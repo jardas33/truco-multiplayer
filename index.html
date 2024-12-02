@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Truco Multiplayer</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -22,17 +23,115 @@
             font-size: 2.5em;
             margin-bottom: 20px;
         }
-        p {
-            font-size: 1.2em;
+        .container {
             background-color: #34495e;
-            padding: 15px 30px;
+            padding: 30px;
             border-radius: 8px;
             max-width: 600px;
+            width: 90%;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        input {
+            padding: 10px;
+            margin: 10px;
+            border: none;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #27ae60;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #219a52;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #27ae60;
+        }
+        .error {
+            background-color: #c0392b;
         }
     </style>
 </head>
 <body>
     <h1>Truco Multiplayer</h1>
-    <p>Welcome to Truco Multiplayer! The server is running.</p>
+    <div class="container">
+        <div class="controls">
+            <input type="text" id="roomId" placeholder="Enter Room ID">
+            <br>
+            <button onclick="createRoom()">Create Room</button>
+            <button onclick="joinRoom()">Join Room</button>
+        </div>
+        <div id="status">Waiting for connection...</div>
+    </div>
+
+    <script>
+        const socket = io();
+        const status = document.getElementById('status');
+        let currentRoom = '';
+
+        function updateStatus(message, isError = false) {
+            status.textContent = message;
+            status.className = isError ? 'error' : 'success';
+        }
+
+        function createRoom() {
+            const roomId = document.getElementById('roomId').value || Math.random().toString(36).substr(2, 6);
+            document.getElementById('roomId').value = roomId;
+            socket.emit('createRoom', roomId);
+            updateStatus('Creating room...');
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                updateStatus('Please enter a room ID', true);
+                return;
+            }
+            socket.emit('joinRoom', roomId);
+            updateStatus('Joining room...');
+        }
+
+        // Socket event handlers
+        socket.on('connect', () => {
+            updateStatus('Connected to server');
+        });
+
+        socket.on('connect_error', () => {
+            updateStatus('Connection error. Please try again.', true);
+        });
+
+        socket.on('roomCreated', (roomId) => {
+            currentRoom = roomId;
+            updateStatus(`Room created! ID: ${roomId}`);
+        });
+
+        socket.on('playerJoined', (data) => {
+            updateStatus(`Players in room: ${data.playerCount}/4`);
+        });
+
+        socket.on('gameStart', () => {
+            updateStatus('Game starting!');
+        });
+
+        socket.on('error', (message) => {
+            updateStatus(message, true);
+        });
+    </script>
 </body>
 </html> 
