@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <meta charset="utf-8" />
-
-  </head>
-  <body>
-    <main>
-      <div id="Menu"></div>
-      <div id="Instructions"></div>
-      <div id="Values"></div>
-      <div id="Game"></div>
-    </main>
-    <script src="variables.js"></script>
-    <script src="players.js"></script>
-    <script src="preload.js"></script>
-    <script src="game.js"></script>
-    <script src="setup.js"></script>
-    <script src="draw.js"></script>
-    <script src="functions.js"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truco Multiplayer</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/libraries/p5.min.js"></script>
+    <script src="/libraries/p5.dom.min.js"></script>
+    <script src="/players.js"></script>
+    <script src="/game.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c3e50;
+        }
+        canvas {
+            border: 2px solid #34495e;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const socket = io();
+        
+        // Add Socket.IO event listeners here
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+    </script>
+</body>
 </html>
