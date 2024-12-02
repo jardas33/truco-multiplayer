@@ -1,1 +1,1 @@
-web: node /opt/render/project/src/server.js 
+web: node index.js 
