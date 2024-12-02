@@ -1,5 +1,5 @@
-// Card values and positions
-const cardValues = {
+// Game constants and state
+const CARD_VALUES = {
     'A_clubs': 1, '2_clubs': 2, '3_clubs': 3,
     'A_hearts': 1, '2_hearts': 2, '3_hearts': 3,
     'A_spades': 1, '2_spades': 2, '3_spades': 3,
@@ -12,6 +12,25 @@ let playerHand = [];
 let playedCards = [];
 let currentPlayer;
 let gameStarted = false;
+let currentPlayerIndex = 0;
+let trucoState = null;
+let gameValue = 1;
+let potentialGameValue = 0;
+let initialTrucoCallerIndex = null;
+let lastActionWasRaise = false;
+let scores = {
+    team1: 0,
+    team2: 0
+};
+let games = {
+    team1: 0,
+    team2: 0
+};
+let sets = {
+    team1: 0,
+    team2: 0
+};
+let roundResults = [];
 
 // Load card images
 function preloadCardImages() {
@@ -30,20 +49,40 @@ function preloadCardImages() {
     });
 }
 
-function setupGame() {
+function initGame(data) {
     gameCanvas = createCanvas(800, 600);
     gameCanvas.parent('gameContainer');
     background('#27ae60');
     
-    // Initialize game state
-    currentPlayer = socket.id;
+    // Initialize game state with received data
+    playerHand = data.hand || [];
+    currentPlayerIndex = data.playerIndex;
+    currentPlayer = data.currentPlayer;
+    players = data.players;
     gameStarted = true;
+    
+    // Reset game state
+    trucoState = null;
+    gameValue = 1;
+    potentialGameValue = 0;
+    initialTrucoCallerIndex = null;
+    lastActionWasRaise = false;
+    playedCards = [];
+    roundResults = [];
+    
+    // Reset scores
+    scores = { team1: 0, team2: 0 };
+    games = { team1: 0, team2: 0 };
+    sets = { team1: 0, team2: 0 };
 }
 
-function drawGame() {
+function draw() {
     if (!gameStarted) return;
     
     background('#27ae60');
+    
+    // Draw game state
+    drawGameState();
     
     // Draw played cards in the center
     drawPlayedCards();
@@ -53,6 +92,19 @@ function drawGame() {
     
     // Draw other players' cards (face down)
     drawOtherPlayersCards();
+}
+
+function drawGameState() {
+    fill(255);
+    textSize(20);
+    textAlign(LEFT, TOP);
+    text(`Game Value: ${gameValue}`, 10, 10);
+    text(`Team 1: ${games.team1}`, 10, 40);
+    text(`Team 2: ${games.team2}`, 10, 70);
+    
+    if (trucoState) {
+        text('TRUCO!', width/2 - 50, 10);
+    }
 }
 
 function drawPlayerHand() {
@@ -65,6 +117,13 @@ function drawPlayerHand() {
         const x = startX + index * cardWidth;
         if (cardImages[card]) {
             image(cardImages[card], x, startY, cardWidth, cardHeight);
+            
+            // Highlight playable cards
+            if (currentPlayer === socket.id && !trucoState) {
+                noFill();
+                stroke('#27ae60');
+                rect(x, startY, cardWidth, cardHeight);
+            }
         }
     });
 }
@@ -75,11 +134,11 @@ function drawPlayedCards() {
     const centerX = width/2 - cardWidth/2;
     const centerY = height/2 - cardHeight/2;
     
-    playedCards.forEach((card, index) => {
-        const x = centerX + index * 20;
+    playedCards.forEach((playedCard, index) => {
+        const x = centerX + (index - playedCards.length/2) * 30;
         const y = centerY;
-        if (cardImages[card]) {
-            image(cardImages[card], x, y, cardWidth, cardHeight);
+        if (cardImages[playedCard.card]) {
+            image(cardImages[playedCard.card], x, y, cardWidth, cardHeight);
         }
     });
 }
@@ -88,18 +147,37 @@ function drawOtherPlayersCards() {
     const cardWidth = 80;
     const cardHeight = 120;
     
-    // Left player
-    image(cardImages['back'], 20, height/2 - cardHeight/2, cardWidth, cardHeight);
-    
-    // Top player
-    image(cardImages['back'], width/2 - cardWidth/2, 20, cardWidth, cardHeight);
-    
-    // Right player
-    image(cardImages['back'], width - cardWidth - 20, height/2 - cardHeight/2, cardWidth, cardHeight);
+    players.forEach((player, index) => {
+        if (player.id !== socket.id) {
+            let x, y;
+            switch(index) {
+                case (currentPlayerIndex + 1) % 4:
+                    x = width - cardWidth - 20;
+                    y = height/2 - cardHeight/2;
+                    break;
+                case (currentPlayerIndex + 2) % 4:
+                    x = width/2 - cardWidth/2;
+                    y = 20;
+                    break;
+                case (currentPlayerIndex + 3) % 4:
+                    x = 20;
+                    y = height/2 - cardHeight/2;
+                    break;
+            }
+            image(cardImages['back'], x, y, cardWidth, cardHeight);
+            
+            // Highlight current player
+            if (currentPlayer === player.id) {
+                noFill();
+                stroke('#27ae60');
+                rect(x, y, cardWidth, cardHeight);
+            }
+        }
+    });
 }
 
 function mouseClicked() {
-    if (!gameStarted) return;
+    if (!gameStarted || currentPlayer !== socket.id || trucoState) return;
     
     // Check if clicked on a card in player's hand
     const cardWidth = 80;
@@ -111,31 +189,37 @@ function mouseClicked() {
         const x = startX + index * cardWidth;
         if (mouseX > x && mouseX < x + cardWidth &&
             mouseY > startY && mouseY < startY + cardHeight) {
-            playCard(index);
+            socket.emit('playCard', {
+                roomId: currentRoom,
+                cardIndex: index
+            });
         }
     });
 }
 
-function playCard(cardIndex) {
-    if (cardIndex >= 0 && cardIndex < playerHand.length) {
-        const card = playerHand[cardIndex];
-        socket.emit('playCard', { card, roomId: currentRoom });
-        playerHand.splice(cardIndex, 1);
-        playedCards.push(card);
-    }
-}
-
-// Socket event handlers for game
-socket.on('gameStart', (data) => {
-    setupGame();
-    playerHand = data.hand || [];
-    currentPlayer = data.currentPlayer;
-});
-
+// Socket event handlers
 socket.on('cardPlayed', (data) => {
-    playedCards.push(data.card);
+    if (data.playerId === socket.id) {
+        // Remove card from hand
+        playerHand.splice(data.cardIndex, 1);
+    }
+    playedCards.push({
+        card: data.card,
+        playerId: data.playerId
+    });
+    currentPlayer = data.nextPlayer;
 });
 
-socket.on('updateHand', (data) => {
-    playerHand = data.hand;
+socket.on('roundEnd', (data) => {
+    // Update scores and game state
+    scores = data.scores;
+    games = data.games;
+    sets = data.sets;
+    playedCards = [];
+    roundResults.push(data.winner);
+});
+
+socket.on('gameEnd', (data) => {
+    alert(`Game Over! ${data.winner} wins!`);
+    gameStarted = false;
 }); 
