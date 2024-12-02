@@ -1,17 +1,38 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 const path = require('path');
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Serve static files from the Images directory
-app.use('/Images', express.static(path.join(__dirname, '../Images')));
+// Serve static files from the images directory
+app.use('/images', express.static(path.join(__dirname, '../images')));
 
 // Serve static files from the libraries directory
 app.use('/libraries', express.static(path.join(__dirname, '../libraries')));
+
+// Basic route for testing
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // Game state
 const rooms = new Map();
