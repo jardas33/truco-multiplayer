@@ -9,7 +9,7 @@
     "npm": "9.x"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node /opt/render/project/src/server.js",
     "dev": "node server.js",
     "build": "npm install"
   },
