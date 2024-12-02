@@ -1,7 +1,6 @@
 #!/bin/bash
-pwd
+echo "Current directory: $(pwd)"
+echo "Directory contents:"
 ls -la
-echo "Current directory contents:"
-ls -R
 echo "Starting server..."
-node server.js 
+node "$(pwd)/src/app.js" 
