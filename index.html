@@ -55,6 +55,10 @@
         button:hover {
             background-color: #219a52;
         }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
         #status {
             margin-top: 20px;
             padding: 10px;
@@ -65,6 +69,23 @@
         }
         .error {
             background-color: #c0392b;
+        }
+        .game-options {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #2c3e50;
+            display: none;
+        }
+        .player-list {
+            margin: 15px 0;
+            text-align: left;
+        }
+        .player-item {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #2c3e50;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -78,16 +99,35 @@
             <button onclick="joinRoom()">Join Room</button>
         </div>
         <div id="status">Waiting for connection...</div>
+        
+        <div id="gameOptions" class="game-options">
+            <div class="player-list" id="playerList">
+                <h3>Players in Room:</h3>
+            </div>
+            <button onclick="addBot()">Add Bot</button>
+            <button onclick="startGame()">Start Game</button>
+            <button onclick="leaveRoom()">Leave Room</button>
+        </div>
     </div>
 
     <script>
         const socket = io();
         const status = document.getElementById('status');
+        const gameOptions = document.getElementById('gameOptions');
+        const playerList = document.getElementById('playerList');
         let currentRoom = '';
+        let players = [];
 
         function updateStatus(message, isError = false) {
             status.textContent = message;
             status.className = isError ? 'error' : 'success';
+        }
+
+        function updatePlayerList() {
+            const playerListHtml = players.map(player => 
+                `<div class="player-item">${player.isBot ? '🤖' : '👤'} ${player.team} - ${player.isBot ? 'Bot' : (player.id === socket.id ? 'You' : 'Player')}</div>`
+            ).join('');
+            playerList.innerHTML = '<h3>Players in Room:</h3>' + playerListHtml;
         }
 
         function createRoom() {
@@ -107,6 +147,22 @@
             updateStatus('Joining room...');
         }
 
+        function addBot() {
+            socket.emit('addBot', currentRoom);
+        }
+
+        function startGame() {
+            socket.emit('startGame', currentRoom);
+        }
+
+        function leaveRoom() {
+            socket.emit('leaveRoom', currentRoom);
+            currentRoom = '';
+            players = [];
+            gameOptions.style.display = 'none';
+            updateStatus('Left room');
+        }
+
         // Socket event handlers
         socket.on('connect', () => {
             updateStatus('Connected to server');
@@ -119,18 +175,35 @@
         socket.on('roomCreated', (roomId) => {
             currentRoom = roomId;
             updateStatus(`Room created! ID: ${roomId}`);
+            gameOptions.style.display = 'block';
         });
 
         socket.on('playerJoined', (data) => {
+            players = data.players;
             updateStatus(`Players in room: ${data.playerCount}/4`);
+            updatePlayerList();
+            gameOptions.style.display = 'block';
         });
 
-        socket.on('gameStart', () => {
+        socket.on('botAdded', (data) => {
+            players = data.players;
+            updateStatus(`Bot added. Players in room: ${data.playerCount}/4`);
+            updatePlayerList();
+        });
+
+        socket.on('gameStart', (data) => {
             updateStatus('Game starting!');
+            // Here we'll add the game initialization code later
         });
 
         socket.on('error', (message) => {
             updateStatus(message, true);
+        });
+
+        socket.on('playerLeft', (data) => {
+            players = data.players;
+            updateStatus(`A player left. Players in room: ${data.playerCount}/4`);
+            updatePlayerList();
         });
     </script>
 </body>
