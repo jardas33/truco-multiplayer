@@ -2,15 +2,15 @@
   "name": "truco-multiplayer",
   "version": "1.0.0",
   "description": "Multiplayer Truco card game",
-  "main": "src/server.js",
+  "main": "server.js",
   "type": "commonjs",
   "engines": {
     "node": "18.x",
     "npm": "9.x"
   },
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node src/server.js",
+    "start": "node server.js",
+    "dev": "node server.js",
     "build": "npm install"
   },
   "dependencies": {
