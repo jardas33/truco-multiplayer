@@ -1,33 +1,25 @@
 const express = require('express');
-const { Server } = require('socket.io');
-const http = require('http');
 const path = require('path');
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 
-// Serve static files from public directory
-app.use(express.static('public'));
+// Basic route
+app.get('/', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-// Serve static files from Images directory
-app.use('/Images', express.static('Images'));
+// Handle 404s
+app.use((req, res) => {
+    res.status(404).send('Not found');
+});
 
-// Serve static files from libraries directory
-app.use('/libraries', express.static('libraries'));
-
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-    console.log('A user connected');
-    
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
-    
-    // Add game-specific socket events here
+// Handle errors
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).send('Something went wrong!');
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 }); 
