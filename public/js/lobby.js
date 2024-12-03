@@ -66,19 +66,10 @@ function setupSocketListeners() {
         }
     });
 
-    socket.on('gameReady', (players) => {
-        console.log('Game ready with players:', players);
-        enableStartButton();
-    });
-
     socket.on('gameStart', (players) => {
         console.log('Game starting with players:', players);
         hideRoomControls();
-        if (typeof startGame === 'function') {
-            startGame(players);
-        } else {
-            console.error('startGame function not found');
-        }
+        startTrucoGame();
     });
 
     socket.on('playerDisconnected', (data) => {
@@ -184,20 +175,14 @@ function updateLobbyUI(inRoom) {
 }
 
 function updatePlayerList(players) {
-    console.log('Updating player list:', players);
-    const playerListDiv = document.getElementById('playerList');
-    if (!playerListDiv) return;
-
-    playerListDiv.innerHTML = '<h3>Players in Room:</h3>';
-    players.forEach((player, index) => {
-        const playerDiv = document.createElement('div');
-        playerDiv.textContent = `Player ${index + 1}: ${player.isBot ? 'Bot' : 'Human'} (${player.team})`;
-        playerListDiv.appendChild(playerDiv);
-    });
+    const playerList = document.getElementById('playerList');
+    if (playerList) {
+        playerList.innerHTML = '<h3>Players in Room:</h3>' + 
+            players.map(p => `<div>${p.name || 'Player'} ${p.isBot ? '(Bot)' : ''}</div>`).join('');
+    }
 }
 
 function enableStartButton() {
-    console.log('Enabling start button');
     const startGameBtn = document.getElementById('startGameBtn');
     if (startGameBtn) {
         startGameBtn.disabled = false;
@@ -205,7 +190,6 @@ function enableStartButton() {
 }
 
 function hideRoomControls() {
-    console.log('Hiding room controls');
     const roomControls = document.getElementById('roomControls');
     if (roomControls) {
         roomControls.style.display = 'none';

@@ -20,8 +20,11 @@ window.p5Instance = new p5(function(p) {
         startButton.style("width", "200px");
         startButton.style("height", "60px");
         startButton.style("font-weight", "bold");
-        startButton.mousePressed(startTrucoGame);
-        startButton.parent(menuDiv);
+        startButton.mousePressed(() => {
+            startTrucoGame();
+            startButton.hide();
+        });
+        startButton.parent('gameCanvas');
 
         instructionsButton = p.createButton("Instructions");
         instructionsButton.position(20, 20);

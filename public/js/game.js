@@ -513,7 +513,12 @@ function createDeck() {
     if (window.roomId) {
         // Multiplayer mode
         isMultiplayerMode = true;
-        socket.emit('startGame', window.roomId);
+        gameState = gameStateEnum.Playing;
+        createDeck();
+        shuffleDeck(deck);
+        // Players will be initialized by server events
+        game = new Game(players || []);
+        game.startGame();
     } else {
         // Single player mode with bots
         startSinglePlayerGame();
@@ -526,12 +531,12 @@ function createDeck() {
     players = [];
     
     // Create human player
-    players.push(new Player(0, "Player 1", "team1", false));
+    players.push(new Player(1, "Player 1", "team1", false));
     
     // Create bot players
-    players.push(new Player(1, "Bot 1", "team2", true));
-    players.push(new Player(2, "Bot 2", "team1", true));
-    players.push(new Player(3, "Bot 3", "team2", true));
+    players.push(new Player(2, "Bot 1", "team2", true));
+    players.push(new Player(3, "Bot 2", "team1", true));
+    players.push(new Player(4, "Bot 3", "team2", true));
 
     createDeck();
     shuffleDeck(deck);
