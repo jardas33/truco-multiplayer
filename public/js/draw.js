@@ -25,6 +25,7 @@ function drawInstructions() {
 
 function drawCardValues() {
     // Draw background image
+    clear();
     background(backgroundImage);
     
     // Draw title
@@ -40,6 +41,7 @@ function drawCardValues() {
     const boxY = height/2 - boxHeight/2;
     
     // Draw box background with opacity
+    push();
     fill(0, 0, 0, 200);  // Black with 80% opacity
     stroke(218, 165, 32);
     strokeWeight(3);
@@ -59,39 +61,46 @@ function drawCardValues() {
     const leftColX = boxX + 50;
     const rightColX = boxX + boxWidth/2 + 50;
     
-    // Numbers in gold color
-    fill(218, 165, 32);
-    // Left column numbers
-    for(let i = 1; i <= 9; i++) {
-        text(i + ".", leftColX, startY + lineHeight * (i-1));
+    // Draw each entry with number and text together
+    const leftColumnEntries = [
+        "Queen of diamonds",
+        "Jack of clubs",
+        "5 of clubs",
+        "4 of clubs",
+        "7 of hearts",
+        "Ace of spades",
+        "7 of diamonds",
+        "All 3's",
+        "All 2's"
+    ];
+
+    const rightColumnEntries = [
+        "Remaining Aces",
+        "All Kings",
+        "Remaining Queens",
+        "Remaining Jacks",
+        "Remaining 7's",
+        "All 6's",
+        "Remaining 5's",
+        "Remaining 4's"
+    ];
+
+    // Draw left column
+    for(let i = 0; i < leftColumnEntries.length; i++) {
+        fill(218, 165, 32);  // Gold color for numbers
+        text((i + 1) + ".", leftColX, startY + lineHeight * i);
+        fill(255);  // White color for text
+        text(leftColumnEntries[i], leftColX + 25, startY + lineHeight * i);
     }
-    // Right column numbers
-    for(let i = 10; i <= 17; i++) {
-        text(i + ".", rightColX, startY + lineHeight * (i-10));
+
+    // Draw right column
+    for(let i = 0; i < rightColumnEntries.length; i++) {
+        fill(218, 165, 32);  // Gold color for numbers
+        text((i + 10) + ".", rightColX, startY + lineHeight * i);
+        fill(255);  // White color for text
+        text(rightColumnEntries[i], rightColX + 35, startY + lineHeight * i);
     }
-    
-    // Card names in white
-    fill(255);
-    // Left column card names
-    text("Queen of diamonds", leftColX + 25, startY);
-    text("Jack of clubs", leftColX + 25, startY + lineHeight);
-    text("5 of clubs", leftColX + 25, startY + lineHeight * 2);
-    text("4 of clubs", leftColX + 25, startY + lineHeight * 3);
-    text("7 of hearts", leftColX + 25, startY + lineHeight * 4);
-    text("Ace of spades", leftColX + 25, startY + lineHeight * 5);
-    text("7 of diamonds", leftColX + 25, startY + lineHeight * 6);
-    text("All 3's", leftColX + 25, startY + lineHeight * 7);
-    text("All 2's", leftColX + 25, startY + lineHeight * 8);
-    
-    // Right column card names
-    text("Remaining Aces", rightColX + 35, startY);
-    text("All Kings", rightColX + 35, startY + lineHeight);
-    text("Remaining Queens", rightColX + 35, startY + lineHeight * 2);
-    text("Remaining Jacks", rightColX + 35, startY + lineHeight * 3);
-    text("Remaining 7's", rightColX + 35, startY + lineHeight * 4);
-    text("All 6's", rightColX + 35, startY + lineHeight * 5);
-    text("Remaining 5's", rightColX + 35, startY + lineHeight * 6);
-    text("Remaining 4's", rightColX + 35, startY + lineHeight * 7);
+    pop();
 }
 
 function drawPlaying() {
