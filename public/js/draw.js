@@ -3,7 +3,10 @@ function drawGame(p) {
 
     // Draw the game state
     if (gameState === gameStateEnum.Menu) {
-        p.background(backgroundImage);
+        p.background(0, 100, 0);
+        if (backgroundImage) {
+            p.image(backgroundImage, 0, 0, p.width, p.height);
+        }
     } else if (gameState === gameStateEnum.Instructions) {
         drawInstructions(p);
     } else if (gameState === gameStateEnum.CardValues) {
@@ -61,6 +64,9 @@ function drawPlaying(p) {
 
     // Draw background
     p.background(0, 100, 0);
+    if (backgroundImage) {
+        p.image(backgroundImage, 0, 0, p.width, p.height);
+    }
 
     // Draw player labels and cards
     for (let i = 0; i < players.length; i++) {
@@ -83,7 +89,9 @@ function drawPlaying(p) {
                     p.image(card.image, cardX, cardY, cardWidth, cardHeight);
                 } else if (i !== selfPlayer - 1) {
                     // Draw card back for other players
-                    p.image(backCardImage, cardX, cardY, cardWidth, cardHeight);
+                    if (backCardImage) {
+                        p.image(backCardImage, cardX, cardY, cardWidth, cardHeight);
+                    }
                 }
             }
         }

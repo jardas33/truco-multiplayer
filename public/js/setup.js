@@ -1,5 +1,5 @@
 // Create p5 instance in the game canvas div
-window.p5Instance = new p5(function(p) {
+const sketch = (p) => {
     p.preload = function() {
         // Load background image
         window.backgroundImage = p.loadImage("Images/background.jpg");
@@ -60,7 +60,7 @@ window.p5Instance = new p5(function(p) {
     };
 
     p.setup = function() {
-        let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+        const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
         canvas.parent('Game');
         
         // Store p5 instance globally for other files to use
@@ -95,57 +95,32 @@ window.p5Instance = new p5(function(p) {
 
     p.draw = function() {
         if (gameState === gameStateEnum.Menu) {
-            p.background(backgroundImage);
+            p.background(0, 100, 0);
+            if (backgroundImage) {
+                p.image(backgroundImage, 0, 0, p.width, p.height);
+            }
         } else {
             drawGame(p);
         }
     };
-}, 'Game');
 
-function drawMenu(p) {
-    // Menu state drawing code
-}
-
-function drawInstructions(p) {
-    // Draw instructions background
-    p.background(0, 100, 0);
-    
-    // Draw instructions image if available
-    if (instructionsImage) {
-        const imgWidth = Math.min(p.width * 0.8, 800);
-        const imgHeight = imgWidth * (instructionsImage.height / instructionsImage.width);
-        p.image(instructionsImage, p.width/2 - imgWidth/2, 150, imgWidth, imgHeight);
-    }
-}
-
-function drawCardValues(p) {
-    // Draw card values background
-    p.background(0, 100, 0);
-    p.fill(255);
-    p.textSize(32);
-    p.textAlign(p.CENTER, p.CENTER);
-    p.text("Card Values", p.width/2, 50);
-    
-    // Draw card values
-    p.textSize(16);
-    p.textAlign(p.LEFT, p.TOP);
-    let x = 50;
-    let y = 100;
-    let lineHeight = 25;
-    
-    // Sort cards by value
-    const sortedCards = Object.entries(cardValues)
-        .sort((a, b) => a[1] - b[1]);
-    
-    for (const [card, value] of sortedCards) {
-        p.text(`${card}: ${value}`, x, y);
-        y += lineHeight;
+    p.windowResized = function() {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
         
-        // Create new column if reaching bottom of screen
-        if (y > p.height - 50) {
-            y = 100;
-            x += p.width/3;
+        // Update player positions
+        if (playerPositions) {
+            playerPositions[0].x = p.width / 6;
+            playerPositions[0].y = p.height / 2;
+            playerPositions[1].x = p.width / 2;
+            playerPositions[1].y = 100;
+            playerPositions[2].x = (5 * p.width) / 6;
+            playerPositions[2].y = p.height / 2;
+            playerPositions[3].x = p.width / 2;
+            playerPositions[3].y = p.height - cardHeight - 100;
         }
-    }
-}
+    };
+};
+
+// Initialize p5 with the sketch
+window.p5Instance = new p5(sketch);
   
