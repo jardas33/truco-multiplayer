@@ -148,16 +148,15 @@ button:disabled {
 .instructions-title {
     color: rgb(218, 165, 32);
     text-align: center;
-    font-size: 36px;
+    font-size: 32px;
     margin-bottom: 30px;
 }
 
 .instructions-text {
-    font-size: 22px;
-    line-height: 35px;
-    margin-bottom: 25px;
+    font-size: 18px;
+    line-height: 32px;
+    margin-bottom: 20px;
     text-align: left;
-    padding: 0 80px;
 }
 
 .values-box {
