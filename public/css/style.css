@@ -121,6 +121,8 @@ button:disabled {
     cursor: pointer;
     font-size: 16px;
     transition: all 0.3s ease;
+    position: absolute;
+    z-index: 1000;
 }
 
 .close-button:hover {

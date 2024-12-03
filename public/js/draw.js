@@ -13,11 +13,13 @@ function draw() {
         gameDiv.hide();
         instructionsDiv.hide();
         valuesDiv.hide();
+        if (instructionsCloseButton) {
+            instructionsCloseButton.hide();
+        }
     }
     else if (gameState === gameStateEnum.Instructions) {
         menuDiv.hide();
         gameDiv.hide();
-        instructionsDiv.show();
         valuesDiv.hide();
         
         push();
@@ -92,18 +94,22 @@ function draw() {
             }
         }
         
-        // Position close button at the bottom of the box
+        // Create and position close button
         if (!instructionsCloseButton) {
             instructionsCloseButton = createButton('Close');
             instructionsCloseButton.class('close-button');
             instructionsCloseButton.mousePressed(() => {
-                instructionsCloseButton.hide();
                 gameState = gameStateEnum.Menu;
                 instructionsDiv.hide();
                 menuDiv.show();
+                instructionsCloseButton.hide();
             });
         }
-        instructionsCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
+        
+        // Position the button at the bottom center of the box
+        const buttonX = width/2 - 50;
+        const buttonY = boxY + boxHeight - 50;
+        instructionsCloseButton.position(buttonX, buttonY);
         instructionsCloseButton.show();
         
         pop();
