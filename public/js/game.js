@@ -355,14 +355,6 @@ function createDeck() {
         isMultiplayerMode = true;
         gameState = gameStateEnum.Playing;
         
-        // Hide menu and show game canvas
-        document.getElementById('Menu').classList.remove('active');
-        document.getElementById('Game').classList.add('active');
-        
-        // Show game UI elements
-        if (backToMainMenuButton) backToMainMenuButton.show();
-        if (trucoButton) trucoButton.show();
-        
         // Initialize game
         window.game = new window.Game(window.players || []);
         createDeck();
@@ -375,6 +367,12 @@ function createDeck() {
             playerPosition = data.position;
             window.game.updatePlayers(data.players);
             window.game.currentPlayerIndex = 0;
+            
+            // Show game UI elements
+            backToMainMenuButton.show();
+            trucoButton.show();
+            
+            // Force redraw
             redrawGame();
         });
 
@@ -386,9 +384,6 @@ function createDeck() {
                 redrawGame();
             }
         });
-
-        // Force redraw to show initial game state
-        redrawGame();
     }
 }
 
