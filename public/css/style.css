@@ -3,46 +3,35 @@ html, body {
     padding: 0;
     height: 100%;
     font-family: Arial, sans-serif;
-}
-
-body {
-    background-image: url('/Images/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    background-color: #004d00;
 }
 
 #gameContainer {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+    width: 100%;
+    height: 100vh;
     position: relative;
+    overflow: hidden;
 }
 
-#menuContainer {
+#gameCanvas {
     width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
+    height: 100%;
 }
 
 #roomControls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.7);
     padding: 30px;
     border-radius: 15px;
-    width: 100%;
-    box-sizing: border-box;
+    width: 80%;
+    max-width: 500px;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    z-index: 1000;
 }
 
 .input-group {
@@ -50,21 +39,6 @@ body {
     gap: 10px;
     justify-content: center;
     flex-wrap: wrap;
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.menu-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 20px;
 }
 
 input[type="text"] {
@@ -76,7 +50,9 @@ input[type="text"] {
     background-color: rgba(255, 255, 255, 0.9);
 }
 
-button {
+.menu-btn {
+    background-color: #ff9800;
+    color: white;
     padding: 12px 24px;
     border: none;
     border-radius: 8px;
@@ -86,44 +62,33 @@ button {
     transition: all 0.3s ease;
 }
 
-.primary-btn {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.secondary-btn {
-    background-color: #2196F3;
-    color: white;
-}
-
-.menu-btn {
-    background-color: #ff9800;
-    color: white;
-}
-
-button:hover {
+.menu-btn:hover {
+    background-color: #f57c00;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-button:active {
+.menu-btn:active {
     transform: translateY(0);
 }
 
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+button.primary-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+button.secondary-btn {
+    background-color: #2196F3;
+    color: white;
 }
 
 #playerList {
     color: white;
     text-align: center;
     margin-top: 20px;
-    padding: 20px;
     background-color: rgba(0, 0, 0, 0.5);
     border-radius: 8px;
+    padding: 15px;
 }
 
 #playerList h3 {
@@ -138,73 +103,17 @@ button:disabled {
     border-radius: 4px;
 }
 
-#gameCanvas {
-    width: 100%;
-    flex: 1;
-    position: relative;
-    margin-top: 20px;
-}
-
 @media (max-width: 600px) {
     #roomControls {
+        width: 90%;
         padding: 20px;
     }
 
-    .input-group, .button-group, .menu-buttons {
+    .input-group {
         flex-direction: column;
-        width: 100%;
     }
 
-    input[type="text"], button {
+    input[type="text"] {
         width: 100%;
     }
-}
-
-.button-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
-    z-index: 1000;
-}
-
-.menu-btn {
-    background-color: #ff9800;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-.start-btn {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #4CAF50;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    width: 200px;
-    height: 60px;
-}
-
-.menu-btn:hover, .start-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.menu-btn:active, .start-btn:active {
-    transform: translateY(0);
 }

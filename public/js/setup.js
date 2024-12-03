@@ -7,56 +7,78 @@ window.p5Instance = new p5(function(p) {
         // Store p5 instance globally for other files to use
         window.p = p;
 
-        // Create menu buttons
-        const backToMenuBtn = p.createButton("Back to Main Menu");
-        backToMenuBtn.class('menu-btn');
-        backToMenuBtn.mousePressed(() => {
-            console.log("Back to menu clicked");
+        // Initialize game state if not already set
+        if (typeof gameState === 'undefined') {
             gameState = gameStateEnum.Menu;
-            if (window.game) {
-                delete window.game;
-            }
-        });
+        }
 
-        const cardValuesBtn = p.createButton("Card Values");
-        cardValuesBtn.class('menu-btn');
-        cardValuesBtn.mousePressed(() => {
-            console.log("Card values clicked");
-            previousGameState = gameState;
-            gameState = gameStateEnum.CardValues;
-        });
+        // Create menu buttons only if they don't exist
+        if (!window.menuInitialized) {
+            // Create menu buttons
+            const buttonContainer = p.createDiv('');
+            buttonContainer.id('menuButtons');
+            buttonContainer.style('position', 'fixed');
+            buttonContainer.style('top', '20px');
+            buttonContainer.style('left', '50%');
+            buttonContainer.style('transform', 'translateX(-50%)');
+            buttonContainer.style('display', 'flex');
+            buttonContainer.style('gap', '20px');
+            buttonContainer.style('z-index', '1000');
+            buttonContainer.parent('gameContainer');
 
-        const instructionsBtn = p.createButton("Instructions");
-        instructionsBtn.class('menu-btn');
-        instructionsBtn.mousePressed(() => {
-            console.log("Instructions clicked");
-            previousGameState = gameState;
-            gameState = gameStateEnum.Instructions;
-        });
+            const backToMenuBtn = p.createButton("Back to Main Menu");
+            backToMenuBtn.class('menu-btn');
+            backToMenuBtn.parent(buttonContainer);
+            backToMenuBtn.mousePressed(() => {
+                console.log("Back to menu clicked");
+                gameState = gameStateEnum.Menu;
+                if (window.game) {
+                    delete window.game;
+                }
+            });
 
-        // Create start game button
-        startButton = p.createButton("Start Truco Game");
-        startButton.class('start-btn');
-        startButton.mousePressed(() => {
-            console.log("Start game clicked");
-            startTrucoGame();
-            startButton.hide();
-        });
+            const cardValuesBtn = p.createButton("Card Values");
+            cardValuesBtn.class('menu-btn');
+            cardValuesBtn.parent(buttonContainer);
+            cardValuesBtn.mousePressed(() => {
+                console.log("Card values clicked");
+                previousGameState = gameState;
+                gameState = gameStateEnum.CardValues;
+            });
 
-        // Position buttons
-        const buttonContainer = p.createDiv('');
-        buttonContainer.class('button-container');
-        buttonContainer.child(backToMenuBtn);
-        buttonContainer.child(cardValuesBtn);
-        buttonContainer.child(instructionsBtn);
-        buttonContainer.child(startButton);
-        buttonContainer.parent('gameCanvas');
+            const instructionsBtn = p.createButton("Instructions");
+            instructionsBtn.class('menu-btn');
+            instructionsBtn.parent(buttonContainer);
+            instructionsBtn.mousePressed(() => {
+                console.log("Instructions clicked");
+                previousGameState = gameState;
+                gameState = gameStateEnum.Instructions;
+            });
+
+            window.menuInitialized = true;
+        }
     };
 
     p.draw = function() {
-        p.background(51);
-        if (typeof drawGame === 'function') {
-            drawGame(p);
+        // Clear the background with a dark green color
+        p.background(0, 100, 0);
+        
+        // Draw game state
+        switch (gameState) {
+            case gameStateEnum.Menu:
+                drawMenu(p);
+                break;
+            case gameStateEnum.Playing:
+                if (typeof drawGame === 'function') {
+                    drawGame(p);
+                }
+                break;
+            case gameStateEnum.Instructions:
+                drawInstructions(p);
+                break;
+            case gameStateEnum.CardValues:
+                drawCardValues(p);
+                break;
         }
     };
 
@@ -64,4 +86,34 @@ window.p5Instance = new p5(function(p) {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
     };
 });
+
+function drawMenu(p) {
+    // Menu state drawing code
+}
+
+function drawInstructions(p) {
+    // Draw instructions background
+    p.background(0, 100, 0);
+    p.fill(255);
+    p.textSize(32);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.text("Instructions", p.width/2, 100);
+    
+    // Add instruction text
+    p.textSize(16);
+    p.text("Game instructions will be displayed here", p.width/2, p.height/2);
+}
+
+function drawCardValues(p) {
+    // Draw card values background
+    p.background(0, 100, 0);
+    p.fill(255);
+    p.textSize(32);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.text("Card Values", p.width/2, 100);
+    
+    // Add card values text
+    p.textSize(16);
+    p.text("Card values will be displayed here", p.width/2, p.height/2);
+}
   
