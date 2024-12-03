@@ -81,33 +81,34 @@ function draw() {
         valuesDiv.show();
         
         // Draw golden box
-        const boxWidth = 1000; // Slightly wider box
-        const boxHeight = 600; // Taller box for better spacing
+        const boxWidth = 1000;
+        const boxHeight = 600;
         const boxX = width/2 - boxWidth/2;
         const boxY = height/2 - boxHeight/2;
         
         // Draw box background with opacity
-        fill(0, 0, 0, 200);  // Black with 80% opacity
-        stroke(218, 165, 32); // Golden color
+        fill(0, 0, 0, 200);
+        stroke(218, 165, 32); // Golden color only for box border
         strokeWeight(3);
         rect(boxX, boxY, boxWidth, boxHeight);
         
         // Draw title
-        fill(218, 165, 32); // Golden color
-        textSize(36); // Larger title
+        noStroke(); // Remove stroke for all text
+        fill(218, 165, 32);
+        textSize(36);
         textAlign(CENTER);
         text("Card Values", width/2, boxY + 60);
         
         // Draw subtitle
-        textSize(28); // Larger subtitle
+        textSize(28);
         text("Card power from most powerful (1) to least powerful (17)", width/2, boxY + 110);
         
         // Draw two columns of card values
-        textSize(22); // Larger text for values
+        textSize(22);
         textAlign(LEFT);
         const startY = boxY + 160;
-        const lineHeight = 35; // More space between lines
-        const leftColX = boxX + 80; // More indent
+        const lineHeight = 35;
+        const leftColX = boxX + 80;
         const rightColX = boxX + boxWidth/2 + 80;
         
         const leftColumnEntries = [
@@ -135,17 +136,17 @@ function draw() {
         
         // Draw left column
         for(let i = 0; i < leftColumnEntries.length; i++) {
-            fill(218, 165, 32);  // Gold color for numbers
+            fill(218, 165, 32);
             text((i + 1) + ".", leftColX, startY + lineHeight * i);
-            fill(255);  // White color for text
+            fill(255);
             text(leftColumnEntries[i], leftColX + 35, startY + lineHeight * i);
         }
         
         // Draw right column
         for(let i = 0; i < rightColumnEntries.length; i++) {
-            fill(218, 165, 32);  // Gold color for numbers
+            fill(218, 165, 32);
             text((i + 10) + ".", rightColX, startY + lineHeight * i);
-            fill(255);  // White color for text
+            fill(255);
             text(rightColumnEntries[i], rightColX + 45, startY + lineHeight * i);
         }
         
