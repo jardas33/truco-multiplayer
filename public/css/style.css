@@ -1,73 +1,161 @@
 html, body {
-  margin: 0;
-  padding: 0;
-  background-image: url('/Images/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  min-height: 100vh;
-  font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
 }
 
-canvas {
-  display: block;
+body {
+    background-image: url('/Images/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 #gameContainer {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+}
+
+#menuContainer {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
 #roomControls {
-  background-color: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 10px;
-  margin: 20px;
-  color: white;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 30px;
+    border-radius: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  margin: 5px;
-  cursor: pointer;
-  font-size: 16px;
+.input-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-button:hover {
-  background-color: #45a049;
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.menu-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
 }
 
 input[type="text"] {
-  padding: 10px;
-  margin: 5px;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-  font-size: 16px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 2px solid #4CAF50;
+    font-size: 16px;
+    min-width: 200px;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.secondary-btn {
+    background-color: #2196F3;
+    color: white;
+}
+
+.menu-btn {
+    background-color: #ff9800;
+    color: white;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 #playerList {
-  color: white;
-  text-align: left;
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
 }
 
 #playerList h3 {
-  margin-bottom: 10px;
+    margin: 0 0 15px 0;
+    color: #4CAF50;
+}
+
+#playerList div {
+    margin: 8px 0;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
 #gameCanvas {
-  width: 100%;
-  height: calc(100vh - 100px);
-  position: relative;
+    width: 100%;
+    flex: 1;
+    position: relative;
+    margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+    #roomControls {
+        padding: 20px;
+    }
+
+    .input-group, .button-group, .menu-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    input[type="text"], button {
+        width: 100%;
+    }
 }
