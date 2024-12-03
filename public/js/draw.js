@@ -20,7 +20,6 @@ function draw() {
     else if (gameState === gameStateEnum.Instructions) {
         menuDiv.hide();
         gameDiv.hide();
-        instructionsDiv.show();
         valuesDiv.hide();
         
         push();
@@ -101,8 +100,6 @@ function draw() {
             instructionsCloseButton.class('close-button');
             instructionsCloseButton.mousePressed(() => {
                 gameState = gameStateEnum.Menu;
-                instructionsDiv.hide();
-                menuDiv.show();
                 instructionsCloseButton.hide();
             });
         }
