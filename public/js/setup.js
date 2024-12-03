@@ -52,19 +52,23 @@ function setup() {
     text2Div.style("top", "50%");
     text2Div.style("left", "50%");
     text2Div.style("transform", "translate(-50%, -50%)");
+    text2Div.style("width", "80%");
+    text2Div.style("max-width", "1000px");
+    text2Div.style("background-color", "rgba(0, 0, 0, 0.8)");
+    text2Div.style("padding", "30px");
+    text2Div.style("border-radius", "15px");
+    text2Div.style("border", "2px solid gold");
     text2Div.html(`
-        <h2>Instructions of the game</h2>
-        <div style="justify-content: space-between;">
-            <p>Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.</p>
-            <p>In each round, every player plays one card. The team that wins two out of three rounds wins the game. The team that wins twelve games first wins the set.</p>
-            <p>The order of turns is clockwise, with the first player in each round being the one who played the highest card in the previous round, or in case of a tie, the one who played first in the previous round.</p>
-            <p>The game features the 'truco' mechanic. During their turn, a player can choose to call 'truco', which increases the value of the current game if accepted. The next player can then choose to accept, reject, or raise the value further. If truco is rejected, the game ends immediately, and the team that called 'truco' wins the game at its current value. If accepted, the game goes on but it is now worth 3 games instead of 1. The next player can also raise to 6, then the decision goes back to the player that initially called truco and he has the same options: accept, reject and raise. A game can only be risen to 12 games. It is not possible to raise after that.</p>
-            <p>Once a team has won eleven games within a set, the 'Game of Eleven' rule comes into effect. The team can view their cards and their partner's cards before deciding whether to play the next game. If they decide to play, the game's value is increased to three. If they reject, the opposing team wins one game instantly.</p>
-            <p>Truco is played with a 40 card deck, with a specific order of card values that you can see in the card values instructions.</p>
+        <h2 style="color: gold; font-size: 32px; margin-bottom: 20px; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Instructions of the game</h2>
+        <div style="color: white; font-size: 18px; line-height: 1.6; text-align: justify;">
+            <p style="margin-bottom: 15px;">Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.</p>
+            <p style="margin-bottom: 15px;">In each round, every player plays one card. The team that wins two out of three rounds wins the game. The team that wins twelve games first wins the set.</p>
+            <p style="margin-bottom: 15px;">The order of turns is clockwise, with the first player in each round being the one who played the highest card in the previous round, or in case of a tie, the one who played first in the previous round.</p>
+            <p style="margin-bottom: 15px;">The game features the 'truco' mechanic. During their turn, a player can choose to call 'truco', which increases the value of the current game if accepted. The next player can then choose to accept, reject, or raise the value further. If truco is rejected, the game ends immediately, and the team that called 'truco' wins the game at its current value. If accepted, the game goes on but it is now worth 3 games instead of 1. The next player can also raise to 6, then the decision goes back to the player that initially called truco and he has the same options: accept, reject and raise. A game can only be risen to 12 games. It is not possible to raise after that.</p>
+            <p style="margin-bottom: 15px;">Once a team has won eleven games within a set, the 'Game of Eleven' rule comes into effect. The team can view their cards and their partner's cards before deciding whether to play the next game. If they decide to play, the game's value is increased to three. If they reject, the opposing team wins one game instantly.</p>
+            <p style="margin-bottom: 15px;">Truco is played with a 40 card deck, with a specific order of card values that you can see in the card values instructions.</p>
         </div>
     `);
-    text2Div.style("color", "white");
-    text2Div.style("text-align", "center");
     text2Div.parent(instructionsDiv);
 
     // Create instructions close button
@@ -104,34 +108,42 @@ function setup() {
     textDiv.style("top", "50%");
     textDiv.style("left", "50%");
     textDiv.style("transform", "translate(-50%, -50%)");
+    textDiv.style("width", "80%");
+    textDiv.style("max-width", "800px");
+    textDiv.style("background-color", "rgba(0, 0, 0, 0.8)");
+    textDiv.style("padding", "30px");
+    textDiv.style("border-radius", "15px");
+    textDiv.style("border", "2px solid gold");
     textDiv.html(`
-        <h2>Card power from most powerful - 1 to less powerfull - 17</h2>
-        <div style="display: flex; justify-content: space-between;">
+        <h2 style="color: gold; font-size: 32px; margin-bottom: 20px; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Card power from most powerful (1) to least powerful (17)</h2>
+        <div style="display: flex; justify-content: space-between; color: white; font-size: 18px; line-height: 1.6;">
             <div style="flex-basis: 48%;">
-                <p>Queen of diamonds - 1</p>
-                <p>Jack of clubs - 2</p>
-                <p>5 of clubs - 3</p>
-                <p>4 of clubs - 4</p>
-                <p>7 of hearts - 5</p>
-                <p>Ace of spades - 6</p>
-                <p>7 of diamonds - 7</p>
-                <p>All 3's - 8</p>
-                <p>All 2's - 9</p>
+                <div style="background-color: rgba(0, 100, 0, 0.5); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                    <p style="margin: 8px 0;"><span style="color: gold;">1.</span> Queen of diamonds</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">2.</span> Jack of clubs</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">3.</span> 5 of clubs</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">4.</span> 4 of clubs</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">5.</span> 7 of hearts</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">6.</span> Ace of spades</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">7.</span> 7 of diamonds</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">8.</span> All 3's</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">9.</span> All 2's</p>
+                </div>
             </div>
             <div style="flex-basis: 48%;">
-                <p>Remaining Aces - 10</p>
-                <p>All Kings - 11</p>
-                <p>Remaining Queens - 12</p>
-                <p>Remaining Jacks - 13</p>
-                <p>Remaining 7's - 14</p>
-                <p>All 6's - 15</p>
-                <p>Remaining 5's - 16</p>
-                <p>Remaining 4's - 17</p>
+                <div style="background-color: rgba(0, 100, 0, 0.5); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                    <p style="margin: 8px 0;"><span style="color: gold;">10.</span> Remaining Aces</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">11.</span> All Kings</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">12.</span> Remaining Queens</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">13.</span> Remaining Jacks</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">14.</span> Remaining 7's</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">15.</span> All 6's</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">16.</span> Remaining 5's</p>
+                    <p style="margin: 8px 0;"><span style="color: gold;">17.</span> Remaining 4's</p>
+                </div>
             </div>
         </div>
     `);
-    textDiv.style("color", "white");
-    textDiv.style("text-align", "center");
     textDiv.parent(valuesDiv);
 
     // Create card values close button
