@@ -42,6 +42,55 @@ button:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.room-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid gold;
+    text-align: center;
+    min-width: 300px;
+}
+
+#roomInput {
+    width: 200px;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid gold;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 16px;
+}
+
+#playerList {
+    margin-top: 20px;
+    color: white;
+    text-align: left;
+}
+
+#playerList h3 {
+    color: gold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#playerList div {
+    padding: 5px;
+    margin: 5px 0;
+    background-color: rgba(0, 100, 0, 0.5);
+    border-radius: 5px;
+}
+
 .popup {
     position: fixed;
     top: 50%;

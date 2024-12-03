@@ -9,7 +9,16 @@
   </head>
   <body>
     <main>
-      <div id="Menu"></div>
+      <div id="Menu">
+        <div id="roomControls" class="room-controls">
+          <input type="text" id="roomInput" placeholder="Room Code" />
+          <button id="createRoomBtn">Create Room</button>
+          <button id="joinRoomBtn">Join Room</button>
+          <button id="addBotBtn" style="display: none;">Add Bot</button>
+          <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
+          <div id="playerList"></div>
+        </div>
+      </div>
       <div id="Instructions"></div>
       <div id="Values"></div>
       <div id="Game"></div>
