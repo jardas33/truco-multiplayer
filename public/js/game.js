@@ -544,3 +544,43 @@ function createDeck() {
     window.game.startGame();
   }
   
+  function drawPlayerHand() {
+    if (!playerHand || !playerHand.length) return;
+
+    const startX = width/2 - (playerHand.length * cardWidth)/2;
+    const startY = height - cardHeight - 20;
+
+    playerHand.forEach((card, index) => {
+        const x = startX + index * cardWidth;
+        if (card.image) {
+            image(card.image, x, startY, cardWidth, cardHeight);
+        }
+    });
+  }
+  
+  function drawOtherPlayersCards() {
+    const cardWidth = 60;
+    const cardHeight = 90;
+    
+    // Draw left player's cards
+    if (players.length > 1) {
+        for (let i = 0; i < 3; i++) {
+            image(backCardImage, 20, 200 + i * 30, cardWidth, cardHeight);
+        }
+    }
+    
+    // Draw top player's cards
+    if (players.length > 2) {
+        for (let i = 0; i < 3; i++) {
+            image(backCardImage, width/2 - 90 + i * 30, 20, cardWidth, cardHeight);
+        }
+    }
+    
+    // Draw right player's cards
+    if (players.length > 3) {
+        for (let i = 0; i < 3; i++) {
+            image(backCardImage, width - 80, 200 + i * 30, cardWidth, cardHeight);
+        }
+    }
+  }
+  

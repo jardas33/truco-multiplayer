@@ -1,5 +1,10 @@
 // Create p5 instance in the game canvas div
 window.p5Instance = new p5(function(p) {
+    p.preload = function() {
+        // Call our preload function with the p5 instance
+        preload.call(p);
+    };
+
     p.setup = function() {
         let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
         canvas.parent('Game');
@@ -156,26 +161,7 @@ window.p5Instance = new p5(function(p) {
     };
 
     p.draw = function() {
-        // Clear the background with a dark green color
-        p.background(0, 100, 0);
-        
-        // Draw game state
-        switch (gameState) {
-            case gameStateEnum.Menu:
-                drawMenu(p);
-                break;
-            case gameStateEnum.Playing:
-                if (typeof drawGame === 'function') {
-                    drawGame(p);
-                }
-                break;
-            case gameStateEnum.Instructions:
-                drawInstructions(p);
-                break;
-            case gameStateEnum.CardValues:
-                drawCardValues(p);
-                break;
-        }
+        drawGame(p);
     };
 
     p.windowResized = function() {

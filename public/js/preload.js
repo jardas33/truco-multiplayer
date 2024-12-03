@@ -4,8 +4,7 @@ function preload() {
     backCardImage = loadImage("Images/cardBack.jpg");
     popupframeImage = loadImage("Images/popup_frame.png");
     instructionsImage = loadImage("Images/instructions.png");
-    // Add an image element to the popup
-  
+    
     // Load card images
     let cardNames = {
       "Queen of diamonds": "Images/queen_of_diamonds.png",
@@ -53,5 +52,5 @@ function preload() {
     for (let name in cardNames) {
       cardImages[name] = loadImage(cardNames[name]);
     }
-  }
+}
   
