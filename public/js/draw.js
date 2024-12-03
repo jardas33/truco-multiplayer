@@ -1,11 +1,10 @@
 function draw() {
-    // Clear the canvas and draw background at the start of each frame
+    // Clear the canvas at the start of each frame
     clear();
-    background(backgroundImage);
     
     // Draw the game state
     if (gameState === gameStateEnum.Menu) {
-        // Menu state already has background
+        background(backgroundImage);
     } else if (gameState === gameStateEnum.Instructions) {
         drawInstructions();
     } else if (gameState === gameStateEnum.CardValues) {
@@ -16,6 +15,9 @@ function draw() {
 }
 
 function drawInstructions() {
+    // Draw background first
+    background(backgroundImage);
+    
     push();  // Save the current drawing state
     
     // Draw the black box with golden border
@@ -67,6 +69,9 @@ function drawInstructions() {
 }
 
 function drawCardValues() {
+    // Draw background first
+    background(backgroundImage);
+    
     push();  // Save the current drawing state
     
     // Draw golden box
