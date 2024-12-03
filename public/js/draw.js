@@ -1,21 +1,29 @@
 function draw() {
-    // Always draw background
-    background(0, 100, 0);
+    // Always draw background first
     if (backgroundImage) {
+        // Use push() and pop() to isolate image drawing settings
+        push();
+        imageMode(CORNER);
         image(backgroundImage, 0, 0, width, height);
+        pop();
+    } else {
+        // Fallback to green background if image not loaded
+        background(0, 100, 0);
     }
 
     switch (gameState) {
         case gameStateEnum.Menu:
-            // Menu state - just show background
+            // Menu state - background already drawn
             break;
             
         case gameStateEnum.Instructions:
             // Draw instructions
+            push();
             fill(0, 0, 0, 200);
             rect(width/2 - 400, height/2 - 300, 800, 600);
             fill(255);
             noStroke();
+            textAlign(CENTER, CENTER);
             textSize(32);
             text("Instructions", width/2, height/2 - 250);
             textSize(20);
@@ -26,14 +34,17 @@ function draw() {
             text("5. First team to 12 points wins the game", width/2, height/2 - 20);
             text("6. You can call Truco to raise the stakes", width/2, height/2 + 20);
             text("7. Opponent can accept, reject, or raise", width/2, height/2 + 60);
+            pop();
             break;
             
         case gameStateEnum.CardValues:
             // Draw card values
+            push();
             fill(0, 0, 0, 200);
             rect(width/2 - 400, height/2 - 300, 800, 600);
             fill(255);
             noStroke();
+            textAlign(CENTER, CENTER);
             textSize(32);
             text("Card Values (Strongest to Weakest)", width/2, height/2 - 250);
             textSize(18);
@@ -56,6 +67,7 @@ function draw() {
             for (let i = 0; i < valueText.length; i++) {
                 text(valueText[i], width/2, height/2 - 180 + (i * 30));
             }
+            pop();
             break;
             
         case gameStateEnum.Playing:
