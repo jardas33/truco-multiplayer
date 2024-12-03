@@ -16,6 +16,7 @@ function draw() {
 
 function drawInstructions() {
     // Draw background first
+    clear();
     background(backgroundImage);
     
     push();  // Save the current drawing state
