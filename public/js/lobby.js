@@ -1,9 +1,15 @@
-let socket;
+// Use existing socket if available, otherwise create new one
+if (typeof socket === 'undefined') {
+    let socket;
+}
+
 let roomId = null;
 let playerId = null;
 
 function initializeLobby() {
-    socket = io();
+    if (!socket) {
+        socket = io();
+    }
     
     socket.on('connect', () => {
         console.log('Connected to server');
@@ -22,7 +28,7 @@ function initializeLobby() {
 
     socket.on('gameStart', (players) => {
         console.log('Game starting with players:', players);
-        // The game will automatically start when all players have joined
+        startGame(); // Call the game's start function
     });
 
     socket.on('playerDisconnected', (id) => {

@@ -16,27 +16,16 @@
         <div id="gameCanvas"></div>
     </div>
 
+    <!-- Load dependencies first -->
     <script src="/js/variables.js"></script>
+    <script src="/js/lobby.js"></script>
+    
+    <!-- Load game logic -->
     <script src="/js/functions.js"></script>
     <script src="/js/players.js"></script>
     <script src="/js/preload.js"></script>
     <script src="/js/setup.js"></script>
     <script src="/js/draw.js"></script>
     <script src="/js/game.js"></script>
-    <script src="/js/lobby.js"></script>
-
-    <script>
-        function createRoom() {
-            const roomCode = document.getElementById('roomInput').value || Math.random().toString(36).substring(7);
-            socket.emit('createRoom', roomCode);
-        }
-
-        function joinRoom() {
-            const roomCode = document.getElementById('roomInput').value;
-            if (roomCode) {
-                socket.emit('joinRoom', roomCode);
-            }
-        }
-    </script>
 </body>
 </html>
