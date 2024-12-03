@@ -354,6 +354,11 @@ function createDeck() {
         // Multiplayer mode
         isMultiplayerMode = true;
         gameState = gameStateEnum.Playing;
+        
+        // Hide menu and show game canvas
+        document.getElementById('Menu').classList.remove('active');
+        document.getElementById('Game').classList.add('active');
+        
         window.game = new window.Game([]);
         
         // Listen for game started event which includes player hands
@@ -363,21 +368,38 @@ function createDeck() {
             playerPosition = data.position;
             window.game.updatePlayers(data.players);
             window.game.currentPlayerIndex = 0;
+            
+            // Create and setup the game canvas
+            const gameDiv = document.getElementById('Game');
+            if (!gameDiv.querySelector('canvas')) {
+                let canvas = createCanvas(windowWidth, windowHeight);
+                canvas.parent('Game');
+            }
+            
+            // Initialize game state
+            createDeck();
+            shuffleDeck(deck);
             redrawGame();
         });
 
         // Listen for card played events
         socket.on('cardPlayed', (data) => {
             console.log('Card played:', data);
-            // Update game state based on played card
             if (data.playerId !== socket.id) {
-                // Handle opponent's card play
                 window.game.handleCardPlay(data.card, data.playerId);
                 redrawGame();
             }
         });
     }
-  }
+}
+
+// Add window resize handler
+function windowResized() {
+    if (gameState === gameStateEnum.Playing) {
+        resizeCanvas(windowWidth, windowHeight);
+        redrawGame();
+    }
+}
   
   function startSinglePlayerGame() {
     console.log("Starting single player game...");
