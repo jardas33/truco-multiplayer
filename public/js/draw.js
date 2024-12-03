@@ -57,20 +57,22 @@ function draw() {
         });
         
         // Create and position close button
-        if (instructionsCloseButton) {
-            instructionsCloseButton.remove();
+        if (!instructionsCloseButton) {
+            instructionsCloseButton = createButton('Close');
+            instructionsCloseButton.class('close-button');
+            instructionsCloseButton.mousePressed(() => {
+                gameState = gameStateEnum.Menu;
+                instructionsCloseButton.hide();
+                menuDiv.show();
+                loop();
+            });
         }
-        instructionsCloseButton = createButton('Close');
-        instructionsCloseButton.class('close-button');
-        instructionsCloseButton.mousePressed(() => {
-            gameState = gameStateEnum.Menu;
-            instructionsBox.remove();
-            instructionsCloseButton.remove();
-            menuDiv.show();
-            loop();
-        });
         
-        instructionsCloseButton.parent(instructionsBox);
+        // Position the button at the bottom of the box
+        const boxHeight = instructionsBox.size().height;
+        instructionsCloseButton.position(width/2 - 50, height/2 + boxHeight/2 - 50);
+        instructionsCloseButton.show();
+        
         instructionsBox.parent(instructionsDiv);
         instructionsDiv.show();
     }
