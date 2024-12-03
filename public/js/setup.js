@@ -79,6 +79,17 @@ function setup() {
     instructionsCloseButton.style("bottom", "10px");
     instructionsCloseButton.style("left", "50%");
     instructionsCloseButton.style("transform", "translateX(-50%)");
+    instructionsCloseButton.style("background-color", "darkgreen");
+    instructionsCloseButton.style("color", "white");
+    instructionsCloseButton.style("border", "2px solid gold");
+    instructionsCloseButton.style("padding", "10px 20px");
+    instructionsCloseButton.style("border-radius", "5px");
+    instructionsCloseButton.style("cursor", "pointer");
+    instructionsCloseButton.style("font-size", "16px");
+
+    // Remove the background image from instructionsDiv
+    instructionsDiv.style("background-image", "none");
+    instructionsDiv.style("background-color", "rgb(0, 100, 0)"); // Keep the green background
 
     // Create card values buttons and popup
     cardValuesButton = createButton("Card Values");
