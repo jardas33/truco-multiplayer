@@ -40,10 +40,6 @@ function setup() {
     instructionsPopup.parent(instructionsDiv);
     instructionsPopup.style("width", "100%");
     instructionsPopup.style("height", "100%");
-    instructionsPopup.style("background-image", 'url("Images/instructions.png")');
-    instructionsPopup.style("background-repeat", "no-repeat");
-    instructionsPopup.style("background-position", "center");
-    instructionsPopup.style("background-size", "cover");
     instructionsPopup.hide();
 
     // Create instructions text

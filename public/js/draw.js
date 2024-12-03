@@ -15,14 +15,18 @@ function draw() {
 }
 
 function drawMenu() {
+    // Draw background
+    push();
+    imageMode(CORNER);
     image(backgroundImage, 0, 0, width, height);
+    pop();
 }
 
 function drawInstructions() {
     // Draw background
+    push();
+    imageMode(CORNER);
     image(backgroundImage, 0, 0, width, height);
-    
-    push();  // Save the current drawing state
     
     // Draw the black box with golden border
     const boxWidth = 800;
@@ -69,14 +73,14 @@ function drawInstructions() {
         textY += line === "" ? 20 : textLeading() * (line.length / 70 + 1);
     }
     
-    pop();  // Restore the drawing state
+    pop();
 }
 
 function drawCardValues() {
     // Draw background
+    push();
+    imageMode(CORNER);
     image(backgroundImage, 0, 0, width, height);
-    
-    push();  // Save the current drawing state
     
     // Draw golden box
     const boxWidth = 800;
@@ -147,13 +151,15 @@ function drawCardValues() {
         text(rightColumnEntries[i], rightColX + 35, startY + lineHeight * i);
     }
     
-    pop();  // Restore the drawing state
+    pop();
 }
 
 function drawPlaying() {
     if (!game) return;
 
     // Draw background
+    push();
+    imageMode(CORNER);
     image(backgroundImage, 0, 0, width, height);
 
     // Draw player labels and cards
@@ -199,4 +205,5 @@ function drawPlaying() {
             }
         }
     }
+    pop();
 }
