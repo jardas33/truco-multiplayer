@@ -1,6 +1,5 @@
 function setup() {
-    let canvas = createCanvas(windowWidth, windowHeight);
-    canvas.parent('Game');
+    createCanvas(windowWidth, windowHeight);
 
     // Initialize game state if not already set
     if (typeof gameState === 'undefined') {
