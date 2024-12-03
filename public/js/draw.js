@@ -22,8 +22,8 @@ function draw() {
         
         push();
         // Draw the black box with golden border
-        const boxWidth = 900;
-        const boxHeight = 800;
+        const boxWidth = 1400;
+        const boxHeight = 600;
         const boxX = width/2 - boxWidth/2;
         const boxY = height/2 - boxHeight/2;
         
@@ -49,7 +49,7 @@ function draw() {
         
         const textX = boxX + 50;
         let textY = boxY + 100;
-        const textWidth = boxWidth - 100; // More narrow text width for better wrapping
+        const textWidth = boxWidth - 100; // More space for text width
         
         const instructions = [
             "Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.",
