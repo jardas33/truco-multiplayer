@@ -15,27 +15,35 @@ window.p5Instance = new p5(function(p) {
         // Create menu buttons only if they don't exist
         if (!window.menuInitialized) {
             // Create menu buttons container
-            const menuButtons = p.createDiv('');
-            menuButtons.class('menu-buttons');
-            menuButtons.parent('menuContainer');
+            const menuButtons = document.querySelector('.menu-buttons');
+            if (!menuButtons) return;
 
             // Back to Menu button
-            const backToMenuBtn = p.createButton("Back to Main Menu");
-            backToMenuBtn.class('menu-btn');
-            backToMenuBtn.parent(menuButtons);
-            backToMenuBtn.mousePressed(backToMainMenu);
+            const backToMenuBtn = document.getElementById('backToMenuBtn');
+            if (backToMenuBtn) {
+                backToMenuBtn.onclick = backToMainMenu;
+            }
 
             // Card Values button
-            const cardValuesBtn = p.createButton("Card Values");
-            cardValuesBtn.class('menu-btn');
-            cardValuesBtn.parent(menuButtons);
-            cardValuesBtn.mousePressed(showCardValues);
+            const cardValuesBtn = document.getElementById('cardValuesBtn');
+            if (cardValuesBtn) {
+                cardValuesBtn.onclick = showCardValues;
+            }
 
             // Instructions button
-            const instructionsBtn = p.createButton("Instructions");
-            instructionsBtn.class('menu-btn');
-            instructionsBtn.parent(menuButtons);
-            instructionsBtn.mousePressed(showInstructions);
+            const instructionsBtn = document.getElementById('instructionsBtn');
+            if (instructionsBtn) {
+                instructionsBtn.onclick = showInstructions;
+            }
+
+            // Start Game button
+            const startGameBtn = document.getElementById('startGameBtn');
+            if (startGameBtn) {
+                startGameBtn.onclick = () => {
+                    console.log("Start game clicked");
+                    startTrucoGame();
+                };
+            }
 
             window.menuInitialized = true;
         }
@@ -76,19 +84,12 @@ function drawMenu(p) {
 function drawInstructions(p) {
     // Draw instructions background
     p.background(0, 100, 0);
-    p.fill(255);
-    p.textSize(32);
-    p.textAlign(p.CENTER, p.CENTER);
-    p.text("Instructions", p.width/2, 100);
     
     // Draw instructions image if available
     if (instructionsImage) {
         const imgWidth = Math.min(p.width * 0.8, 800);
         const imgHeight = imgWidth * (instructionsImage.height / instructionsImage.width);
         p.image(instructionsImage, p.width/2 - imgWidth/2, 150, imgWidth, imgHeight);
-    } else {
-        p.textSize(16);
-        p.text("Instructions image not loaded", p.width/2, p.height/2);
     }
 }
 
@@ -107,8 +108,12 @@ function drawCardValues(p) {
     let y = 100;
     let lineHeight = 25;
     
-    for (let card in cardValues) {
-        p.text(`${card}: ${cardValues[card]}`, x, y);
+    // Sort cards by value
+    const sortedCards = Object.entries(cardValues)
+        .sort((a, b) => a[1] - b[1]);
+    
+    for (const [card, value] of sortedCards) {
+        p.text(`${card}: ${value}`, x, y);
         y += lineHeight;
         
         // Create new column if reaching bottom of screen

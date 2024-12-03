@@ -131,36 +131,42 @@ function startTrucoGame() {
   game.startGame();
 }
 
+function backToMainMenu() {
+  console.log("Back to menu clicked");
+  gameState = gameStateEnum.Menu;
+  if (window.game) {
+    delete window.game;
+  }
+}
+
 function showInstructions() {
-  previousGameState = gameState; // Store the current game state
+  console.log("Instructions clicked");
+  previousGameState = gameState;
   gameState = gameStateEnum.Instructions;
+}
+
+function showCardValues() {
+  console.log("Card values clicked");
+  previousGameState = gameState;
+  gameState = gameStateEnum.CardValues;
 }
 
 function closeInstructions() {
   if (previousGameState != null) {
-    gameState = previousGameState; // Revert to the previous game state
-    previousGameState = null; // Reset the stored previous game state
+    gameState = previousGameState;
+    previousGameState = null;
   } else {
-    gameState = gameStateEnum.Menu; // Fallback to menu state if previous game state was not set
+    gameState = gameStateEnum.Menu;
   }
-}
-
-function showCardValues() {
-  previousGameState = gameState; // Store the current game state
-  gameState = gameStateEnum.CardValues;
 }
 
 function closeCardValues() {
   if (previousGameState != null) {
-    gameState = previousGameState; // Revert to the previous game state
-    previousGameState = null; // Reset the stored previous game state
+    gameState = previousGameState;
+    previousGameState = null;
   } else {
-    gameState = gameStateEnum.Menu; // Fallback to menu state if previous game state was not set
+    gameState = gameStateEnum.Menu;
   }
-}
-
-function backToMainMenu() {
-  gameState = gameStateEnum.Menu;
 }
 
 function imageClick(image) {
