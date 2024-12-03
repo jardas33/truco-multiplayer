@@ -136,11 +136,11 @@ button:disabled {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 1600px;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.9);
     border: 3px solid rgb(218, 165, 32);
     padding: 30px;
     color: white;
-    z-index: 100;
+    z-index: 1000;
     max-height: 80vh;
     overflow-y: auto;
 }
