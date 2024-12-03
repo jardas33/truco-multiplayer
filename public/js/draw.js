@@ -1,7 +1,14 @@
 function draw() {
+    // Clear the canvas at the start of each frame
+    clear();
+    
+    // Draw background
+    push();
+    imageMode(CORNER);
+    image(backgroundImage, 0, 0, width, height);
+    pop();
+    
     if (gameState === gameStateEnum.Menu) {
-        background(backgroundImage);
-        
         menuDiv.show();
         gameDiv.hide();
         instructionsDiv.hide();
@@ -12,8 +19,6 @@ function draw() {
         buttonRaiseTruco.hide();
     }
     else if (gameState === gameStateEnum.Instructions) {
-        background(backgroundImage);
-        
         // Draw instructions box
         fill(0, 0, 0, 200);
         rect(width/2 - 400, height/2 - 300, 800, 600);
@@ -37,8 +42,6 @@ function draw() {
         valuesDiv.hide();
     }
     else if (gameState === gameStateEnum.CardValues) {
-        background(backgroundImage);
-        
         // Draw card values box
         fill(0, 0, 0, 200);
         rect(width/2 - 400, height/2 - 300, 800, 600);
@@ -74,8 +77,6 @@ function draw() {
         valuesDiv.show();
     }
     else if (gameState === gameStateEnum.Playing) {
-        background(backgroundImage);
-        
         menuDiv.hide();
         gameDiv.show();
         instructionsDiv.hide();

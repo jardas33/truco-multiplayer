@@ -1,7 +1,6 @@
 function setup() {
-    // Create canvas for both single and multiplayer modes
     let canvas = createCanvas(windowWidth, windowHeight);
-    canvas.parent('Game');
+    canvas.parent('Menu');  // Attach canvas to Menu div
     
     // Set text properties
     textAlign(CENTER, CENTER);
@@ -9,11 +8,6 @@ function setup() {
     fill(255);
     stroke(0);
     strokeWeight(2);
-    
-    // Initialize game state if not already set
-    if (typeof gameState === 'undefined') {
-        gameState = gameStateEnum.Menu;
-    }
     
     // Get all the div containers
     menuDiv = select("#Menu");
@@ -47,13 +41,6 @@ function setup() {
     instructionsCloseButton.style("bottom", "10px");
     instructionsCloseButton.style("left", "50%");
     instructionsCloseButton.style("transform", "translateX(-50%)");
-    instructionsCloseButton.style("background-color", "darkgreen");
-    instructionsCloseButton.style("color", "white");
-    instructionsCloseButton.style("border", "2px solid gold");
-    instructionsCloseButton.style("padding", "10px 20px");
-    instructionsCloseButton.style("border-radius", "5px");
-    instructionsCloseButton.style("cursor", "pointer");
-    instructionsCloseButton.style("font-size", "16px");
     
     cardValuesCloseButton = createButton("Close");
     cardValuesCloseButton.mousePressed(closeCardValues);
@@ -62,13 +49,6 @@ function setup() {
     cardValuesCloseButton.style("bottom", "10px");
     cardValuesCloseButton.style("left", "50%");
     cardValuesCloseButton.style("transform", "translateX(-50%)");
-    cardValuesCloseButton.style("background-color", "darkgreen");
-    cardValuesCloseButton.style("color", "white");
-    cardValuesCloseButton.style("border", "2px solid gold");
-    cardValuesCloseButton.style("padding", "10px 20px");
-    cardValuesCloseButton.style("border-radius", "5px");
-    cardValuesCloseButton.style("cursor", "pointer");
-    cardValuesCloseButton.style("font-size", "16px");
     
     // Create back to menu button
     backToMainMenuButton = createButton("Back to Main Menu");
@@ -103,37 +83,6 @@ function setup() {
     buttonAcceptTruco.hide();
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
-    
-    // Create popup
-    popup = createDiv("");
-    popup.hide();
-    popup.position(windowWidth / 2 - 150, windowHeight / 2 - 100);
-    popup.style("width", "300px");
-    popup.style("height", `200px`);
-    popup.style("background-image", 'url("Images/popup_frame.png")');
-    popup.style("padding", "20px");
-    popup.style("text-align", "center");
-    popup.style("color", "white");
-    popup.style("font-weight", "bold");
-    popup.style("background-repeat", "no-repeat");
-    popup.style("background-position", "center");
-    popup.style("background-size", "cover");
-    
-    closeButton = createButton("Close");
-    closeButton.mousePressed(closePopup);
-    closeButton.parent(popup);
-    closeButton.style("position", "absolute");
-    closeButton.style("bottom", "10px");
-    closeButton.style("left", "50%");
-    closeButton.style("transform", "translateX(-50%)");
-    
-    messageParagrph = createP("");
-    messageParagrph.style("margin", "0");
-    messageParagrph.style("position", "absolute");
-    messageParagrph.style("top", "50%");
-    messageParagrph.style("left", "50%");
-    messageParagrph.style("transform", "translate(-50%, -50%)");
-    messageParagrph.parent(popup);
     
     // Setup player positions
     playerPositions = [
