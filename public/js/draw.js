@@ -1,4 +1,5 @@
 function draw() {
+    clear();  // Clear the canvas at the start of each frame
     // Draw the game state
     if (gameState === gameStateEnum.Menu) {
         background(backgroundImage);
@@ -12,21 +13,26 @@ function draw() {
 }
 
 function drawInstructions() {
-    // Draw background image
+    // Clear and draw background image
+    clear();
     background(backgroundImage);
     
     // Draw instructions image if available
     if (instructionsImage) {
+        push();  // Save the current drawing state
         const imgWidth = Math.min(width * 0.8, 800);
         const imgHeight = imgWidth * (instructionsImage.height / instructionsImage.width);
         image(instructionsImage, width/2 - imgWidth/2, 150, imgWidth, imgHeight);
+        pop();  // Restore the drawing state
     }
 }
 
 function drawCardValues() {
-    // Draw background image
+    // Clear and draw background image
     clear();
     background(backgroundImage);
+    
+    push();  // Save the current drawing state
     
     // Draw title
     fill(255);
@@ -41,7 +47,6 @@ function drawCardValues() {
     const boxY = height/2 - boxHeight/2;
     
     // Draw box background with opacity
-    push();
     fill(0, 0, 0, 200);  // Black with 80% opacity
     stroke(218, 165, 32);
     strokeWeight(3);
@@ -100,7 +105,8 @@ function drawCardValues() {
         fill(255);  // White color for text
         text(rightColumnEntries[i], rightColX + 35, startY + lineHeight * i);
     }
-    pop();
+    
+    pop();  // Restore the drawing state
 }
 
 function drawPlaying() {
