@@ -1,38 +1,60 @@
+// Global variables
+let socket = null;
+let gameInitialized = false;
+
 // Initialize socket and lobby when the document is ready
-let socket;
+function initGame() {
+    console.log('Initializing game...');
+    if (!gameInitialized) {
+        initSocket();
+        setupButtonListeners();
+        gameInitialized = true;
+    }
+}
 
 function initSocket() {
     try {
         console.log('Initializing socket...');
-        if (typeof io !== 'undefined') {
-            socket = io();
-            console.log('Socket initialized successfully');
-            setupSocketListeners();
-            setupButtonListeners();
-        } else {
-            console.error('Socket.IO not loaded');
-            setTimeout(initSocket, 1000); // Try again in 1 second
+        if (typeof io === 'undefined') {
+            console.error('Socket.IO not loaded, retrying in 1 second...');
+            setTimeout(initSocket, 1000);
+            return;
         }
+
+        socket = io();
+        console.log('Socket initialized successfully');
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+        });
+
+        setupSocketListeners();
     } catch (error) {
         console.error('Error initializing socket:', error);
+        setTimeout(initSocket, 1000);
     }
 }
 
 function setupSocketListeners() {
-    socket.on('connect', () => {
-        console.log('Connected to server');
-    });
+    if (!socket) {
+        console.error('Socket not initialized in setupSocketListeners');
+        return;
+    }
 
     socket.on('roomCreated', (id) => {
+        console.log('Room created:', id);
         window.roomId = id;
         document.getElementById('roomInput').value = id;
-        console.log('Room created:', id);
         updateLobbyUI(true);
     });
 
     socket.on('roomJoined', (id) => {
-        window.roomId = id;
         console.log('Joined room:', id);
+        window.roomId = id;
         updateLobbyUI(true);
     });
 
@@ -54,6 +76,8 @@ function setupSocketListeners() {
         hideRoomControls();
         if (typeof startGame === 'function') {
             startGame(players);
+        } else {
+            console.error('startGame function not found');
         }
     });
 
@@ -61,42 +85,51 @@ function setupSocketListeners() {
         console.log('Player disconnected:', data);
         updatePlayerList(data.players);
     });
-
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
-        alert('An error occurred: ' + error);
-    });
 }
 
 function setupButtonListeners() {
-    // Setup button click handlers
+    console.log('Setting up button listeners...');
+    
+    // Create Room button
     const createRoomBtn = document.getElementById('createRoomBtn');
-    const joinRoomBtn = document.getElementById('joinRoomBtn');
-    const addBotBtn = document.getElementById('addBotBtn');
-    const startGameBtn = document.getElementById('startGameBtn');
-
     if (createRoomBtn) {
-        createRoomBtn.onclick = createRoom;
-        console.log('Create room button listener added');
+        createRoomBtn.onclick = () => {
+            console.log('Create Room clicked');
+            createRoom();
+        };
     }
+
+    // Join Room button
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
     if (joinRoomBtn) {
-        joinRoomBtn.onclick = joinRoom;
-        console.log('Join room button listener added');
+        joinRoomBtn.onclick = () => {
+            console.log('Join Room clicked');
+            joinRoom();
+        };
     }
+
+    // Add Bot button
+    const addBotBtn = document.getElementById('addBotBtn');
     if (addBotBtn) {
-        addBotBtn.onclick = addBot;
-        console.log('Add bot button listener added');
+        addBotBtn.onclick = () => {
+            console.log('Add Bot clicked');
+            addBot();
+        };
     }
+
+    // Start Game button
+    const startGameBtn = document.getElementById('startGameBtn');
     if (startGameBtn) {
-        startGameBtn.onclick = startGameWithCurrentPlayers;
-        console.log('Start game button listener added');
+        startGameBtn.onclick = () => {
+            console.log('Start Game clicked');
+            startGameWithCurrentPlayers();
+        };
     }
 }
 
 function createRoom() {
-    console.log('Creating room...');
     if (!socket) {
-        console.error('Socket not initialized');
+        console.error('Socket not initialized in createRoom');
         return;
     }
     const roomCode = document.getElementById('roomInput').value || Math.random().toString(36).substring(7);
@@ -105,9 +138,8 @@ function createRoom() {
 }
 
 function joinRoom() {
-    console.log('Joining room...');
     if (!socket) {
-        console.error('Socket not initialized');
+        console.error('Socket not initialized in joinRoom');
         return;
     }
     const roomCode = document.getElementById('roomInput').value;
@@ -120,7 +152,6 @@ function joinRoom() {
 }
 
 function addBot() {
-    console.log('Adding bot...');
     if (!socket || !window.roomId) {
         console.error('Socket not initialized or not in a room');
         return;
@@ -130,7 +161,6 @@ function addBot() {
 }
 
 function startGameWithCurrentPlayers() {
-    console.log('Starting game...');
     if (!socket || !window.roomId) {
         console.error('Socket not initialized or not in a room');
         return;
@@ -183,4 +213,4 @@ function hideRoomControls() {
 }
 
 // Initialize when the document is ready
-document.addEventListener('DOMContentLoaded', initSocket); 
+document.addEventListener('DOMContentLoaded', initGame); 
