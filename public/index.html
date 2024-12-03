@@ -1,56 +1,26 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Truco Game</title>
-    <link rel="stylesheet" type="text/css" href="/css/style.css">
-</head>
-<body>
-    <div id="gameContainer">
-        <div id="menuContainer">
-            <div id="roomControls">
-                <div class="input-group">
-                    <input type="text" id="roomInput" placeholder="Enter room code">
-                    <button id="createRoomBtn" class="primary-btn">Create Room</button>
-                    <button id="joinRoomBtn" class="primary-btn">Join Room</button>
-                </div>
-                <div class="button-group">
-                    <button id="addBotBtn" class="secondary-btn" style="display: none;">Add Bot</button>
-                    <button id="startGameBtn" class="primary-btn" style="display: none;">Start Game</button>
-                </div>
-                <div id="playerList"></div>
-            </div>
-            <div class="menu-buttons">
-                <button id="backToMenuBtn" class="menu-btn">Back to Main Menu</button>
-                <button id="cardValuesBtn" class="menu-btn">Card Values</button>
-                <button id="instructionsBtn" class="menu-btn">Instructions</button>
-            </div>
-        </div>
-        <div id="gameCanvas"></div>
-    </div>
-
-    <!-- Load Socket.IO first -->
+<html lang="en">
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- Load p5.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-
-    <!-- Load game dependencies -->
-    <script src="/js/variables.js"></script>
-    <script src="/js/functions.js"></script>
-    <script src="/js/lobby.js"></script>
-    
-    <!-- Load game logic -->
-    <script src="/js/game.js"></script>
-    <script src="/js/setup.js"></script>
-    <script src="/js/draw.js"></script>
-
-    <script>
-        // Initialize game when document is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof initGame === 'function') {
-                initGame();
-            }
-        });
-    </script>
-</body>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <main>
+      <div id="Menu"></div>
+      <div id="Instructions"></div>
+      <div id="Values"></div>
+      <div id="Game"></div>
+    </main>
+    <script src="js/variables.js"></script>
+    <script src="js/players.js"></script>
+    <script src="js/preload.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/setup.js"></script>
+    <script src="js/draw.js"></script>
+    <script src="js/functions.js"></script>
+    <script src="js/lobby.js"></script>
+  </body>
 </html>

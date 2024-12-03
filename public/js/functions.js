@@ -6,33 +6,32 @@ function truco() {
   openPopup(true);
 
   if (!game.potentialGameValue) {
-    game.potentialGameValue = 3; // Initialize potentialGameValue to 3.
-    game.initialTrucoCallerIndex = game.currentPlayerIndex // Keep track of the player who called truco
-    game.lastActionWasRaise = false; // Initialize lastActionWasRaise to false.
+    game.potentialGameValue = 3;
+    game.initialTrucoCallerIndex = game.currentPlayerIndex;
+    game.lastActionWasRaise = false;
   }
-  console.log('Initial potentialGameValue:', game.potentialGameValue);
 
-  // Assuming current player is the one who called truco
+  // Emit truco call to other players
+  if (socket) {
+    socket.emit('truco-called', {
+      roomCode: currentRoom,
+      caller: game.currentPlayerIndex
+    });
+  }
+
   let opponentIndex = game.currentPlayerIndex === players.length - 1 ? 0 : game.currentPlayerIndex + 1;
   game.currentPlayerIndex = opponentIndex;
 
   if (players[opponentIndex].isBot) {
-    //botDecision();
     players[opponentIndex].botPlay();
-
   } else {
-
     buttonAcceptTruco.show();
     buttonRejectTruco.show();
     buttonRaiseTruco.show();
   }
 
   trucoButton.hide();
-  // You might want to update the game state or UI here, e.g. show a message to the opponent
-  console.log(game.currentPlayerIndex + 1 + ", Truco has been called! Do you accept, raise or forfeit the round?");
-
 }
-
 
 function mouseReleased() {
   if (gameState !== gameStateEnum.Playing) {
@@ -46,17 +45,25 @@ function mouseReleased() {
     for (let i = 0; i < player.hand.length; i++) {
       let card = player.hand[i];
       let x = xBase + i * (cardWidth + 10);
-      let y = playerPositions[0].y;
+      let y = playerPositions[selfPlayer - 1].y;
       if (
         dist(mouseX, mouseY, x + cardWidth / 2, y + cardHeight / 2) <
         cardWidth / 2
       ) {
+        // Emit card played to other players
+        if (socket) {
+          socket.emit('card-played', {
+            roomCode: currentRoom,
+            player: selfPlayer,
+            cardIndex: i
+          });
+        }
         game.playCard(player, i);
         break;
       }
     }
   }
-  return false; // Prevents the browser from doing the default action for the
+  return false;
 }
 
 function endGameAndHandleSet(winningTeam) {
@@ -125,47 +132,83 @@ function closePopup() {
 }
 
 function startTrucoGame() {
-  gameState = gameStateEnum.Playing;
-  game = new Game(players);
-  game.restartGame();
-  game.startGame();
+  if (socket) {
+    // Online mode - check if enough players
+    if (Object.keys(players).length < 2) {
+      alert('Need at least 2 players to start the game');
+      return;
+    }
+    socket.emit('start-game', { roomCode: currentRoom });
+  } else {
+    // Local mode
+    gameState = gameStateEnum.Playing;
+    game = new Game(players);
+    game.restartGame();
+    game.startGame();
+  }
+
+  // Hide menu and show game
+  menuDiv.style('display', 'none');
+  gameDiv.style('display', 'block');
 }
 
 function backToMainMenu() {
-  console.log("Back to menu clicked");
   gameState = gameStateEnum.Menu;
-  if (window.game) {
-    delete window.game;
+  gameDiv.style('display', 'none');
+  menuDiv.style('display', 'block');
+  
+  // If in online mode, leave the room
+  if (socket && currentRoom) {
+    socket.emit('leave-room', { roomCode: currentRoom });
+    currentRoom = null;
   }
 }
 
 function showInstructions() {
-  console.log("Instructions clicked");
   previousGameState = gameState;
   gameState = gameStateEnum.Instructions;
+  menuDiv.style('display', 'none');
+  gameDiv.style('display', 'none');
+  instructionsDiv.style('display', 'block');
 }
 
 function showCardValues() {
-  console.log("Card values clicked");
   previousGameState = gameState;
   gameState = gameStateEnum.CardValues;
+  menuDiv.style('display', 'none');
+  gameDiv.style('display', 'none');
+  valuesDiv.style('display', 'block');
 }
 
 function closeInstructions() {
+  instructionsDiv.style('display', 'none');
   if (previousGameState != null) {
     gameState = previousGameState;
+    if (gameState === gameStateEnum.Menu) {
+      menuDiv.style('display', 'block');
+    } else if (gameState === gameStateEnum.Playing) {
+      gameDiv.style('display', 'block');
+    }
     previousGameState = null;
   } else {
     gameState = gameStateEnum.Menu;
+    menuDiv.style('display', 'block');
   }
 }
 
 function closeCardValues() {
+  valuesDiv.style('display', 'none');
   if (previousGameState != null) {
     gameState = previousGameState;
+    if (gameState === gameStateEnum.Menu) {
+      menuDiv.style('display', 'block');
+    } else if (gameState === gameStateEnum.Playing) {
+      gameDiv.style('display', 'block');
+    }
     previousGameState = null;
   } else {
     gameState = gameStateEnum.Menu;
+    menuDiv.style('display', 'block');
   }
 }
 
@@ -237,6 +280,62 @@ function showTrucoButton() {
   } else {
     trucoButton.hide()
   }
+}
+
+function setupSocketHandlers() {
+  if (!socket) return;
+
+  socket.on('player-joined', function(data) {
+    console.log('Player joined:', data);
+    // Update player list
+    updatePlayerList(data.players);
+  });
+
+  socket.on('game-started', function(data) {
+    console.log('Game started:', data);
+    gameState = gameStateEnum.Playing;
+    game = new Game(data.players);
+    game.restartGame();
+    game.startGame();
+    
+    // Hide menu and show game
+    menuDiv.style('display', 'none');
+    gameDiv.style('display', 'block');
+  });
+
+  socket.on('card-played', function(data) {
+    console.log('Card played:', data);
+    if (data.player !== selfPlayer) {
+      let player = game.players[data.player - 1];
+      game.playCard(player, data.cardIndex);
+    }
+  });
+
+  socket.on('truco-called', function(data) {
+    console.log('Truco called:', data);
+    if (data.caller !== game.currentPlayerIndex) {
+      truco();
+    }
+  });
+
+  socket.on('player-left', function(data) {
+    console.log('Player left:', data);
+    // Update player list
+    updatePlayerList(data.players);
+  });
+}
+
+function updatePlayerList(playerData) {
+  // Update the player list in the menu
+  const playerList = document.getElementById('playerList');
+  if (!playerList) return;
+
+  playerList.innerHTML = '<h3>Players in Room</h3>';
+  Object.keys(playerData).forEach(playerId => {
+    const playerDiv = document.createElement('div');
+    playerDiv.textContent = `Player ${playerId}`;
+    playerList.appendChild(playerDiv);
+  });
 }
 
 

@@ -2,7 +2,7 @@
 window.p5Instance = new p5(function(p) {
     p.setup = function() {
         let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
-        canvas.parent('gameCanvas');
+        canvas.parent('Game');
         
         // Store p5 instance globally for other files to use
         window.p = p;
@@ -12,55 +12,147 @@ window.p5Instance = new p5(function(p) {
             gameState = gameStateEnum.Menu;
         }
 
-        // Create menu buttons only if they don't exist
-        if (!window.menuInitialized) {
-            // Create menu buttons container
-            const menuButtons = document.querySelector('.menu-buttons');
-            if (!menuButtons) return;
+        // Create menu elements
+        menuDiv = p.select("#Menu");
+        gameDiv = p.select("#Game");
+        instructionsDiv = p.select("#Instructions");
+        valuesDiv = p.select("#Values");
 
-            // Back to Menu button
-            const backToMenuBtn = document.getElementById('backToMenuBtn');
-            if (backToMenuBtn) {
-                backToMenuBtn.onclick = function() {
-                    if (typeof backToMainMenu === 'function') {
-                        backToMainMenu();
-                    }
-                };
-            }
+        // Create menu buttons
+        startButton = p.createButton("Start Truco Game");
+        startButton.style("position", "fixed");
+        startButton.style("top", "50%");
+        startButton.style("left", "50%");
+        startButton.style("transform", "translate(-50%, -50%)");
+        startButton.style("width", "200px");
+        startButton.style("height", "60px");
+        startButton.style("font-weight", "bold");
+        startButton.mousePressed(startTrucoGame);
+        startButton.parent(menuDiv);
 
-            // Card Values button
-            const cardValuesBtn = document.getElementById('cardValuesBtn');
-            if (cardValuesBtn) {
-                cardValuesBtn.onclick = function() {
-                    if (typeof showCardValues === 'function') {
-                        showCardValues();
-                    }
-                };
-            }
+        instructionsButton = p.createButton("Instructions");
+        instructionsButton.position(20, 20);
+        instructionsButton.mousePressed(showInstructions);
+        instructionsButton.parent(menuDiv);
+        
+        instructionsButton = p.createButton("Instructions");
+        instructionsButton.position(20, 80);
+        instructionsButton.mousePressed(showInstructions);
+        instructionsButton.parent(gameDiv);
 
-            // Instructions button
-            const instructionsBtn = document.getElementById('instructionsBtn');
-            if (instructionsBtn) {
-                instructionsBtn.onclick = function() {
-                    if (typeof showInstructions === 'function') {
-                        showInstructions();
-                    }
-                };
-            }
+        cardValuesButton = p.createButton("Card Values");
+        cardValuesButton.position(20, 60);
+        cardValuesButton.mousePressed(showCardValues);
+        cardValuesButton.parent(menuDiv);
+        
+        cardValuesButton = p.createButton("Card Values");
+        cardValuesButton.position(20, 120);
+        cardValuesButton.mousePressed(showCardValues);
+        cardValuesButton.parent(gameDiv);
 
-            // Start Game button
-            const startGameBtn = document.getElementById('startGameBtn');
-            if (startGameBtn) {
-                startGameBtn.onclick = function() {
-                    console.log("Start game clicked");
-                    if (typeof startTrucoGame === 'function') {
-                        startTrucoGame();
-                    }
-                };
-            }
+        backToMainMenuButton = p.createButton("Back to Main Menu");
+        backToMainMenuButton.position(20, 20);
+        backToMainMenuButton.mousePressed(backToMainMenu);
+        backToMainMenuButton.parent(gameDiv);
 
-            window.menuInitialized = true;
-        }
+        // Create game buttons
+        trucoButton = p.createButton("Truco");
+        trucoButton.position(50, 180);
+        trucoButton.mousePressed(truco);
+        trucoButton.parent(gameDiv);
+        trucoButton.hide();
+
+        buttonAcceptTruco = p.createButton("Accept Truco");
+        buttonRejectTruco = p.createButton("Reject Truco");
+        buttonRaiseTruco = p.createButton("Raise Truco");
+
+        buttonAcceptTruco.position(10, 180);
+        buttonAcceptTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 1));
+        buttonRejectTruco.position(10, 210);
+        buttonRejectTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 2));
+        buttonRaiseTruco.position(10, 240);
+        buttonRaiseTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 3));
+
+        buttonAcceptTruco.parent(gameDiv);
+        buttonRejectTruco.parent(gameDiv);
+        buttonRaiseTruco.parent(gameDiv);
+
+        buttonAcceptTruco.hide();
+        buttonRejectTruco.hide();
+        buttonRaiseTruco.hide();
+
+        // Create popups
+        popup = p.createDiv("");
+        popup.hide();
+        popup.position(p.windowWidth / 2 - 150, p.windowHeight / 2 - 100);
+        popup.style("width", "300px");
+        popup.style("height", `200px`);
+        popup.style("background-image", 'url("Images/popup_frame.png")');
+        popup.style("padding", "20px");
+        popup.style("text-align", "center");
+        popup.style("color", "white");
+        popup.style("font-weight", "bold");
+        popup.style("background-repeat", "no-repeat");
+        popup.style("background-position", "center");
+        popup.style("background-size", "cover");
+
+        closeButton = p.createButton("Close");
+        closeButton.mousePressed(closePopup);
+        closeButton.parent(popup);
+        closeButton.style("position", "absolute");
+        closeButton.style("bottom", "10px");
+        closeButton.style("left", "50%");
+        closeButton.style("transform", "translateX(-50%)");
+
+        messageParagrph = p.createP("");
+        messageParagrph.style("margin", "0");
+        messageParagrph.style("position", "absolute");
+        messageParagrph.style("top", "50%");
+        messageParagrph.style("left", "50%");
+        messageParagrph.style("transform", "translate(-50%, -50%)");
+        messageParagrph.parent(popup);
+
+        // Setup player positions
+        playerPositions = [
+            {
+                x: p.width / 6,
+                y: p.height / 2,
+                label: "Player 1 - Team 1",
+                labelOffset: -50,
+            },
+            { 
+                x: p.width / 2, 
+                y: 100, 
+                label: "Player 2 - Team 2", 
+                labelOffset: -50 
+            },
+            {
+                x: (5 * p.width) / 6,
+                y: p.height / 2,
+                label: "Player 3 - Team 1",
+                labelOffset: -50,
+            },
+            {
+                x: p.width / 2,
+                y: p.height - cardHeight - 100,
+                label: "Player 4 - Team 2",
+                labelOffset: cardHeight + 20,
+            },
+        ];
+
+        // Initialize socket.io connection
+        socket = io();
+        
+        // Hide game elements initially
+        gameDiv.style('display', 'none');
+        instructionsDiv.style('display', 'none');
+        valuesDiv.style('display', 'none');
+
+        // Show menu elements
+        menuDiv.style('display', 'block');
+        
+        // Setup socket event handlers
+        setupSocketHandlers();
     };
 
     p.draw = function() {
@@ -88,6 +180,18 @@ window.p5Instance = new p5(function(p) {
 
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
+        
+        // Update player positions
+        if (playerPositions) {
+            playerPositions[0].x = p.width / 6;
+            playerPositions[0].y = p.height / 2;
+            playerPositions[1].x = p.width / 2;
+            playerPositions[1].y = 100;
+            playerPositions[2].x = (5 * p.width) / 6;
+            playerPositions[2].y = p.height / 2;
+            playerPositions[3].x = p.width / 2;
+            playerPositions[3].y = p.height - cardHeight - 100;
+        }
     };
 });
 
