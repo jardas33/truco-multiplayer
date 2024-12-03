@@ -27,5 +27,16 @@
     <script src="/js/setup.js"></script>
     <script src="/js/draw.js"></script>
     <script src="/js/game.js"></script>
+
+    <script>
+        // Ensure all scripts are loaded before initializing
+        window.addEventListener('load', function() {
+            if (typeof initializeLobby === 'function') {
+                initializeLobby();
+            } else {
+                console.error('Lobby initialization failed');
+            }
+        });
+    </script>
 </body>
 </html>

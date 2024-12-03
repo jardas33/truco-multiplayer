@@ -1,34 +1,34 @@
-// Use existing socket if available, otherwise create new one
-if (typeof socket === 'undefined') {
-    let socket;
-}
+// Initialize socket at global scope
+window.socket = io();
 
 let roomId = null;
 let playerId = null;
 
 function initializeLobby() {
-    if (!socket) {
-        socket = io();
-    }
+    console.log('Initializing lobby...');
     
     socket.on('connect', () => {
         console.log('Connected to server');
     });
 
     socket.on('roomCreated', (id) => {
-        roomId = id;
+        window.roomId = id;
         document.getElementById('roomInput').value = id;
         console.log('Room created:', id);
     });
 
     socket.on('roomJoined', (id) => {
-        roomId = id;
+        window.roomId = id;
         console.log('Joined room:', id);
     });
 
     socket.on('gameStart', (players) => {
         console.log('Game starting with players:', players);
-        startGame(); // Call the game's start function
+        if (typeof startGame === 'function') {
+            startGame();
+        } else {
+            console.log('startGame function not found');
+        }
     });
 
     socket.on('playerDisconnected', (id) => {
