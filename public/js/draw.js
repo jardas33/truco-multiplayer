@@ -26,32 +26,60 @@ function drawInstructions() {
 function drawCardValues() {
     // Draw card values background
     background(0, 100, 0);
+    
+    // Draw title
     fill(255);
     textSize(32);
     textAlign(CENTER, CENTER);
     text("Card Values", width/2, 50);
     
-    // Draw card values
-    textSize(16);
-    textAlign(LEFT, TOP);
-    let x = 50;
-    let y = 100;
-    let lineHeight = 25;
+    // Draw golden box
+    const boxWidth = 800;
+    const boxHeight = 400;
+    const boxX = width/2 - boxWidth/2;
+    const boxY = height/2 - boxHeight/2;
     
-    // Sort cards by value
-    const sortedCards = Object.entries(cardValues)
-        .sort((a, b) => a[1] - b[1]);
+    // Draw box background
+    fill(0);
+    stroke(218, 165, 32);
+    strokeWeight(3);
+    rect(boxX, boxY, boxWidth, boxHeight);
     
-    for (const [card, value] of sortedCards) {
-        text(`${card}: ${value}`, x, y);
-        y += lineHeight;
-        
-        // Create new column if reaching bottom of screen
-        if (y > height - 50) {
-            y = 100;
-            x += width/3;
-        }
-    }
+    // Draw title inside box
+    fill(218, 165, 32);
+    textSize(24);
+    textAlign(CENTER);
+    text("Card power from most powerful (1) to least powerful (17)", width/2, boxY + 40);
+    
+    // Draw two columns of card values
+    textSize(18);
+    textAlign(LEFT);
+    const startY = boxY + 80;
+    const lineHeight = 30;
+    const leftColX = boxX + 50;
+    const rightColX = boxX + boxWidth/2 + 50;
+    
+    fill(255);
+    // Left column (1-9)
+    text("1. Queen of diamonds", leftColX, startY);
+    text("2. Jack of clubs", leftColX, startY + lineHeight);
+    text("3. 5 of clubs", leftColX, startY + lineHeight * 2);
+    text("4. 4 of clubs", leftColX, startY + lineHeight * 3);
+    text("5. 7 of hearts", leftColX, startY + lineHeight * 4);
+    text("6. Ace of spades", leftColX, startY + lineHeight * 5);
+    text("7. 7 of diamonds", leftColX, startY + lineHeight * 6);
+    text("8. All 3's", leftColX, startY + lineHeight * 7);
+    text("9. All 2's", leftColX, startY + lineHeight * 8);
+    
+    // Right column (10-17)
+    text("10. Remaining Aces", rightColX, startY);
+    text("11. All Kings", rightColX, startY + lineHeight);
+    text("12. Remaining Queens", rightColX, startY + lineHeight * 2);
+    text("13. Remaining Jacks", rightColX, startY + lineHeight * 3);
+    text("14. Remaining 7's", rightColX, startY + lineHeight * 4);
+    text("15. All 6's", rightColX, startY + lineHeight * 5);
+    text("16. Remaining 5's", rightColX, startY + lineHeight * 6);
+    text("17. Remaining 4's", rightColX, startY + lineHeight * 7);
 }
 
 function drawPlaying() {
