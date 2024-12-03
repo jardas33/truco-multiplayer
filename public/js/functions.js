@@ -167,35 +167,51 @@ function backToMainMenu() {
 }
 
 function showInstructions() {
+  previousGameState = gameState; // Store the current game state
   gameState = gameStateEnum.Instructions;
-  menuDiv.removeClass('active');
-  instructionsDiv.class('active');
-  valuesDiv.removeClass('active');
-  gameDiv.removeClass('active');
-}
-
-function showCardValues() {
-  gameState = gameStateEnum.CardValues;
-  menuDiv.removeClass('active');
-  instructionsDiv.removeClass('active');
-  valuesDiv.class('active');
-  gameDiv.removeClass('active');
+  // Move canvas to Instructions div
+  let canvas = document.querySelector('canvas');
+  if (canvas) {
+    document.getElementById('Instructions').appendChild(canvas);
+  }
 }
 
 function closeInstructions() {
-  gameState = gameStateEnum.Menu;
-  menuDiv.class('active');
-  instructionsDiv.removeClass('active');
-  valuesDiv.removeClass('active');
-  gameDiv.removeClass('active');
+  if (previousGameState != null) {
+    gameState = previousGameState; // Revert to the previous game state
+    previousGameState = null; // Reset the stored previous game state
+  } else {
+    gameState = gameStateEnum.Menu; // Fallback to menu state
+  }
+  // Move canvas back to Menu div
+  let canvas = document.querySelector('canvas');
+  if (canvas) {
+    document.getElementById('Menu').appendChild(canvas);
+  }
+}
+
+function showCardValues() {
+  previousGameState = gameState; // Store the current game state
+  gameState = gameStateEnum.CardValues;
+  // Move canvas to Values div
+  let canvas = document.querySelector('canvas');
+  if (canvas) {
+    document.getElementById('Values').appendChild(canvas);
+  }
 }
 
 function closeCardValues() {
-  gameState = gameStateEnum.Menu;
-  menuDiv.class('active');
-  instructionsDiv.removeClass('active');
-  valuesDiv.removeClass('active');
-  gameDiv.removeClass('active');
+  if (previousGameState != null) {
+    gameState = previousGameState; // Revert to the previous game state
+    previousGameState = null; // Reset the stored previous game state
+  } else {
+    gameState = gameStateEnum.Menu; // Fallback to menu state
+  }
+  // Move canvas back to Menu div
+  let canvas = document.querySelector('canvas');
+  if (canvas) {
+    document.getElementById('Menu').appendChild(canvas);
+  }
 }
 
 function imageClick(image) {

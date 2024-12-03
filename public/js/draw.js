@@ -2,7 +2,7 @@ function draw() {
     // Clear the canvas at the start of each frame
     clear();
     
-    // Draw background
+    // Draw background for all states
     push();
     imageMode(CORNER);
     image(backgroundImage, 0, 0, width, height);
@@ -13,12 +13,13 @@ function draw() {
         gameDiv.hide();
         instructionsDiv.hide();
         valuesDiv.hide();
-        
-        buttonAcceptTruco.hide();
-        buttonRejectTruco.hide();
-        buttonRaiseTruco.hide();
     }
     else if (gameState === gameStateEnum.Instructions) {
+        menuDiv.hide();
+        gameDiv.hide();
+        instructionsDiv.show();
+        valuesDiv.hide();
+        
         // Draw the black box with golden border
         const boxWidth = 800;
         const boxHeight = 500;
@@ -63,13 +64,13 @@ function draw() {
             text(line, textX, textY, boxWidth - 60);
             textY += line === "" ? 20 : textLeading() * (line.length / 70 + 1);
         }
-        
-        menuDiv.hide();
-        gameDiv.hide();
-        instructionsDiv.show();
-        valuesDiv.hide();
     }
     else if (gameState === gameStateEnum.CardValues) {
+        menuDiv.hide();
+        gameDiv.hide();
+        instructionsDiv.hide();
+        valuesDiv.show();
+        
         // Draw golden box
         const boxWidth = 800;
         const boxHeight = 400;
@@ -138,11 +139,6 @@ function draw() {
             fill(255);  // White color for text
             text(rightColumnEntries[i], rightColX + 35, startY + lineHeight * i);
         }
-        
-        menuDiv.hide();
-        gameDiv.hide();
-        instructionsDiv.hide();
-        valuesDiv.show();
     }
     else if (gameState === gameStateEnum.Playing) {
         menuDiv.hide();
@@ -152,7 +148,6 @@ function draw() {
         backToMainMenuButton.show();
         
         if (window.game) {
-            // Draw game state
             drawGameState();
         }
     }
