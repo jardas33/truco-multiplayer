@@ -56,6 +56,9 @@ function draw() {
             p.parent(instructionsBox);
         });
         
+        instructionsBox.parent(instructionsDiv);
+        instructionsDiv.show();
+        
         // Create and position close button
         if (!instructionsCloseButton) {
             instructionsCloseButton = createButton('Close');
@@ -68,12 +71,7 @@ function draw() {
             });
         }
         
-        instructionsBox.parent(instructionsDiv);
-        instructionsDiv.show();
-        
-        // Position the button below the box
-        const boxRect = instructionsBox.elt.getBoundingClientRect();
-        instructionsCloseButton.position(width/2 - 50, boxRect.bottom + 20);
+        instructionsCloseButton.position(width/2 - 50, height/2 + 300);
         instructionsCloseButton.show();
     }
     else if (gameState === gameStateEnum.CardValues) {
