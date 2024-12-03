@@ -49,7 +49,7 @@ function draw() {
         
         const textX = boxX + 50;
         let textY = boxY + 100;
-        const textWidth = boxWidth - 100;
+        const maxLineWidth = boxWidth - 100;
         
         const instructions = [
             "Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.",
@@ -74,9 +74,9 @@ function draw() {
                 
                 for (let word of words) {
                     let testLine = currentLine + word + ' ';
-                    let testWidth = textWidth(testLine);
+                    let lineWidth = textWidth(testLine);
                     
-                    if (testWidth > textWidth) {
+                    if (lineWidth > maxLineWidth) {
                         text(currentLine, textX, textY);
                         textY += textLeading();
                         currentLine = word + ' ';
@@ -97,9 +97,10 @@ function draw() {
             instructionsCloseButton = createButton('Close');
             instructionsCloseButton.class('close-button');
             instructionsCloseButton.mousePressed(() => {
-                gameState = previousGameState || gameStateEnum.Menu;
-                previousGameState = null;
+                instructionsCloseButton.hide();
+                gameState = gameStateEnum.Menu;
                 instructionsDiv.hide();
+                menuDiv.show();
             });
         }
         instructionsCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
