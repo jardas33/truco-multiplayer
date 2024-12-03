@@ -14,46 +14,28 @@ window.p5Instance = new p5(function(p) {
 
         // Create menu buttons only if they don't exist
         if (!window.menuInitialized) {
-            // Create menu buttons
-            const buttonContainer = p.createDiv('');
-            buttonContainer.id('menuButtons');
-            buttonContainer.style('position', 'fixed');
-            buttonContainer.style('top', '20px');
-            buttonContainer.style('left', '50%');
-            buttonContainer.style('transform', 'translateX(-50%)');
-            buttonContainer.style('display', 'flex');
-            buttonContainer.style('gap', '20px');
-            buttonContainer.style('z-index', '1000');
-            buttonContainer.parent('gameContainer');
+            // Create menu buttons container
+            const menuButtons = p.createDiv('');
+            menuButtons.class('menu-buttons');
+            menuButtons.parent('menuContainer');
 
+            // Back to Menu button
             const backToMenuBtn = p.createButton("Back to Main Menu");
             backToMenuBtn.class('menu-btn');
-            backToMenuBtn.parent(buttonContainer);
-            backToMenuBtn.mousePressed(() => {
-                console.log("Back to menu clicked");
-                gameState = gameStateEnum.Menu;
-                if (window.game) {
-                    delete window.game;
-                }
-            });
+            backToMenuBtn.parent(menuButtons);
+            backToMenuBtn.mousePressed(backToMainMenu);
 
+            // Card Values button
             const cardValuesBtn = p.createButton("Card Values");
             cardValuesBtn.class('menu-btn');
-            cardValuesBtn.parent(buttonContainer);
-            cardValuesBtn.mousePressed(() => {
-                console.log("Card values clicked");
-                previousGameState = gameState;
-                gameState = gameStateEnum.CardValues;
-            });
+            cardValuesBtn.parent(menuButtons);
+            cardValuesBtn.mousePressed(showCardValues);
 
+            // Instructions button
             const instructionsBtn = p.createButton("Instructions");
             instructionsBtn.class('menu-btn');
-            instructionsBtn.parent(buttonContainer);
-            instructionsBtn.mousePressed(() => {
-                console.log("Instructions clicked");
-                previousGameState = gameState;
-                gameState = gameStateEnum.Instructions;
-            });
+            instructionsBtn.parent(menuButtons);
+            instructionsBtn.mousePressed(showInstructions);
 
             window.menuInitialized = true;
         }
@@ -99,9 +81,15 @@ function drawInstructions(p) {
     p.textAlign(p.CENTER, p.CENTER);
     p.text("Instructions", p.width/2, 100);
     
-    // Add instruction text
-    p.textSize(16);
-    p.text("Game instructions will be displayed here", p.width/2, p.height/2);
+    // Draw instructions image if available
+    if (instructionsImage) {
+        const imgWidth = Math.min(p.width * 0.8, 800);
+        const imgHeight = imgWidth * (instructionsImage.height / instructionsImage.width);
+        p.image(instructionsImage, p.width/2 - imgWidth/2, 150, imgWidth, imgHeight);
+    } else {
+        p.textSize(16);
+        p.text("Instructions image not loaded", p.width/2, p.height/2);
+    }
 }
 
 function drawCardValues(p) {
@@ -110,10 +98,24 @@ function drawCardValues(p) {
     p.fill(255);
     p.textSize(32);
     p.textAlign(p.CENTER, p.CENTER);
-    p.text("Card Values", p.width/2, 100);
+    p.text("Card Values", p.width/2, 50);
     
-    // Add card values text
+    // Draw card values
     p.textSize(16);
-    p.text("Card values will be displayed here", p.width/2, p.height/2);
+    p.textAlign(p.LEFT, p.TOP);
+    let x = 50;
+    let y = 100;
+    let lineHeight = 25;
+    
+    for (let card in cardValues) {
+        p.text(`${card}: ${cardValues[card]}`, x, y);
+        y += lineHeight;
+        
+        // Create new column if reaching bottom of screen
+        if (y > p.height - 50) {
+            y = 100;
+            x += p.width/3;
+        }
+    }
 }
   
