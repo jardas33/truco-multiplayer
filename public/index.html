@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Truco Game</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="roomControls" style="text-align: center; margin: 20px;">
+            <input type="text" id="roomInput" placeholder="Enter room code">
+            <button onclick="createRoom()">Create Room</button>
+            <button onclick="joinRoom()">Join Room</button>
+        </div>
+        <div id="gameCanvas"></div>
+    </div>
+
+    <script src="/js/variables.js"></script>
+    <script src="/js/functions.js"></script>
+    <script src="/js/players.js"></script>
+    <script src="/js/preload.js"></script>
+    <script src="/js/setup.js"></script>
+    <script src="/js/draw.js"></script>
+    <script src="/js/game.js"></script>
+
+    <script>
+        function createRoom() {
+            const roomCode = document.getElementById('roomInput').value || Math.random().toString(36).substring(7);
+            socket.emit('createRoom', roomCode);
+        }
+
+        function joinRoom() {
+            const roomCode = document.getElementById('roomInput').value;
+            if (roomCode) {
+                socket.emit('joinRoom', roomCode);
+            }
+        }
+    </script>
+</body>
+</html>
