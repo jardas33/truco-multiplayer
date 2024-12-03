@@ -113,6 +113,8 @@ button:disabled {
 }
 
 .close-button {
+    display: block;
+    margin: 20px auto 0;
     padding: 10px 30px;
     background-color: rgba(0, 0, 0, 0.7);
     color: white;
@@ -121,8 +123,6 @@ button:disabled {
     cursor: pointer;
     font-size: 16px;
     transition: all 0.3s ease;
-    position: absolute;
-    z-index: 1000;
 }
 
 .close-button:hover {
@@ -141,6 +141,8 @@ button:disabled {
     padding: 30px;
     color: white;
     z-index: 100;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .instructions-title {
