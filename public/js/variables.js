@@ -9,7 +9,6 @@ let showAllCards = true;
 let backgroundImage;
 let backCardImage;
 let popupframeImage;
-let instructionsImage;
 let game;
 
 // Truco variables
