@@ -360,10 +360,13 @@ function createDeck() {
         document.getElementById('Game').classList.add('active');
         
         // Show game UI elements
-        backToMainMenuButton.show();
-        trucoButton.show();
+        if (backToMainMenuButton) backToMainMenuButton.show();
+        if (trucoButton) trucoButton.show();
         
-        window.game = new window.Game([]);
+        // Initialize game
+        window.game = new window.Game(window.players || []);
+        createDeck();
+        shuffleDeck(deck);
         
         // Listen for game started event which includes player hands
         socket.on('gameStarted', (data) => {
@@ -372,10 +375,6 @@ function createDeck() {
             playerPosition = data.position;
             window.game.updatePlayers(data.players);
             window.game.currentPlayerIndex = 0;
-            
-            // Initialize game state
-            createDeck();
-            shuffleDeck(deck);
             redrawGame();
         });
 
@@ -387,6 +386,9 @@ function createDeck() {
                 redrawGame();
             }
         });
+
+        // Force redraw to show initial game state
+        redrawGame();
     }
 }
 
