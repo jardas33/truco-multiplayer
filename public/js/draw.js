@@ -22,8 +22,8 @@ function draw() {
         
         push();
         // Draw the black box with golden border
-        const boxWidth = 1000;
-        const boxHeight = 700;
+        const boxWidth = 900;
+        const boxHeight = 800;
         const boxX = width/2 - boxWidth/2;
         const boxY = height/2 - boxHeight/2;
         
@@ -42,12 +42,15 @@ function draw() {
         
         // Draw instructions text
         fill(255); // White color
-        textSize(16);
+        noStroke();
+        textSize(18); // Slightly larger text
         textAlign(LEFT);
-        textLeading(28);
+        textLeading(32); // More line spacing
         
-        const textX = boxX + 60;
+        const textX = boxX + 50;
         let textY = boxY + 100;
+        const textWidth = boxWidth - 100; // More narrow text width for better wrapping
+        
         const instructions = [
             "Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.",
             "",
@@ -63,8 +66,31 @@ function draw() {
         ];
         
         for (let line of instructions) {
-            text(line, textX, textY, boxWidth - 120);
-            textY += line === "" ? 30 : textLeading() * (line.length / 50 + 1);
+            if (line === "") {
+                textY += 32; // Space between paragraphs
+            } else {
+                // Split long lines into multiple lines
+                let words = line.split(' ');
+                let currentLine = '';
+                
+                for (let word of words) {
+                    let testLine = currentLine + word + ' ';
+                    let testWidth = textWidth(testLine);
+                    
+                    if (testWidth > textWidth) {
+                        text(currentLine, textX, textY);
+                        textY += textLeading();
+                        currentLine = word + ' ';
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                
+                if (currentLine) {
+                    text(currentLine, textX, textY);
+                    textY += textLeading();
+                }
+            }
         }
         
         pop();
