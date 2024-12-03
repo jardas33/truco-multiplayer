@@ -22,7 +22,7 @@ function draw() {
         
         push();
         // Draw the black box with golden border
-        const boxWidth = 1400;
+        const boxWidth = 1600;
         const boxHeight = 600;
         const boxX = width/2 - boxWidth/2;
         const boxY = height/2 - boxHeight/2;
@@ -43,13 +43,13 @@ function draw() {
         // Draw instructions text
         fill(255); // White color
         noStroke();
-        textSize(18); // Slightly larger text
+        textSize(18);
         textAlign(LEFT);
-        textLeading(32); // More line spacing
+        textLeading(32);
         
         const textX = boxX + 50;
         let textY = boxY + 100;
-        const textWidth = boxWidth - 100; // More space for text width
+        const textWidth = boxWidth - 100;
         
         const instructions = [
             "Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.",
@@ -67,9 +67,8 @@ function draw() {
         
         for (let line of instructions) {
             if (line === "") {
-                textY += 32; // Space between paragraphs
+                textY += 32;
             } else {
-                // Split long lines into multiple lines
                 let words = line.split(' ');
                 let currentLine = '';
                 
@@ -92,6 +91,19 @@ function draw() {
                 }
             }
         }
+        
+        // Position close button at the bottom of the box
+        if (!instructionsCloseButton) {
+            instructionsCloseButton = createButton('Close');
+            instructionsCloseButton.class('close-button');
+            instructionsCloseButton.mousePressed(() => {
+                gameState = previousGameState || gameStateEnum.Menu;
+                previousGameState = null;
+                instructionsDiv.hide();
+            });
+        }
+        instructionsCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
+        instructionsCloseButton.show();
         
         pop();
     }
