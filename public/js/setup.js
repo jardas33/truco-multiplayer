@@ -110,37 +110,33 @@ function setup() {
     textDiv.style("transform", "translate(-50%, -50%)");
     textDiv.style("width", "80%");
     textDiv.style("max-width", "800px");
-    textDiv.style("background-color", "rgba(0, 0, 0, 0.8)");
+    textDiv.style("background-color", "rgba(0, 0, 0, 0.9)");
     textDiv.style("padding", "30px");
     textDiv.style("border-radius", "15px");
     textDiv.style("border", "2px solid gold");
     textDiv.html(`
-        <h2 style="color: gold; font-size: 32px; margin-bottom: 20px; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Card power from most powerful (1) to least powerful (17)</h2>
+        <h2 style="color: gold; font-size: 32px; margin-bottom: 30px; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Card power from most powerful (1) to least powerful (17)</h2>
         <div style="display: flex; justify-content: space-between; color: white; font-size: 18px; line-height: 1.6;">
-            <div style="flex-basis: 48%;">
-                <div style="background-color: rgba(0, 100, 0, 0.5); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
-                    <p style="margin: 8px 0;"><span style="color: gold;">1.</span> Queen of diamonds</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">2.</span> Jack of clubs</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">3.</span> 5 of clubs</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">4.</span> 4 of clubs</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">5.</span> 7 of hearts</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">6.</span> Ace of spades</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">7.</span> 7 of diamonds</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">8.</span> All 3's</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">9.</span> All 2's</p>
-                </div>
+            <div style="flex-basis: 48%; background-color: rgba(0, 100, 0, 0.5); padding: 20px; border-radius: 10px;">
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">1.</span> Queen of diamonds</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">2.</span> Jack of clubs</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">3.</span> 5 of clubs</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">4.</span> 4 of clubs</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">5.</span> 7 of hearts</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">6.</span> Ace of spades</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">7.</span> 7 of diamonds</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">8.</span> All 3's</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">9.</span> All 2's</p>
             </div>
-            <div style="flex-basis: 48%;">
-                <div style="background-color: rgba(0, 100, 0, 0.5); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
-                    <p style="margin: 8px 0;"><span style="color: gold;">10.</span> Remaining Aces</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">11.</span> All Kings</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">12.</span> Remaining Queens</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">13.</span> Remaining Jacks</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">14.</span> Remaining 7's</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">15.</span> All 6's</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">16.</span> Remaining 5's</p>
-                    <p style="margin: 8px 0;"><span style="color: gold;">17.</span> Remaining 4's</p>
-                </div>
+            <div style="flex-basis: 48%; background-color: rgba(0, 100, 0, 0.5); padding: 20px; border-radius: 10px;">
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">10.</span> Remaining Aces</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">11.</span> All Kings</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">12.</span> Remaining Queens</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">13.</span> Remaining Jacks</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">14.</span> Remaining 7's</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">15.</span> All 6's</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">16.</span> Remaining 5's</p>
+                <p style="margin: 10px 0;"><span style="color: gold; font-weight: bold;">17.</span> Remaining 4's</p>
             </div>
         </div>
     `);
@@ -260,6 +256,63 @@ function setup() {
     
     // Setup socket event handlers
     setupSocketHandlers();
+
+    // Create room creation and joining elements
+    let roomDiv = createDiv();
+    roomDiv.style("position", "fixed");
+    roomDiv.style("top", "50%");
+    roomDiv.style("left", "50%");
+    roomDiv.style("transform", "translate(-50%, -50%)");
+    roomDiv.style("background-color", "rgba(0, 0, 0, 0.9)");
+    roomDiv.style("padding", "30px");
+    roomDiv.style("border-radius", "15px");
+    roomDiv.style("border", "2px solid gold");
+    roomDiv.style("text-align", "center");
+    roomDiv.parent(menuDiv);
+
+    let createRoomButton = createButton("Create Room");
+    createRoomButton.style("width", "200px");
+    createRoomButton.style("height", "50px");
+    createRoomButton.style("margin", "10px");
+    createRoomButton.style("font-size", "18px");
+    createRoomButton.style("background-color", "darkgreen");
+    createRoomButton.style("color", "white");
+    createRoomButton.style("border", "2px solid gold");
+    createRoomButton.style("border-radius", "8px");
+    createRoomButton.style("cursor", "pointer");
+    createRoomButton.mousePressed(() => {
+        socket.emit('createRoom');
+    });
+    createRoomButton.parent(roomDiv);
+
+    let joinRoomInput = createInput();
+    joinRoomInput.attribute('placeholder', 'Enter Room Code');
+    joinRoomInput.style("width", "180px");
+    joinRoomInput.style("height", "40px");
+    joinRoomInput.style("margin", "10px");
+    joinRoomInput.style("font-size", "16px");
+    joinRoomInput.style("padding", "0 10px");
+    joinRoomInput.style("border-radius", "8px");
+    joinRoomInput.style("border", "2px solid gold");
+    joinRoomInput.parent(roomDiv);
+
+    let joinRoomButton = createButton("Join Room");
+    joinRoomButton.style("width", "200px");
+    joinRoomButton.style("height", "50px");
+    joinRoomButton.style("margin", "10px");
+    joinRoomButton.style("font-size", "18px");
+    joinRoomButton.style("background-color", "darkgreen");
+    joinRoomButton.style("color", "white");
+    joinRoomButton.style("border", "2px solid gold");
+    joinRoomButton.style("border-radius", "8px");
+    joinRoomButton.style("cursor", "pointer");
+    joinRoomButton.mousePressed(() => {
+        const roomCode = joinRoomInput.value();
+        if (roomCode) {
+            socket.emit('joinRoom', roomCode);
+        }
+    });
+    joinRoomButton.parent(roomDiv);
 }
 
 function windowResized() {
