@@ -1,7 +1,7 @@
-let socket;
 let roomId;
 let playerId;
 let isMultiplayerMode = false;
+let players = [];
   
 function createDeck() {
     deck = [];
@@ -105,6 +105,8 @@ function createDeck() {
     }
   
     startGame() {
+      console.log("Starting game with players:", this.players);
+      this.currentPlayerIndex = 0;
       this.players[this.currentPlayerIndex].isActive = true;
       playedCards = [];
       this.players[this.currentPlayerIndex].hand.forEach(
@@ -115,12 +117,7 @@ function createDeck() {
           () => this.players[this.currentPlayerIndex].botPlay(this),
           timeBots
         );
-        if (!this.players[this.currentPlayerIndex].isBot) {
-          trucoButton.show();
-        }
       }
-  
-  
       this.startRoundPlayer = this.currentPlayerIndex;
     }
   
@@ -510,6 +507,7 @@ function createDeck() {
   }
   
   function startTrucoGame() {
+    console.log("Starting Truco game...");
     if (window.roomId) {
         // Multiplayer mode
         isMultiplayerMode = true;
@@ -517,8 +515,8 @@ function createDeck() {
         createDeck();
         shuffleDeck(deck);
         // Players will be initialized by server events
-        game = new Game(players || []);
-        game.startGame();
+        window.game = new Game(players || []);
+        window.game.startGame();
     } else {
         // Single player mode with bots
         startSinglePlayerGame();
@@ -526,6 +524,7 @@ function createDeck() {
   }
   
   function startSinglePlayerGame() {
+    console.log("Starting single player game...");
     isMultiplayerMode = false;
     gameState = gameStateEnum.Playing;
     players = [];
@@ -541,7 +540,7 @@ function createDeck() {
     createDeck();
     shuffleDeck(deck);
     distributeCards(players, deck);
-    game = new Game(players);
-    game.startGame();
+    window.game = new Game(players);
+    window.game.startGame();
   }
   

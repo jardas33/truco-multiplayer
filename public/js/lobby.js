@@ -3,6 +3,11 @@ let socket = null;
 let gameInitialized = false;
 
 // Initialize socket and lobby when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing game...');
+    initGame();
+});
+
 function initGame() {
     console.log('Initializing game...');
     if (!gameInitialized) {
