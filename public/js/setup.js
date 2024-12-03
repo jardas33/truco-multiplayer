@@ -1,126 +1,172 @@
-// Create p5 instance in the game canvas div
-const sketch = (p) => {
-    p.preload = function() {
-        // Load background image
-        window.backgroundImage = p.loadImage("Images/background.jpg");
-        window.backCardImage = p.loadImage("Images/cardBack.jpg");
-        window.popupframeImage = p.loadImage("Images/popup_frame.png");
-        window.instructionsImage = p.loadImage("Images/instructions.png");
-        
-        // Load card images
-        let cardNames = {
-            "Queen of diamonds": "Images/queen_of_diamonds.png",
-            "Jack of clubs": "Images/jack_of_clubs.png",
-            "5 of clubs": "Images/5_of_clubs.png",
-            "4 of clubs": "Images/4_of_clubs.png",
-            "7 of hearts": "Images/7_of_hearts.png",
-            "Ace of spades": "Images/ace_of_spades.png",
-            "7 of diamonds": "Images/7_of_diamonds.png",
-            "3 of clubs": "Images/3_of_clubs.png",
-            "3 of diamonds": "Images/3_of_diamonds.png",
-            "3 of spades": "Images/3_of_spades.png",
-            "3 of hearts": "Images/3_of_hearts.png",
-            "2 of clubs": "Images/2_of_clubs.png",
-            "2 of diamonds": "Images/2_of_diamonds.png",
-            "2 of spades": "Images/2_of_spades.png",
-            "2 of hearts": "Images/2_of_hearts.png",
-            "Ace of diamonds": "Images/ace_of_diamonds.png",
-            "Ace of clubs": "Images/ace_of_clubs.png",
-            "Ace of hearts": "Images/ace_of_hearts.png",
-            "King of clubs": "Images/king_of_clubs.png",
-            "King of diamonds": "Images/king_of_diamonds.png",
-            "King of spades": "Images/king_of_spades.png",
-            "King of hearts": "Images/king_of_hearts.png",
-            "Queen of spades": "Images/queen_of_spades.png",
-            "Queen of clubs": "Images/queen_of_clubs.png",
-            "Queen of hearts": "Images/queen_of_hearts.png",
-            "Jack of diamonds": "Images/jack_of_diamonds.png",
-            "Jack of spades": "Images/jack_of_spades.png",
-            "Jack of hearts": "Images/jack_of_hearts.png",
-            "7 of spades": "Images/7_of_spades.png",
-            "7 of clubs": "Images/7_of_clubs.png",
-            "6 of clubs": "Images/6_of_clubs.png",
-            "6 of diamonds": "Images/6_of_diamonds.png",
-            "6 of spades": "Images/6_of_spades.png",
-            "6 of hearts": "Images/6_of_hearts.png",
-            "5 of diamonds": "Images/5_of_diamonds.png",
-            "5 of spades": "Images/5_of_spades.png",
-            "5 of hearts": "Images/5_of_hearts.png",
-            "4 of diamonds": "Images/4_of_diamonds.png",
-            "4 of spades": "Images/4_of_spades.png",
-            "4 of hearts": "Images/4_of_hearts.png",
-        };
-        
-        // Initialize cardImages if not already initialized
-        window.cardImages = window.cardImages || {};
-        
-        for (let name in cardNames) {
-            window.cardImages[name] = p.loadImage(cardNames[name]);
-        }
-    };
+function setup() {
+    let canvas = createCanvas(windowWidth, windowHeight);
+    canvas.parent('Game');
 
-    p.setup = function() {
-        const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
-        canvas.parent('Game');
-        
-        // Store p5 instance globally for other files to use
-        window.p = p;
+    // Initialize game state if not already set
+    if (typeof gameState === 'undefined') {
+        gameState = gameStateEnum.Menu;
+    }
 
-        // Initialize game state if not already set
-        if (typeof gameState === 'undefined') {
-            gameState = gameStateEnum.Menu;
-        }
+    // Create menu elements
+    menuDiv = select("#Menu");
+    gameDiv = select("#Game");
+    instructionsDiv = select("#Instructions");
+    valuesDiv = select("#Values");
 
-        // Create menu elements
-        menuDiv = p.select("#Menu");
-        gameDiv = p.select("#Game");
-        instructionsDiv = p.select("#Instructions");
-        valuesDiv = p.select("#Values");
+    // Create menu buttons
+    startButton = createButton("Start Truco Game");
+    startButton.style("position", "fixed");
+    startButton.style("top", "50%");
+    startButton.style("left", "50%");
+    startButton.style("transform", "translate(-50%, -50%)");
+    startButton.style("width", "200px");
+    startButton.style("height", "60px");
+    startButton.style("font-weight", "bold");
+    startButton.mousePressed(startTrucoGame);
+    startButton.parent(menuDiv);
 
-        // Create menu buttons
-        startButton = p.createButton("Start Truco Game");
-        startButton.style("position", "fixed");
-        startButton.style("top", "50%");
-        startButton.style("left", "50%");
-        startButton.style("transform", "translate(-50%, -50%)");
-        startButton.style("width", "200px");
-        startButton.style("height", "60px");
-        startButton.style("font-weight", "bold");
-        startButton.mousePressed(startTrucoGame);
-        startButton.parent(menuDiv);
+    // Create instruction buttons
+    instructionsButton = createButton("Instructions");
+    instructionsButton.position(20, 20);
+    instructionsButton.mousePressed(showInstructions);
+    instructionsButton.parent(menuDiv);
+    
+    instructionsButton = createButton("Instructions");
+    instructionsButton.position(20, 80);
+    instructionsButton.mousePressed(showInstructions);
+    instructionsButton.parent(gameDiv);
 
-        // Create other UI elements
-        createUIElements(p);
-    };
+    // Create card values buttons
+    cardValuesButton = createButton("Card Values");
+    cardValuesButton.position(20, 60);
+    cardValuesButton.mousePressed(showCardValues);
+    cardValuesButton.parent(menuDiv);
+    
+    cardValuesButton = createButton("Card Values");
+    cardValuesButton.position(20, 120);
+    cardValuesButton.mousePressed(showCardValues);
+    cardValuesButton.parent(gameDiv);
 
-    p.draw = function() {
-        if (gameState === gameStateEnum.Menu) {
-            p.background(0, 100, 0);
-            if (backgroundImage) {
-                p.image(backgroundImage, 0, 0, p.width, p.height);
-            }
-        } else {
-            drawGame(p);
-        }
-    };
+    // Create back to menu button
+    backToMainMenuButton = createButton("Back to Main Menu");
+    backToMainMenuButton.position(20, 20);
+    backToMainMenuButton.mousePressed(backToMainMenu);
+    backToMainMenuButton.parent(gameDiv);
 
-    p.windowResized = function() {
-        p.resizeCanvas(p.windowWidth, p.windowHeight);
-        
-        // Update player positions
-        if (playerPositions) {
-            playerPositions[0].x = p.width / 6;
-            playerPositions[0].y = p.height / 2;
-            playerPositions[1].x = p.width / 2;
-            playerPositions[1].y = 100;
-            playerPositions[2].x = (5 * p.width) / 6;
-            playerPositions[2].y = p.height / 2;
-            playerPositions[3].x = p.width / 2;
-            playerPositions[3].y = p.height - cardHeight - 100;
-        }
-    };
-};
+    // Create game buttons
+    trucoButton = createButton("Truco");
+    trucoButton.position(50, 180);
+    trucoButton.mousePressed(truco);
+    trucoButton.parent(gameDiv);
+    trucoButton.hide();
 
-// Initialize p5 with the sketch
-window.p5Instance = new p5(sketch);
+    // Create truco response buttons
+    buttonAcceptTruco = createButton("Accept Truco");
+    buttonRejectTruco = createButton("Reject Truco");
+    buttonRaiseTruco = createButton("Raise Truco");
+
+    buttonAcceptTruco.position(10, 180);
+    buttonAcceptTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 1));
+    buttonRejectTruco.position(10, 210);
+    buttonRejectTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 2));
+    buttonRaiseTruco.position(10, 240);
+    buttonRaiseTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 3));
+
+    buttonAcceptTruco.parent(gameDiv);
+    buttonRejectTruco.parent(gameDiv);
+    buttonRaiseTruco.parent(gameDiv);
+
+    buttonAcceptTruco.hide();
+    buttonRejectTruco.hide();
+    buttonRaiseTruco.hide();
+
+    // Create popup
+    popup = createDiv("");
+    popup.hide();
+    popup.position(windowWidth / 2 - 150, windowHeight / 2 - 100);
+    popup.style("width", "300px");
+    popup.style("height", `200px`);
+    popup.style("background-image", 'url("Images/popup_frame.png")');
+    popup.style("padding", "20px");
+    popup.style("text-align", "center");
+    popup.style("color", "white");
+    popup.style("font-weight", "bold");
+    popup.style("background-repeat", "no-repeat");
+    popup.style("background-position", "center");
+    popup.style("background-size", "cover");
+
+    closeButton = createButton("Close");
+    closeButton.mousePressed(closePopup);
+    closeButton.parent(popup);
+    closeButton.style("position", "absolute");
+    closeButton.style("bottom", "10px");
+    closeButton.style("left", "50%");
+    closeButton.style("transform", "translateX(-50%)");
+
+    messageParagrph = createP("");
+    messageParagrph.style("margin", "0");
+    messageParagrph.style("position", "absolute");
+    messageParagrph.style("top", "50%");
+    messageParagrph.style("left", "50%");
+    messageParagrph.style("transform", "translate(-50%, -50%)");
+    messageParagrph.parent(popup);
+
+    // Setup player positions
+    playerPositions = [
+        {
+            x: width / 6,
+            y: height / 2,
+            label: "Player 1 - Team 1",
+            labelOffset: -50,
+        },
+        { 
+            x: width / 2, 
+            y: 100, 
+            label: "Player 2 - Team 2", 
+            labelOffset: -50 
+        },
+        {
+            x: (5 * width) / 6,
+            y: height / 2,
+            label: "Player 3 - Team 1",
+            labelOffset: -50,
+        },
+        {
+            x: width / 2,
+            y: height - cardHeight - 100,
+            label: "Player 4 - Team 2",
+            labelOffset: cardHeight + 20,
+        },
+    ];
+
+    // Initialize socket.io connection
+    socket = io();
+    
+    // Hide game elements initially
+    gameDiv.style('display', 'none');
+    instructionsDiv.style('display', 'none');
+    valuesDiv.style('display', 'none');
+
+    // Show menu elements
+    menuDiv.style('display', 'block');
+    
+    // Setup socket event handlers
+    setupSocketHandlers();
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    
+    // Update player positions
+    if (playerPositions) {
+        playerPositions[0].x = width / 6;
+        playerPositions[0].y = height / 2;
+        playerPositions[1].x = width / 2;
+        playerPositions[1].y = 100;
+        playerPositions[2].x = (5 * width) / 6;
+        playerPositions[2].y = height / 2;
+        playerPositions[3].x = width / 2;
+        playerPositions[3].y = height - cardHeight - 100;
+    }
+}
   
