@@ -1,6 +1,7 @@
 let socket;
 let roomId;
 let playerId;
+let isMultiplayerMode = false;
   
 function createDeck() {
     deck = [];
@@ -506,5 +507,36 @@ function createDeck() {
         }
       }
     }*/
+  }
+  
+  function startTrucoGame() {
+    if (window.roomId) {
+        // Multiplayer mode
+        isMultiplayerMode = true;
+        socket.emit('startGame', window.roomId);
+    } else {
+        // Single player mode with bots
+        startSinglePlayerGame();
+    }
+  }
+  
+  function startSinglePlayerGame() {
+    isMultiplayerMode = false;
+    gameState = gameStateEnum.Playing;
+    players = [];
+    
+    // Create human player
+    players.push(new Player(0, "Player 1", "team1", false));
+    
+    // Create bot players
+    players.push(new Player(1, "Bot 1", "team2", true));
+    players.push(new Player(2, "Bot 2", "team1", true));
+    players.push(new Player(3, "Bot 3", "team2", true));
+
+    createDeck();
+    shuffleDeck(deck);
+    distributeCards(players, deck);
+    game = new Game(players);
+    game.startGame();
   }
   
