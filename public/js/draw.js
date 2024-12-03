@@ -20,6 +20,7 @@ function draw() {
     else if (gameState === gameStateEnum.Instructions) {
         menuDiv.hide();
         gameDiv.hide();
+        instructionsDiv.show();
         valuesDiv.hide();
         
         push();
