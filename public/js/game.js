@@ -354,14 +354,28 @@ function createDeck() {
         // Multiplayer mode
         isMultiplayerMode = true;
         gameState = gameStateEnum.Playing;
-        createDeck();
-        shuffleDeck(deck);
-        // Players will be initialized by server events
-        window.game = new window.Game(window.players || []);
-        window.game.startGame();
-    } else {
-        // Single player mode with bots
-        startSinglePlayerGame();
+        window.game = new window.Game([]);
+        
+        // Listen for game started event which includes player hands
+        socket.on('gameStarted', (data) => {
+            console.log('Received game data:', data);
+            playerHand = data.hand;
+            playerPosition = data.position;
+            window.game.updatePlayers(data.players);
+            window.game.currentPlayerIndex = 0;
+            redrawGame();
+        });
+
+        // Listen for card played events
+        socket.on('cardPlayed', (data) => {
+            console.log('Card played:', data);
+            // Update game state based on played card
+            if (data.playerId !== socket.id) {
+                // Handle opponent's card play
+                window.game.handleCardPlay(data.card, data.playerId);
+                redrawGame();
+            }
+        });
     }
   }
   

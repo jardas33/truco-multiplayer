@@ -74,7 +74,13 @@ function setupSocketListeners() {
     socket.on('gameStart', (players) => {
         console.log('Game starting with players:', players);
         hideRoomControls();
-        startTrucoGame();
+        window.players = players;  // Store players for the game
+        startTrucoGame();  // This will now wait for 'gameStarted' event
+    });
+
+    socket.on('error', (message) => {
+        console.error('Server error:', message);
+        alert(message);
     });
 
     socket.on('playerDisconnected', (data) => {
