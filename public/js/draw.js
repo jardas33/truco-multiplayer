@@ -14,7 +14,7 @@ function draw() {
         instructionsDiv.hide();
         valuesDiv.hide();
         if (instructionsCloseButton) {
-            instructionsCloseButton.hide();
+            instructionsCloseButton.remove();
         }
         // Remove any existing instructions box
         const existingBox = document.querySelector('.instructions-box');
@@ -66,6 +66,8 @@ function draw() {
             gameState = gameStateEnum.Menu;
             instructionsBox.remove();
             instructionsCloseButton.remove();
+            menuDiv.show(); // Show menu when closing instructions
+            loop(); // Ensure draw loop continues
         });
         
         instructionsCloseButton.parent(instructionsBox);
