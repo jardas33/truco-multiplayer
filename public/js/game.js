@@ -359,6 +359,10 @@ function createDeck() {
         document.getElementById('Menu').classList.remove('active');
         document.getElementById('Game').classList.add('active');
         
+        // Show game UI elements
+        backToMainMenuButton.show();
+        trucoButton.show();
+        
         window.game = new window.Game([]);
         
         // Listen for game started event which includes player hands
@@ -368,13 +372,6 @@ function createDeck() {
             playerPosition = data.position;
             window.game.updatePlayers(data.players);
             window.game.currentPlayerIndex = 0;
-            
-            // Create and setup the game canvas
-            const gameDiv = document.getElementById('Game');
-            if (!gameDiv.querySelector('canvas')) {
-                let canvas = createCanvas(windowWidth, windowHeight);
-                canvas.parent('Game');
-            }
             
             // Initialize game state
             createDeck();
