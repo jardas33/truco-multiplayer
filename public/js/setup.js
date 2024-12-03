@@ -6,56 +6,51 @@ window.p5Instance = new p5(function(p) {
         
         // Store p5 instance globally for other files to use
         window.p = p;
-        
-        menuDiv = p.select("#Menu");
-        gameDiv = p.select("#Game");
-        instructionsDiv = p.select("#Instructions");
-        valuesDiv = p.select("#Values");
 
+        // Create menu buttons
+        const backToMenuBtn = p.createButton("Back to Main Menu");
+        backToMenuBtn.class('menu-btn');
+        backToMenuBtn.mousePressed(() => {
+            console.log("Back to menu clicked");
+            gameState = gameStateEnum.Menu;
+            if (window.game) {
+                delete window.game;
+            }
+        });
+
+        const cardValuesBtn = p.createButton("Card Values");
+        cardValuesBtn.class('menu-btn');
+        cardValuesBtn.mousePressed(() => {
+            console.log("Card values clicked");
+            previousGameState = gameState;
+            gameState = gameStateEnum.CardValues;
+        });
+
+        const instructionsBtn = p.createButton("Instructions");
+        instructionsBtn.class('menu-btn');
+        instructionsBtn.mousePressed(() => {
+            console.log("Instructions clicked");
+            previousGameState = gameState;
+            gameState = gameStateEnum.Instructions;
+        });
+
+        // Create start game button
         startButton = p.createButton("Start Truco Game");
-        startButton.style("position", "fixed");
-        startButton.style("top", "50%");
-        startButton.style("left", "50%");
-        startButton.style("transform", "translate(-50%, -50%)");
-        startButton.style("width", "200px");
-        startButton.style("height", "60px");
-        startButton.style("font-weight", "bold");
+        startButton.class('start-btn');
         startButton.mousePressed(() => {
+            console.log("Start game clicked");
             startTrucoGame();
             startButton.hide();
         });
-        startButton.parent('gameCanvas');
 
-        instructionsButton = p.createButton("Instructions");
-        instructionsButton.position(20, 20);
-        instructionsButton.mousePressed(showInstructions);
-        instructionsButton.parent(menuDiv);
-        
-        instructionsButton = p.createButton("Instructions");
-        instructionsButton.position(20, 80);
-        instructionsButton.mousePressed(showInstructions);
-        instructionsButton.parent(gameDiv);
-
-        cardValuesButton = p.createButton("Card Values");
-        cardValuesButton.position(20, 60);
-        cardValuesButton.mousePressed(showCardValues);
-        cardValuesButton.parent(menuDiv);
-        
-        cardValuesButton = p.createButton("Card Values");
-        cardValuesButton.position(20, 120);
-        cardValuesButton.mousePressed(showCardValues);
-        cardValuesButton.parent(gameDiv);
-
-        // Create the back to main menu button
-        backToMainMenuButton = p.createButton("Back to Main Menu");
-        backToMainMenuButton.position(20, 20);
-        backToMainMenuButton.mousePressed(backToMainMenu);
-        backToMainMenuButton.parent(gameDiv);
-
-        // Initialize game elements
-        if (typeof initializeGameElements === 'function') {
-            initializeGameElements(p);
-        }
+        // Position buttons
+        const buttonContainer = p.createDiv('');
+        buttonContainer.class('button-container');
+        buttonContainer.child(backToMenuBtn);
+        buttonContainer.child(cardValuesBtn);
+        buttonContainer.child(instructionsBtn);
+        buttonContainer.child(startButton);
+        buttonContainer.parent('gameCanvas');
     };
 
     p.draw = function() {

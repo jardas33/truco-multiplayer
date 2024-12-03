@@ -1,7 +1,7 @@
 let roomId;
 let playerId;
 let isMultiplayerMode = false;
-let players = [];
+window.players = [];
   
 function createDeck() {
     deck = [];
@@ -30,7 +30,7 @@ function createDeck() {
     }
   }
   
-  class Game {
+  window.Game = class Game {
     getTeam1Rounds() {
       return this.scores.team1;
     }
@@ -515,7 +515,7 @@ function createDeck() {
         createDeck();
         shuffleDeck(deck);
         // Players will be initialized by server events
-        window.game = new Game(players || []);
+        window.game = new window.Game(window.players || []);
         window.game.startGame();
     } else {
         // Single player mode with bots
@@ -527,20 +527,20 @@ function createDeck() {
     console.log("Starting single player game...");
     isMultiplayerMode = false;
     gameState = gameStateEnum.Playing;
-    players = [];
+    window.players = [];
     
     // Create human player
-    players.push(new Player(1, "Player 1", "team1", false));
+    window.players.push(new Player(1, "Player 1", "team1", false));
     
     // Create bot players
-    players.push(new Player(2, "Bot 1", "team2", true));
-    players.push(new Player(3, "Bot 2", "team1", true));
-    players.push(new Player(4, "Bot 3", "team2", true));
+    window.players.push(new Player(2, "Bot 1", "team2", true));
+    window.players.push(new Player(3, "Bot 2", "team1", true));
+    window.players.push(new Player(4, "Bot 3", "team2", true));
 
     createDeck();
     shuffleDeck(deck);
-    distributeCards(players, deck);
-    window.game = new Game(players);
+    distributeCards(window.players, deck);
+    window.game = new window.Game(window.players);
     window.game.startGame();
   }
   
