@@ -33,13 +33,15 @@ function draw() {
         rect(boxX, boxY, boxWidth, boxHeight);
         
         // Draw title
+        noStroke(); // Remove stroke for text
         fill(218, 165, 32); // Golden color
         textSize(32);
         textAlign(CENTER);
         text("Instructions of the game", width/2, boxY + 50);
         
         // Draw instructions text
-        fill(255);
+        fill(255); // White color for text
+        noStroke(); // Ensure no stroke for text
         textSize(18);
         textAlign(LEFT);
         textLeading(28);  // Increased line spacing for better readability
