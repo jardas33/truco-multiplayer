@@ -158,3 +158,50 @@ button:disabled {
     margin-bottom: 20px;
     text-align: left;
 }
+
+.values-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1600px;
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 3px solid rgb(218, 165, 32);
+    padding: 30px;
+    color: white;
+    z-index: 1000;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.values-title {
+    color: rgb(218, 165, 32);
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+.values-text {
+    font-size: 20px;
+    line-height: 40px;
+    margin-bottom: 15px;
+    text-align: left;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.value-item {
+    width: 45%;
+    margin: 10px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgb(218, 165, 32);
+    border-radius: 5px;
+}
+
+.value-rank {
+    color: rgb(218, 165, 32);
+    font-weight: bold;
+    margin-right: 10px;
+}
