@@ -36,14 +36,21 @@
 
     <!-- Load game dependencies -->
     <script src="/js/variables.js"></script>
+    <script src="/js/functions.js"></script>
     <script src="/js/lobby.js"></script>
     
     <!-- Load game logic -->
-    <script src="/js/functions.js"></script>
-    <script src="/js/players.js"></script>
-    <script src="/js/preload.js"></script>
+    <script src="/js/game.js"></script>
     <script src="/js/setup.js"></script>
     <script src="/js/draw.js"></script>
-    <script src="/js/game.js"></script>
+
+    <script>
+        // Initialize game when document is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initGame === 'function') {
+                initGame();
+            }
+        });
+    </script>
 </body>
 </html>

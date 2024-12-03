@@ -21,27 +21,41 @@ window.p5Instance = new p5(function(p) {
             // Back to Menu button
             const backToMenuBtn = document.getElementById('backToMenuBtn');
             if (backToMenuBtn) {
-                backToMenuBtn.onclick = backToMainMenu;
+                backToMenuBtn.onclick = function() {
+                    if (typeof backToMainMenu === 'function') {
+                        backToMainMenu();
+                    }
+                };
             }
 
             // Card Values button
             const cardValuesBtn = document.getElementById('cardValuesBtn');
             if (cardValuesBtn) {
-                cardValuesBtn.onclick = showCardValues;
+                cardValuesBtn.onclick = function() {
+                    if (typeof showCardValues === 'function') {
+                        showCardValues();
+                    }
+                };
             }
 
             // Instructions button
             const instructionsBtn = document.getElementById('instructionsBtn');
             if (instructionsBtn) {
-                instructionsBtn.onclick = showInstructions;
+                instructionsBtn.onclick = function() {
+                    if (typeof showInstructions === 'function') {
+                        showInstructions();
+                    }
+                };
             }
 
             // Start Game button
             const startGameBtn = document.getElementById('startGameBtn');
             if (startGameBtn) {
-                startGameBtn.onclick = () => {
+                startGameBtn.onclick = function() {
                     console.log("Start game clicked");
-                    startTrucoGame();
+                    if (typeof startTrucoGame === 'function') {
+                        startTrucoGame();
+                    }
                 };
             }
 
