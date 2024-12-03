@@ -10,8 +10,11 @@
     <div id="gameContainer">
         <div id="roomControls" style="text-align: center; margin: 20px;">
             <input type="text" id="roomInput" placeholder="Enter room code">
-            <button onclick="createRoom()">Create Room</button>
-            <button onclick="joinRoom()">Join Room</button>
+            <button id="createRoomBtn">Create Room</button>
+            <button id="joinRoomBtn">Join Room</button>
+            <button id="addBotBtn" style="display: none;">Add Bot</button>
+            <button id="startGameBtn" style="display: none;">Start Game</button>
+            <div id="playerList" style="margin-top: 20px;"></div>
         </div>
         <div id="Menu"></div>
         <div id="Instructions"></div>
@@ -31,16 +34,5 @@
     <script src="/js/setup.js"></script>
     <script src="/js/draw.js"></script>
     <script src="/js/game.js"></script>
-
-    <script>
-        // Ensure all scripts are loaded before initializing
-        window.addEventListener('load', function() {
-            if (typeof initializeLobby === 'function') {
-                initializeLobby();
-            } else {
-                console.error('Lobby initialization failed');
-            }
-        });
-    </script>
 </body>
 </html>
