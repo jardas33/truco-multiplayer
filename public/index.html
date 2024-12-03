@@ -3,8 +3,6 @@
 <head>
     <title>Truco Game</title>
     <link rel="stylesheet" type="text/css" href="/css/style.css">
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
     <div id="gameContainer">
@@ -23,7 +21,13 @@
         <div id="gameCanvas"></div>
     </div>
 
-    <!-- Load dependencies first -->
+    <!-- Load Socket.IO first -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Load p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+
+    <!-- Load game dependencies -->
     <script src="/js/variables.js"></script>
     <script src="/js/lobby.js"></script>
     
@@ -34,5 +38,13 @@
     <script src="/js/setup.js"></script>
     <script src="/js/draw.js"></script>
     <script src="/js/game.js"></script>
+
+    <script>
+        // Error handling for script loading
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+            return false;
+        };
+    </script>
 </body>
 </html>

@@ -1,14 +1,30 @@
-// Initialize socket at global scope
-window.socket = io();
+// Wait for socket.io to be loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize socket
+    window.socket = io();
+    
+    // Initialize lobby after socket is ready
+    socket.on('connect', () => {
+        console.log('Socket connected successfully');
+        initializeLobby();
+    });
+});
 
 function initializeLobby() {
     console.log('Initializing lobby...');
     
-    // Initialize socket event listeners
-    socket.on('connect', () => {
-        console.log('Connected to server');
-    });
+    // Add button event listeners
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const addBotBtn = document.getElementById('addBotBtn');
+    const startGameBtn = document.getElementById('startGameBtn');
 
+    if (createRoomBtn) createRoomBtn.addEventListener('click', createRoom);
+    if (joinRoomBtn) joinRoomBtn.addEventListener('click', joinRoom);
+    if (addBotBtn) addBotBtn.addEventListener('click', addBot);
+    if (startGameBtn) startGameBtn.addEventListener('click', startGameWithCurrentPlayers);
+
+    // Socket event listeners
     socket.on('roomCreated', (id) => {
         window.roomId = id;
         document.getElementById('roomInput').value = id;
@@ -37,6 +53,7 @@ function initializeLobby() {
 
     socket.on('gameStart', (players) => {
         console.log('Game starting with players:', players);
+        hideRoomControls();
         if (typeof startGame === 'function') {
             startGame(players);
         }
@@ -47,20 +64,21 @@ function initializeLobby() {
         updatePlayerList(data.players);
     });
 
-    // Add button event listeners
-    document.getElementById('createRoomBtn').addEventListener('click', createRoom);
-    document.getElementById('joinRoomBtn').addEventListener('click', joinRoom);
-    document.getElementById('addBotBtn').addEventListener('click', addBot);
-    document.getElementById('startGameBtn').addEventListener('click', startGameWithCurrentPlayers);
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+        alert('An error occurred: ' + error);
+    });
 }
 
 function createRoom() {
+    console.log('Creating room...');
     const roomCode = document.getElementById('roomInput').value || Math.random().toString(36).substring(7);
     console.log('Creating room with code:', roomCode);
     socket.emit('createRoom', roomCode);
 }
 
 function joinRoom() {
+    console.log('Joining room...');
     const roomCode = document.getElementById('roomInput').value;
     if (roomCode) {
         console.log('Joining room:', roomCode);
@@ -71,6 +89,7 @@ function joinRoom() {
 }
 
 function addBot() {
+    console.log('Adding bot...');
     if (window.roomId) {
         console.log('Adding bot to room:', window.roomId);
         socket.emit('addBot', window.roomId);
@@ -78,6 +97,7 @@ function addBot() {
 }
 
 function startGameWithCurrentPlayers() {
+    console.log('Starting game...');
     if (window.roomId) {
         console.log('Starting game in room:', window.roomId);
         socket.emit('startGame', window.roomId);
@@ -85,20 +105,24 @@ function startGameWithCurrentPlayers() {
 }
 
 function updateLobbyUI(inRoom) {
+    console.log('Updating lobby UI, inRoom:', inRoom);
     const addBotBtn = document.getElementById('addBotBtn');
     const startGameBtn = document.getElementById('startGameBtn');
     
     if (inRoom) {
-        addBotBtn.style.display = 'inline-block';
-        startGameBtn.style.display = 'inline-block';
+        if (addBotBtn) addBotBtn.style.display = 'inline-block';
+        if (startGameBtn) startGameBtn.style.display = 'inline-block';
     } else {
-        addBotBtn.style.display = 'none';
-        startGameBtn.style.display = 'none';
+        if (addBotBtn) addBotBtn.style.display = 'none';
+        if (startGameBtn) startGameBtn.style.display = 'none';
     }
 }
 
 function updatePlayerList(players) {
+    console.log('Updating player list:', players);
     const playerListDiv = document.getElementById('playerList');
+    if (!playerListDiv) return;
+
     playerListDiv.innerHTML = '<h3>Players in Room:</h3>';
     players.forEach((player, index) => {
         const playerDiv = document.createElement('div');
@@ -108,9 +132,17 @@ function updatePlayerList(players) {
 }
 
 function enableStartButton() {
+    console.log('Enabling start button');
     const startGameBtn = document.getElementById('startGameBtn');
-    startGameBtn.disabled = false;
+    if (startGameBtn) {
+        startGameBtn.disabled = false;
+    }
 }
 
-// Initialize when the page loads
-window.addEventListener('load', initializeLobby); 
+function hideRoomControls() {
+    console.log('Hiding room controls');
+    const roomControls = document.getElementById('roomControls');
+    if (roomControls) {
+        roomControls.style.display = 'none';
+    }
+} 
