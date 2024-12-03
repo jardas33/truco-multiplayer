@@ -154,8 +154,10 @@ function startTrucoGame() {
 
 function backToMainMenu() {
   gameState = gameStateEnum.Menu;
-  gameDiv.style('display', 'none');
-  menuDiv.style('display', 'block');
+  menuDiv.class('active');
+  instructionsDiv.removeClass('active');
+  valuesDiv.removeClass('active');
+  gameDiv.removeClass('active');
   
   // If in online mode, leave the room
   if (socket && currentRoom) {
@@ -165,51 +167,35 @@ function backToMainMenu() {
 }
 
 function showInstructions() {
-  previousGameState = gameState;
   gameState = gameStateEnum.Instructions;
-  menuDiv.style('display', 'none');
-  gameDiv.style('display', 'none');
-  instructionsDiv.style('display', 'block');
+  menuDiv.removeClass('active');
+  instructionsDiv.class('active');
+  valuesDiv.removeClass('active');
+  gameDiv.removeClass('active');
 }
 
 function showCardValues() {
-  previousGameState = gameState;
   gameState = gameStateEnum.CardValues;
-  menuDiv.style('display', 'none');
-  gameDiv.style('display', 'none');
-  valuesDiv.style('display', 'block');
+  menuDiv.removeClass('active');
+  instructionsDiv.removeClass('active');
+  valuesDiv.class('active');
+  gameDiv.removeClass('active');
 }
 
 function closeInstructions() {
-  instructionsDiv.style('display', 'none');
-  if (previousGameState != null) {
-    gameState = previousGameState;
-    if (gameState === gameStateEnum.Menu) {
-      menuDiv.style('display', 'block');
-    } else if (gameState === gameStateEnum.Playing) {
-      gameDiv.style('display', 'block');
-    }
-    previousGameState = null;
-  } else {
-    gameState = gameStateEnum.Menu;
-    menuDiv.style('display', 'block');
-  }
+  gameState = gameStateEnum.Menu;
+  menuDiv.class('active');
+  instructionsDiv.removeClass('active');
+  valuesDiv.removeClass('active');
+  gameDiv.removeClass('active');
 }
 
 function closeCardValues() {
-  valuesDiv.style('display', 'none');
-  if (previousGameState != null) {
-    gameState = previousGameState;
-    if (gameState === gameStateEnum.Menu) {
-      menuDiv.style('display', 'block');
-    } else if (gameState === gameStateEnum.Playing) {
-      gameDiv.style('display', 'block');
-    }
-    previousGameState = null;
-  } else {
-    gameState = gameStateEnum.Menu;
-    menuDiv.style('display', 'block');
-  }
+  gameState = gameStateEnum.Menu;
+  menuDiv.class('active');
+  instructionsDiv.removeClass('active');
+  valuesDiv.removeClass('active');
+  gameDiv.removeClass('active');
 }
 
 function imageClick(image) {
@@ -336,6 +322,30 @@ function updatePlayerList(playerData) {
     playerDiv.textContent = `Player ${playerId}`;
     playerList.appendChild(playerDiv);
   });
+}
+
+function startGame() {
+  gameState = gameStateEnum.Playing;
+  menuDiv.removeClass('active');
+  instructionsDiv.removeClass('active');
+  valuesDiv.removeClass('active');
+  gameDiv.class('active');
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  
+  // Update player positions
+  if (playerPositions) {
+    playerPositions[0].x = width / 6;
+    playerPositions[0].y = height / 2;
+    playerPositions[1].x = width / 2;
+    playerPositions[1].y = 100;
+    playerPositions[2].x = (5 * width) / 6;
+    playerPositions[2].y = height / 2;
+    playerPositions[3].x = width / 2;
+    playerPositions[3].y = height - 100;
+  }
 }
 
 
