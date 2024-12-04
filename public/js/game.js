@@ -34,76 +34,45 @@ function createDeck() {
     constructor(players) {
       this.players = players;
       this.currentPlayerIndex = 0;
-      this.initialTrucoCallerIndex = null;
-      this.lastActionWasRaise = false;
-      this.round = 0;
-      this.trucoState = null;
-      this.gameValue = 1;
-      this.winningstruc = null;
-      this.scores = {
-        team1: 0,
-        team2: 0
-      };
-      this.games = {
-        team1: 0,
-        team2: 0
-      };
-      this.sets = {
-        team1: 0,
-        team2: 0
-      };
-      this.roundResults = [];
       this.startRoundPlayer = 0;
-  
-      // Initialize socket for multiplayer
-      if (isMultiplayerMode) {
-        this.initializeSocket();
-      }
-    }
-  
-    initializeSocket() {
-      socket = io();
-  
-      socket.on('playerJoined', (data) => {
-        this.updatePlayers(data.players);
-        playerId = data.playerId;
-      });
-  
-      socket.on('gameStart', (players) => {
-        this.startGame();
-      });
-  
-      socket.on('cardPlayed', (data) => {
-        if (data.playerId !== playerId) {
-          this.handleRemoteCardPlay(data);
-        }
-      });
-  
-      socket.on('trucoRequested', (data) => {
-        if (data.playerId !== playerId) {
-          this.handleRemoteTrucoRequest(data);
-        }
-      });
-  
-      socket.on('trucoResponseReceived', (data) => {
-        if (data.playerId !== playerId) {
-          this.handleRemoteTrucoResponse(data);
-        }
-      });
+      this.round = 0;
+      this.scores = { team1: 0, team2: 0 };
+      this.games = { team1: 0, team2: 0 };
+      this.sets = { team1: 0, team2: 0 };
+      this.gameValue = 1;
+      this.potentialGameValue = 0;
+      this.trucoState = false;
+      this.initialTrucoCallerIndex = null;
+      this.roundResults = [];
+      this.IsDraw = false;
+      this.roundWinner = null;
+      this.winningstruc = null;
+      console.log("Game initialized with players:", players);
     }
   
     startGame() {
-      console.log("Starting game with players:", this.players);
+      console.log("Starting game...");
+      createDeck();
+      shuffleDeck(deck);
+      distributeCards(this.players, deck);
+      
       this.currentPlayerIndex = 0;
       this.players[this.currentPlayerIndex].isActive = true;
       playedCards = [];
+      
+      // Make cards clickable for first player
       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
       
+      // Show game UI elements
+      backToMainMenuButton.show();
+      trucoButton.show();
+      
+      // If first player is a bot, it plays automatically
       if (this.players[this.currentPlayerIndex].isBot) {
         setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
       }
       
-      this.startRoundPlayer = this.currentPlayerIndex;
+      console.log("Game started successfully");
     }
   
     nextPlayer() {

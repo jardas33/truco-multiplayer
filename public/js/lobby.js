@@ -163,12 +163,44 @@ function addBot() {
 }
 
 function startGameWithCurrentPlayers() {
-    if (!socket || !window.roomId) {
-        console.error('Socket not initialized or not in a room');
-        return;
-    }
-    console.log('Starting game in room:', window.roomId);
-    socket.emit('startGame', window.roomId);
+    console.log('Starting game with current players...');
+    
+    // Initialize game state
+    gameState = gameStateEnum.Playing;
+    
+    // Create players array with one human player and three bots
+    let players = [
+        new Player("Player 1", "Team 1", false),
+        new Player("Bot 1", "Team 2", true),
+        new Player("Bot 2", "Team 1", true),
+        new Player("Bot 3", "Team 2", true)
+    ];
+    
+    console.log("Players created:", players);
+    
+    // Initialize game with players
+    window.game = new Game(players);
+    
+    // Initialize game variables
+    playedCards = [];
+    team1Rounds = 0;
+    team2Rounds = 0;
+    team1Games = 0;
+    team2Games = 0;
+    team1Sets = 0;
+    team2Sets = 0;
+    
+    // Start the game
+    window.game.startGame();
+    
+    // Update UI
+    menuDiv.style('display', 'none');
+    gameDiv.style('display', 'block');
+    instructionsDiv.style('display', 'none');
+    valuesDiv.style('display', 'none');
+    backToMainMenuButton.show();
+    
+    console.log('Game started successfully');
 }
 
 function updateLobbyUI(inRoom) {
