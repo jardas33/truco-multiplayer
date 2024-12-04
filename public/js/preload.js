@@ -3,7 +3,6 @@ function preload() {
     backgroundImage = loadImage("Images/background.jpg");
     backCardImage = loadImage("Images/cardBack.jpg");
     popupframeImage = loadImage("Images/popup_frame.png");
-    instructionsImage = loadImage("Images/instructions.png");
     
     // Load card images
     let cardNames = {
