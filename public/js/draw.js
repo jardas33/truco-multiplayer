@@ -22,149 +22,6 @@ function draw() {
             existingBox.remove();
         }
     }
-    else if (gameState === gameStateEnum.Instructions) {
-        menuDiv.hide();
-        gameDiv.hide();
-        valuesDiv.hide();
-        
-        // Remove any existing instructions box first
-        const existingBox = document.querySelector('.instructions-box');
-        if (existingBox) {
-            existingBox.remove();
-        }
-        
-        // Create new instructions box
-        const instructionsBox = createElement('div');
-        instructionsBox.class('instructions-box');
-        
-        const title = createElement('h1', 'Instructions of the game');
-        title.class('instructions-title');
-        title.parent(instructionsBox);
-        
-        const instructions = [
-            "Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.",
-            "In each round, every player plays one card. The team that wins two out of three rounds wins the game. The team that wins twelve games first wins the set.",
-            "The order of turns is clockwise, with the first player in each round being the one who played the highest card in the previous round, or in case of a tie, the one who played first in the previous round.",
-            "The game features the 'truco' mechanic. During their turn, a player can choose to call 'truco', which increases the value of the current game if accepted. The next player can then choose to accept, reject, or raise the value further. If truco is rejected, the game ends immediately, and the team that called 'truco' wins the game at its current value. If accepted, the game goes on but it is now worth 3 games instead of 1. The next player can also raise to 6, then the decision goes back to the player that initially called truco and he has the same options: accept, reject and raise. A game can only be risen to 12 games. It is not possible to raise after that.",
-            "Once a team has won eleven games within a set, the 'Game of Eleven' rule comes into effect. The team can view their cards and their partner's cards before deciding whether to play the next game. If they decide to play, the game's value is increased to three. If they reject, the opposing team wins one game instantly.",
-            "Truco is played with a 40 card deck, with a specific order of card values that you can see in the card values instructions."
-        ];
-        
-        instructions.forEach(text => {
-            const p = createElement('p', text);
-            p.class('instructions-text');
-            p.parent(instructionsBox);
-        });
-        
-        // Create and position close button
-        if (instructionsCloseButton) {
-            instructionsCloseButton.remove();
-        }
-        instructionsCloseButton = createButton('Close');
-        instructionsCloseButton.class('close-button');
-        instructionsCloseButton.mousePressed(() => {
-            gameState = gameStateEnum.Menu;
-            instructionsBox.remove();
-            instructionsCloseButton.remove();
-            menuDiv.show();
-            loop();
-        });
-        
-        instructionsCloseButton.parent(instructionsBox);
-        instructionsBox.parent(instructionsDiv);
-        instructionsDiv.show();
-    }
-    else if (gameState === gameStateEnum.CardValues) {
-        menuDiv.hide();
-        gameDiv.hide();
-        instructionsDiv.hide();
-        valuesDiv.show();
-        
-        // Draw golden box
-        const boxWidth = 1000;
-        const boxHeight = 600;
-        const boxX = width/2 - boxWidth/2;
-        const boxY = height/2 - boxHeight/2;
-        
-        // Draw box background with opacity
-        fill(0, 0, 0, 200);
-        stroke(218, 165, 32); // Golden color only for box border
-        strokeWeight(3);
-        rect(boxX, boxY, boxWidth, boxHeight);
-        
-        // Draw title
-        noStroke(); // Remove stroke for all text
-        fill(218, 165, 32);
-        textSize(36);
-        textAlign(CENTER);
-        text("Card Values", width/2, boxY + 60);
-        
-        // Draw subtitle
-        textSize(28);
-        text("Card power from most powerful (1) to least powerful (17)", width/2, boxY + 110);
-        
-        // Draw two columns of card values
-        textSize(22);
-        textAlign(LEFT);
-        const startY = boxY + 160;
-        const lineHeight = 35;
-        const leftColX = boxX + 80;
-        const rightColX = boxX + boxWidth/2 + 80;
-        
-        const leftColumnEntries = [
-            "Queen of diamonds",
-            "Jack of clubs",
-            "5 of clubs",
-            "4 of clubs",
-            "7 of hearts",
-            "Ace of spades",
-            "7 of diamonds",
-            "All 3's",
-            "All 2's"
-        ];
-        
-        const rightColumnEntries = [
-            "Remaining Aces",
-            "All Kings",
-            "Remaining Queens",
-            "Remaining Jacks",
-            "Remaining 7's",
-            "All 6's",
-            "Remaining 5's",
-            "Remaining 4's"
-        ];
-        
-        // Draw left column
-        for(let i = 0; i < leftColumnEntries.length; i++) {
-            fill(218, 165, 32);
-            text((i + 1) + ".", leftColX, startY + lineHeight * i);
-            fill(255);
-            text(leftColumnEntries[i], leftColX + 35, startY + lineHeight * i);
-        }
-        
-        // Draw right column
-        for(let i = 0; i < rightColumnEntries.length; i++) {
-            fill(218, 165, 32);
-            text((i + 10) + ".", rightColX, startY + lineHeight * i);
-            fill(255);
-            text(rightColumnEntries[i], rightColX + 45, startY + lineHeight * i);
-        }
-        
-        // Create and position close button
-        if (!instructionsCloseButton) {
-            instructionsCloseButton = createButton('Close');
-            instructionsCloseButton.class('close-button');
-            instructionsCloseButton.mousePressed(() => {
-                gameState = gameStateEnum.Menu;
-                instructionsCloseButton.hide();
-                menuDiv.show();
-                loop();
-            });
-        }
-        
-        instructionsCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
-        instructionsCloseButton.show();
-    }
     else if (gameState === gameStateEnum.Playing) {
         menuDiv.hide();
         gameDiv.show();
@@ -173,128 +30,63 @@ function draw() {
         backToMainMenuButton.show();
         
         if (window.game) {
-            // Add debug information
-            console.log('Game state:', window.game);
-            
-            // Basic error checking before drawing
-            if (!backgroundImage) {
-                console.error('Background image not loaded');
-            }
-            
-            try {
-                drawGameState();
-            } catch (error) {
-                console.error('Error in drawGameState:', error);
-                // Fallback display if drawing fails
-                fill(255);
-                textSize(24);
-                textAlign(CENTER);
-                text('Error loading game state. Check console for details.', width/2, height/2);
-            }
-        } else {
-            console.error('Game object not initialized');
-            // Display message if game object is missing
-            fill(255);
-            textSize(24);
-            textAlign(CENTER);
-            text('Game not properly initialized', width/2, height/2);
+            drawGameState();
         }
     }
+    // ... rest of the states ...
 }
 
 function drawGameState() {
-    if (!window.game) {
-        console.error('Game not initialized');
-        return;
-    }
-
-    // Draw players
-    const players = window.game.players;
-    if (!players) {
-        console.error('No players found in game state');
-        return;
-    }
-
     // Draw game table
     push();
-    fill(0, 100, 0); // Dark green table
+    fill(0, 100, 0, 200); // Dark green table with some transparency
     noStroke();
     rect(width * 0.1, height * 0.1, width * 0.8, height * 0.8);
     pop();
 
-    // Draw players' cards
-    players.forEach((player, index) => {
-        if (!player) return;
-        
-        const position = getPlayerPosition(index, players.length);
-        drawPlayerHand(player, position.x, position.y);
-        
-        // Draw player info
-        fill(255);
-        textAlign(CENTER);
-        textSize(16);
-        text(`Player ${index + 1}`, position.x, position.y - 20);
-    });
-
-    // Draw played cards in the center
-    if (window.game.playedCards) {
-        drawPlayedCards();
+    // Draw players and their cards
+    if (window.game.players) {
+        window.game.players.forEach((player, index) => {
+            const position = playerPositions[index];
+            if (position && player) {
+                // Draw player label
+                fill(255);
+                noStroke();
+                textAlign(CENTER);
+                text(position.label, position.x, position.y + position.labelOffset);
+                
+                // Draw player's cards
+                if (player.cards) {
+                    drawPlayerCards(player, position.x, position.y);
+                }
+            }
+        });
     }
 }
 
-function getPlayerPosition(playerIndex, totalPlayers) {
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(width, height) * 0.35;
-    
-    // Calculate angle based on player position
-    const angle = (playerIndex * (2 * Math.PI / totalPlayers)) - Math.PI / 2;
-    
-    return {
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle)
-    };
-}
-
-function drawPlayerHand(player, x, y) {
-    if (!player.cards) return;
-    
+function drawPlayerCards(player, x, y) {
     const cardWidth = 80;
     const cardHeight = 120;
     const cardSpacing = 30;
     
-    player.cards.forEach((card, index) => {
-        const offsetX = (index - player.cards.length / 2) * cardSpacing;
-        if (card) {
-            push();
-            imageMode(CENTER);
-            // Show card face only for the current player (player 1)
-            const cardImage = (player.id === 1) ? cardImages[card.name] : backCardImage;
-            if (cardImage) {
-                image(cardImage, x + offsetX, y, cardWidth, cardHeight);
-            } else {
-                // Fallback if image isn't loaded
-                fill(255);
-                rect(x + offsetX - cardWidth/2, y - cardHeight/2, cardWidth, cardHeight);
+    if (player.cards && player.cards.length > 0) {
+        player.cards.forEach((card, index) => {
+            if (card) {
+                const offsetX = (index - player.cards.length / 2) * cardSpacing;
+                push();
+                imageMode(CENTER);
+                // Show face-up cards only for player 1
+                const cardImg = (player.id === 1) ? cardImages[card.name] : backCardImage;
+                if (cardImg) {
+                    image(cardImg, x + offsetX, y, cardWidth, cardHeight);
+                } else {
+                    // Fallback rectangle if image isn't loaded
+                    fill(255);
+                    rectMode(CENTER);
+                    rect(x + offsetX, y, cardWidth, cardHeight);
+                }
+                pop();
             }
-            pop();
-        }
-    });
-}
-
-function drawPlayedCards() {
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const cardWidth = 80;
-    const cardHeight = 120;
-    
-    window.game.playedCards.forEach((card, index) => {
-        if (!card) return;
-        
-        const offsetX = (index - window.game.playedCards.length / 2) * 30;
-        push();
-        imageMode(CENTER);
-        image(card.image, centerX + offsetX, centerY, cardWidth, cardHeight);
-        pop();
-    });
+        });
+    }
 }

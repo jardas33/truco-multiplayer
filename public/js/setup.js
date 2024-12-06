@@ -210,8 +210,7 @@ function createDeck() {
             deck.push({
                 suit: suit,
                 value: value,
-                name: name,  // Store the full name to match cardImages keys
-                backImage: backCardImage
+                name: name
             });
         }
     }
