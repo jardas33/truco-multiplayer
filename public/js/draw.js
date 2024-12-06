@@ -173,7 +173,31 @@ function draw() {
         backToMainMenuButton.show();
         
         if (window.game) {
-            drawGameState();
+            // Add debug information
+            console.log('Game state:', window.game);
+            
+            // Basic error checking before drawing
+            if (!backgroundImage) {
+                console.error('Background image not loaded');
+            }
+            
+            try {
+                drawGameState();
+            } catch (error) {
+                console.error('Error in drawGameState:', error);
+                // Fallback display if drawing fails
+                fill(255);
+                textSize(24);
+                textAlign(CENTER);
+                text('Error loading game state. Check console for details.', width/2, height/2);
+            }
+        } else {
+            console.error('Game object not initialized');
+            // Display message if game object is missing
+            fill(255);
+            textSize(24);
+            textAlign(CENTER);
+            text('Game not properly initialized', width/2, height/2);
         }
     }
 }
