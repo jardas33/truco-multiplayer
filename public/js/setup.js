@@ -151,9 +151,18 @@ function setup() {
     // Create Start Game button
     startGameButton = createButton("Start Game");
     startGameButton.mousePressed(() => {
-        console.log("Starting game...");
+        console.log("Start Game clicked");
+        console.log("Current game state:", gameState);
+        console.log("Current window.game:", window.game);
+        
         gameState = gameStateEnum.Playing;
+        console.log("Game state changed to:", gameState);
+        
         initializeGame();  // Initialize game when starting
+        console.log("After initialization:", window.game);
+        console.log("Players:", window.game.players);
+        console.log("Player 1 cards:", window.game.players[0].cards);
+        
         loop();
     });
     startGameButton.parent('Menu');
