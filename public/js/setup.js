@@ -139,5 +139,13 @@ function setup() {
             labelOffset: 50,
         },
     ];
+    
+    // Add this to your setup function
+    window.game = {
+        players: [],
+        playedCards: [],
+        currentPlayerIndex: 0,
+        startRoundPlayer: 0
+    };
 }
   

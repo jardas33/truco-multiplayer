@@ -201,3 +201,94 @@ function draw() {
         }
     }
 }
+
+function drawGameState() {
+    if (!window.game) {
+        console.error('Game not initialized');
+        return;
+    }
+
+    // Draw players
+    const players = window.game.players;
+    if (!players) {
+        console.error('No players found in game state');
+        return;
+    }
+
+    // Draw game table
+    push();
+    fill(0, 100, 0); // Dark green table
+    noStroke();
+    rect(width * 0.1, height * 0.1, width * 0.8, height * 0.8);
+    pop();
+
+    // Draw players' cards
+    players.forEach((player, index) => {
+        if (!player) return;
+        
+        const position = getPlayerPosition(index, players.length);
+        drawPlayerHand(player, position.x, position.y);
+        
+        // Draw player info
+        fill(255);
+        textAlign(CENTER);
+        textSize(16);
+        text(`Player ${index + 1}`, position.x, position.y - 20);
+    });
+
+    // Draw played cards in the center
+    if (window.game.playedCards) {
+        drawPlayedCards();
+    }
+}
+
+function getPlayerPosition(playerIndex, totalPlayers) {
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = Math.min(width, height) * 0.35;
+    
+    // Calculate angle based on player position
+    const angle = (playerIndex * (2 * Math.PI / totalPlayers)) - Math.PI / 2;
+    
+    return {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle)
+    };
+}
+
+function drawPlayerHand(player, x, y) {
+    if (!player.cards) return;
+    
+    const cardWidth = 80;
+    const cardHeight = 120;
+    const cardSpacing = 30;
+    
+    player.cards.forEach((card, index) => {
+        const offsetX = (index - player.cards.length / 2) * cardSpacing;
+        if (card) {
+            push();
+            imageMode(CENTER);
+            // If it's the current player or the card is played, show the card face
+            const cardImage = card.image || cardBackImage;
+            image(cardImage, x + offsetX, y, cardWidth, cardHeight);
+            pop();
+        }
+    });
+}
+
+function drawPlayedCards() {
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const cardWidth = 80;
+    const cardHeight = 120;
+    
+    window.game.playedCards.forEach((card, index) => {
+        if (!card) return;
+        
+        const offsetX = (index - window.game.playedCards.length / 2) * 30;
+        push();
+        imageMode(CENTER);
+        image(card.image, centerX + offsetX, centerY, cardWidth, cardHeight);
+        pop();
+    });
+}
