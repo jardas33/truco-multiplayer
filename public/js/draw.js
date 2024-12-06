@@ -269,7 +269,7 @@ function drawPlayerHand(player, x, y) {
             push();
             imageMode(CENTER);
             // Show card face only for the current player (player 1)
-            const cardImage = (player.id === 1) ? card.image : cardBackImage;
+            const cardImage = (player.id === 1) ? cardImages[card.name] : backCardImage;
             if (cardImage) {
                 image(cardImage, x + offsetX, y, cardWidth, cardHeight);
             } else {

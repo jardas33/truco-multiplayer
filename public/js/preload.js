@@ -1,3 +1,5 @@
+let cardImages = {};  // Make sure this is declared globally
+
 function preload() {
     // Load background image
     backgroundImage = loadImage("Images/background.jpg");
@@ -6,8 +8,8 @@ function preload() {
     
     // Load card images
     let cardNames = {
-        "Queen of diamonds": "Images/queen_of_diamonds.png",
-        "Jack of clubs": "Images/jack_of_clubs.png",
+        "queen of diamonds": "Images/queen_of_diamonds.png",
+        "jack of clubs": "Images/jack_of_clubs.png",
         "5 of clubs": "Images/5_of_clubs.png",
         "4 of clubs": "Images/4_of_clubs.png",
         "7 of hearts": "Images/7_of_hearts.png",
@@ -48,8 +50,9 @@ function preload() {
         "4 of hearts": "Images/4_of_hearts.png",
     };
     
+    // Convert all keys to lowercase for easier matching
     for (let name in cardNames) {
-        cardImages[name] = loadImage(cardNames[name]);
+        cardImages[name.toLowerCase()] = loadImage(cardNames[name]);
     }
 }
   

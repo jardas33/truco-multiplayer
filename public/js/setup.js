@@ -147,6 +147,16 @@ function setup() {
         currentPlayerIndex: 0,
         startRoundPlayer: 0
     };
+    
+    // Create Start Game button
+    startGameButton = createButton("Start Game");
+    startGameButton.mousePressed(() => {
+        console.log("Starting game...");
+        gameState = gameStateEnum.Playing;
+        initializeGame();  // Initialize game when starting
+        loop();
+    });
+    startGameButton.parent('Menu');
 }
 
 function initializeGame() {
@@ -196,12 +206,12 @@ function createDeck() {
 
     for (let suit of suits) {
         for (let value of values) {
-            const imageName = `${value}_of_${suit}`;
+            const name = `${value} of ${suit}`;
             deck.push({
                 suit: suit,
                 value: value,
-                image: loadImage(`Images/${imageName}.png`),
-                backImage: cardBackImage
+                name: name,  // Store the full name to match cardImages keys
+                backImage: backCardImage
             });
         }
     }
