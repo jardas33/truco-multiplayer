@@ -1,11 +1,4 @@
-const gameStateEnum = {
-    Menu: 'Menu',
-    Playing: 'Playing',
-    Instructions: 'Instructions',
-    CardValues: 'CardValues'
-};
-
-let gameState = gameStateEnum.Menu;
+let gameState;
 
 function setup() {
     let canvas = createCanvas(windowWidth, windowHeight);
@@ -28,12 +21,7 @@ function setup() {
     
     // Create Start Game button
     startGameButton = createButton("Start Game");
-    startGameButton.mousePressed(() => {
-        console.log("Start Game clicked");
-        gameState = gameStateEnum.Playing;
-        initializeGame();
-        loop();
-    });
+    startGameButton.mousePressed(startGame);
     startGameButton.parent('Menu');
     
     // Setup player positions
@@ -162,6 +150,13 @@ function setup() {
     buttonAcceptTruco.hide();
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
+}
+
+function startGame() {
+    console.log("Starting game...");
+    gameState = gameStateEnum.Playing;
+    initializeGame();
+    loop();
 }
 
 function initializeGame() {
