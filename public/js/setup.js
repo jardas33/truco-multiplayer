@@ -1,13 +1,18 @@
+const gameStateEnum = {
+    Menu: 'Menu',
+    Playing: 'Playing',
+    Instructions: 'Instructions',
+    CardValues: 'CardValues'
+};
+
+let gameState = gameStateEnum.Menu;
+
 function setup() {
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('Menu');
     
-    // Initialize text properties
-    textAlign(CENTER, CENTER);
-    textSize(24);
-    fill(255);
-    stroke(0);
-    strokeWeight(2);
+    // Initialize game state
+    gameState = gameStateEnum.Menu;
     
     // Get all the div containers
     menuDiv = select("#Menu");
@@ -16,10 +21,56 @@ function setup() {
     valuesDiv = select("#Values");
     
     // Initially show only menu
-    menuDiv.class('active');
-    gameDiv.removeClass('active');
-    instructionsDiv.removeClass('active');
-    valuesDiv.removeClass('active');
+    menuDiv.show();
+    gameDiv.hide();
+    instructionsDiv.hide();
+    valuesDiv.hide();
+    
+    // Create Start Game button
+    startGameButton = createButton("Start Game");
+    startGameButton.mousePressed(() => {
+        console.log("Start Game clicked");
+        gameState = gameStateEnum.Playing;
+        initializeGame();
+        loop();
+    });
+    startGameButton.parent('Menu');
+    
+    // Setup player positions
+    playerPositions = [
+        {
+            x: width / 6,
+            y: height / 2,
+            label: "Player 1 - Team 1",
+            labelOffset: -50,
+        },
+        { 
+            x: width / 2, 
+            y: 100, 
+            label: "Player 2 - Team 2", 
+            labelOffset: -50 
+        },
+        {
+            x: (5 * width) / 6,
+            y: height / 2,
+            label: "Player 3 - Team 1",
+            labelOffset: -50,
+        },
+        {
+            x: width / 2,
+            y: height - 100,
+            label: "Player 4 - Team 2",
+            labelOffset: 50,
+        },
+    ];
+    
+    // Add this to your setup function
+    window.game = {
+        players: [],
+        playedCards: [],
+        currentPlayerIndex: 0,
+        startRoundPlayer: 0
+    };
     
     // Create instruction buttons
     instructionsButton = createButton("Instructions");
@@ -111,61 +162,6 @@ function setup() {
     buttonAcceptTruco.hide();
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
-    
-    // Setup player positions
-    playerPositions = [
-        {
-            x: width / 6,
-            y: height / 2,
-            label: "Player 1 - Team 1",
-            labelOffset: -50,
-        },
-        { 
-            x: width / 2, 
-            y: 100, 
-            label: "Player 2 - Team 2", 
-            labelOffset: -50 
-        },
-        {
-            x: (5 * width) / 6,
-            y: height / 2,
-            label: "Player 3 - Team 1",
-            labelOffset: -50,
-        },
-        {
-            x: width / 2,
-            y: height - 100,
-            label: "Player 4 - Team 2",
-            labelOffset: 50,
-        },
-    ];
-    
-    // Add this to your setup function
-    window.game = {
-        players: [],
-        playedCards: [],
-        currentPlayerIndex: 0,
-        startRoundPlayer: 0
-    };
-    
-    // Create Start Game button
-    startGameButton = createButton("Start Game");
-    startGameButton.mousePressed(() => {
-        console.log("Start Game clicked");
-        console.log("Current game state:", gameState);
-        console.log("Current window.game:", window.game);
-        
-        gameState = gameStateEnum.Playing;
-        console.log("Game state changed to:", gameState);
-        
-        initializeGame();  // Initialize game when starting
-        console.log("After initialization:", window.game);
-        console.log("Players:", window.game.players);
-        console.log("Player 1 cards:", window.game.players[0].cards);
-        
-        loop();
-    });
-    startGameButton.parent('Menu');
 }
 
 function initializeGame() {
