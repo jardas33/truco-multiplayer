@@ -268,9 +268,15 @@ function drawPlayerHand(player, x, y) {
         if (card) {
             push();
             imageMode(CENTER);
-            // If it's the current player or the card is played, show the card face
-            const cardImage = card.image || cardBackImage;
-            image(cardImage, x + offsetX, y, cardWidth, cardHeight);
+            // Show card face only for the current player (player 1)
+            const cardImage = (player.id === 1) ? card.image : cardBackImage;
+            if (cardImage) {
+                image(cardImage, x + offsetX, y, cardWidth, cardHeight);
+            } else {
+                // Fallback if image isn't loaded
+                fill(255);
+                rect(x + offsetX - cardWidth/2, y - cardHeight/2, cardWidth, cardHeight);
+            }
             pop();
         }
     });

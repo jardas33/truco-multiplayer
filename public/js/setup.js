@@ -148,4 +148,79 @@ function setup() {
         startRoundPlayer: 0
     };
 }
+
+function initializeGame() {
+    window.game = {
+        players: [
+            {
+                id: 1,
+                cards: [],
+                isBot: false,
+                team: 1
+            },
+            {
+                id: 2,
+                cards: [],
+                isBot: true,
+                team: 2
+            },
+            {
+                id: 3,
+                cards: [],
+                isBot: true,
+                team: 1
+            },
+            {
+                id: 4,
+                cards: [],
+                isBot: true,
+                team: 2
+            }
+        ],
+        playedCards: [],
+        currentPlayerIndex: 0,
+        startRoundPlayer: 0,
+        round: 1,
+        scores: [0, 0]  // Team 1 and Team 2 scores
+    };
+
+    // Create a deck and deal cards
+    const deck = createDeck();
+    dealCards(deck);
+}
+
+function createDeck() {
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = ['ace', '2', '3', '4', '5', '6', '7', 'queen', 'jack', 'king'];
+    let deck = [];
+
+    for (let suit of suits) {
+        for (let value of values) {
+            const imageName = `${value}_of_${suit}`;
+            deck.push({
+                suit: suit,
+                value: value,
+                image: loadImage(`Images/${imageName}.png`),
+                backImage: cardBackImage
+            });
+        }
+    }
+
+    // Shuffle the deck
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+
+    return deck;
+}
+
+function dealCards(deck) {
+    // Deal 3 cards to each player
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < window.game.players.length; j++) {
+            window.game.players[j].cards.push(deck.pop());
+        }
+    }
+}
   
