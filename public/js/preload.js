@@ -1,9 +1,20 @@
 let cardImages = {};
+let backgroundImage;
+let backCardImage;
 
 function preload() {
+    console.log("Starting preload...");
+    
     // Load background image
-    backgroundImage = loadImage("Images/background.jpg");
-    backCardImage = loadImage("Images/cardBack.jpg");
+    backgroundImage = loadImage("Images/background.jpg", 
+        () => console.log("Background loaded successfully"),
+        () => console.log("Failed to load background")
+    );
+    
+    backCardImage = loadImage("Images/cardBack.jpg",
+        () => console.log("Card back loaded successfully"),
+        () => console.log("Failed to load card back")
+    );
     
     // Load card images with consistent naming
     const cards = [
@@ -14,7 +25,10 @@ function preload() {
     
     cards.forEach(cardName => {
         const displayName = cardName.replace(/_/g, ' ');
-        cardImages[displayName] = loadImage(`Images/${cardName}.png`);
+        cardImages[displayName] = loadImage(`Images/${cardName}.png`,
+            () => console.log(`Loaded ${cardName}`),
+            () => console.log(`Failed to load ${cardName}`)
+        );
     });
 }
   

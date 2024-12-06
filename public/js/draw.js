@@ -5,7 +5,12 @@ function draw() {
     // Draw background for all states
     push();
     imageMode(CORNER);
-    image(backgroundImage, 0, 0, width, height);
+    if (backgroundImage) {
+        image(backgroundImage, 0, 0, windowWidth, windowHeight);
+    } else {
+        // Fallback green background if image fails to load
+        background(0, 100, 0);
+    }
     pop();
     
     if (gameState === gameStateEnum.Menu) {
@@ -89,4 +94,18 @@ function drawPlayerCards(player, x, y) {
             }
         });
     }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    // Redraw background
+    clear();
+    push();
+    imageMode(CORNER);
+    if (backgroundImage) {
+        image(backgroundImage, 0, 0, windowWidth, windowHeight);
+    } else {
+        background(0, 100, 0);
+    }
+    pop();
 }
