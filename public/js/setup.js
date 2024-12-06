@@ -1,17 +1,27 @@
 let gameState;
+let menuDiv, gameDiv, instructionsDiv, valuesDiv;
+let startGameButton;
+let playerPositions;
 
 function setup() {
+    console.log("Setup starting...");
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('Menu');
     
     // Initialize game state
     gameState = gameStateEnum.Menu;
+    console.log("Game state initialized to:", gameState);
     
     // Get all the div containers
     menuDiv = select("#Menu");
     gameDiv = select("#Game");
     instructionsDiv = select("#Instructions");
     valuesDiv = select("#Values");
+    
+    if (!menuDiv || !gameDiv || !instructionsDiv || !valuesDiv) {
+        console.error("Failed to select one or more divs");
+        return;
+    }
     
     // Initially show only menu
     menuDiv.show();
@@ -21,8 +31,12 @@ function setup() {
     
     // Create Start Game button
     startGameButton = createButton("Start Game");
-    startGameButton.mousePressed(startGame);
+    startGameButton.mousePressed(() => {
+        console.log("Start Game button pressed");
+        startGame();
+    });
     startGameButton.parent('Menu');
+    startGameButton.position(width/2 - 50, height/2);
     
     // Setup player positions
     playerPositions = [
@@ -52,109 +66,17 @@ function setup() {
         },
     ];
     
-    // Add this to your setup function
-    window.game = {
-        players: [],
-        playedCards: [],
-        currentPlayerIndex: 0,
-        startRoundPlayer: 0
-    };
-    
-    // Create instruction buttons
-    instructionsButton = createButton("Instructions");
-    instructionsButton.position(20, 20);
-    instructionsButton.mousePressed(showInstructions);
-    instructionsButton.parent('Menu');
-    
-    // Create card values button
-    cardValuesButton = createButton("Card Values");
-    cardValuesButton.position(20, 60);
-    cardValuesButton.mousePressed(showCardValues);
-    cardValuesButton.parent('Menu');
-    
-    // Create text div for instructions
-    let instructionsTextDiv = createDiv('');
-    instructionsTextDiv.parent(instructionsDiv);
-    instructionsTextDiv.style('color', 'white');
-    instructionsTextDiv.style('position', 'absolute');
-    instructionsTextDiv.style('top', '50%');
-    instructionsTextDiv.style('left', '50%');
-    instructionsTextDiv.style('transform', 'translate(-50%, -50%)');
-    instructionsTextDiv.style('width', '80%');
-    instructionsTextDiv.style('text-align', 'left');
-    instructionsTextDiv.style('font-size', '16px');
-    instructionsTextDiv.style('line-height', '1.5');
-    instructionsTextDiv.html(`
-        <div style="margin-bottom: 20px;">
-            Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.<br><br>
-            
-            In each round, every player plays one card. The team that wins two out of three rounds wins the game. The team that wins twelve games first wins the set.<br><br>
-            
-            The order of turns is clockwise, with the first player in each round being the one who played the highest card in the previous round, or in case of a tie, the one who played first in the previous round.<br><br>
-            
-            The game features the 'truco' mechanic. During their turn, a player can choose to call 'truco', which increases the value of the current game if accepted. The next player can then choose to accept, reject, or raise the value further. If truco is rejected, the game ends immediately, and the team that called 'truco' wins the game at its current value. If accepted, the game goes on but it is now worth 3 games instead of 1. The next player can also raise to 6, then the decision goes back to the player that initially called truco and he has the same options: accept, reject and raise. A game can only be risen to 12 games. It is not possible to raise after that.<br><br>
-            
-            Once a team has won eleven games within a set, the 'Game of Eleven' rule comes into effect. The team can view their cards and their partner's cards before deciding whether to play the next game. If they decide to play, the game's value is increased to three. If they reject, the opposing team wins one game instantly.<br><br>
-            
-            Truco is played with a 40 card deck, with a specific order of card values that you can see in the card values instructions.
-        </div>
-    `);
-    
-    // Create close buttons
-    instructionsCloseButton = createButton("Close");
-    instructionsCloseButton.mousePressed(closeInstructions);
-    instructionsCloseButton.parent(instructionsDiv);
-    instructionsCloseButton.style("position", "absolute");
-    instructionsCloseButton.style("bottom", "10px");
-    instructionsCloseButton.style("left", "50%");
-    instructionsCloseButton.style("transform", "translateX(-50%)");
-    
-    cardValuesCloseButton = createButton("Close");
-    cardValuesCloseButton.mousePressed(closeCardValues);
-    cardValuesCloseButton.parent(valuesDiv);
-    cardValuesCloseButton.style("position", "absolute");
-    cardValuesCloseButton.style("bottom", "10px");
-    cardValuesCloseButton.style("left", "50%");
-    cardValuesCloseButton.style("transform", "translateX(-50%)");
-    
-    // Create back to menu button
-    backToMainMenuButton = createButton("Back to Main Menu");
-    backToMainMenuButton.position(20, 20);
-    backToMainMenuButton.mousePressed(backToMainMenu);
-    backToMainMenuButton.parent(gameDiv);
-    backToMainMenuButton.hide();
-    
-    // Create game buttons
-    trucoButton = createButton("Truco");
-    trucoButton.position(50, 180);
-    trucoButton.mousePressed(truco);
-    trucoButton.parent(gameDiv);
-    trucoButton.hide();
-    
-    // Create truco response buttons
-    buttonAcceptTruco = createButton("Accept Truco");
-    buttonRejectTruco = createButton("Reject Truco");
-    buttonRaiseTruco = createButton("Raise Truco");
-    
-    buttonAcceptTruco.position(10, 180);
-    buttonAcceptTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 1));
-    buttonRejectTruco.position(10, 210);
-    buttonRejectTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 2));
-    buttonRaiseTruco.position(10, 240);
-    buttonRaiseTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 3));
-    
-    buttonAcceptTruco.parent(gameDiv);
-    buttonRejectTruco.parent(gameDiv);
-    buttonRaiseTruco.parent(gameDiv);
-    
-    buttonAcceptTruco.hide();
-    buttonRejectTruco.hide();
-    buttonRaiseTruco.hide();
+    console.log("Setup completed");
 }
 
 function startGame() {
     console.log("Starting game...");
+    if (!gameStateEnum) {
+        console.error("gameStateEnum not defined!");
+        return;
+    }
     gameState = gameStateEnum.Playing;
+    console.log("Game state changed to:", gameState);
     initializeGame();
     loop();
 }
