@@ -1,51 +1,74 @@
 function draw() {
-    // Basic debug info
-    console.log("Draw called, gameState:", gameState);
-    
     clear();
-    background(0, 100, 0);  // Fallback green background
     
-    // Draw background image if available
-    if (backgroundImage) {
-        push();
-        imageMode(CORNER);
-        image(backgroundImage, 0, 0, width, height);
-        pop();
-    }
-
-    // Debug text
-    fill(255);
-    textSize(24);
-    textAlign(CENTER, CENTER);
-    text(`Current State: ${gameState}`, width/2, 30);
-
+    // Draw background
+    push();
+    imageMode(CORNER);
+    image(backgroundImage, 0, 0, width, height);
+    pop();
+    
     if (gameState === gameStateEnum.Menu) {
         menuDiv.show();
         gameDiv.hide();
         instructionsDiv.hide();
         valuesDiv.hide();
-    } 
+    }
     else if (gameState === gameStateEnum.Playing) {
         menuDiv.hide();
         gameDiv.show();
         instructionsDiv.hide();
         valuesDiv.hide();
+        backToMainMenuButton.show();
         
-        // Draw simple game table
+        // Draw game table
         push();
-        fill(0, 80, 0);
+        fill(0, 100, 0);
         noStroke();
-        rect(100, 100, width - 200, height - 200);
+        rect(width * 0.1, height * 0.1, width * 0.8, height * 0.8);
         pop();
         
-        // Draw debug info
-        fill(255);
-        text("Game Active", width/2, 60);
-        
         if (window.game && window.game.players) {
-            text(`Players: ${window.game.players.length}`, width/2, 90);
+            // Draw players and their cards
+            window.game.players.forEach((player, index) => {
+                const pos = playerPositions[index];
+                
+                // Draw player label
+                fill(255);
+                textSize(16);
+                textAlign(CENTER);
+                text(pos.label, pos.x, pos.y + pos.labelOffset);
+                
+                // Draw player's cards
+                if (player.cards) {
+                    drawPlayerCards(player, pos.x, pos.y);
+                }
+            });
         }
     }
+}
+
+function drawPlayerCards(player, x, y) {
+    const cardWidth = 80;
+    const cardHeight = 120;
+    const cardSpacing = 30;
+    
+    player.cards.forEach((card, index) => {
+        const offsetX = (index - player.cards.length / 2) * cardSpacing;
+        push();
+        imageMode(CENTER);
+        
+        // Show face-up cards only for player 1
+        fill(255);
+        rectMode(CENTER);
+        rect(x + offsetX, y, cardWidth, cardHeight);
+        
+        // Draw card name for debugging
+        fill(0);
+        textSize(10);
+        text(card.name, x + offsetX, y);
+        
+        pop();
+    });
 }
 
 function windowResized() {

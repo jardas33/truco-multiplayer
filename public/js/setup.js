@@ -1,6 +1,10 @@
 let gameState;
 let menuDiv, gameDiv, instructionsDiv, valuesDiv;
-let startGameButton;
+let startGameButton, instructionsButton, cardValuesButton;
+let backToMainMenuButton;
+let trucoButton;
+let buttonAcceptTruco, buttonRejectTruco, buttonRaiseTruco;
+let instructionsCloseButton, cardValuesCloseButton;
 let playerPositions;
 
 function setup() {
@@ -18,11 +22,6 @@ function setup() {
     instructionsDiv = select("#Instructions");
     valuesDiv = select("#Values");
     
-    if (!menuDiv || !gameDiv || !instructionsDiv || !valuesDiv) {
-        console.error("Failed to select one or more divs");
-        return;
-    }
-    
     // Initially show only menu
     menuDiv.show();
     gameDiv.hide();
@@ -36,7 +35,49 @@ function setup() {
         startGame();
     });
     startGameButton.parent('Menu');
-    startGameButton.position(width/2 - 50, height/2);
+    
+    // Create instruction buttons
+    instructionsButton = createButton("Instructions");
+    instructionsButton.position(20, 20);
+    instructionsButton.mousePressed(showInstructions);
+    instructionsButton.parent('Menu');
+    
+    // Create card values button
+    cardValuesButton = createButton("Card Values");
+    cardValuesButton.position(20, 60);
+    cardValuesButton.mousePressed(showCardValues);
+    cardValuesButton.parent('Menu');
+    
+    // Create back to menu button
+    backToMainMenuButton = createButton("Back to Main Menu");
+    backToMainMenuButton.position(20, 20);
+    backToMainMenuButton.mousePressed(backToMainMenu);
+    backToMainMenuButton.parent(gameDiv);
+    backToMainMenuButton.hide();
+    
+    // Create game buttons
+    trucoButton = createButton("Truco");
+    trucoButton.position(50, 180);
+    trucoButton.mousePressed(truco);
+    trucoButton.parent(gameDiv);
+    trucoButton.hide();
+    
+    // Create truco response buttons
+    buttonAcceptTruco = createButton("Accept Truco");
+    buttonRejectTruco = createButton("Reject Truco");
+    buttonRaiseTruco = createButton("Raise Truco");
+    
+    buttonAcceptTruco.position(10, 180);
+    buttonRejectTruco.position(10, 210);
+    buttonRaiseTruco.position(10, 240);
+    
+    buttonAcceptTruco.parent(gameDiv);
+    buttonRejectTruco.parent(gameDiv);
+    buttonRaiseTruco.parent(gameDiv);
+    
+    buttonAcceptTruco.hide();
+    buttonRejectTruco.hide();
+    buttonRaiseTruco.hide();
     
     // Setup player positions
     playerPositions = [
