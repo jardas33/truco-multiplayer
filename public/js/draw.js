@@ -1,7 +1,8 @@
 function draw() {
+    // Clear the canvas at the start of each frame
     clear();
     
-    // Draw background
+    // Draw background for all states
     push();
     imageMode(CORNER);
     image(backgroundImage, 0, 0, width, height);
@@ -12,6 +13,14 @@ function draw() {
         gameDiv.hide();
         instructionsDiv.hide();
         valuesDiv.hide();
+        if (instructionsCloseButton) {
+            instructionsCloseButton.remove();
+        }
+        // Remove any existing instructions box
+        const existingBox = document.querySelector('.instructions-box');
+        if (existingBox) {
+            existingBox.remove();
+        }
     }
     else if (gameState === gameStateEnum.Playing) {
         menuDiv.hide();
@@ -20,29 +29,8 @@ function draw() {
         valuesDiv.hide();
         backToMainMenuButton.show();
         
-        // Draw game table
-        push();
-        fill(0, 100, 0);
-        noStroke();
-        rect(width * 0.1, height * 0.1, width * 0.8, height * 0.8);
-        pop();
-        
-        if (window.game && window.game.players) {
-            // Draw players and their cards
-            window.game.players.forEach((player, index) => {
-                const pos = playerPositions[index];
-                
-                // Draw player label
-                fill(255);
-                textSize(16);
-                textAlign(CENTER);
-                text(pos.label, pos.x, pos.y + pos.labelOffset);
-                
-                // Draw player's cards
-                if (player.cards) {
-                    drawPlayerCards(player, pos.x, pos.y);
-                }
-            });
+        if (window.game) {
+            drawGameState();
         }
     }
 }

@@ -8,13 +8,15 @@ let instructionsCloseButton, cardValuesCloseButton;
 let playerPositions;
 
 function setup() {
-    console.log("Setup starting...");
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('Menu');
     
-    // Initialize game state
-    gameState = gameStateEnum.Menu;
-    console.log("Game state initialized to:", gameState);
+    // Initialize text properties
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    fill(255);
+    stroke(0);
+    strokeWeight(2);
     
     // Get all the div containers
     menuDiv = select("#Menu");
@@ -23,18 +25,10 @@ function setup() {
     valuesDiv = select("#Values");
     
     // Initially show only menu
-    menuDiv.show();
-    gameDiv.hide();
-    instructionsDiv.hide();
-    valuesDiv.hide();
-    
-    // Create Start Game button
-    startGameButton = createButton("Start Game");
-    startGameButton.mousePressed(() => {
-        console.log("Start Game button pressed");
-        startGame();
-    });
-    startGameButton.parent('Menu');
+    menuDiv.class('active');
+    gameDiv.removeClass('active');
+    instructionsDiv.removeClass('active');
+    valuesDiv.removeClass('active');
     
     // Create instruction buttons
     instructionsButton = createButton("Instructions");
@@ -68,8 +62,11 @@ function setup() {
     buttonRaiseTruco = createButton("Raise Truco");
     
     buttonAcceptTruco.position(10, 180);
+    buttonAcceptTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 1));
     buttonRejectTruco.position(10, 210);
+    buttonRejectTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 2));
     buttonRaiseTruco.position(10, 240);
+    buttonRaiseTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 3));
     
     buttonAcceptTruco.parent(gameDiv);
     buttonRejectTruco.parent(gameDiv);
@@ -106,8 +103,6 @@ function setup() {
             labelOffset: 50,
         },
     ];
-    
-    console.log("Setup completed");
 }
 
 function startGame() {
