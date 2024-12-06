@@ -42,6 +42,11 @@ function draw() {
 }
 
 function drawGameState() {
+    if (!window.game) {
+        console.error('Game not initialized');
+        return;
+    }
+
     // Draw game table
     push();
     fill(0, 100, 0, 200); // Dark green table with some transparency
@@ -52,48 +57,65 @@ function drawGameState() {
     // Draw players and their cards
     if (window.game.players) {
         window.game.players.forEach((player, index) => {
+            if (!player) {
+                console.error('Invalid player at index', index);
+                return;
+            }
+            
             const position = playerPositions[index];
-            if (position && player) {
-                // Draw player label
-                fill(255);
-                noStroke();
-                textAlign(CENTER);
-                text(position.label, position.x, position.y + position.labelOffset);
-                
-                // Draw player's cards
-                if (player.cards) {
-                    drawPlayerCards(player, position.x, position.y);
-                }
+            if (!position) {
+                console.error('No position for player', index);
+                return;
+            }
+
+            // Draw player label
+            fill(255);
+            noStroke();
+            textAlign(CENTER);
+            text(position.label, position.x, position.y + position.labelOffset);
+            
+            // Draw player's cards
+            if (player.cards) {
+                drawPlayerCards(player, position.x, position.y);
             }
         });
     }
 }
 
 function drawPlayerCards(player, x, y) {
+    if (!player || !player.cards) {
+        console.error('Invalid player or cards');
+        return;
+    }
+
     const cardWidth = 80;
     const cardHeight = 120;
     const cardSpacing = 30;
     
-    if (player.cards && player.cards.length > 0) {
-        player.cards.forEach((card, index) => {
-            if (card) {
-                const offsetX = (index - player.cards.length / 2) * cardSpacing;
-                push();
-                imageMode(CENTER);
-                // Show face-up cards only for player 1
-                const cardImg = (player.id === 1) ? cardImages[card.name] : backCardImage;
-                if (cardImg) {
-                    image(cardImg, x + offsetX, y, cardWidth, cardHeight);
-                } else {
-                    // Fallback rectangle if image isn't loaded
-                    fill(255);
-                    rectMode(CENTER);
-                    rect(x + offsetX, y, cardWidth, cardHeight);
-                }
-                pop();
-            }
-        });
-    }
+    player.cards.forEach((card, index) => {
+        if (!card) return;
+        
+        const offsetX = (index - player.cards.length / 2) * cardSpacing;
+        push();
+        imageMode(CENTER);
+        
+        // Show face-up cards only for player 1
+        const cardImg = (player.id === 1) ? cardImages[card.name.toLowerCase()] : backCardImage;
+        
+        if (cardImg) {
+            image(cardImg, x + offsetX, y, cardWidth, cardHeight);
+        } else {
+            // Fallback rectangle if image isn't loaded
+            fill(255);
+            rectMode(CENTER);
+            rect(x + offsetX, y, cardWidth, cardHeight);
+            // Draw card name for debugging
+            fill(0);
+            textSize(10);
+            text(card.name, x + offsetX, y);
+        }
+        pop();
+    });
 }
 
 function windowResized() {

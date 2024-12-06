@@ -160,6 +160,7 @@ function setup() {
 }
 
 function initializeGame() {
+    console.log("Initializing game...");
     window.game = {
         players: [
             {
@@ -191,12 +192,17 @@ function initializeGame() {
         currentPlayerIndex: 0,
         startRoundPlayer: 0,
         round: 1,
-        scores: [0, 0]  // Team 1 and Team 2 scores
+        scores: [0, 0],  // Team 1 and Team 2 scores
+        getCurrentPlayer: function() {
+            return this.players[this.currentPlayerIndex];
+        }
     };
 
-    // Create a deck and deal cards
+    console.log("Creating deck...");
     const deck = createDeck();
+    console.log("Dealing cards...");
     dealCards(deck);
+    console.log("Game initialized:", window.game);
 }
 
 function createDeck() {
