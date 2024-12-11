@@ -9,6 +9,11 @@ function setup() {
     console.log('Starting setup...');
     
     try {
+        // Ensure the DOM is fully loaded
+        if (!document.getElementById('Menu')) {
+            throw new Error('Required DOM elements not found. Please ensure the page is properly loaded.');
+        }
+
         initializeCanvas();
         initializeUI();
         initializeGameState();
@@ -27,11 +32,18 @@ function setup() {
 
 function initializeCanvas() {
     try {
+        const menuElement = document.getElementById('Menu');
+        if (!menuElement) {
+            throw new Error('Menu element not found');
+        }
+
         let canvas = createCanvas(windowWidth, windowHeight);
         if (!canvas) {
             throw new Error('Failed to create canvas');
         }
-        canvas.parent('Menu');
+        
+        // Use vanilla JS appendChild instead of p5's parent()
+        menuElement.appendChild(canvas.elt);
         
         // Initialize canvas properties
         textAlign(CENTER, CENTER);
@@ -48,12 +60,12 @@ function initializeCanvas() {
 
 function initializeUI() {
     try {
-        // Get all required div containers
+        // Get all required div containers using vanilla JS
         const requiredDivs = {
-            menuDiv: select("#Menu"),
-            gameDiv: select("#Game"),
-            instructionsDiv: select("#Instructions"),
-            valuesDiv: select("#Values")
+            menuDiv: document.getElementById('Menu'),
+            gameDiv: document.getElementById('Game'),
+            instructionsDiv: document.getElementById('Instructions'),
+            valuesDiv: document.getElementById('Values')
         };
         
         // Verify all divs exist
@@ -61,14 +73,15 @@ function initializeUI() {
             if (!div) {
                 throw new Error(`Required div "${name}" not found`);
             }
-            window[name] = div; // Assign to global scope
+            // Store references both in window and local scope
+            window[name] = div;
         }
         
-        // Set initial visibility
-        menuDiv.class('active');
-        gameDiv.removeClass('active');
-        instructionsDiv.removeClass('active');
-        valuesDiv.removeClass('active');
+        // Set initial visibility using classList instead of class/removeClass
+        requiredDivs.menuDiv.classList.add('active');
+        requiredDivs.gameDiv.classList.remove('active');
+        requiredDivs.instructionsDiv.classList.remove('active');
+        requiredDivs.valuesDiv.classList.remove('active');
         
         createGameButtons();
         createInstructionsUI();
@@ -80,7 +93,6 @@ function initializeUI() {
 }
 
 function createGameButtons() {
-    // Create and verify each button
     const buttons = [
         {
             name: 'instructionsButton',
@@ -102,9 +114,9 @@ function createGameButtons() {
             position: { x: 20, y: 20 },
             action: () => {
                 gameState = gameStateEnum.Menu;
-                backToMainMenuButton.hide();
-                if (trucoButton) trucoButton.hide();
-                menuDiv.show();
+                if (window.backToMainMenuButton) window.backToMainMenuButton.style.display = 'none';
+                if (window.trucoButton) window.trucoButton.style.display = 'none';
+                if (window.menuDiv) window.menuDiv.classList.add('active');
             },
             parent: 'Game',
             initiallyHidden: true
@@ -125,19 +137,23 @@ function createGameButtons() {
     
     for (let btn of buttons) {
         try {
-            const button = createButton(btn.label);
-            if (!button) {
-                throw new Error(`Failed to create ${btn.name}`);
+            const parentElement = document.getElementById(btn.parent);
+            if (!parentElement) {
+                throw new Error(`Parent element ${btn.parent} not found`);
             }
-            
-            button.position(btn.position.x, btn.position.y);
-            button.mousePressed(btn.action);
-            button.parent(btn.parent);
+
+            const button = document.createElement('button');
+            button.textContent = btn.label;
+            button.style.position = 'absolute';
+            button.style.left = `${btn.position.x}px`;
+            button.style.top = `${btn.position.y}px`;
+            button.addEventListener('click', btn.action);
             
             if (btn.initiallyHidden) {
-                button.hide();
+                button.style.display = 'none';
             }
             
+            parentElement.appendChild(button);
             window[btn.name] = button;
         } catch (error) {
             initState.errors.push(`Button creation failed (${btn.name}): ${error.message}`);
@@ -147,43 +163,85 @@ function createGameButtons() {
 
 function createInstructionsUI() {
     try {
-        const instructionsTextDiv = createDiv('');
-        if (!instructionsTextDiv) {
-            throw new Error('Failed to create instructions text div');
+        const instructionsDiv = document.getElementById('Instructions');
+        if (!instructionsDiv) {
+            throw new Error('Instructions div not found');
         }
+
+        const instructionsTextDiv = document.createElement('div');
+        instructionsTextDiv.style.cssText = `
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.5;
+        `;
         
-        instructionsTextDiv.parent(instructionsDiv);
-        instructionsTextDiv.style('color', 'white');
-        instructionsTextDiv.style('position', 'absolute');
-        instructionsTextDiv.style('top', '50%');
-        instructionsTextDiv.style('left', '50%');
-        instructionsTextDiv.style('transform', 'translate(-50%, -50%)');
-        instructionsTextDiv.style('width', '80%');
-        instructionsTextDiv.style('text-align', 'left');
-        instructionsTextDiv.style('font-size', '16px');
-        instructionsTextDiv.style('line-height', '1.5');
-        
-        instructionsTextDiv.html(`
+        instructionsTextDiv.innerHTML = `
             <div style="margin-bottom: 20px;">
-                Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.<br><br>
-                <!-- ... rest of the instructions ... -->
+                <h2 style="color: white; text-align: center; margin-bottom: 20px;">How to Play Truco</h2>
+                <p>Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.</p>
+                <p>In each round, every player plays one card. The team that wins two out of three rounds wins the game. The team that wins twelve games first wins the set.</p>
+                <p>The order of turns is clockwise, with the first player in each round being the one who played the highest card in the previous round, or in case of a tie, the one who played first in the previous round.</p>
+                <p>The game features the 'truco' mechanic. During their turn, a player can choose to call 'truco', which increases the value of the current game if accepted. The next player can then choose to accept, reject, or raise the value further.</p>
+                <button onclick="hideInstructions()" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);">Close</button>
             </div>
-        `);
+        `;
+        
+        instructionsDiv.appendChild(instructionsTextDiv);
     } catch (error) {
         initState.errors.push('Instructions UI creation failed: ' + error.message);
     }
 }
 
+function hideInstructions() {
+    const instructionsDiv = document.getElementById('Instructions');
+    if (instructionsDiv) {
+        instructionsDiv.classList.remove('active');
+    }
+    const menuDiv = document.getElementById('Menu');
+    if (menuDiv) {
+        menuDiv.classList.add('active');
+    }
+}
+
+function showInstructions() {
+    const menuDiv = document.getElementById('Menu');
+    const instructionsDiv = document.getElementById('Instructions');
+    if (menuDiv && instructionsDiv) {
+        menuDiv.classList.remove('active');
+        instructionsDiv.classList.add('active');
+    }
+}
+
+function showCardValues() {
+    const menuDiv = document.getElementById('Menu');
+    const valuesDiv = document.getElementById('Values');
+    if (menuDiv && valuesDiv) {
+        menuDiv.classList.remove('active');
+        valuesDiv.classList.add('active');
+    }
+}
+
 function initializeGameState() {
     try {
-        if (!gameStateEnum) {
-            throw new Error('gameStateEnum not defined');
+        if (typeof gameStateEnum === 'undefined') {
+            window.gameStateEnum = {
+                Playing: "playing",
+                Menu: "menu",
+                Instructions: "instructions",
+                CardValues: "cardValues"
+            };
         }
         
-        gameState = gameStateEnum.Menu;
+        window.gameState = gameStateEnum.Menu;
         
         // Initialize player positions
-        playerPositions = [
+        window.playerPositions = [
             {
                 x: width / 6,
                 y: height / 2,
@@ -216,7 +274,14 @@ function initializeGameState() {
 }
 
 function showSetupError(title, errors) {
+    // Remove any existing error display
+    const existingError = document.getElementById('setup-error');
+    if (existingError) {
+        existingError.remove();
+    }
+
     const errorDiv = document.createElement('div');
+    errorDiv.id = 'setup-error';
     errorDiv.style.cssText = `
         position: fixed;
         top: 50%;
@@ -253,18 +318,18 @@ function windowResized() {
         resizeCanvas(windowWidth, windowHeight);
         
         // Update player positions
-        if (playerPositions) {
-            playerPositions[0].x = width / 6;
-            playerPositions[0].y = height / 2;
+        if (window.playerPositions) {
+            window.playerPositions[0].x = width / 6;
+            window.playerPositions[0].y = height / 2;
             
-            playerPositions[1].x = width / 2;
-            playerPositions[1].y = 100;
+            window.playerPositions[1].x = width / 2;
+            window.playerPositions[1].y = 100;
             
-            playerPositions[2].x = (5 * width) / 6;
-            playerPositions[2].y = height / 2;
+            window.playerPositions[2].x = (5 * width) / 6;
+            window.playerPositions[2].y = height / 2;
             
-            playerPositions[3].x = width / 2;
-            playerPositions[3].y = height - 100;
+            window.playerPositions[3].x = width / 2;
+            window.playerPositions[3].y = height - 100;
         }
     } catch (error) {
         console.error('Window resize handling failed:', error);
