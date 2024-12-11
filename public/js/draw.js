@@ -8,14 +8,14 @@ function draw() {
     image(backgroundImage, 0, 0, width, height);
     pop();
     
-    if (gameState === gameStateEnum.Menu) {
+    if (window.gameState.currentPhase === gameStateEnum.Menu) {
         // Show menu and hide other sections
         if (window.ui.divs.menu) window.ui.divs.menu.style.display = 'block';
         if (window.ui.divs.game) window.ui.divs.game.style.display = 'none';
         if (window.ui.divs.instructions) window.ui.divs.instructions.style.display = 'none';
         if (window.ui.divs.values) window.ui.divs.values.style.display = 'none';
     }
-    else if (gameState === gameStateEnum.Playing) {
+    else if (window.gameState.currentPhase === gameStateEnum.Playing) {
         // Show game and hide other sections
         if (window.ui.divs.menu) window.ui.divs.menu.style.display = 'none';
         if (window.ui.divs.game) window.ui.divs.game.style.display = 'block';

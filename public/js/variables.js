@@ -1,3 +1,11 @@
+// Game State Enum
+const gameStateEnum = {
+    Menu: 'menu',
+    Playing: 'playing',
+    Instructions: 'instructions',
+    CardValues: 'cardValues'
+};
+
 // Game Configuration
 const CONFIG = {
     TIMINGS: {
@@ -18,7 +26,7 @@ const CONFIG = {
 
 // Game State
 window.gameState = {
-    currentPhase: 'menu', // menu, playing, instructions, cardValues
+    currentPhase: gameStateEnum.Menu, // menu, playing, instructions, cardValues
     isInTrucoPhase: false,
     selfPlayer: 1,
     showAllCards: true,
@@ -124,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         CONFIG,
+        gameStateEnum,
         gameState: window.gameState,
         gameAssets: window.gameAssets,
         gameElements: window.gameElements,

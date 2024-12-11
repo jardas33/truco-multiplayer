@@ -36,10 +36,12 @@ function setup() {
 
     // Set up button event listeners
     window.ui.buttons.instructions.addEventListener('click', () => {
+        window.gameState.currentPhase = gameStateEnum.Instructions;
         window.ui.divs.instructions.style.display = 'block';
     });
 
     window.ui.buttons.cardValues.addEventListener('click', () => {
+        window.gameState.currentPhase = gameStateEnum.CardValues;
         window.ui.divs.values.style.display = 'block';
     });
 
@@ -47,12 +49,13 @@ function setup() {
     document.querySelectorAll('.close-panel').forEach(button => {
         button.addEventListener('click', (e) => {
             e.target.closest('.panel').style.display = 'none';
+            window.gameState.currentPhase = gameStateEnum.Menu;
         });
     });
 
     // Initialize game state
     window.gameState = {
-        currentState: 'menu',
+        currentPhase: gameStateEnum.Menu,
         showAllCards: false
     };
 
@@ -89,7 +92,7 @@ function setupSocketListeners() {
     socket.on('gameStarted', (gameData) => {
         console.log('Game started:', gameData);
         window.game = gameData;
-        window.gameState.currentState = 'playing';
+        window.gameState.currentPhase = gameStateEnum.Playing;
         window.ui.divs.menu.style.display = 'none';
         window.ui.divs.game.style.display = 'block';
     });
