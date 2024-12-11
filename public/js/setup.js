@@ -51,62 +51,47 @@ function setup() {
         }
     };
 
-    // Set up button event listeners
-    setupButtonListeners();
+    // Set up instruction panel handlers
+    setupInstructionPanels();
     
     console.log('Setup completed with game state:', window.gameState);
 }
 
-function setupButtonListeners() {
-    // Create Room button
-    if (window.ui.buttons.createRoom) {
-        window.ui.buttons.createRoom.addEventListener('click', () => {
-            if (socket) {
-                console.log('Creating room...');
-                socket.emit('createRoom');
-            }
-        });
-    }
-
-    // Add Bot button
-    if (window.ui.buttons.addBot) {
-        window.ui.buttons.addBot.addEventListener('click', () => {
-            if (socket && window.gameState.roomCode) {
-                console.log('Adding bot to room:', window.gameState.roomCode);
-                socket.emit('addBot', window.gameState.roomCode);
-            }
-        });
-    }
-
-    // Start Game button
-    if (window.ui.buttons.startGame) {
-        window.ui.buttons.startGame.addEventListener('click', () => {
-            if (socket && window.gameState.roomCode) {
-                console.log('Starting game in room:', window.gameState.roomCode);
-                socket.emit('startGame', window.gameState.roomCode);
-            }
-        });
-    }
-
-    // Join Room button
-    if (window.ui.buttons.joinRoom) {
-        window.ui.buttons.joinRoom.addEventListener('click', () => {
-            const roomCode = window.ui.inputs.roomCode.value.trim();
-            if (socket && roomCode) {
-                socket.emit('joinRoom', roomCode);
-            }
-        });
-    }
-
+function setupInstructionPanels() {
     // Instructions button
-    if (window.ui.buttons.instructions) {
-        window.ui.buttons.instructions.addEventListener('click', showInstructions);
+    const instructionsBtn = document.getElementById('instructionsBtn');
+    const instructionsPanel = document.getElementById('Instructions');
+    if (instructionsBtn && instructionsPanel) {
+        instructionsBtn.onclick = () => {
+            instructionsPanel.classList.add('active');
+        };
     }
 
     // Card Values button
-    if (window.ui.buttons.cardValues) {
-        window.ui.buttons.cardValues.addEventListener('click', showCardValues);
+    const cardValuesBtn = document.getElementById('cardValuesBtn');
+    const valuesPanel = document.getElementById('Values');
+    if (cardValuesBtn && valuesPanel) {
+        cardValuesBtn.onclick = () => {
+            valuesPanel.classList.add('active');
+        };
     }
+
+    // Close buttons for panels
+    document.querySelectorAll('.close-panel').forEach(button => {
+        button.onclick = () => {
+            const panel = button.closest('.panel');
+            if (panel) {
+                panel.classList.remove('active');
+            }
+        };
+    });
+
+    // Close panels when clicking outside
+    document.addEventListener('click', (event) => {
+        if (event.target.classList.contains('panel')) {
+            event.target.classList.remove('active');
+        }
+    });
 }
 
 function setupSocketListeners() {

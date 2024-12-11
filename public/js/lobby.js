@@ -15,7 +15,7 @@ const connectionState = {
 
 // Initialize socket and lobby when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing game...');
+    console.log('DOM loaded, initializing lobby...');
     
     // Initialize socket first
     initSocket();
@@ -39,85 +39,46 @@ document.addEventListener('DOMContentLoaded', function() {
     initGame();
 });
 
-function initGame() {
-    console.log('Initializing game...');
-    if (!gameInitialized) {
-        initSocket();
-        setupButtonListeners();
-        gameInitialized = true;
-    }
-}
-
 function initSocket() {
-    if (connectionState.isConnecting) {
-        console.log('Socket initialization already in progress');
-        return;
-    }
-    
     try {
         console.log('Initializing socket...');
-        connectionState.isConnecting = true;
         
-        if (typeof io === 'undefined') {
-            throw new Error('Socket.IO not loaded');
-        }
-
         // Initialize socket with robust configuration
-        socket = io({
-            reconnection: true,
-            reconnectionAttempts: MAX_RECONNECTION_ATTEMPTS,
-            reconnectionDelay: RECONNECTION_DELAY,
-            reconnectionDelayMax: 5000,
-            timeout: 20000,
-            autoConnect: true,
-            forceNew: true
+        socket = io();
+        window.socket = socket;  // Make socket globally available
+
+        // Set up socket event handlers
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            connectionState.isConnected = true;
+            connectionState.isConnecting = false;
+            connectionAttempts = 0;
+            connectionState.lastError = null;
+            hideError();
         });
 
-        // Store socket globally
-        window.socket = socket;
+        socket.on('connect_error', handleConnectionError);
+        socket.on('error', handleConnectionError);
 
-        setupSocketEventHandlers();
+        socket.on('disconnect', (reason) => {
+            connectionState.isConnected = false;
+            console.log('Disconnected:', reason);
+            
+            if (reason === 'io server disconnect') {
+                showError('Disconnected from server. Please refresh the page.');
+            } else {
+                showError('Connection lost. Attempting to reconnect...');
+                attemptReconnection();
+            }
+        });
+
+        // Set up game event handlers
+        setupGameEventHandlers();
         
     } catch (error) {
+        console.error('Socket initialization error:', error);
         handleConnectionError(error);
     }
-}
-
-function setupSocketEventHandlers() {
-    if (!socket) {
-        console.error('Cannot setup handlers - socket not initialized');
-        return;
-    }
-
-    socket.on('connect', () => {
-        console.log('Connected to server');
-        connectionState.isConnected = true;
-        connectionState.isConnecting = false;
-        connectionAttempts = 0;
-        connectionState.lastError = null;
-        hideError();
-        
-        // Emit ready event
-        socket.emit('clientReady');
-    });
-
-    socket.on('connect_error', handleConnectionError);
-    socket.on('error', handleConnectionError);
-
-    socket.on('disconnect', (reason) => {
-        connectionState.isConnected = false;
-        console.log('Disconnected:', reason);
-        
-        if (reason === 'io server disconnect') {
-            showError('Disconnected from server. Please refresh the page.');
-        } else {
-            showError('Connection lost. Attempting to reconnect...');
-            attemptReconnection();
-        }
-    });
-
-    // Game-specific event handlers
-    setupGameEventHandlers();
 }
 
 function setupGameEventHandlers() {
@@ -143,22 +104,6 @@ function setupGameEventHandlers() {
         updateGameControls();
     });
 
-    socket.on('gameStarted', (gameData) => {
-        console.log('Game started with data:', gameData);
-        
-        if (!gameData) {
-            console.error('Game data is undefined');
-            return;
-        }
-
-        // Initialize game with received data
-        if (typeof initializeGame === 'function') {
-            initializeGame(gameData);
-        } else {
-            console.error('initializeGame function not found');
-        }
-    });
-
     socket.on('updatePlayers', (data) => {
         console.log('Players updated:', data);
         if (!window.gameState) {
@@ -174,10 +119,86 @@ function setupGameEventHandlers() {
         }
     });
 
-    socket.on('gameError', (error) => {
-        console.error('Game error:', error);
-        showError(error);
+    socket.on('gameStarted', (gameData) => {
+        console.log('Game started with data:', gameData);
+        
+        if (!gameData) {
+            console.error('Game data is undefined');
+            return;
+        }
+
+        // Initialize game with received data
+        if (typeof initializeGame === 'function') {
+            initializeGame(gameData);
+        } else {
+            console.error('initializeGame function not found');
+        }
     });
+}
+
+function initGame() {
+    console.log('Initializing game...');
+    if (!gameInitialized) {
+        setupButtonListeners();
+        gameInitialized = true;
+    }
+}
+
+function setupButtonListeners() {
+    console.log('Setting up button listeners...');
+    
+    // Create Room button
+    if (window.ui.buttons.createRoom) {
+        console.log('Setting up Create Room button');
+        window.ui.buttons.createRoom.onclick = () => {
+            if (!socket) {
+                showError('Not connected to server. Please wait...');
+                return;
+            }
+            console.log('Emitting createRoom event');
+            socket.emit('createRoom');
+        };
+    } else {
+        console.error('Create Room button not found');
+    }
+
+    // Add Bot button
+    if (window.ui.buttons.addBot) {
+        window.ui.buttons.addBot.onclick = () => {
+            if (!socket || !window.gameState.roomCode) {
+                showError('Room not created yet');
+                return;
+            }
+            socket.emit('addBot', window.gameState.roomCode);
+        };
+    }
+
+    // Start Game button
+    if (window.ui.buttons.start) {
+        window.ui.buttons.start.onclick = () => {
+            if (!socket || !window.gameState.roomCode) {
+                showError('Room not created yet');
+                return;
+            }
+            socket.emit('startGame', window.gameState.roomCode);
+        };
+    }
+
+    // Join Room button
+    if (window.ui.buttons.joinRoom) {
+        window.ui.buttons.joinRoom.onclick = () => {
+            if (!socket) {
+                showError('Not connected to server. Please wait...');
+                return;
+            }
+            const roomCode = window.ui.inputs.roomCode.value.trim().toUpperCase();
+            if (roomCode) {
+                socket.emit('joinRoom', roomCode);
+            } else {
+                showError('Please enter a room code');
+            }
+        };
+    }
 }
 
 function updateGameControls() {
@@ -257,115 +278,6 @@ function updatePlayerList(players) {
             </div>
         `).join('')}
     `;
-}
-
-function setupButtonListeners() {
-    // Instructions button
-    const instructionsBtn = document.getElementById('instructionsBtn');
-    const instructionsPanel = document.getElementById('Instructions');
-    if (instructionsBtn && instructionsPanel) {
-        instructionsBtn.onclick = () => {
-            instructionsPanel.classList.add('active');
-        };
-    }
-
-    // Card Values button
-    const cardValuesBtn = document.getElementById('cardValuesBtn');
-    const valuesPanel = document.getElementById('Values');
-    if (cardValuesBtn && valuesPanel) {
-        cardValuesBtn.onclick = () => {
-            valuesPanel.classList.add('active');
-        };
-    }
-
-    // Close buttons for panels
-    document.querySelectorAll('.close-panel').forEach(button => {
-        button.onclick = () => {
-            const panel = button.closest('.panel');
-            if (panel) {
-                panel.classList.remove('active');
-            }
-        };
-    });
-
-    // Close panels when clicking outside
-    document.addEventListener('click', (event) => {
-        if (event.target.classList.contains('panel')) {
-            event.target.classList.remove('active');
-        }
-    });
-
-    // Create Room button
-    if (window.ui.buttons.createRoom) {
-        window.ui.buttons.createRoom.onclick = () => {
-            if (!connectionState.isConnected) {
-                showError('Not connected to server. Please wait...');
-                return;
-            }
-            socket.emit('createRoom');
-        };
-    }
-
-    // Join Room button
-    if (window.ui.buttons.joinRoom && window.ui.inputs.roomCode) {
-        window.ui.buttons.joinRoom.onclick = () => {
-            if (!connectionState.isConnected) {
-                showError('Not connected to server. Please wait...');
-                return;
-            }
-            const roomCode = window.ui.inputs.roomCode.value.trim().toUpperCase();
-            if (roomCode) {
-                socket.emit('joinRoom', roomCode);
-            } else {
-                showError('Please enter a room code');
-            }
-        };
-    }
-
-    // Add Bot button
-    if (window.ui.buttons.addBot) {
-        window.ui.buttons.addBot.onclick = () => {
-            if (!connectionState.isConnected) {
-                showError('Not connected to server. Please wait...');
-                return;
-            }
-            if (!window.gameState.roomCode) {
-                showError('Room code not found');
-                return;
-            }
-            if (window.gameState.botCount >= CONFIG.GAME.MAX_BOTS) {
-                showError('Maximum number of bots reached');
-                return;
-            }
-            socket.emit('addBot', window.gameState.roomCode);
-        };
-    }
-
-    // Start Game button
-    if (window.ui.buttons.start) {
-        window.ui.buttons.start.onclick = () => {
-            if (!connectionState.isConnected) {
-                showError('Not connected to server. Please wait...');
-                return;
-            }
-            if (!window.gameState.roomCode) {
-                showError('Room code not found');
-                return;
-            }
-            if (!window.gameState.players || window.gameState.players.length !== CONFIG.GAME.MAX_PLAYERS) {
-                showError('Need exactly 4 players to start the game');
-                return;
-            }
-            
-            console.log('Emitting startGame event with room code:', window.gameState.roomCode);
-            socket.emit('startGame', window.gameState.roomCode);
-        };
-        
-        // Make button visible for host
-        if (window.gameState.isHost) {
-            window.ui.buttons.start.style.display = 'block';
-        }
-    }
 }
 
 // Add keyboard event listener to close panels with Escape key
