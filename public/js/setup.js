@@ -43,21 +43,37 @@ function setup() {
         }
     };
 
+    // Remove any existing event listeners
+    const newAddBotBtn = window.ui.buttons.addBot.cloneNode(true);
+    window.ui.buttons.addBot.parentNode.replaceChild(newAddBotBtn, window.ui.buttons.addBot);
+    window.ui.buttons.addBot = newAddBotBtn;
+
+    const newCreateRoomBtn = window.ui.buttons.createRoom.cloneNode(true);
+    window.ui.buttons.createRoom.parentNode.replaceChild(newCreateRoomBtn, window.ui.buttons.createRoom);
+    window.ui.buttons.createRoom = newCreateRoomBtn;
+
+    const newStartGameBtn = window.ui.buttons.startGame.cloneNode(true);
+    window.ui.buttons.startGame.parentNode.replaceChild(newStartGameBtn, window.ui.buttons.startGame);
+    window.ui.buttons.startGame = newStartGameBtn;
+
     // Set up button event listeners
     window.ui.buttons.createRoom.addEventListener('click', () => {
         if (socket) {
+            console.log('Creating room...');
             socket.emit('createRoom');
         }
     });
 
     window.ui.buttons.addBot.addEventListener('click', () => {
         if (socket && window.gameState.roomCode) {
+            console.log('Adding bot to room:', window.gameState.roomCode);
             socket.emit('addBot', window.gameState.roomCode);
         }
     });
 
     window.ui.buttons.startGame.addEventListener('click', () => {
         if (socket && window.gameState.roomCode) {
+            console.log('Starting game in room:', window.gameState.roomCode);
             socket.emit('startGame', window.gameState.roomCode);
         }
     });
