@@ -162,14 +162,43 @@ function setupSocketListeners() {
 
 function updatePlayerList(players) {
     const playerList = document.getElementById('playerList');
-    playerList.innerHTML = '<h3>Players in Room:</h3>';
+    playerList.className = 'player-list';
+    
+    // Count players and bots
+    const realPlayers = players.filter(p => !p.isBot).length;
+    const bots = players.filter(p => p.isBot).length;
+    
+    // Create header with counts
+    playerList.innerHTML = `
+        <h3>Players in Room</h3>
+        <div class="room-status">
+            Players: <span>${realPlayers}/4</span> (including <span>${bots}/3</span> bots)
+        </div>
+    `;
+    
+    // Add each player
     players.forEach(player => {
         const playerElement = document.createElement('div');
-        playerElement.textContent = player.name + (player.isBot ? ' (Bot)' : '') + (player.isHost ? ' (Host)' : '');
+        playerElement.className = 'player-item';
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = `player-icon ${player.isBot ? 'bot-icon' : ''}`;
+        iconDiv.textContent = player.isBot ? 'B' : 'P';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = player.name + 
+            (player.isBot ? ' (Bot)' : '') + 
+            (player.isHost ? ' (Host)' : '');
+        
+        playerElement.appendChild(iconDiv);
+        playerElement.appendChild(nameSpan);
         playerList.appendChild(playerElement);
     });
 
-    // Enable start button if enough players
+    // Enable/disable buttons based on counts
+    if (window.ui.buttons.addBot) {
+        window.ui.buttons.addBot.disabled = bots >= 3;
+    }
     if (window.ui.buttons.startGame) {
         window.ui.buttons.startGame.disabled = players.length < 2;
     }
