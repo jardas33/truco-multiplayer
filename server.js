@@ -6,6 +6,13 @@ const path = require('path');
 
 app.use(express.static('public'));
 
+// Game configuration
+const GAME_CONFIG = {
+    MAX_TOTAL_PLAYERS: 4,
+    MAX_BOTS: 3,
+    MIN_PLAYERS: 2
+};
+
 // Store active rooms
 const rooms = new Map();
 
@@ -72,7 +79,10 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            if (room.players.length >= 4) {
+            // Count real players (non-bots)
+            const realPlayerCount = room.players.filter(p => !p.isBot).length;
+
+            if (room.players.length >= GAME_CONFIG.MAX_TOTAL_PLAYERS) {
                 socket.emit('gameError', 'Room is full');
                 return;
             }
@@ -80,7 +90,7 @@ io.on('connection', (socket) => {
             // Add player to the room
             const newPlayer = {
                 id: socket.id,
-                name: `Player ${room.players.length + 1}`,
+                name: `Player ${realPlayerCount + 1}`,
                 isBot: false,
                 isHost: false
             };
@@ -123,20 +133,20 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            if (room.players.length >= 4) {
+            if (room.players.length >= GAME_CONFIG.MAX_TOTAL_PLAYERS) {
                 socket.emit('gameError', 'Room is full');
                 return;
             }
 
-            if (room.botCount >= 3) {
-                socket.emit('gameError', 'Maximum number of bots reached');
+            if (room.botCount >= GAME_CONFIG.MAX_BOTS) {
+                socket.emit('gameError', 'Maximum number of bots reached (3)');
                 return;
             }
 
             // Add bot to the room
             const botPlayer = {
                 id: `bot-${Math.random().toString(36).substring(7)}`,
-                name: `Bot ${room.players.length + 1}`,
+                name: `Bot ${room.players.length}`,
                 isBot: true,
                 isHost: false
             };
@@ -174,7 +184,7 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            if (room.players.length < 2) {
+            if (room.players.length < GAME_CONFIG.MIN_PLAYERS) {
                 socket.emit('gameError', 'Not enough players');
                 return;
             }
@@ -218,12 +228,15 @@ io.on('connection', (socket) => {
                     
                     if (player.isHost && room.players.length > 0) {
                         // Assign new host
-                        room.players[0].isHost = true;
+                        const nextPlayer = room.players.find(p => !p.isBot);
+                        if (nextPlayer) {
+                            nextPlayer.isHost = true;
+                        }
                     }
                 }
 
-                if (room.players.length === 0) {
-                    // Delete empty room
+                if (room.players.length === 0 || !room.players.some(p => !p.isBot)) {
+                    // Delete room if no real players left
                     rooms.delete(roomCode);
                     console.log('Room deleted:', roomCode);
                 } else {
