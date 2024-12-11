@@ -38,9 +38,15 @@ function initializeGame(gameState) {
         }
     } else {
         console.error('UI elements not properly initialized');
+        return;
     }
     
     // Set game phase
+    if (!window.gameState) {
+        console.error('Window game state not initialized');
+        return;
+    }
+    
     window.gameState.currentPhase = gameStateEnum.Playing;
     
     console.log('Game initialized successfully');

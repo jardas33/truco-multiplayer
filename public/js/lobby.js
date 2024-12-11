@@ -16,6 +16,18 @@ const connectionState = {
 // Initialize socket and lobby when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing game...');
+    // Initialize game state first
+    window.gameState = {
+        currentPhase: gameStateEnum.Menu,
+        isInTrucoPhase: false,
+        selfPlayer: 1,
+        showAllCards: true,
+        roomCode: null,
+        isHost: false,
+        players: [],
+        botCount: 0
+    };
+    
     initGame();
 });
 
@@ -114,17 +126,28 @@ function setupGameEventHandlers() {
 
     socket.on('roomCreated', (roomData) => {
         console.log('Room created:', roomData);
+        if (!window.gameState) {
+            console.error('Game state not initialized');
+            return;
+        }
+        
         window.gameState.roomCode = roomData.roomCode;
         window.gameState.isHost = true;
-        window.gameState.players = roomData.players;
+        window.gameState.players = roomData.players || [];
         window.gameState.botCount = 0;
         
+        console.log('Updated game state:', window.gameState);
         updateRoomUI(roomData);
         updateGameControls();
     });
 
     socket.on('updatePlayers', (data) => {
         console.log('Players updated:', data);
+        if (!window.gameState) {
+            console.error('Game state not initialized');
+            return;
+        }
+        
         if (data && data.players) {
             window.gameState.players = data.players;
             window.gameState.botCount = data.players.filter(p => p.isBot).length;
@@ -141,15 +164,22 @@ function setupGameEventHandlers() {
             return;
         }
 
+        if (!window.gameState) {
+            console.error('Game state not initialized');
+            return;
+        }
+
         // Update game state
         window.gameState = {
             ...window.gameState,
             currentPhase: gameStateEnum.Playing,
-            players: gameData.players,
-            scores: gameData.scores,
-            playedCards: gameData.playedCards,
-            currentTurn: gameData.currentTurn
+            players: gameData.players || [],
+            scores: gameData.scores || { team1: { points: 0, rounds: 0 }, team2: { points: 0, rounds: 0 } },
+            playedCards: gameData.playedCards || [],
+            currentTurn: gameData.currentTurn || 0
         };
+
+        console.log('Game state updated for game start:', window.gameState);
 
         // Initialize game
         if (typeof initializeGame === 'function') {
@@ -166,7 +196,15 @@ function setupGameEventHandlers() {
 }
 
 function updateGameControls() {
-    if (!window.ui.buttons.start || !window.gameState) return;
+    if (!window.ui.buttons.start) {
+        console.error('Start button not found');
+        return;
+    }
+    
+    if (!window.gameState) {
+        console.error('Game state not initialized');
+        return;
+    }
 
     const startButton = window.ui.buttons.start;
     const canStartGame = window.gameState.isHost && 
@@ -179,7 +217,8 @@ function updateGameControls() {
     console.log('Updated start button state:', {
         disabled: !canStartGame,
         display: window.gameState.isHost ? 'block' : 'none',
-        players: window.gameState.players?.length
+        players: window.gameState.players?.length,
+        isHost: window.gameState.isHost
     });
 }
 
