@@ -120,12 +120,7 @@ function setupGameEventHandlers() {
         window.gameState.botCount = 0;
         
         updateRoomUI(roomData);
-        showHostControls();
-
-        // Show start game button for host
-        if (window.ui.buttons.start) {
-            window.ui.buttons.start.style.display = 'block';
-        }
+        updateGameControls();
     });
 
     socket.on('updatePlayers', (data) => {
@@ -134,6 +129,7 @@ function setupGameEventHandlers() {
             window.gameState.players = data.players;
             window.gameState.botCount = data.players.filter(p => p.isBot).length;
             updatePlayerList(data.players);
+            updateGameControls();
         }
     });
 
@@ -170,24 +166,21 @@ function setupGameEventHandlers() {
 }
 
 function updateGameControls() {
-    const playerCount = window.gameState.players.length;
-    const botCount = window.gameState.botCount;
+    if (!window.ui.buttons.start || !window.gameState) return;
+
+    const startButton = window.ui.buttons.start;
+    const canStartGame = window.gameState.isHost && 
+                        window.gameState.players && 
+                        window.gameState.players.length === CONFIG.GAME.MAX_PLAYERS;
+
+    startButton.disabled = !canStartGame;
+    startButton.style.display = window.gameState.isHost ? 'block' : 'none';
     
-    // Update Add Bot button visibility
-    if (window.ui.buttons.addBot) {
-        const canAddBot = window.gameState.isHost && 
-                         playerCount < CONFIG.GAME.MAX_PLAYERS && 
-                         botCount < CONFIG.GAME.MAX_BOTS;
-        
-        window.ui.buttons.addBot.style.display = canAddBot ? 'block' : 'none';
-    }
-    
-    // Update Start Game button
-    if (window.ui.buttons.start) {
-        const canStart = window.gameState.isHost && playerCount >= CONFIG.GAME.MIN_PLAYERS;
-        window.ui.buttons.start.style.display = canStart ? 'block' : 'none';
-        window.ui.buttons.start.disabled = !canStart;
-    }
+    console.log('Updated start button state:', {
+        disabled: !canStartGame,
+        display: window.gameState.isHost ? 'block' : 'none',
+        players: window.gameState.players?.length
+    });
 }
 
 function showHostControls() {
@@ -335,8 +328,8 @@ function setupButtonListeners() {
                 showError('Room code not found');
                 return;
             }
-            if (!window.gameState.players || window.gameState.players.length < CONFIG.GAME.MIN_PLAYERS) {
-                showError('Not enough players to start the game');
+            if (!window.gameState.players || window.gameState.players.length !== CONFIG.GAME.MAX_PLAYERS) {
+                showError('Need exactly 4 players to start the game');
                 return;
             }
             

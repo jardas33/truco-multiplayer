@@ -111,11 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ui.divs.roomControls = document.getElementById('roomControls');
 
     // Initialize button references
-    window.ui.buttons.truco = document.getElementById('trucoButton');
+    window.ui.buttons.truco = document.getElementById('trucoBtn');
     window.ui.buttons.start = document.getElementById('startGameBtn');
-    window.ui.buttons.instructions = document.getElementById('instructionsButton');
-    window.ui.buttons.cardValues = document.getElementById('cardValuesButton');
-    window.ui.buttons.backToMainMenu = document.getElementById('backToMainMenuButton');
+    window.ui.buttons.instructions = document.getElementById('instructionsBtn');
+    window.ui.buttons.cardValues = document.getElementById('cardValuesBtn');
+    window.ui.buttons.backToMainMenu = document.getElementById('backToMenuBtn');
     window.ui.buttons.addBot = document.getElementById('addBotBtn');
     window.ui.buttons.createRoom = document.getElementById('createRoomBtn');
     window.ui.buttons.joinRoom = document.getElementById('joinRoomBtn');
@@ -125,7 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup initial button states
     if (window.ui.buttons.addBot) window.ui.buttons.addBot.style.display = 'none';
-    if (window.ui.buttons.start) window.ui.buttons.start.style.display = 'none';
+    if (window.ui.buttons.start) {
+        window.ui.buttons.start.style.display = 'none';
+        window.ui.buttons.start.disabled = true;
+    }
+
+    console.log('UI elements initialized:', window.ui);
 });
 
 // Export configuration for modules that need it
