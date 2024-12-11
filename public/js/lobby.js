@@ -159,8 +159,13 @@ function setupGameEventHandlers() {
 
     socket.on('gameStarted', (gameData) => {
         console.log('Game started:', gameData);
-        window.gameState.currentPhase = 'playing';
-        startGame(gameData);
+        
+        // Initialize game with received data
+        if (typeof initializeGame === 'function') {
+            initializeGame(gameData);
+        } else {
+            console.error('initializeGame function not found');
+        }
     });
 
     socket.on('gameError', (error) => {
@@ -339,6 +344,8 @@ function setupButtonListeners() {
                 showError('Not enough players to start the game');
                 return;
             }
+            
+            console.log('Emitting startGame event');
             socket.emit('startGame', window.gameState.roomCode);
         };
     }

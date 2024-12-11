@@ -179,29 +179,22 @@ io.on('connection', (socket) => {
 
             // Initialize game state
             const gameState = {
-                players: room.players.map(p => ({
-                    id: p.id,
-                    name: p.name,
-                    isBot: p.isBot,
-                    hand: p.hand,
-                    isHost: p.isHost
-                })),
-                currentRound: 1,
-                currentTurn: 0,
+                players: room.players,
+                currentPhase: 'playing',
                 scores: {
-                    team1: { rounds: 0, points: 0 },
-                    team2: { rounds: 0, points: 0 }
+                    team1: { points: 0, rounds: 0 },
+                    team2: { points: 0, rounds: 0 }
                 },
                 playedCards: [],
-                roundWinner: null,
-                gamePhase: 'playing'
+                currentTurn: 0
             };
 
-            // Send game state to all players
-            io.to(roomCode).emit('gameStarted', {
-                gameState: gameState
-            });
+            // Store game state in room
+            room.gameState = gameState;
 
+            // Emit game started event to all players in room
+            io.to(roomCode).emit('gameStarted', gameState);
+            
             console.log('Game started in room:', roomCode);
         } catch (error) {
             console.error('Error starting game:', error);

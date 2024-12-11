@@ -3,17 +3,32 @@ let currentPlayer = null;
 
 function initializeGame(gameState) {
     console.log('Initializing game with state:', gameState);
+    
+    if (!gameState) {
+        console.error('Game state is undefined');
+        return;
+    }
+
     currentGame = gameState;
     
-    // Find current player
-    currentPlayer = gameState.players.find(p => p.id === socket.id);
+    // Find current player in the players array
+    if (gameState.players && Array.isArray(gameState.players)) {
+        currentPlayer = gameState.players.find(p => p.id === socket.id);
+    } else {
+        console.error('Invalid players array in game state');
+        return;
+    }
     
     // Hide menu and show game
-    if (window.ui.divs.menu) window.ui.divs.menu.style.display = 'none';
-    if (window.ui.divs.game) window.ui.divs.game.style.display = 'block';
+    if (window.ui && window.ui.divs) {
+        if (window.ui.divs.menu) window.ui.divs.menu.style.display = 'none';
+        if (window.ui.divs.game) window.ui.divs.game.style.display = 'block';
+    }
     
     // Set game phase
-    window.gameState.currentPhase = gameStateEnum.Playing;
+    if (window.gameState) {
+        window.gameState.currentPhase = gameStateEnum.Playing;
+    }
     
     console.log('Current player:', currentPlayer);
 }
