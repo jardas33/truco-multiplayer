@@ -35,12 +35,12 @@ io.on('connection', (socket) => {
             // Generate a random 6-character room code
             const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             
-            // Create the room
+            // Create the room with the host player
             const room = {
                 code: roomCode,
                 players: [{
                     id: socket.id,
-                    name: `Player 1`,
+                    name: 'Player 1',
                     isBot: false,
                     isHost: true
                 }],
@@ -57,6 +57,12 @@ io.on('connection', (socket) => {
             // Send the room data back to the client
             socket.emit('roomCreated', {
                 roomCode: roomCode,
+                players: room.players,
+                botCount: room.botCount
+            });
+
+            // Also emit updatePlayers to ensure the UI updates
+            io.to(roomCode).emit('updatePlayers', {
                 players: room.players,
                 botCount: room.botCount
             });
@@ -132,16 +138,17 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // Check total players (including bots)
+            // Check bot limit
             if (room.botCount >= GAME_CONFIG.MAX_BOTS) {
                 socket.emit('gameError', 'Maximum number of bots reached (3)');
                 return;
             }
 
             // Add bot to the room
+            const botNumber = room.botCount + 1;
             const botPlayer = {
                 id: `bot-${Math.random().toString(36).substring(7)}`,
-                name: `Bot ${room.players.length}`,
+                name: `Bot ${botNumber}`,
                 isBot: true,
                 isHost: false
             };
@@ -149,7 +156,7 @@ io.on('connection', (socket) => {
             room.botCount++;
 
             // Notify all players in the room
-            io.to(roomCode).emit('botAdded', {
+            io.to(roomCode).emit('updatePlayers', {
                 players: room.players,
                 botCount: room.botCount
             });

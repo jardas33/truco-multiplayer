@@ -134,11 +134,7 @@ function setupSocketListeners() {
     });
 
     socket.on('updatePlayers', (data) => {
-        updatePlayerList(data.players);
-    });
-
-    socket.on('botAdded', (data) => {
-        console.log('Bot added:', data);
+        console.log('Players updated:', data);
         updatePlayerList(data.players);
     });
 
@@ -148,10 +144,6 @@ function setupSocketListeners() {
         window.gameState.currentPhase = gameStateEnum.Playing;
         window.ui.divs.menu.style.display = 'none';
         window.ui.divs.game.style.display = 'block';
-    });
-
-    socket.on('updateGame', (gameData) => {
-        window.game = gameData;
     });
 
     socket.on('gameError', (error) => {
@@ -170,18 +162,28 @@ function updatePlayerList(players) {
     const totalPlayers = players.length;
     
     // Create header with counts
-    playerList.innerHTML = `
+    let headerHtml = `
         <h3>Players in Room</h3>
         <div class="room-status">
             Total Players: <span>${totalPlayers}/4</span> (including <span>${bots}/3</span> bots)
         </div>
-        <div class="room-status">
-            ${totalPlayers === 4 ? 
-                '<span class="ready">Ready to start!</span>' : 
-                `Need ${4 - totalPlayers} more player${4 - totalPlayers !== 1 ? 's' : ''}`
-            }
-        </div>
     `;
+
+    if (totalPlayers === 4) {
+        headerHtml += `
+            <div class="room-status">
+                <span class="ready">Ready to start!</span>
+            </div>
+        `;
+    } else {
+        headerHtml += `
+            <div class="room-status">
+                Need ${4 - totalPlayers} more player${4 - totalPlayers !== 1 ? 's' : ''}
+            </div>
+        `;
+    }
+    
+    playerList.innerHTML = headerHtml;
     
     // Add each player
     players.forEach(player => {
@@ -205,9 +207,13 @@ function updatePlayerList(players) {
     // Enable/disable buttons based on counts
     if (window.ui.buttons.addBot) {
         window.ui.buttons.addBot.disabled = bots >= 3 || totalPlayers >= 4;
+        window.ui.buttons.addBot.title = bots >= 3 ? 'Maximum bots reached' : 
+                                       totalPlayers >= 4 ? 'Room is full' : 
+                                       'Add a bot player';
     }
     if (window.ui.buttons.startGame) {
         window.ui.buttons.startGame.disabled = totalPlayers < 4;
+        window.ui.buttons.startGame.title = totalPlayers < 4 ? 'Need 4 players to start' : 'Start the game';
     }
 }
 
