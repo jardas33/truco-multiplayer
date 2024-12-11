@@ -24,9 +24,9 @@ const CONFIG = {
     }
 };
 
-// Game State
+// Initialize game state immediately
 window.gameState = {
-    currentPhase: gameStateEnum.Menu, // menu, playing, instructions, cardValues
+    currentPhase: gameStateEnum.Menu,
     isInTrucoPhase: false,
     selfPlayer: 1,
     showAllCards: true,
@@ -35,6 +35,8 @@ window.gameState = {
     players: [],
     botCount: 0
 };
+
+console.log('Initial game state created:', window.gameState);
 
 // Game Assets
 window.gameAssets = {
@@ -102,6 +104,8 @@ window.game = null;
 
 // Initialize UI references
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing UI elements...');
+    
     // Initialize div references
     window.ui.divs.menu = document.getElementById('Menu');
     window.ui.divs.game = document.getElementById('Game');
@@ -130,7 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.ui.buttons.start.disabled = true;
     }
 
-    console.log('UI elements initialized:', window.ui);
+    console.log('UI elements initialized:', {
+        gameState: window.gameState,
+        ui: window.ui
+    });
 });
 
 // Export configuration for modules that need it

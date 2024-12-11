@@ -16,18 +16,12 @@ const connectionState = {
 // Initialize socket and lobby when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing game...');
-    // Initialize game state first
-    window.gameState = {
-        currentPhase: gameStateEnum.Menu,
-        isInTrucoPhase: false,
-        selfPlayer: 1,
-        showAllCards: true,
-        roomCode: null,
-        isHost: false,
-        players: [],
-        botCount: 0
-    };
-    
+    // Check if game state exists
+    if (!window.gameState) {
+        console.error('Game state not initialized in variables.js');
+        return;
+    }
+    console.log('Using existing game state:', window.gameState);
     initGame();
 });
 
@@ -136,7 +130,7 @@ function setupGameEventHandlers() {
         window.gameState.players = roomData.players || [];
         window.gameState.botCount = 0;
         
-        console.log('Updated game state:', window.gameState);
+        console.log('Updated game state after room creation:', window.gameState);
         updateRoomUI(roomData);
         updateGameControls();
     });
