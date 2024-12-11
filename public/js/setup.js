@@ -25,7 +25,8 @@ function setup() {
             menu: document.getElementById('Menu'),
             game: document.getElementById('Game'),
             instructions: document.getElementById('Instructions'),
-            values: document.getElementById('Values')
+            values: document.getElementById('Values'),
+            playerList: document.getElementById('playerList')
         },
         buttons: {
             instructions: document.getElementById('instructionsBtn'),
@@ -43,65 +44,30 @@ function setup() {
     };
 
     // Set up button event listeners
-    window.ui.buttons.instructions.addEventListener('click', () => {
-        window.gameState.currentPhase = gameStateEnum.Instructions;
-        window.ui.divs.instructions.style.display = 'block';
+    window.ui.buttons.createRoom.addEventListener('click', () => {
+        if (socket) {
+            socket.emit('createRoom');
+        }
     });
 
-    window.ui.buttons.cardValues.addEventListener('click', () => {
-        window.gameState.currentPhase = gameStateEnum.CardValues;
-        window.ui.divs.values.style.display = 'block';
+    window.ui.buttons.addBot.addEventListener('click', () => {
+        if (socket && window.gameState.roomCode) {
+            socket.emit('addBot', window.gameState.roomCode);
+        }
     });
 
-    // Set up close buttons for panels
-    document.querySelectorAll('.close-panel').forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.target.closest('.panel').style.display = 'none';
-            window.gameState.currentPhase = gameStateEnum.Menu;
-        });
+    window.ui.buttons.startGame.addEventListener('click', () => {
+        if (socket && window.gameState.roomCode) {
+            socket.emit('startGame', window.gameState.roomCode);
+        }
     });
 
-    // Set up game control buttons
-    if (window.ui.buttons.addBot) {
-        window.ui.buttons.addBot.addEventListener('click', () => {
-            if (socket && window.gameState.roomCode) {
-                socket.emit('addBot', window.gameState.roomCode);
-            }
-        });
-    }
-
-    if (window.ui.buttons.startGame) {
-        window.ui.buttons.startGame.addEventListener('click', () => {
-            if (socket && window.gameState.roomCode) {
-                socket.emit('startGame', window.gameState.roomCode);
-            }
-        });
-    }
-
-    if (window.ui.buttons.createRoom) {
-        window.ui.buttons.createRoom.addEventListener('click', () => {
-            if (socket) {
-                socket.emit('createRoom');
-            }
-        });
-    }
-
-    if (window.ui.buttons.joinRoom) {
-        window.ui.buttons.joinRoom.addEventListener('click', () => {
-            const roomCode = window.ui.inputs.roomCode.value.trim();
-            if (socket && roomCode) {
-                socket.emit('joinRoom', roomCode);
-            }
-        });
-    }
-
-    // Initialize game state
-    window.gameState = {
-        currentPhase: gameStateEnum.Menu,
-        showAllCards: false,
-        roomCode: null,
-        isHost: false
-    };
+    window.ui.buttons.joinRoom.addEventListener('click', () => {
+        const roomCode = window.ui.inputs.roomCode.value.trim();
+        if (socket && roomCode) {
+            socket.emit('joinRoom', roomCode);
+        }
+    });
 
     // Initialize socket connection
     socket = io();
@@ -119,17 +85,6 @@ function setupSocketListeners() {
         window.gameState.isHost = true;
         window.ui.buttons.addBot.style.display = 'block';
         window.ui.buttons.startGame.style.display = 'block';
-        updatePlayerList(data.players);
-    });
-
-    socket.on('joinedRoom', (data) => {
-        console.log('Joined room:', data);
-        window.gameState.roomCode = data.roomCode;
-        window.gameState.isHost = data.isHost;
-        if (data.isHost) {
-            window.ui.buttons.addBot.style.display = 'block';
-            window.ui.buttons.startGame.style.display = 'block';
-        }
         updatePlayerList(data.players);
     });
 
@@ -153,67 +108,56 @@ function setupSocketListeners() {
 }
 
 function updatePlayerList(players) {
+    console.log('Updating player list with:', players);
     const playerList = document.getElementById('playerList');
-    playerList.className = 'player-list';
     
     // Count players and bots
     const realPlayers = players.filter(p => !p.isBot).length;
     const bots = players.filter(p => p.isBot).length;
     const totalPlayers = players.length;
     
-    // Create header with counts
-    let headerHtml = `
+    let html = `
         <h3>Players in Room</h3>
         <div class="room-status">
-            Total Players: <span>${totalPlayers}/4</span> (including <span>${bots}/3</span> bots)
+            Players: <span>${realPlayers}</span> + Bots: <span>${bots}</span> (Total: ${totalPlayers}/4)
         </div>
     `;
 
+    // Add each player
+    players.forEach(player => {
+        html += `
+            <div class="player-item">
+                <div class="player-icon ${player.isBot ? 'bot-icon' : ''}">
+                    ${player.isBot ? 'B' : 'P'}
+                </div>
+                <span>${player.name}${player.isBot ? ' (Bot)' : ''}${player.isHost ? ' (Host)' : ''}</span>
+            </div>
+        `;
+    });
+
+    // Add status message
     if (totalPlayers === 4) {
-        headerHtml += `
+        html += `
             <div class="room-status">
                 <span class="ready">Ready to start!</span>
             </div>
         `;
     } else {
-        headerHtml += `
+        html += `
             <div class="room-status">
                 Need ${4 - totalPlayers} more player${4 - totalPlayers !== 1 ? 's' : ''}
             </div>
         `;
     }
-    
-    playerList.innerHTML = headerHtml;
-    
-    // Add each player
-    players.forEach(player => {
-        const playerElement = document.createElement('div');
-        playerElement.className = 'player-item';
-        
-        const iconDiv = document.createElement('div');
-        iconDiv.className = `player-icon ${player.isBot ? 'bot-icon' : ''}`;
-        iconDiv.textContent = player.isBot ? 'B' : 'P';
-        
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = player.name + 
-            (player.isBot ? ' (Bot)' : '') + 
-            (player.isHost ? ' (Host)' : '');
-        
-        playerElement.appendChild(iconDiv);
-        playerElement.appendChild(nameSpan);
-        playerList.appendChild(playerElement);
-    });
 
-    // Enable/disable buttons based on counts
+    playerList.innerHTML = html;
+
+    // Update button states
     if (window.ui.buttons.addBot) {
         window.ui.buttons.addBot.disabled = bots >= 3 || totalPlayers >= 4;
-        window.ui.buttons.addBot.title = bots >= 3 ? 'Maximum bots reached' : 
-                                       totalPlayers >= 4 ? 'Room is full' : 
-                                       'Add a bot player';
     }
     if (window.ui.buttons.startGame) {
         window.ui.buttons.startGame.disabled = totalPlayers < 4;
-        window.ui.buttons.startGame.title = totalPlayers < 4 ? 'Need 4 players to start' : 'Start the game';
     }
 }
 
