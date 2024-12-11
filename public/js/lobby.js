@@ -243,6 +243,41 @@ function updatePlayerList(players) {
 }
 
 function setupButtonListeners() {
+    // Instructions button
+    const instructionsBtn = document.getElementById('instructionsBtn');
+    const instructionsPanel = document.getElementById('Instructions');
+    if (instructionsBtn && instructionsPanel) {
+        instructionsBtn.onclick = () => {
+            instructionsPanel.classList.add('active');
+        };
+    }
+
+    // Card Values button
+    const cardValuesBtn = document.getElementById('cardValuesBtn');
+    const valuesPanel = document.getElementById('Values');
+    if (cardValuesBtn && valuesPanel) {
+        cardValuesBtn.onclick = () => {
+            valuesPanel.classList.add('active');
+        };
+    }
+
+    // Close buttons for panels
+    document.querySelectorAll('.close-panel').forEach(button => {
+        button.onclick = () => {
+            const panel = button.closest('.panel');
+            if (panel) {
+                panel.classList.remove('active');
+            }
+        };
+    });
+
+    // Close panels when clicking outside
+    document.addEventListener('click', (event) => {
+        if (event.target.classList.contains('panel')) {
+            event.target.classList.remove('active');
+        }
+    });
+
     // Create Room button
     if (window.ui.buttons.createRoom) {
         window.ui.buttons.createRoom.onclick = () => {
@@ -277,6 +312,10 @@ function setupButtonListeners() {
                 showError('Not connected to server. Please wait...');
                 return;
             }
+            if (!window.gameState.roomCode) {
+                showError('Room code not found');
+                return;
+            }
             if (window.gameState.botCount >= CONFIG.GAME.MAX_BOTS) {
                 showError('Maximum number of bots reached');
                 return;
@@ -292,6 +331,10 @@ function setupButtonListeners() {
                 showError('Not connected to server. Please wait...');
                 return;
             }
+            if (!window.gameState.roomCode) {
+                showError('Room code not found');
+                return;
+            }
             if (window.gameState.players.length < CONFIG.GAME.MIN_PLAYERS) {
                 showError('Not enough players to start the game');
                 return;
@@ -300,6 +343,15 @@ function setupButtonListeners() {
         };
     }
 }
+
+// Add keyboard event listener to close panels with Escape key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        document.querySelectorAll('.panel.active').forEach(panel => {
+            panel.classList.remove('active');
+        });
+    }
+});
 
 function handleConnectionError(error) {
     console.error('Connection error:', error);

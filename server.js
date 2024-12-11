@@ -9,8 +9,18 @@ app.use(express.static('public'));
 // Store active rooms
 const rooms = new Map();
 
+// Debug logging for room management
+function logRoomState(roomCode, action) {
+    const room = rooms.get(roomCode);
+    console.log(`[${action}] Room ${roomCode}:`, room ? {
+        playerCount: room.players.length,
+        botCount: room.botCount,
+        players: room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot }))
+    } : 'not found');
+}
+
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('A user connected:', socket.id);
 
     // Handle room creation
     socket.on('createRoom', () => {
@@ -32,10 +42,10 @@ io.on('connection', (socket) => {
             };
             
             rooms.set(roomCode, room);
+            socket.roomCode = roomCode; // Store room code in socket object
 
             // Join the room
             socket.join(roomCode);
-            socket.roomCode = roomCode;
 
             // Send the room data back to the client
             socket.emit('roomCreated', {
@@ -44,7 +54,7 @@ io.on('connection', (socket) => {
                 botCount: room.botCount
             });
 
-            console.log(`Room created: ${roomCode}`);
+            logRoomState(roomCode, 'Room Created');
         } catch (error) {
             console.error('Error creating room:', error);
             socket.emit('gameError', 'Failed to create room');
@@ -55,6 +65,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', (roomCode) => {
         try {
             const room = rooms.get(roomCode);
+            logRoomState(roomCode, 'Join Attempt');
             
             if (!room) {
                 socket.emit('gameError', 'Room not found');
@@ -74,17 +85,10 @@ io.on('connection', (socket) => {
                 isHost: false
             };
             room.players.push(newPlayer);
+            socket.roomCode = roomCode; // Store room code in socket object
             
             // Join the room
             socket.join(roomCode);
-            socket.roomCode = roomCode;
-
-            // Notify the joining player
-            socket.emit('roomJoined', {
-                roomCode: roomCode,
-                players: room.players,
-                botCount: room.botCount
-            });
 
             // Notify all players in the room
             io.to(roomCode).emit('playerJoined', {
@@ -92,7 +96,7 @@ io.on('connection', (socket) => {
                 botCount: room.botCount
             });
 
-            console.log(`Player joined room: ${roomCode}`);
+            logRoomState(roomCode, 'Player Joined');
         } catch (error) {
             console.error('Error joining room:', error);
             socket.emit('gameError', 'Failed to join room');
@@ -102,10 +106,20 @@ io.on('connection', (socket) => {
     // Handle adding bots
     socket.on('addBot', (roomCode) => {
         try {
+            console.log('Add bot request for room:', roomCode);
             const room = rooms.get(roomCode);
+            logRoomState(roomCode, 'Add Bot Attempt');
             
             if (!room) {
+                console.error('Room not found:', roomCode);
                 socket.emit('gameError', 'Room not found');
+                return;
+            }
+
+            // Verify the requester is in the room and is the host
+            const player = room.players.find(p => p.id === socket.id);
+            if (!player || !player.isHost) {
+                socket.emit('gameError', 'Only the host can add bots');
                 return;
             }
 
@@ -135,7 +149,7 @@ io.on('connection', (socket) => {
                 botCount: room.botCount
             });
 
-            console.log(`Bot added to room: ${roomCode}`);
+            logRoomState(roomCode, 'Bot Added');
         } catch (error) {
             console.error('Error adding bot:', error);
             socket.emit('gameError', 'Failed to add bot');
@@ -146,9 +160,17 @@ io.on('connection', (socket) => {
     socket.on('startGame', (roomCode) => {
         try {
             const room = rooms.get(roomCode);
+            logRoomState(roomCode, 'Start Game Attempt');
             
             if (!room) {
                 socket.emit('gameError', 'Room not found');
+                return;
+            }
+
+            // Verify the requester is in the room and is the host
+            const player = room.players.find(p => p.id === socket.id);
+            if (!player || !player.isHost) {
+                socket.emit('gameError', 'Only the host can start the game');
                 return;
             }
 
@@ -173,7 +195,7 @@ io.on('connection', (socket) => {
                 gameState: room.game
             });
 
-            console.log(`Game started in room: ${roomCode}`);
+            logRoomState(roomCode, 'Game Started');
         } catch (error) {
             console.error('Error starting game:', error);
             socket.emit('gameError', 'Failed to start game');
@@ -186,6 +208,7 @@ io.on('connection', (socket) => {
             const roomCode = socket.roomCode;
             if (roomCode && rooms.has(roomCode)) {
                 const room = rooms.get(roomCode);
+                logRoomState(roomCode, 'Before Disconnect');
                 
                 // Remove the player
                 const playerIndex = room.players.findIndex(p => p.id === socket.id);
@@ -202,15 +225,17 @@ io.on('connection', (socket) => {
                 if (room.players.length === 0) {
                     // Delete empty room
                     rooms.delete(roomCode);
+                    console.log('Room deleted:', roomCode);
                 } else {
                     // Notify remaining players
                     io.to(roomCode).emit('playerLeft', {
                         players: room.players,
                         botCount: room.botCount
                     });
+                    logRoomState(roomCode, 'After Disconnect');
                 }
             }
-            console.log('A user disconnected');
+            console.log('User disconnected:', socket.id);
         } catch (error) {
             console.error('Error handling disconnect:', error);
         }

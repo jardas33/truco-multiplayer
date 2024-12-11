@@ -11,6 +11,13 @@
   </head>
   <body>
     <main>
+      <!-- Corner Buttons -->
+      <div class="corner-buttons">
+        <button id="instructionsBtn">Instructions</button>
+        <button id="cardValuesBtn">Card Values</button>
+      </div>
+
+      <!-- Game Sections -->
       <div id="Menu">
         <div id="roomControls" class="room-controls">
           <h2>Truco Multiplayer</h2>
@@ -24,29 +31,67 @@
             <button id="addBotBtn" style="display: none;">Add Bot</button>
             <button id="startGameBtn" class="primary-button" style="display: none;" disabled>Start Game</button>
           </div>
-          <div class="menu-buttons">
-            <button id="instructionsBtn">Instructions</button>
-            <button id="cardValuesBtn">Card Values</button>
-          </div>
         </div>
       </div>
+
       <div id="Game">
         <button id="backToMenuBtn" style="display: none;">Back to Menu</button>
         <button id="trucoBtn" style="display: none;">Truco!</button>
       </div>
-      <div id="Instructions">
-        <div class="instructions-content">
-          <h2>How to Play Truco</h2>
-          <!-- Instructions content will be added dynamically -->
+
+      <!-- Instruction Panel -->
+      <div id="Instructions" class="panel">
+        <button class="close-panel">&times;</button>
+        <h2>How to Play Truco</h2>
+        <div class="panel-content">
+          <p>Truco is a popular card game played between 2 to 6 players in teams. Here are the basic rules:</p>
+          <h3>Game Setup</h3>
+          <ul>
+            <li>Players are divided into two teams</li>
+            <li>Each player receives 3 cards per round</li>
+            <li>The goal is to win 2 out of 3 rounds</li>
+          </ul>
+          <h3>Card Values</h3>
+          <p>Cards have special rankings in Truco. Check the Card Values section for the complete hierarchy.</p>
+          <h3>Gameplay</h3>
+          <ul>
+            <li>Players take turns playing one card at a time</li>
+            <li>The highest card wins each round</li>
+            <li>Win 2 rounds to win the game</li>
+            <li>First team to 12 points wins the match</li>
+          </ul>
+          <h3>Special Moves</h3>
+          <p>Players can call "Truco" to raise the stakes of the current hand. The opposing team can accept, decline, or raise the stakes further.</p>
         </div>
       </div>
-      <div id="Values">
-        <div class="values-content">
-          <h2>Card Values</h2>
-          <!-- Card values content will be added dynamically -->
+
+      <!-- Card Values Panel -->
+      <div id="Values" class="panel">
+        <button class="close-panel">&times;</button>
+        <h2>Card Values</h2>
+        <div class="panel-content">
+          <p>Cards are ranked from highest to lowest as follows:</p>
+          <ol>
+            <li>4 of Clubs (Zap)</li>
+            <li>7 of Hearts (Copas)</li>
+            <li>Ace of Swords (Espadilha)</li>
+            <li>7 of Diamonds (Pica Fumo)</li>
+            <li>All 3s</li>
+            <li>All 2s</li>
+            <li>All Aces (except Swords)</li>
+            <li>All Kings (K)</li>
+            <li>All Jacks (J)</li>
+            <li>All Queens (Q)</li>
+            <li>All 7s (except Hearts and Diamonds)</li>
+            <li>All 6s</li>
+            <li>All 5s</li>
+            <li>All 4s (except Clubs)</li>
+          </ol>
         </div>
       </div>
     </main>
+
+    <!-- Scripts -->
     <script src="js/variables.js"></script>
     <script src="js/players.js"></script>
     <script src="js/preload.js"></script>

@@ -306,3 +306,80 @@ canvas {
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.4);
 }
+
+.corner-buttons {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+}
+
+.corner-buttons button {
+    background: rgba(76, 175, 80, 0.9);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 150px;
+    text-align: left;
+}
+
+.corner-buttons button:hover {
+    background: rgba(76, 175, 80, 1);
+    transform: translateX(5px);
+}
+
+/* Instructions and Values panels */
+.panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.panel h2 {
+    color: #4CAF50;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.panel-content {
+    color: white;
+    line-height: 1.6;
+}
+
+.close-panel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+}
+
+.close-panel:hover {
+    color: #4CAF50;
+}
