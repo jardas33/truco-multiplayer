@@ -314,10 +314,10 @@ canvas {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    z-index: 100;
+    z-index: 1000;
 }
 
-.corner-buttons button {
+.corner-button {
     background: rgba(76, 175, 80, 0.9);
     color: white;
     border: none;
@@ -327,11 +327,13 @@ canvas {
     transition: all 0.3s ease;
     width: 150px;
     text-align: left;
+    font-size: 16px;
 }
 
-.corner-buttons button:hover {
+.corner-button:hover {
     background: rgba(76, 175, 80, 1);
     transform: translateX(5px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 /* Instructions and Values panels */
@@ -382,4 +384,9 @@ canvas {
 
 .close-panel:hover {
     color: #4CAF50;
+}
+
+/* Remove the old button styles */
+#Instructions, #Card.Values {
+    display: none;
 }

@@ -1,0 +1,5 @@
+[33mcommit 40a2b9becdc1bd08c51c50341e893f12b9cac1e6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Jardas33 <moreiraquim@gmail.com>
+Date:   Tue Dec 10 20:11:30 2024 -0500
+
+    Fix UI issues and improve error handling: Fix duplicate corner buttons, improve styling and positioning, enhance state management

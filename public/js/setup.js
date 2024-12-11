@@ -6,27 +6,116 @@ let initState = {
 };
 
 function setup() {
-    console.log('Starting setup...');
+    // Create canvas and set it up
+    const canvas = createCanvas(windowWidth, windowHeight);
+    canvas.style('display', 'block');
+    canvas.parent('Game');
     
-    try {
-        // Ensure the DOM is fully loaded
-        if (!document.getElementById('Menu')) {
-            throw new Error('Required DOM elements not found. Please ensure the page is properly loaded.');
+    // Initialize UI elements
+    window.ui = {
+        divs: {
+            menu: document.getElementById('Menu'),
+            game: document.getElementById('Game'),
+            instructions: document.getElementById('Instructions'),
+            values: document.getElementById('Values')
+        },
+        buttons: {
+            instructions: document.getElementById('instructionsBtn'),
+            cardValues: document.getElementById('cardValuesBtn'),
+            createRoom: document.getElementById('createRoomBtn'),
+            joinRoom: document.getElementById('joinRoomBtn'),
+            addBot: document.getElementById('addBotBtn'),
+            startGame: document.getElementById('startGameBtn'),
+            backToMenu: document.getElementById('backToMenuBtn'),
+            truco: document.getElementById('trucoBtn')
+        },
+        inputs: {
+            roomCode: document.getElementById('roomInput')
         }
+    };
 
-        initializeCanvas();
-        initializeUI();
-        initializeGameState();
-        
-        if (initState.errors.length > 0) {
-            showSetupError('Game initialization failed', initState.errors);
-            return;
+    // Set up button event listeners
+    window.ui.buttons.instructions.addEventListener('click', () => {
+        window.ui.divs.instructions.style.display = 'block';
+    });
+
+    window.ui.buttons.cardValues.addEventListener('click', () => {
+        window.ui.divs.values.style.display = 'block';
+    });
+
+    // Set up close buttons for panels
+    document.querySelectorAll('.close-panel').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.target.closest('.panel').style.display = 'none';
+        });
+    });
+
+    // Initialize game state
+    window.gameState = {
+        currentState: 'menu',
+        showAllCards: false
+    };
+
+    // Initialize socket connection
+    socket = io();
+    setupSocketListeners();
+}
+
+function setupSocketListeners() {
+    socket.on('connect', () => {
+        console.log('Connected to server');
+    });
+
+    socket.on('roomCreated', (roomCode) => {
+        console.log('Room created:', roomCode);
+        currentRoom = roomCode;
+        window.ui.buttons.addBot.style.display = 'block';
+        window.ui.buttons.startGame.style.display = 'block';
+    });
+
+    socket.on('joinedRoom', (data) => {
+        console.log('Joined room:', data);
+        currentRoom = data.roomCode;
+        if (data.isHost) {
+            window.ui.buttons.addBot.style.display = 'block';
+            window.ui.buttons.startGame.style.display = 'block';
         }
-        
-        console.log('Setup completed successfully');
-    } catch (error) {
-        console.error('Setup failed:', error);
-        showSetupError('Unexpected error during setup', [error.message]);
+    });
+
+    socket.on('updatePlayers', (players) => {
+        updatePlayerList(players);
+    });
+
+    socket.on('gameStarted', (gameData) => {
+        console.log('Game started:', gameData);
+        window.game = gameData;
+        window.gameState.currentState = 'playing';
+        window.ui.divs.menu.style.display = 'none';
+        window.ui.divs.game.style.display = 'block';
+    });
+
+    socket.on('updateGame', (gameData) => {
+        window.game = gameData;
+    });
+
+    socket.on('error', (error) => {
+        console.error('Server error:', error);
+        alert(error);
+    });
+}
+
+function updatePlayerList(players) {
+    const playerList = document.getElementById('playerList');
+    playerList.innerHTML = '<h3>Players in Room:</h3>';
+    players.forEach(player => {
+        const playerElement = document.createElement('div');
+        playerElement.textContent = player.name + (player.isBot ? ' (Bot)' : '');
+        playerList.appendChild(playerElement);
+    });
+
+    // Enable start button if enough players
+    if (window.ui.buttons.startGame) {
+        window.ui.buttons.startGame.disabled = players.length < 2;
     }
 }
 
