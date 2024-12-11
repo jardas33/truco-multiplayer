@@ -348,20 +348,24 @@ function startGame() {
   gameDiv.class('active');
 }
 
+// Handle window resizing
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  
-  // Update player positions
-  if (playerPositions) {
-    playerPositions[0].x = width / 6;
-    playerPositions[0].y = height / 2;
-    playerPositions[1].x = width / 2;
-    playerPositions[1].y = 100;
-    playerPositions[2].x = (5 * width) / 6;
-    playerPositions[2].y = height / 2;
-    playerPositions[3].x = width / 2;
-    playerPositions[3].y = height - 100;
-  }
+    resizeCanvas(windowWidth, windowHeight);
+    
+    // Initialize player positions if they don't exist
+    if (!window.gameElements) {
+        window.gameElements = {};
+    }
+    
+    if (!window.gameElements.playerPositions) {
+        window.gameElements.playerPositions = [];
+    }
+
+    // Update player positions
+    window.gameElements.playerPositions[0] = { x: width / 6, y: height / 2, labelOffset: 60 };
+    window.gameElements.playerPositions[1] = { x: width / 2, y: 100, labelOffset: 60 };
+    window.gameElements.playerPositions[2] = { x: (5 * width) / 6, y: height / 2, labelOffset: 60 };
+    window.gameElements.playerPositions[3] = { x: width / 2, y: height - 100, labelOffset: -80 };
 }
 
 

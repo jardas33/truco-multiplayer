@@ -118,7 +118,6 @@ io.on('connection', (socket) => {
         try {
             console.log('Add bot request for room:', roomCode);
             const room = rooms.get(roomCode);
-            logRoomState(roomCode, 'Add Bot Attempt');
             
             if (!room) {
                 console.error('Room not found:', roomCode);
@@ -133,11 +132,7 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            if (room.players.length >= GAME_CONFIG.MAX_TOTAL_PLAYERS) {
-                socket.emit('gameError', 'Room is full');
-                return;
-            }
-
+            // Check total players (including bots)
             if (room.botCount >= GAME_CONFIG.MAX_BOTS) {
                 socket.emit('gameError', 'Maximum number of bots reached (3)');
                 return;
