@@ -16,12 +16,26 @@ const connectionState = {
 // Initialize socket and lobby when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing game...');
-    // Check if game state exists
+    
+    // Initialize socket first
+    initSocket();
+    
+    // Initialize game state if not already done
     if (!window.gameState) {
-        console.error('Game state not initialized in variables.js');
-        return;
+        window.gameState = {
+            currentPhase: gameStateEnum.Menu,
+            isInTrucoPhase: false,
+            selfPlayer: 1,
+            showAllCards: true,
+            roomCode: null,
+            isHost: false,
+            players: [],
+            botCount: 0
+        };
+        console.log('Game state initialized:', window.gameState);
     }
-    console.log('Using existing game state:', window.gameState);
+    
+    // Initialize game
     initGame();
 });
 
@@ -48,18 +62,6 @@ function initSocket() {
             throw new Error('Socket.IO not loaded');
         }
 
-        if (connectionAttempts >= MAX_RECONNECTION_ATTEMPTS) {
-            throw new Error('Max reconnection attempts reached');
-        }
-
-        connectionAttempts++;
-        
-        // Clear any existing socket
-        if (socket) {
-            socket.disconnect();
-            socket = null;
-        }
-        
         // Initialize socket with robust configuration
         socket = io({
             reconnection: true,
@@ -70,6 +72,9 @@ function initSocket() {
             autoConnect: true,
             forceNew: true
         });
+
+        // Store socket globally
+        window.socket = socket;
 
         setupSocketEventHandlers();
         
@@ -116,7 +121,10 @@ function setupSocketEventHandlers() {
 }
 
 function setupGameEventHandlers() {
-    if (!socket) return;
+    if (!socket) {
+        console.error('Socket not initialized');
+        return;
+    }
 
     socket.on('roomCreated', (roomData) => {
         console.log('Room created:', roomData);
@@ -135,6 +143,22 @@ function setupGameEventHandlers() {
         updateGameControls();
     });
 
+    socket.on('gameStarted', (gameData) => {
+        console.log('Game started with data:', gameData);
+        
+        if (!gameData) {
+            console.error('Game data is undefined');
+            return;
+        }
+
+        // Initialize game with received data
+        if (typeof initializeGame === 'function') {
+            initializeGame(gameData);
+        } else {
+            console.error('initializeGame function not found');
+        }
+    });
+
     socket.on('updatePlayers', (data) => {
         console.log('Players updated:', data);
         if (!window.gameState) {
@@ -147,39 +171,6 @@ function setupGameEventHandlers() {
             window.gameState.botCount = data.players.filter(p => p.isBot).length;
             updatePlayerList(data.players);
             updateGameControls();
-        }
-    });
-
-    socket.on('gameStarted', (gameData) => {
-        console.log('Game started with data:', gameData);
-        
-        if (!gameData) {
-            console.error('Game data is undefined');
-            return;
-        }
-
-        if (!window.gameState) {
-            console.error('Game state not initialized');
-            return;
-        }
-
-        // Update game state
-        window.gameState = {
-            ...window.gameState,
-            currentPhase: gameStateEnum.Playing,
-            players: gameData.players || [],
-            scores: gameData.scores || { team1: { points: 0, rounds: 0 }, team2: { points: 0, rounds: 0 } },
-            playedCards: gameData.playedCards || [],
-            currentTurn: gameData.currentTurn || 0
-        };
-
-        console.log('Game state updated for game start:', window.gameState);
-
-        // Initialize game
-        if (typeof initializeGame === 'function') {
-            initializeGame(window.gameState);
-        } else {
-            console.error('initializeGame function not found');
         }
     });
 

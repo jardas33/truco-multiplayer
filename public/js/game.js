@@ -1,5 +1,6 @@
 let currentGame = null;
 let currentPlayer = null;
+let socket = null;
 
 function initializeGame(gameState) {
     console.log('Initializing game with state:', gameState);
@@ -11,6 +12,13 @@ function initializeGame(gameState) {
 
     if (!gameState.players || !Array.isArray(gameState.players)) {
         console.error('Invalid players array in game state');
+        return;
+    }
+
+    // Get socket instance
+    socket = io.socket || window.socket;
+    if (!socket) {
+        console.error('Socket not initialized');
         return;
     }
 
@@ -41,13 +49,12 @@ function initializeGame(gameState) {
         return;
     }
     
-    // Set game phase
-    if (!window.gameState) {
-        console.error('Window game state not initialized');
-        return;
-    }
-    
-    window.gameState.currentPhase = gameStateEnum.Playing;
+    // Update window game state
+    window.gameState = {
+        ...window.gameState,
+        ...gameState,
+        currentPhase: gameStateEnum.Playing
+    };
     
     console.log('Game initialized successfully');
     console.log('Current game state:', window.gameState);
