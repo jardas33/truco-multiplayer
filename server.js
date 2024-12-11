@@ -151,20 +151,24 @@ io.on('connection', (socket) => {
 
     socket.on('startGame', (roomCode) => {
         try {
+            console.log('Starting game in room:', roomCode);
             const room = rooms.get(roomCode);
             
             if (!room) {
+                console.error('Room not found:', roomCode);
                 socket.emit('gameError', 'Room not found');
                 return;
             }
 
             if (room.players.length !== GAME_CONFIG.MAX_TOTAL_PLAYERS) {
+                console.error('Invalid player count:', room.players.length);
                 socket.emit('gameError', 'Need exactly 4 players to start');
                 return;
             }
 
             const player = room.players.find(p => p.id === socket.id);
             if (!player || !player.isHost) {
+                console.error('Non-host player attempted to start game');
                 socket.emit('gameError', 'Only the host can start the game');
                 return;
             }
@@ -179,7 +183,13 @@ io.on('connection', (socket) => {
 
             // Initialize game state
             const gameState = {
-                players: room.players,
+                players: room.players.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    isBot: p.isBot,
+                    hand: p.hand,
+                    isHost: p.isHost
+                })),
                 currentPhase: 'playing',
                 scores: {
                     team1: { points: 0, rounds: 0 },
@@ -192,10 +202,12 @@ io.on('connection', (socket) => {
             // Store game state in room
             room.gameState = gameState;
 
+            console.log('Game state initialized:', gameState);
+
             // Emit game started event to all players in room
             io.to(roomCode).emit('gameStarted', gameState);
             
-            console.log('Game started in room:', roomCode);
+            console.log('Game started successfully in room:', roomCode);
         } catch (error) {
             console.error('Error starting game:', error);
             socket.emit('gameError', 'Failed to start game');

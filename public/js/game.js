@@ -9,27 +9,38 @@ function initializeGame(gameState) {
         return;
     }
 
+    if (!gameState.players || !Array.isArray(gameState.players)) {
+        console.error('Invalid players array in game state');
+        return;
+    }
+
     currentGame = gameState;
     
     // Find current player in the players array
-    if (gameState.players && Array.isArray(gameState.players)) {
-        currentPlayer = gameState.players.find(p => p.id === socket.id);
-    } else {
-        console.error('Invalid players array in game state');
+    currentPlayer = gameState.players.find(p => p.id === socket.id);
+    if (!currentPlayer) {
+        console.error('Current player not found in game state');
         return;
     }
     
     // Hide menu and show game
     if (window.ui && window.ui.divs) {
-        if (window.ui.divs.menu) window.ui.divs.menu.style.display = 'none';
-        if (window.ui.divs.game) window.ui.divs.game.style.display = 'block';
+        if (window.ui.divs.menu) {
+            window.ui.divs.menu.style.display = 'none';
+        }
+        if (window.ui.divs.game) {
+            window.ui.divs.game.style.display = 'block';
+        }
+    } else {
+        console.error('UI elements not properly initialized');
     }
     
     // Set game phase
     if (window.gameState) {
-        window.gameState.currentPhase = gameStateEnum.Playing;
+        window.gameState.currentPhase = 'playing';
     }
     
+    console.log('Game initialized successfully');
     console.log('Current player:', currentPlayer);
 }
 

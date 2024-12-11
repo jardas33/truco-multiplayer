@@ -158,11 +158,26 @@ function setupGameEventHandlers() {
     });
 
     socket.on('gameStarted', (gameData) => {
-        console.log('Game started:', gameData);
+        console.log('Game started with data:', gameData);
         
+        if (!gameData) {
+            console.error('Game data is undefined');
+            return;
+        }
+
+        // Update game state
+        window.gameState = {
+            ...window.gameState,
+            currentPhase: 'playing',
+            players: gameData.players,
+            scores: gameData.scores,
+            playedCards: gameData.playedCards,
+            currentTurn: gameData.currentTurn
+        };
+
         // Initialize game with received data
         if (typeof initializeGame === 'function') {
-            initializeGame(gameData);
+            initializeGame(window.gameState);
         } else {
             console.error('initializeGame function not found');
         }
@@ -340,14 +355,19 @@ function setupButtonListeners() {
                 showError('Room code not found');
                 return;
             }
-            if (window.gameState.players.length < CONFIG.GAME.MIN_PLAYERS) {
+            if (!window.gameState.players || window.gameState.players.length < CONFIG.GAME.MIN_PLAYERS) {
                 showError('Not enough players to start the game');
                 return;
             }
             
-            console.log('Emitting startGame event');
+            console.log('Emitting startGame event with room code:', window.gameState.roomCode);
             socket.emit('startGame', window.gameState.roomCode);
         };
+        
+        // Make button visible for host
+        if (window.gameState.isHost) {
+            window.ui.buttons.start.style.display = 'block';
+        }
     }
 }
 
