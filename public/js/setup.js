@@ -11,6 +11,14 @@ function setup() {
     canvas.style('display', 'block');
     canvas.parent('Game');
     
+    // Initialize player positions
+    window.gameElements.playerPositions = [
+        { x: width / 6, y: height / 2, labelOffset: 60 },
+        { x: width / 2, y: 100, labelOffset: 60 },
+        { x: (5 * width) / 6, y: height / 2, labelOffset: 60 },
+        { x: width / 2, y: height - 100, labelOffset: -80 }
+    ];
+    
     // Initialize UI elements
     window.ui = {
         divs: {
@@ -52,6 +60,40 @@ function setup() {
             window.gameState.currentPhase = gameStateEnum.Menu;
         });
     });
+
+    // Set up game control buttons
+    if (window.ui.buttons.addBot) {
+        window.ui.buttons.addBot.addEventListener('click', () => {
+            if (socket && currentRoom) {
+                socket.emit('addBot', { roomCode: currentRoom });
+            }
+        });
+    }
+
+    if (window.ui.buttons.startGame) {
+        window.ui.buttons.startGame.addEventListener('click', () => {
+            if (socket && currentRoom) {
+                socket.emit('startGame', { roomCode: currentRoom });
+            }
+        });
+    }
+
+    if (window.ui.buttons.createRoom) {
+        window.ui.buttons.createRoom.addEventListener('click', () => {
+            if (socket) {
+                socket.emit('createRoom');
+            }
+        });
+    }
+
+    if (window.ui.buttons.joinRoom) {
+        window.ui.buttons.joinRoom.addEventListener('click', () => {
+            const roomCode = window.ui.inputs.roomCode.value.trim();
+            if (socket && roomCode) {
+                socket.emit('joinRoom', { roomCode });
+            }
+        });
+    }
 
     // Initialize game state
     window.gameState = {

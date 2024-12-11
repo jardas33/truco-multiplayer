@@ -113,17 +113,10 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     
     // Update player positions
-    if (window.gameElements.playerPositions) {
-        window.gameElements.playerPositions[0].x = width / 6;
-        window.gameElements.playerPositions[0].y = height / 2;
-        
-        window.gameElements.playerPositions[1].x = width / 2;
-        window.gameElements.playerPositions[1].y = 100;
-        
-        window.gameElements.playerPositions[2].x = (5 * width) / 6;
-        window.gameElements.playerPositions[2].y = height / 2;
-        
-        window.gameElements.playerPositions[3].x = width / 2;
-        window.gameElements.playerPositions[3].y = height - 100;
+    if (window.gameElements && window.gameElements.playerPositions) {
+        window.gameElements.playerPositions[0] = { x: width / 6, y: height / 2, labelOffset: 60 };
+        window.gameElements.playerPositions[1] = { x: width / 2, y: 100, labelOffset: 60 };
+        window.gameElements.playerPositions[2] = { x: (5 * width) / 6, y: height / 2, labelOffset: 60 };
+        window.gameElements.playerPositions[3] = { x: width / 2, y: height - 100, labelOffset: -80 };
     }
 }
