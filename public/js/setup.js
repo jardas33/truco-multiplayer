@@ -64,16 +64,16 @@ function setup() {
     // Set up game control buttons
     if (window.ui.buttons.addBot) {
         window.ui.buttons.addBot.addEventListener('click', () => {
-            if (socket && currentRoom) {
-                socket.emit('addBot', { roomCode: currentRoom });
+            if (socket && window.gameState.roomCode) {
+                socket.emit('addBot', window.gameState.roomCode);
             }
         });
     }
 
     if (window.ui.buttons.startGame) {
         window.ui.buttons.startGame.addEventListener('click', () => {
-            if (socket && currentRoom) {
-                socket.emit('startGame', { roomCode: currentRoom });
+            if (socket && window.gameState.roomCode) {
+                socket.emit('startGame', window.gameState.roomCode);
             }
         });
     }
@@ -90,7 +90,7 @@ function setup() {
         window.ui.buttons.joinRoom.addEventListener('click', () => {
             const roomCode = window.ui.inputs.roomCode.value.trim();
             if (socket && roomCode) {
-                socket.emit('joinRoom', { roomCode });
+                socket.emit('joinRoom', roomCode);
             }
         });
     }
@@ -98,7 +98,9 @@ function setup() {
     // Initialize game state
     window.gameState = {
         currentPhase: gameStateEnum.Menu,
-        showAllCards: false
+        showAllCards: false,
+        roomCode: null,
+        isHost: false
     };
 
     // Initialize socket connection
@@ -111,29 +113,38 @@ function setupSocketListeners() {
         console.log('Connected to server');
     });
 
-    socket.on('roomCreated', (roomCode) => {
-        console.log('Room created:', roomCode);
-        currentRoom = roomCode;
+    socket.on('roomCreated', (data) => {
+        console.log('Room created:', data);
+        window.gameState.roomCode = data.roomCode;
+        window.gameState.isHost = true;
         window.ui.buttons.addBot.style.display = 'block';
         window.ui.buttons.startGame.style.display = 'block';
+        updatePlayerList(data.players);
     });
 
     socket.on('joinedRoom', (data) => {
         console.log('Joined room:', data);
-        currentRoom = data.roomCode;
+        window.gameState.roomCode = data.roomCode;
+        window.gameState.isHost = data.isHost;
         if (data.isHost) {
             window.ui.buttons.addBot.style.display = 'block';
             window.ui.buttons.startGame.style.display = 'block';
         }
+        updatePlayerList(data.players);
     });
 
-    socket.on('updatePlayers', (players) => {
-        updatePlayerList(players);
+    socket.on('updatePlayers', (data) => {
+        updatePlayerList(data.players);
     });
 
-    socket.on('gameStarted', (gameData) => {
-        console.log('Game started:', gameData);
-        window.game = gameData;
+    socket.on('botAdded', (data) => {
+        console.log('Bot added:', data);
+        updatePlayerList(data.players);
+    });
+
+    socket.on('gameStarted', (data) => {
+        console.log('Game started:', data);
+        window.game = data.gameState;
         window.gameState.currentPhase = gameStateEnum.Playing;
         window.ui.divs.menu.style.display = 'none';
         window.ui.divs.game.style.display = 'block';
@@ -143,8 +154,8 @@ function setupSocketListeners() {
         window.game = gameData;
     });
 
-    socket.on('error', (error) => {
-        console.error('Server error:', error);
+    socket.on('gameError', (error) => {
+        console.error('Game error:', error);
         alert(error);
     });
 }
@@ -154,7 +165,7 @@ function updatePlayerList(players) {
     playerList.innerHTML = '<h3>Players in Room:</h3>';
     players.forEach(player => {
         const playerElement = document.createElement('div');
-        playerElement.textContent = player.name + (player.isBot ? ' (Bot)' : '');
+        playerElement.textContent = player.name + (player.isBot ? ' (Bot)' : '') + (player.isHost ? ' (Host)' : '');
         playerList.appendChild(playerElement);
     });
 
