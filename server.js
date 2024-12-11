@@ -13,6 +13,42 @@ const GAME_CONFIG = {
     MIN_PLAYERS: 2
 };
 
+// Card deck configuration
+const CARDS = [
+    '4_clubs', '7_hearts', 'ace_spades', '7_diamonds', // Manilhas
+    '3_clubs', '3_hearts', '3_spades', '3_diamonds',
+    '2_clubs', '2_hearts', '2_spades', '2_diamonds',
+    'ace_clubs', 'ace_hearts', 'ace_diamonds',
+    'king_clubs', 'king_hearts', 'king_spades', 'king_diamonds',
+    'jack_clubs', 'jack_hearts', 'jack_spades', 'jack_diamonds',
+    'queen_clubs', 'queen_hearts', 'queen_spades', 'queen_diamonds',
+    '7_clubs', '7_spades',
+    '6_clubs', '6_hearts', '6_spades', '6_diamonds',
+    '5_clubs', '5_hearts', '5_spades', '5_diamonds',
+    '4_hearts', '4_spades', '4_diamonds'
+];
+
+function shuffleDeck() {
+    const deck = [...CARDS];
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+}
+
+function dealCards(players) {
+    const deck = shuffleDeck();
+    const hands = [];
+    
+    // Deal 3 cards to each player
+    for (let i = 0; i < players.length; i++) {
+        hands[i] = deck.slice(i * 3, (i + 1) * 3);
+    }
+    
+    return hands;
+}
+
 // Store active rooms
 const rooms = new Map();
 
@@ -133,12 +169,40 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            io.to(roomCode).emit('gameStarted', {
-                gameState: {
-                    players: room.players,
-                    currentRound: 0
-                }
+            // Deal cards to all players
+            const hands = dealCards(room.players);
+            
+            // Assign hands to players
+            room.players.forEach((player, index) => {
+                player.hand = hands[index];
             });
+
+            // Initialize game state
+            const gameState = {
+                players: room.players.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    isBot: p.isBot,
+                    hand: p.hand,
+                    isHost: p.isHost
+                })),
+                currentRound: 1,
+                currentTurn: 0,
+                scores: {
+                    team1: { rounds: 0, points: 0 },
+                    team2: { rounds: 0, points: 0 }
+                },
+                playedCards: [],
+                roundWinner: null,
+                gamePhase: 'playing'
+            };
+
+            // Send game state to all players
+            io.to(roomCode).emit('gameStarted', {
+                gameState: gameState
+            });
+
+            console.log('Game started in room:', roomCode);
         } catch (error) {
             console.error('Error starting game:', error);
             socket.emit('gameError', 'Failed to start game');
