@@ -8,6 +8,11 @@ const CONFIG = {
     CARD_DIMENSIONS: {
         WIDTH: 85,
         HEIGHT: 123
+    },
+    GAME: {
+        MIN_PLAYERS: 2,
+        MAX_PLAYERS: 4,
+        MAX_BOTS: 3
     }
 };
 
@@ -16,7 +21,11 @@ window.gameState = {
     currentPhase: 'menu', // menu, playing, instructions, cardValues
     isInTrucoPhase: false,
     selfPlayer: 1,
-    showAllCards: true
+    showAllCards: true,
+    roomCode: null,
+    isHost: false,
+    players: [],
+    botCount: 0
 };
 
 // Game Assets
@@ -56,14 +65,21 @@ window.ui = {
         start: null,
         instructions: null,
         cardValues: null,
-        backToMainMenu: null
+        backToMainMenu: null,
+        addBot: null,
+        createRoom: null,
+        joinRoom: null
     },
     divs: {
         menu: null,
         game: null,
         instructions: null,
         values: null,
-        playerList: null
+        playerList: null,
+        roomControls: null
+    },
+    inputs: {
+        roomCode: null
     },
     popup: {
         element: null,
@@ -84,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ui.divs.instructions = document.getElementById('Instructions');
     window.ui.divs.values = document.getElementById('Values');
     window.ui.divs.playerList = document.getElementById('playerList');
+    window.ui.divs.roomControls = document.getElementById('roomControls');
 
     // Initialize button references
     window.ui.buttons.truco = document.getElementById('trucoButton');
@@ -91,6 +108,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ui.buttons.instructions = document.getElementById('instructionsButton');
     window.ui.buttons.cardValues = document.getElementById('cardValuesButton');
     window.ui.buttons.backToMainMenu = document.getElementById('backToMainMenuButton');
+    window.ui.buttons.addBot = document.getElementById('addBotBtn');
+    window.ui.buttons.createRoom = document.getElementById('createRoomBtn');
+    window.ui.buttons.joinRoom = document.getElementById('joinRoomBtn');
+
+    // Initialize input references
+    window.ui.inputs.roomCode = document.getElementById('roomInput');
+
+    // Setup initial button states
+    if (window.ui.buttons.addBot) window.ui.buttons.addBot.style.display = 'none';
+    if (window.ui.buttons.start) window.ui.buttons.start.style.display = 'none';
 });
 
 // Export configuration for modules that need it
