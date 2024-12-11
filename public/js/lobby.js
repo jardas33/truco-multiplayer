@@ -117,6 +117,8 @@ function setupGameEventHandlers() {
         window.gameState.roomCode = roomData.roomCode;
         window.gameState.isHost = true;
         window.gameState.players = roomData.players;
+        window.gameState.botCount = roomData.botCount;
+        
         updateRoomUI(roomData);
         showHostControls();
     });
@@ -125,18 +127,30 @@ function setupGameEventHandlers() {
         console.log('Room joined:', roomData);
         window.gameState.roomCode = roomData.roomCode;
         window.gameState.players = roomData.players;
+        window.gameState.botCount = roomData.botCount;
+        window.gameState.isHost = false;
+        
         updateRoomUI(roomData);
     });
 
     socket.on('playerJoined', (data) => {
         console.log('Player joined:', data);
         window.gameState.players = data.players;
+        window.gameState.botCount = data.botCount;
         updatePlayerList(data.players);
         updateGameControls();
     });
 
     socket.on('botAdded', (data) => {
         console.log('Bot added:', data);
+        window.gameState.players = data.players;
+        window.gameState.botCount = data.botCount;
+        updatePlayerList(data.players);
+        updateGameControls();
+    });
+
+    socket.on('playerLeft', (data) => {
+        console.log('Player left:', data);
         window.gameState.players = data.players;
         window.gameState.botCount = data.botCount;
         updatePlayerList(data.players);
@@ -161,11 +175,11 @@ function updateGameControls() {
     
     // Update Add Bot button visibility
     if (window.ui.buttons.addBot) {
-        if (window.gameState.isHost && playerCount < CONFIG.GAME.MAX_PLAYERS && botCount < CONFIG.GAME.MAX_BOTS) {
-            window.ui.buttons.addBot.style.display = 'block';
-        } else {
-            window.ui.buttons.addBot.style.display = 'none';
-        }
+        const canAddBot = window.gameState.isHost && 
+                         playerCount < CONFIG.GAME.MAX_PLAYERS && 
+                         botCount < CONFIG.GAME.MAX_BOTS;
+        
+        window.ui.buttons.addBot.style.display = canAddBot ? 'block' : 'none';
     }
     
     // Update Start Game button
@@ -182,6 +196,7 @@ function showHostControls() {
     }
     if (window.ui.buttons.start) {
         window.ui.buttons.start.style.display = 'block';
+        window.ui.buttons.start.disabled = window.gameState.players.length < CONFIG.GAME.MIN_PLAYERS;
     }
 }
 
@@ -218,8 +233,10 @@ function updatePlayerList(players) {
         ${players.map((player, index) => `
             <div class="player-item ${player.isBot ? 'bot' : ''}">
                 <span>${player.name}</span>
-                ${player.isBot ? '<span class="bot-tag">Bot</span>' : ''}
-                ${player.isHost ? '<span class="host-tag">Host</span>' : ''}
+                <div class="player-tags">
+                    ${player.isBot ? '<span class="bot-tag">Bot</span>' : ''}
+                    ${player.isHost ? '<span class="host-tag">Host</span>' : ''}
+                </div>
             </div>
         `).join('')}
     `;

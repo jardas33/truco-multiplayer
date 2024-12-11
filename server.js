@@ -13,192 +13,211 @@ io.on('connection', (socket) => {
     console.log('A user connected');
 
     // Handle room creation
-    socket.on('createRoom', (roomCode) => {
-        // Generate a random 6-character room code if not provided
-        if (!roomCode) {
-            roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    socket.on('createRoom', () => {
+        try {
+            // Generate a random 6-character room code
+            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            // Create the room
+            const room = {
+                code: roomCode,
+                players: [{
+                    id: socket.id,
+                    name: `Player 1`,
+                    isBot: false,
+                    isHost: true
+                }],
+                botCount: 0,
+                game: null
+            };
+            
+            rooms.set(roomCode, room);
+
+            // Join the room
+            socket.join(roomCode);
+            socket.roomCode = roomCode;
+
+            // Send the room data back to the client
+            socket.emit('roomCreated', {
+                roomCode: roomCode,
+                players: room.players,
+                botCount: room.botCount
+            });
+
+            console.log(`Room created: ${roomCode}`);
+        } catch (error) {
+            console.error('Error creating room:', error);
+            socket.emit('gameError', 'Failed to create room');
         }
-        
-        // Create the room
-        rooms.set(roomCode, {
-            players: [{
-                id: socket.id,
-                name: `Player 1`,
-                isBot: false
-            }],
-            game: null
-        });
-
-        // Join the room
-        socket.join(roomCode);
-        socket.roomCode = roomCode;
-
-        // Send the room code and player info back to the client
-        socket.emit('roomCreated', roomCode);
-        io.to(roomCode).emit('playerJoined', {
-            players: rooms.get(roomCode).players,
-            count: 1
-        });
     });
 
     // Handle room joining
     socket.on('joinRoom', (roomCode) => {
-        const room = rooms.get(roomCode);
-        
-        if (!room) {
-            socket.emit('error', 'Room not found');
-            return;
+        try {
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                socket.emit('gameError', 'Room not found');
+                return;
+            }
+
+            if (room.players.length >= 4) {
+                socket.emit('gameError', 'Room is full');
+                return;
+            }
+
+            // Add player to the room
+            const newPlayer = {
+                id: socket.id,
+                name: `Player ${room.players.length + 1}`,
+                isBot: false,
+                isHost: false
+            };
+            room.players.push(newPlayer);
+            
+            // Join the room
+            socket.join(roomCode);
+            socket.roomCode = roomCode;
+
+            // Notify the joining player
+            socket.emit('roomJoined', {
+                roomCode: roomCode,
+                players: room.players,
+                botCount: room.botCount
+            });
+
+            // Notify all players in the room
+            io.to(roomCode).emit('playerJoined', {
+                players: room.players,
+                botCount: room.botCount
+            });
+
+            console.log(`Player joined room: ${roomCode}`);
+        } catch (error) {
+            console.error('Error joining room:', error);
+            socket.emit('gameError', 'Failed to join room');
         }
-
-        if (room.players.length >= 4) {
-            socket.emit('error', 'Room is full');
-            return;
-        }
-
-        // Add player to the room
-        room.players.push({
-            id: socket.id,
-            name: `Player ${room.players.length + 1}`,
-            isBot: false
-        });
-        
-        // Join the room
-        socket.join(roomCode);
-        socket.roomCode = roomCode;
-
-        // Notify all players in the room
-        io.to(roomCode).emit('playerJoined', {
-            players: room.players,
-            count: room.players.length
-        });
     });
 
     // Handle adding bots
     socket.on('addBot', (roomCode) => {
-        const room = rooms.get(roomCode);
-        
-        if (!room) {
-            socket.emit('error', 'Room not found');
-            return;
-        }
+        try {
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                socket.emit('gameError', 'Room not found');
+                return;
+            }
 
-        if (room.players.length >= 4) {
-            socket.emit('error', 'Room is full');
-            return;
-        }
+            if (room.players.length >= 4) {
+                socket.emit('gameError', 'Room is full');
+                return;
+            }
 
-        // Add bot to the room
-        room.players.push({
-            id: `bot-${Math.random().toString(36).substring(7)}`,
-            name: `Bot ${room.players.length + 1}`,
-            isBot: true
-        });
+            if (room.botCount >= 3) {
+                socket.emit('gameError', 'Maximum number of bots reached');
+                return;
+            }
 
-        // Notify all players in the room
-        io.to(roomCode).emit('playerJoined', {
-            players: room.players,
-            count: room.players.length
-        });
+            // Add bot to the room
+            const botPlayer = {
+                id: `bot-${Math.random().toString(36).substring(7)}`,
+                name: `Bot ${room.players.length + 1}`,
+                isBot: true,
+                isHost: false
+            };
+            room.players.push(botPlayer);
+            room.botCount++;
 
-        // If we have 4 players (including bots), enable start game
-        if (room.players.length === 4) {
-            io.to(roomCode).emit('roomFull');
+            // Notify all players in the room
+            io.to(roomCode).emit('botAdded', {
+                players: room.players,
+                botCount: room.botCount
+            });
+
+            console.log(`Bot added to room: ${roomCode}`);
+        } catch (error) {
+            console.error('Error adding bot:', error);
+            socket.emit('gameError', 'Failed to add bot');
         }
     });
 
-    // Handle game start
+    // Handle starting the game
     socket.on('startGame', (roomCode) => {
-        const room = rooms.get(roomCode);
-        if (!room || room.players.length < 4) return;
-
-        // Initialize game state
-        room.game = {
-            deck: createDeck(),
-            currentPlayer: 0,
-            scores: { team1: 0, team2: 0 }
-        };
-
-        // Deal cards to players
-        const hands = dealCards(room.game.deck);
-        room.players.forEach((player, index) => {
-            if (!player.isBot) {
-                io.to(player.id).emit('gameStarted', {
-                    hand: hands[index],
-                    position: index,
-                    players: room.players
-                });
+        try {
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                socket.emit('gameError', 'Room not found');
+                return;
             }
-        });
 
-        // Notify all players that game has started
-        io.to(roomCode).emit('gameStart', room.players);
+            if (room.players.length < 2) {
+                socket.emit('gameError', 'Not enough players');
+                return;
+            }
+
+            // Initialize game state
+            room.game = {
+                players: room.players,
+                currentRound: 0,
+                scores: {
+                    team1: { rounds: 0, games: 0, sets: 0 },
+                    team2: { rounds: 0, games: 0, sets: 0 }
+                }
+            };
+
+            // Notify all players that the game is starting
+            io.to(roomCode).emit('gameStarted', {
+                players: room.players,
+                gameState: room.game
+            });
+
+            console.log(`Game started in room: ${roomCode}`);
+        } catch (error) {
+            console.error('Error starting game:', error);
+            socket.emit('gameError', 'Failed to start game');
+        }
     });
 
     // Handle disconnection
     socket.on('disconnect', () => {
-        console.log('User disconnected');
-        
-        if (socket.roomCode) {
-            const room = rooms.get(socket.roomCode);
-            if (room) {
-                // Remove player from room
-                room.players = room.players.filter(p => p.id !== socket.id);
+        try {
+            const roomCode = socket.roomCode;
+            if (roomCode && rooms.has(roomCode)) {
+                const room = rooms.get(roomCode);
                 
-                // Notify remaining players
-                io.to(socket.roomCode).emit('playerLeft', {
-                    players: room.players,
-                    count: room.players.length
-                });
+                // Remove the player
+                const playerIndex = room.players.findIndex(p => p.id === socket.id);
+                if (playerIndex !== -1) {
+                    const player = room.players[playerIndex];
+                    room.players.splice(playerIndex, 1);
+                    
+                    if (player.isHost && room.players.length > 0) {
+                        // Assign new host
+                        room.players[0].isHost = true;
+                    }
+                }
 
-                // Delete room if empty
                 if (room.players.length === 0) {
-                    rooms.delete(socket.roomCode);
+                    // Delete empty room
+                    rooms.delete(roomCode);
+                } else {
+                    // Notify remaining players
+                    io.to(roomCode).emit('playerLeft', {
+                        players: room.players,
+                        botCount: room.botCount
+                    });
                 }
             }
-        }
-    });
-
-    // Handle game events
-    socket.on('playCard', (data) => {
-        const room = rooms.get(data.roomCode);
-        if (room && room.game) {
-            // Handle card play logic
-            io.to(data.roomCode).emit('cardPlayed', {
-                playerId: socket.id,
-                card: data.card
-            });
-
-            // If next player is a bot, make them play after a delay
-            const currentPlayerIndex = room.players.findIndex(p => p.id === socket.id);
-            const nextPlayerIndex = (currentPlayerIndex + 1) % 4;
-            if (room.players[nextPlayerIndex].isBot) {
-                setTimeout(() => {
-                    // Bot plays a random card from their hand
-                    const botHand = room.game.hands[nextPlayerIndex];
-                    if (botHand && botHand.length > 0) {
-                        const randomCard = botHand[Math.floor(Math.random() * botHand.length)];
-                        io.to(data.roomCode).emit('cardPlayed', {
-                            playerId: room.players[nextPlayerIndex].id,
-                            card: randomCard
-                        });
-                    }
-                }, 1000); // Bot plays after 1 second
-            }
+            console.log('A user disconnected');
+        } catch (error) {
+            console.error('Error handling disconnect:', error);
         }
     });
 });
 
-function createDeck() {
-    // Create and return a shuffled deck
-    // Implementation similar to your local version
-}
-
-function dealCards(deck) {
-    // Deal cards to players
-    // Implementation similar to your local version
-}
-
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 }); 

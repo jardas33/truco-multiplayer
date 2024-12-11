@@ -1,27 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truco Multiplayer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-    <meta charset="utf-8" />
   </head>
   <body>
     <main>
       <div id="Menu">
         <div id="roomControls" class="room-controls">
-          <input type="text" id="roomInput" placeholder="Room Code" />
-          <button id="createRoomBtn">Create Room</button>
-          <button id="joinRoomBtn">Join Room</button>
-          <button id="addBotBtn" style="display: none;">Add Bot</button>
-          <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
+          <h2>Truco Multiplayer</h2>
+          <div class="join-controls">
+            <input type="text" id="roomInput" placeholder="Enter Room Code" maxlength="6" />
+            <button id="createRoomBtn" class="primary-button">Create Room</button>
+            <button id="joinRoomBtn">Join Room</button>
+          </div>
           <div id="playerList"></div>
+          <div class="game-controls">
+            <button id="addBotBtn" style="display: none;">Add Bot</button>
+            <button id="startGameBtn" class="primary-button" style="display: none;" disabled>Start Game</button>
+          </div>
+          <div class="menu-buttons">
+            <button id="instructionsBtn">Instructions</button>
+            <button id="cardValuesBtn">Card Values</button>
+          </div>
         </div>
       </div>
-      <div id="Instructions"></div>
-      <div id="Values"></div>
-      <div id="Game"></div>
+      <div id="Game">
+        <button id="backToMenuBtn" style="display: none;">Back to Menu</button>
+        <button id="trucoBtn" style="display: none;">Truco!</button>
+      </div>
+      <div id="Instructions">
+        <div class="instructions-content">
+          <h2>How to Play Truco</h2>
+          <!-- Instructions content will be added dynamically -->
+        </div>
+      </div>
+      <div id="Values">
+        <div class="values-content">
+          <h2>Card Values</h2>
+          <!-- Card values content will be added dynamically -->
+        </div>
+      </div>
     </main>
     <script src="js/variables.js"></script>
     <script src="js/players.js"></script>
