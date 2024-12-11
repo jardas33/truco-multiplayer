@@ -25,6 +25,7 @@ const CONFIG = {
 };
 
 // Initialize game state immediately
+console.log('Initializing game state...');
 window.gameState = {
     currentPhase: gameStateEnum.Menu,
     isInTrucoPhase: false,
@@ -33,10 +34,14 @@ window.gameState = {
     roomCode: null,
     isHost: false,
     players: [],
-    botCount: 0
+    botCount: 0,
+    scores: {
+        team1: { points: 0, rounds: 0 },
+        team2: { points: 0, rounds: 0 }
+    },
+    playedCards: [],
+    currentTurn: 0
 };
-
-console.log('Initial game state created:', window.gameState);
 
 // Game Assets
 window.gameAssets = {
@@ -134,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.ui.buttons.start.disabled = true;
     }
 
-    console.log('UI elements initialized:', {
+    console.log('UI elements initialized with game state:', {
         gameState: window.gameState,
         ui: window.ui
     });

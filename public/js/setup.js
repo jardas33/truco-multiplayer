@@ -6,6 +6,8 @@ let initState = {
 };
 
 function setup() {
+    console.log('Starting setup...');
+    
     // Create canvas and set it up
     const canvas = createCanvas(windowWidth, windowHeight);
     canvas.style('display', 'block');
@@ -18,6 +20,12 @@ function setup() {
         { x: (5 * width) / 6, y: height / 2, labelOffset: 60 },
         { x: width / 2, y: height - 100, labelOffset: -80 }
     ];
+    
+    // Verify game state exists
+    if (!window.gameState) {
+        console.error('Game state not initialized');
+        return;
+    }
     
     // Initialize UI elements
     window.ui = {
@@ -43,51 +51,62 @@ function setup() {
         }
     };
 
-    // Remove any existing event listeners
-    const newAddBotBtn = window.ui.buttons.addBot.cloneNode(true);
-    window.ui.buttons.addBot.parentNode.replaceChild(newAddBotBtn, window.ui.buttons.addBot);
-    window.ui.buttons.addBot = newAddBotBtn;
-
-    const newCreateRoomBtn = window.ui.buttons.createRoom.cloneNode(true);
-    window.ui.buttons.createRoom.parentNode.replaceChild(newCreateRoomBtn, window.ui.buttons.createRoom);
-    window.ui.buttons.createRoom = newCreateRoomBtn;
-
-    const newStartGameBtn = window.ui.buttons.startGame.cloneNode(true);
-    window.ui.buttons.startGame.parentNode.replaceChild(newStartGameBtn, window.ui.buttons.startGame);
-    window.ui.buttons.startGame = newStartGameBtn;
-
     // Set up button event listeners
-    window.ui.buttons.createRoom.addEventListener('click', () => {
-        if (socket) {
-            console.log('Creating room...');
-            socket.emit('createRoom');
-        }
-    });
+    setupButtonListeners();
+    
+    console.log('Setup completed with game state:', window.gameState);
+}
 
-    window.ui.buttons.addBot.addEventListener('click', () => {
-        if (socket && window.gameState.roomCode) {
-            console.log('Adding bot to room:', window.gameState.roomCode);
-            socket.emit('addBot', window.gameState.roomCode);
-        }
-    });
+function setupButtonListeners() {
+    // Create Room button
+    if (window.ui.buttons.createRoom) {
+        window.ui.buttons.createRoom.addEventListener('click', () => {
+            if (socket) {
+                console.log('Creating room...');
+                socket.emit('createRoom');
+            }
+        });
+    }
 
-    window.ui.buttons.startGame.addEventListener('click', () => {
-        if (socket && window.gameState.roomCode) {
-            console.log('Starting game in room:', window.gameState.roomCode);
-            socket.emit('startGame', window.gameState.roomCode);
-        }
-    });
+    // Add Bot button
+    if (window.ui.buttons.addBot) {
+        window.ui.buttons.addBot.addEventListener('click', () => {
+            if (socket && window.gameState.roomCode) {
+                console.log('Adding bot to room:', window.gameState.roomCode);
+                socket.emit('addBot', window.gameState.roomCode);
+            }
+        });
+    }
 
-    window.ui.buttons.joinRoom.addEventListener('click', () => {
-        const roomCode = window.ui.inputs.roomCode.value.trim();
-        if (socket && roomCode) {
-            socket.emit('joinRoom', roomCode);
-        }
-    });
+    // Start Game button
+    if (window.ui.buttons.startGame) {
+        window.ui.buttons.startGame.addEventListener('click', () => {
+            if (socket && window.gameState.roomCode) {
+                console.log('Starting game in room:', window.gameState.roomCode);
+                socket.emit('startGame', window.gameState.roomCode);
+            }
+        });
+    }
 
-    // Initialize socket connection
-    socket = io();
-    setupSocketListeners();
+    // Join Room button
+    if (window.ui.buttons.joinRoom) {
+        window.ui.buttons.joinRoom.addEventListener('click', () => {
+            const roomCode = window.ui.inputs.roomCode.value.trim();
+            if (socket && roomCode) {
+                socket.emit('joinRoom', roomCode);
+            }
+        });
+    }
+
+    // Instructions button
+    if (window.ui.buttons.instructions) {
+        window.ui.buttons.instructions.addEventListener('click', showInstructions);
+    }
+
+    // Card Values button
+    if (window.ui.buttons.cardValues) {
+        window.ui.buttons.cardValues.addEventListener('click', showCardValues);
+    }
 }
 
 function setupSocketListeners() {
