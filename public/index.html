@@ -19,17 +19,26 @@
 
       <!-- Game Sections -->
       <div id="Menu">
-        <div id="roomControls" class="room-controls">
+        <div class="menu-container">
           <h2>Truco Multiplayer</h2>
-          <div class="join-controls">
+          
+          <div class="room-controls">
             <input type="text" id="roomInput" placeholder="Enter Room Code" maxlength="6" />
-            <button id="createRoomBtn" class="primary-button">Create Room</button>
-            <button id="joinRoomBtn">Join Room</button>
+            <div class="button-group">
+              <button id="createRoomBtn" class="primary-button">Create Room</button>
+              <button id="joinRoomBtn">Join Room</button>
+            </div>
           </div>
-          <div id="playerList"></div>
+
+          <!-- Player List Section -->
+          <div id="playerList" class="player-list">
+            <h3>Players in Room</h3>
+            <!-- Players will be added here dynamically -->
+          </div>
+
           <div class="game-controls">
-            <button id="addBotBtn" style="display: none;">Add Bot</button>
-            <button id="startGameBtn" class="primary-button" style="display: none;" disabled>Start Game</button>
+            <button id="addBotBtn" class="action-button">Add Bot</button>
+            <button id="startGameBtn" class="primary-button" disabled>Start Game</button>
           </div>
         </div>
       </div>
