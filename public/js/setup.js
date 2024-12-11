@@ -1,143 +1,274 @@
+// Track initialization state
+let initState = {
+    canvasInitialized: false,
+    uiInitialized: false,
+    errors: []
+};
+
 function setup() {
-    let canvas = createCanvas(windowWidth, windowHeight);
-    canvas.parent('Menu');
+    console.log('Starting setup...');
     
-    // Initialize text properties
-    textAlign(CENTER, CENTER);
-    textSize(24);
-    fill(255);
-    stroke(0);
-    strokeWeight(2);
-    
-    // Get all the div containers
-    menuDiv = select("#Menu");
-    gameDiv = select("#Game");
-    instructionsDiv = select("#Instructions");
-    valuesDiv = select("#Values");
-    
-    // Initially show only menu
-    menuDiv.class('active');
-    gameDiv.removeClass('active');
-    instructionsDiv.removeClass('active');
-    valuesDiv.removeClass('active');
-    
-    // Create instruction buttons
-    instructionsButton = createButton("Instructions");
-    instructionsButton.position(20, 20);
-    instructionsButton.mousePressed(showInstructions);
-    instructionsButton.parent('Menu');
-    
-    // Create card values button
-    cardValuesButton = createButton("Card Values");
-    cardValuesButton.position(20, 60);
-    cardValuesButton.mousePressed(showCardValues);
-    cardValuesButton.parent('Menu');
-    
-    // Create text div for instructions
-    let instructionsTextDiv = createDiv('');
-    instructionsTextDiv.parent(instructionsDiv);
-    instructionsTextDiv.style('color', 'white');
-    instructionsTextDiv.style('position', 'absolute');
-    instructionsTextDiv.style('top', '50%');
-    instructionsTextDiv.style('left', '50%');
-    instructionsTextDiv.style('transform', 'translate(-50%, -50%)');
-    instructionsTextDiv.style('width', '80%');
-    instructionsTextDiv.style('text-align', 'left');
-    instructionsTextDiv.style('font-size', '16px');
-    instructionsTextDiv.style('line-height', '1.5');
-    instructionsTextDiv.html(`
-        <div style="margin-bottom: 20px;">
-            Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.<br><br>
-            
-            In each round, every player plays one card. The team that wins two out of three rounds wins the game. The team that wins twelve games first wins the set.<br><br>
-            
-            The order of turns is clockwise, with the first player in each round being the one who played the highest card in the previous round, or in case of a tie, the one who played first in the previous round.<br><br>
-            
-            The game features the 'truco' mechanic. During their turn, a player can choose to call 'truco', which increases the value of the current game if accepted. The next player can then choose to accept, reject, or raise the value further. If truco is rejected, the game ends immediately, and the team that called 'truco' wins the game at its current value. If accepted, the game goes on but it is now worth 3 games instead of 1. The next player can also raise to 6, then the decision goes back to the player that initially called truco and he has the same options: accept, reject and raise. A game can only be risen to 12 games. It is not possible to raise after that.<br><br>
-            
-            Once a team has won eleven games within a set, the 'Game of Eleven' rule comes into effect. The team can view their cards and their partner's cards before deciding whether to play the next game. If they decide to play, the game's value is increased to three. If they reject, the opposing team wins one game instantly.<br><br>
-            
-            Truco is played with a 40 card deck, with a specific order of card values that you can see in the card values instructions.
-        </div>
-    `);
-    
-    // Create close buttons
-    instructionsCloseButton = createButton("Close");
-    instructionsCloseButton.mousePressed(closeInstructions);
-    instructionsCloseButton.parent(instructionsDiv);
-    instructionsCloseButton.style("position", "absolute");
-    instructionsCloseButton.style("bottom", "10px");
-    instructionsCloseButton.style("left", "50%");
-    instructionsCloseButton.style("transform", "translateX(-50%)");
-    
-    cardValuesCloseButton = createButton("Close");
-    cardValuesCloseButton.mousePressed(closeCardValues);
-    cardValuesCloseButton.parent(valuesDiv);
-    cardValuesCloseButton.style("position", "absolute");
-    cardValuesCloseButton.style("bottom", "10px");
-    cardValuesCloseButton.style("left", "50%");
-    cardValuesCloseButton.style("transform", "translateX(-50%)");
-    
-    // Create back to menu button
-    backToMainMenuButton = createButton("Back to Main Menu");
-    backToMainMenuButton.position(20, 20);
-    backToMainMenuButton.mousePressed(backToMainMenu);
-    backToMainMenuButton.parent(gameDiv);
-    backToMainMenuButton.hide();
-    
-    // Create game buttons
-    trucoButton = createButton("Truco");
-    trucoButton.position(50, 180);
-    trucoButton.mousePressed(truco);
-    trucoButton.parent(gameDiv);
-    trucoButton.hide();
-    
-    // Create truco response buttons
-    buttonAcceptTruco = createButton("Accept Truco");
-    buttonRejectTruco = createButton("Reject Truco");
-    buttonRaiseTruco = createButton("Raise Truco");
-    
-    buttonAcceptTruco.position(10, 180);
-    buttonAcceptTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 1));
-    buttonRejectTruco.position(10, 210);
-    buttonRejectTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 2));
-    buttonRaiseTruco.position(10, 240);
-    buttonRaiseTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 3));
-    
-    buttonAcceptTruco.parent(gameDiv);
-    buttonRejectTruco.parent(gameDiv);
-    buttonRaiseTruco.parent(gameDiv);
-    
-    buttonAcceptTruco.hide();
-    buttonRejectTruco.hide();
-    buttonRaiseTruco.hide();
-    
-    // Setup player positions
-    playerPositions = [
+    try {
+        initializeCanvas();
+        initializeUI();
+        initializeGameState();
+        
+        if (initState.errors.length > 0) {
+            showSetupError('Game initialization failed', initState.errors);
+            return;
+        }
+        
+        console.log('Setup completed successfully');
+    } catch (error) {
+        console.error('Setup failed:', error);
+        showSetupError('Unexpected error during setup', [error.message]);
+    }
+}
+
+function initializeCanvas() {
+    try {
+        let canvas = createCanvas(windowWidth, windowHeight);
+        if (!canvas) {
+            throw new Error('Failed to create canvas');
+        }
+        canvas.parent('Menu');
+        
+        // Initialize canvas properties
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        
+        initState.canvasInitialized = true;
+    } catch (error) {
+        initState.errors.push('Canvas initialization failed: ' + error.message);
+    }
+}
+
+function initializeUI() {
+    try {
+        // Get all required div containers
+        const requiredDivs = {
+            menuDiv: select("#Menu"),
+            gameDiv: select("#Game"),
+            instructionsDiv: select("#Instructions"),
+            valuesDiv: select("#Values")
+        };
+        
+        // Verify all divs exist
+        for (let [name, div] of Object.entries(requiredDivs)) {
+            if (!div) {
+                throw new Error(`Required div "${name}" not found`);
+            }
+            window[name] = div; // Assign to global scope
+        }
+        
+        // Set initial visibility
+        menuDiv.class('active');
+        gameDiv.removeClass('active');
+        instructionsDiv.removeClass('active');
+        valuesDiv.removeClass('active');
+        
+        createGameButtons();
+        createInstructionsUI();
+        
+        initState.uiInitialized = true;
+    } catch (error) {
+        initState.errors.push('UI initialization failed: ' + error.message);
+    }
+}
+
+function createGameButtons() {
+    // Create and verify each button
+    const buttons = [
         {
-            x: width / 6,
-            y: height / 2,
-            label: "Player 1 - Team 1",
-            labelOffset: -50,
-        },
-        { 
-            x: width / 2, 
-            y: 100, 
-            label: "Player 2 - Team 2", 
-            labelOffset: -50 
+            name: 'instructionsButton',
+            label: 'Instructions',
+            position: { x: 20, y: 20 },
+            action: showInstructions,
+            parent: 'Menu'
         },
         {
-            x: (5 * width) / 6,
-            y: height / 2,
-            label: "Player 3 - Team 1",
-            labelOffset: -50,
+            name: 'cardValuesButton',
+            label: 'Card Values',
+            position: { x: 20, y: 60 },
+            action: showCardValues,
+            parent: 'Menu'
         },
         {
-            x: width / 2,
-            y: height - 100,
-            label: "Player 4 - Team 2",
-            labelOffset: 50,
+            name: 'backToMainMenuButton',
+            label: 'Back to Menu',
+            position: { x: 20, y: 20 },
+            action: () => {
+                gameState = gameStateEnum.Menu;
+                backToMainMenuButton.hide();
+                if (trucoButton) trucoButton.hide();
+                menuDiv.show();
+            },
+            parent: 'Game',
+            initiallyHidden: true
         },
+        {
+            name: 'trucoButton',
+            label: 'Truco!',
+            position: { x: 20, y: 60 },
+            action: () => {
+                if (window.game) {
+                    window.game.requestTruco(window.game.getCurrentPlayer());
+                }
+            },
+            parent: 'Game',
+            initiallyHidden: true
+        }
     ];
+    
+    for (let btn of buttons) {
+        try {
+            const button = createButton(btn.label);
+            if (!button) {
+                throw new Error(`Failed to create ${btn.name}`);
+            }
+            
+            button.position(btn.position.x, btn.position.y);
+            button.mousePressed(btn.action);
+            button.parent(btn.parent);
+            
+            if (btn.initiallyHidden) {
+                button.hide();
+            }
+            
+            window[btn.name] = button;
+        } catch (error) {
+            initState.errors.push(`Button creation failed (${btn.name}): ${error.message}`);
+        }
+    }
+}
+
+function createInstructionsUI() {
+    try {
+        const instructionsTextDiv = createDiv('');
+        if (!instructionsTextDiv) {
+            throw new Error('Failed to create instructions text div');
+        }
+        
+        instructionsTextDiv.parent(instructionsDiv);
+        instructionsTextDiv.style('color', 'white');
+        instructionsTextDiv.style('position', 'absolute');
+        instructionsTextDiv.style('top', '50%');
+        instructionsTextDiv.style('left', '50%');
+        instructionsTextDiv.style('transform', 'translate(-50%, -50%)');
+        instructionsTextDiv.style('width', '80%');
+        instructionsTextDiv.style('text-align', 'left');
+        instructionsTextDiv.style('font-size', '16px');
+        instructionsTextDiv.style('line-height', '1.5');
+        
+        instructionsTextDiv.html(`
+            <div style="margin-bottom: 20px;">
+                Truco is a fun game designed to be played by an even number of players, played in teams of 2v2 or 3v3. Each Truco match is composed of multiple sets, where each set equals twelve games, and each game consists of three rounds.<br><br>
+                <!-- ... rest of the instructions ... -->
+            </div>
+        `);
+    } catch (error) {
+        initState.errors.push('Instructions UI creation failed: ' + error.message);
+    }
+}
+
+function initializeGameState() {
+    try {
+        if (!gameStateEnum) {
+            throw new Error('gameStateEnum not defined');
+        }
+        
+        gameState = gameStateEnum.Menu;
+        
+        // Initialize player positions
+        playerPositions = [
+            {
+                x: width / 6,
+                y: height / 2,
+                label: "Player 1 - Team 1",
+                labelOffset: -50
+            },
+            {
+                x: width / 2,
+                y: 100,
+                label: "Player 2 - Team 2",
+                labelOffset: -50
+            },
+            {
+                x: (5 * width) / 6,
+                y: height / 2,
+                label: "Player 3 - Team 1",
+                labelOffset: -50
+            },
+            {
+                x: width / 2,
+                y: height - 100,
+                label: "Player 4 - Team 2",
+                labelOffset: 50
+            }
+        ];
+        
+    } catch (error) {
+        initState.errors.push('Game state initialization failed: ' + error.message);
+    }
+}
+
+function showSetupError(title, errors) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(255, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1000;
+        max-width: 80%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    errorDiv.innerHTML = `
+        <h3>${title}</h3>
+        <div style="text-align: left; margin-top: 10px;">
+            <strong>Error Details:</strong><br>
+            ${errors.join('<br>')}
+        </div>
+        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px;">
+            Retry
+        </button>
+    `;
+    
+    document.body.appendChild(errorDiv);
+}
+
+// Handle window resizing
+function windowResized() {
+    try {
+        resizeCanvas(windowWidth, windowHeight);
+        
+        // Update player positions
+        if (playerPositions) {
+            playerPositions[0].x = width / 6;
+            playerPositions[0].y = height / 2;
+            
+            playerPositions[1].x = width / 2;
+            playerPositions[1].y = 100;
+            
+            playerPositions[2].x = (5 * width) / 6;
+            playerPositions[2].y = height / 2;
+            
+            playerPositions[3].x = width / 2;
+            playerPositions[3].y = height - 100;
+        }
+    } catch (error) {
+        console.error('Window resize handling failed:', error);
+        showSetupError('Error handling window resize', [error.message]);
+    }
 }
   

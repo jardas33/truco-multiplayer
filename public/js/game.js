@@ -32,47 +32,80 @@ function createDeck() {
   
   window.Game = class Game {
     constructor(players) {
-      this.players = players;
-      this.currentPlayerIndex = 0;
-      this.startRoundPlayer = 0;
-      this.round = 0;
-      this.scores = { team1: 0, team2: 0 };
-      this.games = { team1: 0, team2: 0 };
-      this.sets = { team1: 0, team2: 0 };
-      this.gameValue = 1;
-      this.potentialGameValue = 0;
-      this.trucoState = false;
-      this.initialTrucoCallerIndex = null;
-      this.roundResults = [];
-      this.IsDraw = false;
-      this.roundWinner = null;
-      this.winningstruc = null;
-      console.log("Game initialized with players:", players);
+        if (!players || players.length === 0) {
+            console.error("No players provided to game constructor");
+            return;
+        }
+        
+        // Verify images are loaded before proceeding
+        if (!verifyImagesLoaded()) {
+            console.error("Game cannot start - images not loaded");
+            return;
+        }
+        
+        this.players = players;
+        this.currentPlayerIndex = 0;
+        this.startRoundPlayer = 0;
+        this.round = 0;
+        this.scores = { team1: 0, team2: 0 };
+        this.games = { team1: 0, team2: 0 };
+        this.sets = { team1: 0, team2: 0 };
+        this.gameValue = 1;
+        this.potentialGameValue = 0;
+        this.trucoState = false;
+        this.initialTrucoCallerIndex = null;
+        this.roundResults = [];
+        this.IsDraw = false;
+        this.roundWinner = null;
+        this.winningstruc = null;
+        this.isGameInitialized = true;
+        console.log("Game initialized with players:", players);
     }
   
     startGame() {
-      console.log("Starting game...");
-      createDeck();
-      shuffleDeck(deck);
-      distributeCards(this.players, deck);
-      
-      this.currentPlayerIndex = 0;
-      this.players[this.currentPlayerIndex].isActive = true;
-      playedCards = [];
-      
-      // Make cards clickable for first player
-      this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
-      
-      // Show game UI elements
-      backToMainMenuButton.show();
-      trucoButton.show();
-      
-      // If first player is a bot, it plays automatically
-      if (this.players[this.currentPlayerIndex].isBot) {
-        setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
-      }
-      
-      console.log("Game started successfully");
+        if (!this.isGameInitialized) {
+            console.error("Game not properly initialized");
+            return;
+        }
+        
+        console.log("Starting game...");
+        createDeck();
+        
+        if (!deck || deck.length === 0) {
+            console.error("Failed to create deck");
+            return;
+        }
+        
+        shuffleDeck(deck);
+        distributeCards(this.players, deck);
+        
+        // Verify cards were distributed
+        const allPlayersHaveCards = this.players.every(player => player.hand && player.hand.length === 3);
+        if (!allPlayersHaveCards) {
+            console.error("Failed to distribute cards properly");
+            return;
+        }
+        
+        this.currentPlayerIndex = 0;
+        this.players[this.currentPlayerIndex].isActive = true;
+        playedCards = [];
+        
+        // Make cards clickable for first player
+        this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+        
+        // Show game UI elements
+        if (backToMainMenuButton) backToMainMenuButton.show();
+        if (trucoButton) trucoButton.show();
+        
+        // Set game state to playing
+        gameState = gameStateEnum.Playing;
+        
+        // If first player is a bot, it plays automatically
+        if (this.players[this.currentPlayerIndex].isBot) {
+            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
+        }
+        
+        console.log("Game started successfully");
     }
   
     nextPlayer() {
