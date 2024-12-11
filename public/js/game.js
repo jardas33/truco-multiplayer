@@ -14,7 +14,9 @@ function initializeGame(gameState) {
         return;
     }
 
+    // Store the game state
     currentGame = gameState;
+    window.game = gameState;  // Ensure global game state is set
     
     // Find current player in the players array
     currentPlayer = gameState.players.find(p => p.id === socket.id);
@@ -31,16 +33,18 @@ function initializeGame(gameState) {
         if (window.ui.divs.game) {
             window.ui.divs.game.style.display = 'block';
         }
+        if (window.ui.divs.roomControls) {
+            window.ui.divs.roomControls.style.display = 'none';
+        }
     } else {
         console.error('UI elements not properly initialized');
     }
     
     // Set game phase
-    if (window.gameState) {
-        window.gameState.currentPhase = 'playing';
-    }
+    window.gameState.currentPhase = gameStateEnum.Playing;
     
     console.log('Game initialized successfully');
+    console.log('Current game state:', window.gameState);
     console.log('Current player:', currentPlayer);
 }
 

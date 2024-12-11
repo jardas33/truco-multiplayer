@@ -117,44 +117,24 @@ function setupGameEventHandlers() {
         window.gameState.roomCode = roomData.roomCode;
         window.gameState.isHost = true;
         window.gameState.players = roomData.players;
-        window.gameState.botCount = roomData.botCount;
+        window.gameState.botCount = 0;
         
         updateRoomUI(roomData);
         showHostControls();
+
+        // Show start game button for host
+        if (window.ui.buttons.start) {
+            window.ui.buttons.start.style.display = 'block';
+        }
     });
 
-    socket.on('roomJoined', (roomData) => {
-        console.log('Room joined:', roomData);
-        window.gameState.roomCode = roomData.roomCode;
-        window.gameState.players = roomData.players;
-        window.gameState.botCount = roomData.botCount;
-        window.gameState.isHost = false;
-        
-        updateRoomUI(roomData);
-    });
-
-    socket.on('playerJoined', (data) => {
-        console.log('Player joined:', data);
-        window.gameState.players = data.players;
-        window.gameState.botCount = data.botCount;
-        updatePlayerList(data.players);
-        updateGameControls();
-    });
-
-    socket.on('botAdded', (data) => {
-        console.log('Bot added:', data);
-        window.gameState.players = data.players;
-        window.gameState.botCount = data.botCount;
-        updatePlayerList(data.players);
-        updateGameControls();
-    });
-
-    socket.on('playerLeft', (data) => {
-        console.log('Player left:', data);
-        window.gameState.players = data.players;
-        window.gameState.botCount = data.botCount;
-        updatePlayerList(data.players);
-        updateGameControls();
+    socket.on('updatePlayers', (data) => {
+        console.log('Players updated:', data);
+        if (data && data.players) {
+            window.gameState.players = data.players;
+            window.gameState.botCount = data.players.filter(p => p.isBot).length;
+            updatePlayerList(data.players);
+        }
     });
 
     socket.on('gameStarted', (gameData) => {
@@ -168,14 +148,14 @@ function setupGameEventHandlers() {
         // Update game state
         window.gameState = {
             ...window.gameState,
-            currentPhase: 'playing',
+            currentPhase: gameStateEnum.Playing,
             players: gameData.players,
             scores: gameData.scores,
             playedCards: gameData.playedCards,
             currentTurn: gameData.currentTurn
         };
 
-        // Initialize game with received data
+        // Initialize game
         if (typeof initializeGame === 'function') {
             initializeGame(window.gameState);
         } else {
