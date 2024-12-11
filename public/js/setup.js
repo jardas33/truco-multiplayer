@@ -167,12 +167,19 @@ function updatePlayerList(players) {
     // Count players and bots
     const realPlayers = players.filter(p => !p.isBot).length;
     const bots = players.filter(p => p.isBot).length;
+    const totalPlayers = players.length;
     
     // Create header with counts
     playerList.innerHTML = `
         <h3>Players in Room</h3>
         <div class="room-status">
-            Players: <span>${realPlayers}/4</span> (including <span>${bots}/3</span> bots)
+            Total Players: <span>${totalPlayers}/4</span> (including <span>${bots}/3</span> bots)
+        </div>
+        <div class="room-status">
+            ${totalPlayers === 4 ? 
+                '<span class="ready">Ready to start!</span>' : 
+                `Need ${4 - totalPlayers} more player${4 - totalPlayers !== 1 ? 's' : ''}`
+            }
         </div>
     `;
     
@@ -197,10 +204,10 @@ function updatePlayerList(players) {
 
     // Enable/disable buttons based on counts
     if (window.ui.buttons.addBot) {
-        window.ui.buttons.addBot.disabled = bots >= 3;
+        window.ui.buttons.addBot.disabled = bots >= 3 || totalPlayers >= 4;
     }
     if (window.ui.buttons.startGame) {
-        window.ui.buttons.startGame.disabled = players.length < 2;
+        window.ui.buttons.startGame.disabled = totalPlayers < 4;
     }
 }
 

@@ -449,3 +449,42 @@ canvas {
     color: #4CAF50;
     font-weight: bold;
 }
+
+.room-status .ready {
+    color: #4CAF50;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Update the start game button when ready */
+#startGameBtn:not(:disabled) {
+    background: #4CAF50;
+    animation: highlight 2s infinite;
+    font-weight: bold;
+}
+
+@keyframes highlight {
+    0% {
+        box-shadow: 0 0 5px #4CAF50;
+    }
+    50% {
+        box-shadow: 0 0 20px #4CAF50;
+    }
+    100% {
+        box-shadow: 0 0 5px #4CAF50;
+    }
+}
