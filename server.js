@@ -6,11 +6,27 @@ const path = require('path');
 
 app.use(express.static('public'));
 
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        rooms: rooms.size,
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
 // Store active rooms
 const rooms = new Map();
 
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log(`👤 User connected: ${socket.id}`);
+    
+    // Handle connection errors
+    socket.on('error', (error) => {
+        console.error(`Socket error for ${socket.id}:`, error);
+    });
 
     // Handle room creation
     socket.on('createRoom', (roomCode) => {
@@ -199,6 +215,10 @@ function dealCards(deck) {
 }
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+http.listen(PORT, HOST, () => {
+    console.log(`🚀 Truco game server running on port ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📱 Ready for multiplayer action!`);
 }); 

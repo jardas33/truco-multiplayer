@@ -1,12 +1,12 @@
 {
   "name": "truco",
   "version": "1.0.0",
-  "description": "Online multiplayer Truco game with Socket.IO - Railway optimized",
+  "description": "Online multiplayer Truco game with Socket.IO - Free hosting ready",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "echo 'No build step required'",
+    "build": "npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["truco", "card-game", "p5js", "multiplayer", "socketio"],

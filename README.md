@@ -31,15 +31,28 @@ npm start
 
 ## Deployment
 
-This game is configured for deployment on Railway.app:
+This game is configured for **FREE hosting** on multiple platforms:
 
-### Option 1: Railway.app (Recommended - Easiest)
+### Option 1: Render.com (RECOMMENDED - Best Free Option)
 1. Fork this repository
-2. Go to [railway.app](https://railway.app) and sign up/login
-3. Click "New Project" → "Deploy from GitHub repo"
-4. Select your `truco-multiplayer` repository
-5. Railway will automatically detect it's a Node.js app and deploy
-6. Your game will be live in minutes!
+2. Go to [render.com](https://render.com) and sign up with GitHub
+3. Click "New +" → "Web Service"
+4. Connect your GitHub repository
+5. Configure: Name: `truco-game`, Environment: `Node`
+6. Your game will be live in 5-10 minutes!
+
+### Option 2: Glitch.com (Easiest Setup)
+1. Go to [glitch.com](https://glitch.com)
+2. Click "New Project" → "Import from GitHub"
+3. Paste: `https://github.com/jardas33/truco-multiplayer`
+4. Your game is live immediately!
+
+### Option 3: Railway.app (Paid)
+1. Go to [railway.app](https://railway.app) and sign up/login
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select your `truco-multiplayer` repository
+4. Railway will automatically detect it's a Node.js app and deploy
+5. Your game will be live in minutes!
 
 ### Option 2: Docker Deployment
 1. Build the Docker image: `docker build -t truco-game .`

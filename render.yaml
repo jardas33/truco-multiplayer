@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: truco-game
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: "0.0.0.0"
+    healthCheckPath: /health
+    autoDeploy: true
+    numInstances: 1
