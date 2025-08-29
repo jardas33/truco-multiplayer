@@ -315,9 +315,11 @@ function hideRoomControls() {
 function startSinglePlayerGame() {
     console.log('Starting single player game...');
     
-    // Set game state to Playing FIRST
+    // CRITICAL: Set game state to Playing FIRST and ensure it's global
+    window.gameState = gameStateEnum.Playing;
     gameState = gameStateEnum.Playing;
     console.log('Game state set to:', gameState);
+    console.log('Global game state set to:', window.gameState);
     
     // Create players array with one human player and three bots
     let players = [

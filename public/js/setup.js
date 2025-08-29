@@ -82,7 +82,7 @@ function setup() {
     instructionsButton.show();
 
     cardValuesButton = createButton("Card Values");
-    cardValuesButton.position(20, 60);
+    cardValuesButton.position(20, 60); // Position right under Instructions button
     cardValuesButton.mousePressed(showCardValues);
     cardValuesButton.parent('Menu');
     cardValuesButton.style('z-index', '10');

@@ -20,7 +20,7 @@ function draw() {
             console.log('🎨 Canvas parent:', currentParent?.elt?.id || 'NO PARENT');
             
             // Fix canvas parenting based on game state
-            if (gameState === gameStateEnum.Playing) {
+            if (gameState === gameStateEnum.Playing || window.gameState === gameStateEnum.Playing) {
                 // Game is running - canvas should be in Game div
                 if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Game') {
                     console.log('🎨 Moving canvas to Game div');
@@ -28,7 +28,7 @@ function draw() {
                     // Force the Game div to be visible
                     if (gameDiv) gameDiv.style('display', 'block');
                 }
-            } else if (gameState === gameStateEnum.Menu) {
+            } else if (gameState === gameStateEnum.Menu || window.gameState === gameStateEnum.Menu) {
                 // In menu - canvas should be in Menu div
                 if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Menu') {
                     console.log('🎨 Moving canvas to Menu div');
