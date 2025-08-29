@@ -21,6 +21,17 @@ function draw() {
         console.log('🎨 Canvas test: Red square drawn at frame', frameCount);
     }
     
+    // Debug: Always draw a test circle to see if canvas is working
+    fill(0, 255, 0); // Green
+    noStroke();
+    ellipse(width - 50, 50, 30, 30);
+    
+    // Debug: Draw frame counter
+    fill(255, 255, 255);
+    textSize(16);
+    textAlign(LEFT, TOP);
+    text(`Frame: ${frameCount}`, 10, height - 30);
+    
     if (gameState === gameStateEnum.Menu) {
         menuDiv.show();
         gameDiv.hide();
@@ -191,6 +202,14 @@ function draw() {
         textAlign(CENTER, CENTER);
         text('GAME IS RUNNING!', width/2, height/2);
         
+        // Debug: Draw game state info
+        fill(255, 255, 255);
+        textSize(16);
+        textAlign(CENTER, CENTER);
+        text(`Game State: ${gameState}`, width/2, height/2 + 40);
+        text(`Game Object: ${window.game ? 'EXISTS' : 'MISSING'}`, width/2, height/2 + 60);
+        text(`Players: ${window.game?.players?.length || 0}`, width/2, height/2 + 80);
+        
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
             console.log('🎮 Calling drawGameState...');
@@ -201,6 +220,15 @@ function draw() {
                 players: window.game?.players,
                 playerCount: window.game?.players?.length
             });
+            
+            // Debug: Draw what we have
+            fill(255, 0, 0);
+            textSize(20);
+            textAlign(CENTER, CENTER);
+            text('GAME NOT PROPERLY INITIALIZED!', width/2, height/2 + 120);
+            text(`Game: ${window.game ? 'YES' : 'NO'}`, width/2, height/2 + 150);
+            text(`Players: ${window.game?.players ? 'YES' : 'NO'}`, width/2, height/2 + 170);
+            text(`Player Count: ${window.game?.players?.length || 'N/A'}`, width/2, height/2 + 190);
         }
     }
 }

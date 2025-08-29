@@ -377,15 +377,18 @@ function windowResized() {
 
 // Add the missing drawGameState function
 function drawGameState() {
+    console.log('🎮 drawGameState called!');
+    
     if (!window.game || !window.game.players) {
-        console.error('Game or players not initialized');
+        console.error('❌ Game or players not initialized');
         return;
     }
 
     // Only log once per second to prevent spam
     if (!window.lastDrawLog || Date.now() - window.lastDrawLog > 1000) {
-        console.log('Drawing game state with players:', window.game.players);
-        console.log('Player hands:', window.game.players.map(p => ({ name: p.name, hand: p.hand?.length || 0 })));
+        console.log('🎯 Drawing game state with players:', window.game.players);
+        console.log('👥 Player hands:', window.game.players.map(p => ({ name: p.name, hand: p.hand?.length || 0 })));
+        console.log('📍 Player positions:', playerPositions);
         window.lastDrawLog = Date.now();
     }
     
@@ -397,9 +400,11 @@ function drawGameState() {
     window.game.players.forEach((player, index) => {
         const position = playerPositions[index];
         if (!position) {
-            console.error(`No position found for player ${index}:`, player);
+            console.error(`❌ No position found for player ${index}:`, player);
             return;
         }
+        
+        console.log(`🎯 Drawing player ${player.name} at position:`, position);
         
         // Draw player label - SIMPLE TEXT
         fill(255, 255, 255); // White text
@@ -412,7 +417,7 @@ function drawGameState() {
         if (player.hand && player.hand.length > 0) {
             // Only log card drawing once per second to prevent spam
             if (!window.lastCardDrawLog || Date.now() - window.lastCardDrawLog > 1000) {
-                console.log(`Drawing ${player.hand.length} cards for ${player.name}:`, player.hand);
+                console.log(`🃏 Drawing ${player.hand.length} cards for ${player.name}:`, player.hand);
                 window.lastCardDrawLog = Date.now();
             }
             
@@ -420,6 +425,8 @@ function drawGameState() {
             for (let i = 0; i < player.hand.length; i++) {
                 const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
                 const cardY = position.y;
+                
+                console.log(`🎴 Drawing card ${i} at position:`, { cardX, cardY, cardWidth, cardHeight });
                 
                 // Draw card background
                 if (player.isBot || !showAllCards) {
@@ -460,13 +467,14 @@ function drawGameState() {
         } else {
             // Only log missing hands once per second
             if (!window.lastMissingHandLog || Date.now() - window.lastMissingHandLog > 1000) {
-                console.warn(`No hand found for player ${player.name}`);
+                console.warn(`⚠️ No hand found for player ${player.name}`);
                 window.lastMissingHandLog = Date.now();
             }
         }
         
         // Highlight active player with a bright circle
         if (player.isActive) {
+            console.log(`⭐ Highlighting active player: ${player.name}`);
             stroke(255, 255, 0); // Yellow circle
             strokeWeight(4);
             noFill();
@@ -477,6 +485,7 @@ function drawGameState() {
     
     // Draw played cards in the center - SIMPLE RECTANGLES
     if (playedCards && playedCards.length > 0) {
+        console.log(`🎯 Drawing ${playedCards.length} played cards`);
         playedCards.forEach((playedCard, index) => {
             const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
@@ -524,6 +533,8 @@ function drawGameState() {
     strokeWeight(3);
     noFill();
     rect(10, 10, width - 20, height - 20);
+    
+    console.log('✅ drawGameState completed!');
 }
 
 // Add the missing redrawGame function

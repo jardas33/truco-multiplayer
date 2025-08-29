@@ -56,10 +56,16 @@ class Player {
     }
   }
   
+  // Make Player class globally accessible
+  window.Player = Player;
   
+  // Initialize global players array (this will be overridden by the game)
   let players = [
     new Player("Player 1", "team1", !(selfPlayer == 1)), // This player is not a bot
     new Player("Player 2", "team2", !(selfPlayer == 2)), // This player is a bot
     new Player("Player 3", "team1", !(selfPlayer == 3)), // This player is a bot
     new Player("Player 4", "team2", !(selfPlayer == 4)), // This player is a bot
   ];
+  
+  // Make players array globally accessible
+  window.players = players;
