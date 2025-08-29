@@ -82,35 +82,6 @@ function setup() {
     cardValuesButton.show();
     console.log('Buttons created with proper z-index and made visible');
     
-    // Force button styling after a short delay to ensure styles are applied
-    setTimeout(() => {
-        if (instructionsButton) {
-            instructionsButton.style('padding', '10px 20px');
-            instructionsButton.style('margin', '5px');
-            instructionsButton.style('border', '2px solid #fff');
-            instructionsButton.style('background-color', 'rgba(0, 0, 0, 0.7)');
-            instructionsButton.style('color', 'white');
-            instructionsButton.style('font-weight', 'bold');
-            instructionsButton.style('border-radius', '5px');
-            instructionsButton.style('font-size', '16px');
-            instructionsButton.style('min-width', '120px');
-            instructionsButton.style('text-align', 'center');
-        }
-        if (cardValuesButton) {
-            cardValuesButton.style('padding', '10px 20px');
-            cardValuesButton.style('margin', '5px');
-            cardValuesButton.style('border', '2px solid #fff');
-            cardValuesButton.style('background-color', 'rgba(0, 0, 0, 0.7)');
-            cardValuesButton.style('color', 'white');
-            cardValuesButton.style('font-weight', 'bold');
-            cardValuesButton.style('border-radius', '5px');
-            cardValuesButton.style('font-size', '16px');
-            cardValuesButton.style('min-width', '120px');
-            cardValuesButton.style('text-align', 'center');
-        }
-        console.log('Button styles reinforced after delay');
-    }, 100);
-
     // Create game UI buttons
     backToMainMenuButton = createButton("Back to Main Menu");
     backToMainMenuButton.position(20, 20);

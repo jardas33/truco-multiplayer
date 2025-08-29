@@ -39,36 +39,6 @@ button {
     transition: all 0.3s ease;
 }
 
-/* Ensure Instructions and Card Values buttons look identical */
-#Menu button {
-    padding: 10px 20px !important;
-    margin: 5px !important;
-    border: 2px solid #fff !important;
-    background-color: rgba(0, 0, 0, 0.7) !important;
-    color: white !important;
-    font-weight: bold !important;
-    border-radius: 5px !important;
-    font-size: 16px !important;
-    min-width: 120px !important;
-    text-align: center !important;
-}
-
-/* Force button styling for p5.js buttons specifically */
-#Menu canvas + button,
-#Menu button {
-    padding: 10px 20px !important;
-    margin: 5px !important;
-    border: 2px solid #fff !important;
-    background-color: rgba(0, 0, 0, 0.7) !important;
-    color: white !important;
-    font-weight: bold !important;
-    border-radius: 5px !important;
-    font-size: 16px !important;
-    min-width: 120px !important;
-    text-align: center !important;
-    display: block !important;
-}
-
 button:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
