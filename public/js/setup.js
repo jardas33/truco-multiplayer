@@ -15,7 +15,8 @@ function setup() {
     canvas.style('top', '0');
     canvas.style('left', '0');
     canvas.style('z-index', '1'); // Canvas behind HTML elements but visible
-    canvas.style('pointer-events', 'none'); // Allow clicks to pass through to HTML elements
+    // Remove pointer-events: none so cards can be clicked
+    // canvas.style('pointer-events', 'none'); // Allow clicks to pass through to HTML elements
     
     // CRITICAL: Ensure canvas is properly sized and visible
     canvas.style('width', windowWidth + 'px');
