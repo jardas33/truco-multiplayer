@@ -1,9 +1,5 @@
 function setup() {
-    console.log('🎨 Setting up p5.js canvas and UI elements...');
-    
-    // CRITICAL TEST: Check if p5.js is working
-    console.log('🎨 p5.js test - width:', width, 'height:', height);
-    console.log('🎨 p5.js test - frameCount:', frameCount);
+    console.log('Setting up p5.js canvas and UI elements...');
     
     // Set frame rate to prevent excessive rendering
     frameRate(30); // Limit to 30 FPS instead of 60
@@ -15,40 +11,21 @@ function setup() {
     canvas.style('top', '0');
     canvas.style('left', '0');
     canvas.style('z-index', '1'); // Canvas behind HTML elements but visible
-    // Remove pointer-events: none so cards can be clicked
-    // canvas.style('pointer-events', 'none'); // Allow clicks to pass through to HTML elements
     
-    // CRITICAL: Ensure canvas is properly sized and visible
+    // Ensure canvas is properly sized and visible
     canvas.style('width', windowWidth + 'px');
     canvas.style('height', windowHeight + 'px');
-    canvas.style('background-color', 'rgba(255, 0, 0, 0.1)'); // Slight red tint for debugging
     
     console.log('Canvas created and positioned');
-    console.log('Canvas dimensions:', { width: windowWidth, height: windowHeight });
-    console.log('Canvas element:', canvas);
-    console.log('Canvas parent:', canvas.parent());
-
+    
     // Store canvas reference globally for easy access
     window.gameCanvas = canvas;
     
-    // Debug: Check if canvas is actually in the DOM
-    setTimeout(() => {
-        const canvasInDOM = document.querySelector('canvas');
-        console.log('Canvas in DOM:', canvasInDOM);
-        if (canvasInDOM) {
-            console.log('Canvas computed styles:', window.getComputedStyle(canvasInDOM));
-            console.log('Canvas parent div:', canvasInDOM?.parentElement);
-            console.log('Canvas dimensions in DOM:', canvasInDOM.offsetWidth, 'x', canvasInDOM.offsetHeight);
-        } else {
-            console.error('❌ NO CANVAS FOUND IN DOM!');
-        }
-    }, 100);
-
     menuDiv = select("#Menu");
     gameDiv = select("#Game");
     instructionsDiv = select("#Instructions");
     valuesDiv = select("#Values");
-    console.log('Div containers initialized:', { menuDiv, gameDiv, instructionsDiv, valuesDiv });
+    console.log('Div containers initialized');
 
     // Ensure proper initial state
     menuDiv.class('active');
@@ -69,7 +46,7 @@ function setup() {
         roomControls.style.position = 'relative';
         console.log('Room controls made visible with z-index 20');
     } else {
-        console.error('❌ roomControls div not found!');
+        console.error('roomControls div not found!');
     }
 
     // Create p5.js buttons with proper z-index
@@ -140,7 +117,7 @@ function setup() {
     // Setup player positions with better spacing to prevent cards from going off-screen
     playerPositions = [
         {
-            x: Math.max(150, width / 6), // Ensure minimum distance from left edge
+            x: width / 6, // Back to original position - was working well
             y: height - 150, // Bottom-left, above the bottom edge
             label: "Player 1 - Team 1",
             labelOffset: -50,
@@ -164,7 +141,7 @@ function setup() {
             labelOffset: 50,
         },
     ];
-    console.log('Player positions initialized:', playerPositions);
+    console.log('Player positions initialized');
 
     // Create close buttons for popups
     instructionsCloseButton = createButton("Close");
@@ -182,7 +159,7 @@ function setup() {
     cardValuesCloseButton.mousePressed(closeCardValues);
     cardValuesCloseButton.parent(valuesDiv);
     cardValuesCloseButton.style("position", "absolute");
-    cardValuesCloseButton.style("bottom", "10px");
+    cardValuesButton.style("bottom", "10px");
     cardValuesButton.style("left", "50%");
     cardValuesButton.style("transform", "translateX(-50%)");
     cardValuesButton.style("z-index", "30"); // Above everything
@@ -190,11 +167,5 @@ function setup() {
     cardValuesButton.show(); // Make sure p5.js shows it
 
     console.log('Setup complete - canvas and UI elements initialized');
-    
-    // CRITICAL TEST: Force a redraw to see if anything works
-    setTimeout(() => {
-        console.log('🎨 Forcing redraw after setup...');
-        redraw();
-    }, 500);
 }
   

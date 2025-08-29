@@ -1,29 +1,21 @@
 function draw() {
-    // CRITICAL DEBUG: Check if draw function is being called
-    if (frameCount % 60 === 0) { // Log every second
-        console.log('🎨 DRAW FUNCTION CALLED - Frame:', frameCount, 'Canvas:', !!window.gameCanvas);
-    }
-    
     // Clear the canvas at the start of each frame
     clear();
     
-    // CRITICAL DEBUG: Check canvas state
+    // Check canvas state
     if (!window.gameCanvas) {
-        console.error('❌ NO CANVAS FOUND!');
         return;
     }
     
-    // CRITICAL FIX: Ensure canvas is in the correct parent div using proper p5.js method
+    // Fix canvas parenting based on game state
     if (window.gameCanvas) {
         try {
             const currentParent = window.gameCanvas.parent();
-            console.log('🎨 Canvas parent:', currentParent?.elt?.id || 'NO PARENT');
             
             // Fix canvas parenting based on game state
             if (gameState === gameStateEnum.Playing || window.gameState === gameStateEnum.Playing) {
                 // Game is running - canvas should be in Game div
                 if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Game') {
-                    console.log('🎨 Moving canvas to Game div');
                     window.gameCanvas.parent('Game');
                     // Force the Game div to be visible
                     if (gameDiv) gameDiv.style('display', 'block');
@@ -31,50 +23,20 @@ function draw() {
             } else if (gameState === gameStateEnum.Menu || window.gameState === gameStateEnum.Menu) {
                 // In menu - canvas should be in Menu div
                 if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Menu') {
-                    console.log('🎨 Moving canvas to Menu div');
                     window.gameCanvas.parent('Menu');
                     // Force the Menu div to be visible
                     if (menuDiv) menuDiv.style('display', 'block');
                 }
             }
         } catch (error) {
-            console.error('❌ Error handling canvas parent:', error);
             // Emergency fix: try to put canvas back in Menu div
             try {
                 window.gameCanvas.parent('Menu');
-                console.log('🎨 Emergency canvas fix: moved to Menu div');
             } catch (e) {
-                console.error('❌ Emergency canvas fix failed:', e);
+                console.error('Emergency canvas fix failed:', e);
             }
         }
     }
-    
-    // Clear clickable cards array each frame for fresh click detection
-    window.clickableCards = [];
-    
-    // ALWAYS DRAW A BASIC TEST - this should be visible no matter what
-    console.log('🎨 Drawing basic test shapes...');
-    fill(255, 0, 0); // Bright red
-    noStroke();
-    rect(50, 50, 100, 100); // Large red square
-    console.log('🎨 Red square drawn at (50, 50, 100x100)');
-    
-    fill(0, 255, 0); // Bright green
-    ellipse(200, 100, 80, 80); // Large green circle
-    console.log('🎨 Green circle drawn at (200, 100, 80x80)');
-    
-    fill(0, 0, 255); // Bright blue
-    textSize(32);
-    textAlign(LEFT, TOP);
-    text('CANVAS TEST', 50, 200); // Large blue text
-    console.log('🎨 Blue text drawn at (50, 200)');
-    
-    // CRITICAL DEBUG: Check if we can draw at all
-    fill(255, 255, 0); // Yellow
-    textSize(24);
-    textAlign(CENTER, CENTER);
-    text('DRAW FUNCTION WORKING!', width/2, height/2 - 100);
-    console.log('🎨 Yellow text drawn at center');
     
     // Draw background for all states
     push();
@@ -86,25 +48,6 @@ function draw() {
         background(0, 100, 0); // Dark green
     }
     pop();
-    
-    // Debug: Draw a test rectangle to ensure canvas is working
-    if (frameCount % 60 === 0) { // Every 60 frames (once per second)
-        fill(255, 0, 0); // Red
-        noStroke();
-        rect(10, 10, 20, 20);
-        console.log('🎨 Canvas test: Red square drawn at frame', frameCount);
-    }
-    
-    // Debug: Always draw a test circle to see if canvas is working
-    fill(0, 255, 0); // Green
-    noStroke();
-    ellipse(width - 50, 50, 30, 30);
-    
-    // Debug: Draw frame counter
-    fill(255, 255, 255);
-    textSize(16);
-    textAlign(LEFT, TOP);
-    text(`Frame: ${frameCount}`, 10, height - 30);
     
     if (gameState === gameStateEnum.Menu) {
         menuDiv.show();
@@ -279,39 +222,9 @@ function draw() {
         // Show game UI buttons
         if (backToMainMenuButton) backToMainMenuButton.show();
         
-        // Debug: Draw a test message to ensure we're in playing state
-        fill(255, 255, 0); // Yellow
-        textSize(24);
-        textAlign(CENTER, CENTER);
-        text('GAME IS RUNNING!', width/2, height/2);
-        
-        // Debug: Draw game state info
-        fill(255, 255, 255);
-        textSize(16);
-        textAlign(CENTER, CENTER);
-        text(`Game State: ${gameState}`, width/2, height/2 + 40);
-        text(`Game Object: ${window.game ? 'EXISTS' : 'MISSING'}`, width/2, height/2 + 60);
-        text(`Players: ${window.game?.players?.length || 0}`, width/2, height/2 + 80);
-        
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
-            console.log('🎮 Calling drawGameState...');
             drawGameState();
-        } else {
-            console.error('❌ Cannot draw game state:', {
-                game: !!window.game,
-                players: window.game?.players,
-                playerCount: window.game?.players?.length
-            });
-            
-            // Debug: Draw what we have
-            fill(255, 0, 0);
-            textSize(20);
-            textAlign(CENTER, CENTER);
-            text('GAME NOT PROPERLY INITIALIZED!', width/2, height/2 + 120);
-            text(`Game: ${window.game ? 'YES' : 'NO'}`, width/2, height/2 + 120);
-            text(`Players: ${window.game?.players ? 'YES' : 'NO'}`, width/2, height/2 + 120);
-            text(`Player Count: ${window.game?.players?.length || 'N/A'}`, width/2, height/2 + 120);
         }
     }
 }
