@@ -144,6 +144,13 @@ function createRoom() {
         console.error('Socket not initialized in createRoom');
         return;
     }
+    
+    // Clear any existing room state
+    if (window.roomId) {
+        console.log('Clearing existing room state');
+        window.roomId = null;
+    }
+    
     const roomCode = document.getElementById('roomInput').value || Math.random().toString(36).substring(7);
     console.log('Creating room with code:', roomCode);
     socket.emit('createRoom', roomCode);
@@ -154,8 +161,15 @@ function joinRoom() {
         console.error('Socket not initialized in joinRoom');
         return;
     }
+    
     const roomCode = document.getElementById('roomInput').value;
     if (roomCode) {
+        // Check if we're already in this room
+        if (window.roomId === roomCode) {
+            console.log('Already in room:', roomCode);
+            return;
+        }
+        
         console.log('Joining room:', roomCode);
         socket.emit('joinRoom', roomCode);
     } else {
@@ -168,6 +182,17 @@ function addBot() {
         console.error('Socket not initialized or not in a room');
         return;
     }
+    
+    // Check if we already have 4 players
+    const playerList = document.getElementById('playerList');
+    if (playerList) {
+        const currentPlayers = playerList.querySelectorAll('div').length - 1; // -1 for the header
+        if (currentPlayers >= 4) {
+            console.log('Room is already full');
+            return;
+        }
+    }
+    
     console.log('Adding bot to room:', window.roomId);
     socket.emit('addBot', window.roomId);
 }
@@ -285,19 +310,48 @@ function startSinglePlayerGame() {
     // Start the game
     window.game.startGame();
     
-    // Update UI using p5.js functions if available
-    if (typeof select === 'function') {
-        menuDiv.style('display', 'none');
-        gameDiv.style('display', 'block');
-        instructionsDiv.style('display', 'none');
-        valuesDiv.style('display', 'none');
-        if (backToMainMenuButton) backToMainMenuButton.show();
-    } else {
-        // Fallback to DOM manipulation
-        document.getElementById('Menu').style.display = 'none';
-        document.getElementById('Game').style.display = 'block';
-        document.getElementById('Instructions').style.display = 'none';
-        document.getElementById('Values').style.display = 'none';
+    // Force UI transition - use direct DOM manipulation for reliability
+    console.log('Transitioning UI to game view...');
+    
+    // Hide menu
+    const menuElement = document.getElementById('Menu');
+    if (menuElement) {
+        menuElement.style.display = 'none';
+        console.log('Menu hidden');
+    }
+    
+    // Show game area
+    const gameElement = document.getElementById('Game');
+    if (gameElement) {
+        gameElement.style.display = 'block';
+        console.log('Game area shown');
+    }
+    
+    // Hide other elements
+    const instructionsElement = document.getElementById('Instructions');
+    if (instructionsElement) {
+        instructionsElement.style.display = 'none';
+    }
+    
+    const valuesElement = document.getElementById('Values');
+    if (valuesElement) {
+        valuesElement.style.display = 'none';
+    }
+    
+    // Try to show back button if available
+    if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
+        try {
+            backToMainMenuButton.show();
+            console.log('Back button shown');
+        } catch (e) {
+            console.log('Back button not available yet');
+        }
+    }
+    
+    // Force a redraw if p5.js is available
+    if (typeof redraw === 'function') {
+        redraw();
+        console.log('Forced p5.js redraw');
     }
     
     console.log('Single player game started successfully');
