@@ -174,12 +174,12 @@ function setup() {
     cardValuesCloseButton.mousePressed(closeCardValues);
     cardValuesCloseButton.parent(valuesDiv);
     cardValuesCloseButton.style("position", "absolute");
-    cardValuesButton.style("bottom", "10px");
-    cardValuesButton.style("left", "50%");
-    cardValuesButton.style("transform", "translateX(-50%)");
-    cardValuesButton.style("z-index", "30"); // Above everything
-    cardValuesButton.style("display", "block"); // Ensure it's visible
-    cardValuesButton.show(); // Make sure p5.js shows it
+    cardValuesCloseButton.style("bottom", "10px");
+    cardValuesCloseButton.style("left", "50%");
+    cardValuesCloseButton.style("transform", "translateX(-50%)");
+    cardValuesCloseButton.style("z-index", "30"); // Above everything
+    cardValuesCloseButton.style("display", "block"); // Ensure it's visible
+    cardValuesCloseButton.show(); // Make sure p5.js shows it
 
     console.log('Setup complete - canvas and UI elements initialized');
 }
