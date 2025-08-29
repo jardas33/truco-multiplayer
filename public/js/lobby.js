@@ -315,6 +315,10 @@ function hideRoomControls() {
 function startSinglePlayerGame() {
     console.log('Starting single player game...');
     
+    // Set game state to Playing FIRST
+    gameState = gameStateEnum.Playing;
+    console.log('Game state set to:', gameState);
+    
     // Create players array with one human player and three bots
     let players = [
         new Player("Player 1", "team1", false),
@@ -340,48 +344,19 @@ function startSinglePlayerGame() {
     // Start the game
     window.game.startGame();
     
-    // Force UI transition - use direct DOM manipulation for reliability
-    console.log('Transitioning UI to game view...');
+    // Use p5.js element management for proper UI transition
+    console.log('Transitioning UI to game view using p5.js...');
     
-    // Hide menu
-    const menuElement = document.getElementById('Menu');
-    if (menuElement) {
-        menuElement.style.display = 'none';
-        console.log('Menu hidden');
-    }
+    // Let p5.js handle the UI transition in the draw() function
+    // The gameState is now set to Playing, so p5.js will automatically:
+    // - Hide menu
+    // - Show game area
+    // - Call drawGameState()
     
-    // Show game area
-    const gameElement = document.getElementById('Game');
-    if (gameElement) {
-        gameElement.style.display = 'block';
-        console.log('Game area shown');
-    }
-    
-    // Hide other elements
-    const instructionsElement = document.getElementById('Instructions');
-    if (instructionsElement) {
-        instructionsElement.style.display = 'none';
-    }
-    
-    const valuesElement = document.getElementById('Values');
-    if (valuesElement) {
-        valuesElement.style.display = 'none';
-    }
-    
-    // Try to show back button if available
-    if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
-        try {
-            backToMainMenuButton.show();
-            console.log('Back button shown');
-        } catch (e) {
-            console.log('Back button not available yet');
-        }
-    }
-    
-    // Force a redraw if p5.js is available
+    // Force a redraw to trigger the UI transition
     if (typeof redraw === 'function') {
         redraw();
-        console.log('Forced p5.js redraw');
+        console.log('Forced p5.js redraw to trigger UI transition');
     }
     
     console.log('Single player game started successfully');

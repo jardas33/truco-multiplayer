@@ -2,6 +2,15 @@ function setup() {
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('Menu');
     
+    // Ensure canvas is visible and properly positioned
+    canvas.style('display', 'block');
+    canvas.style('position', 'absolute');
+    canvas.style('top', '0');
+    canvas.style('left', '0');
+    canvas.style('z-index', '1');
+    
+    console.log('Canvas created and positioned');
+    
     // Initialize text properties
     textAlign(CENTER, CENTER);
     textSize(24);
@@ -14,6 +23,8 @@ function setup() {
     gameDiv = select("#Game");
     instructionsDiv = select("#Instructions");
     valuesDiv = select("#Values");
+    
+    console.log('Div containers initialized:', { menuDiv, gameDiv, instructionsDiv, valuesDiv });
     
     // Initially show only menu
     menuDiv.class('active');
@@ -151,5 +162,7 @@ function setup() {
             labelOffset: 50,
         },
     ];
+    
+    console.log('Setup complete - canvas and UI elements initialized');
 }
   
