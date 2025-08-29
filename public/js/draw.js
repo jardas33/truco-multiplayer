@@ -2,6 +2,18 @@ function draw() {
     // Clear the canvas at the start of each frame
     clear();
     
+    // CRITICAL FIX: Ensure canvas is in the correct parent div
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+        if (gameState === gameStateEnum.Playing && canvas.parentElement?.id === 'Menu') {
+            console.log('🎨 Moving canvas from Menu to Game div');
+            canvas.parent('Game');
+        } else if (gameState === gameStateEnum.Menu && canvas.parentElement?.id === 'Game') {
+            console.log('🎨 Moving canvas from Game to Menu div');
+            canvas.parent('Menu');
+        }
+    }
+    
     // Draw background for all states
     push();
     imageMode(CORNER);
@@ -137,25 +149,26 @@ function draw() {
         
         const leftColumnEntries = [
             "Queen of diamonds",
-            "Jack of clubs",
-            "5 of clubs",
-            "4 of clubs",
-            "7 of hearts",
-            "Ace of spades",
-            "7 of diamonds",
-            "All 3's",
-            "All 2's"
+            "Queen of clubs",
+            "Queen of hearts",
+            "Queen of spades",
+            "King of clubs",
+            "King of diamonds",
+            "King of spades",
+            "King of hearts",
+            "Jack of clubs"
         ];
         
         const rightColumnEntries = [
-            "Remaining Aces",
-            "All Kings",
-            "Remaining Queens",
-            "Remaining Jacks",
-            "Remaining 7's",
-            "All 6's",
-            "Remaining 5's",
-            "Remaining 4's"
+            "Jack of diamonds",
+            "Jack of spades",
+            "Jack of hearts",
+            "Ace of spades",
+            "Ace of diamonds",
+            "Ace of hearts",
+            "Ace of clubs",
+            "7 of hearts",
+            "7 of diamonds"
         ];
         
         // Draw left column

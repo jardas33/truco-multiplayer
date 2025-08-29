@@ -11,7 +11,11 @@ function setup() {
     canvas.style('top', '0');
     canvas.style('left', '0');
     canvas.style('z-index', '1'); // Canvas behind HTML elements but visible
+    canvas.style('pointer-events', 'none'); // Allow clicks to pass through to HTML elements
     console.log('Canvas created and positioned');
+
+    // Store canvas reference globally for easy access
+    window.gameCanvas = canvas;
 
     menuDiv = select("#Menu");
     gameDiv = select("#Game");
