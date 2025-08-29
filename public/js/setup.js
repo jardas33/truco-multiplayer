@@ -77,16 +77,16 @@ function setup() {
     instructionsButton.position(20, 20);
     instructionsButton.mousePressed(showInstructions);
     instructionsButton.parent('Menu');
-    instructionsButton.style('z-index', '10');
-    instructionsButton.style('position', 'relative');
+    instructionsButton.style('z-index', '100'); // Higher z-index
+    instructionsButton.style('position', 'absolute'); // Force absolute positioning
     instructionsButton.show();
 
     cardValuesButton = createButton("Card Values");
     cardValuesButton.position(20, 60); // Position right under Instructions button
     cardValuesButton.mousePressed(showCardValues);
     cardValuesButton.parent('Menu');
-    cardValuesButton.style('z-index', '10');
-    cardValuesButton.style('position', 'relative');
+    cardValuesButton.style('z-index', '100'); // Higher z-index
+    cardValuesButton.style('position', 'absolute'); // Force absolute positioning
     cardValuesButton.show();
     console.log('Buttons created with proper z-index and made visible');
 
