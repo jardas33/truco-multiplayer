@@ -479,10 +479,10 @@ function windowResized() {
     const startX = width/2 - (playerHand.length * cardWidth)/2;
     const startY = height - cardHeight - 20;
 
-    playerHand.forEach((card, index) => {
+    playerHand.forEach((cardItem, index) => {
         const x = startX + index * cardWidth;
-        if (card.image) {
-            image(card.image, x, startY, cardWidth, cardHeight);
+        if (cardItem && cardItem.image) {
+            image(cardItem.image, x, startY, cardWidth, cardHeight);
         }
     });
   }

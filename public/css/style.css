@@ -216,3 +216,19 @@ canvas {
     font-weight: bold;
     margin-right: 10px;
 }
+
+/* Force Card Values button positioning */
+#cardValuesButton {
+    position: absolute !important;
+    top: 60px !important;
+    left: 20px !important;
+    z-index: 100 !important;
+}
+
+/* Force Instructions button positioning */
+#instructionsButton {
+    position: absolute !important;
+    top: 20px !important;
+    left: 20px !important;
+    z-index: 100 !important;
+}
