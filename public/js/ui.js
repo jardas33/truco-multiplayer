@@ -102,8 +102,8 @@ function createUIElements(p) {
                 labelOffset: -50,
             };
             playerPositions[3] = {
-                x: p.windowWidth / 2,           // Player 1 (bottom)
-                y: p.windowHeight - 150,        // Bottom center
+                x: p.windowWidth / 2,           // Player 1 (bottom) - same height as Bot 2
+                y: topMargin + 50,              // Same height as Bot 2 for better balance
                 label: "Player 1 - Team 1",
                 labelOffset: 50,
             };

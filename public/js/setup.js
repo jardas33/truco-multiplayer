@@ -153,8 +153,8 @@ function setup() {
             labelOffset: -50,
         },
         {
-            x: width / 2,           // Player 1 (bottom)
-            y: height - 150,        // Bottom center
+            x: width / 2,           // Player 1 (bottom) - same height as Bot 2
+            y: topMargin + 50,      // Same height as Bot 2 for better balance
             label: "Player 1 - Team 1",
             labelOffset: 50,
         },
