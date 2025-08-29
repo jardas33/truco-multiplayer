@@ -404,7 +404,7 @@ function drawGameState() {
         noStroke();
         textSize(18);
         textAlign(CENTER, CENTER);
-        text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y - 80);
+        text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y + position.labelOffset);
         
         // Draw player's cards - PROPER CARD IMAGES with fallbacks
         if (player.hand && player.hand.length > 0) {
@@ -500,7 +500,7 @@ function drawGameState() {
             stroke(255, 255, 0); // Yellow circle
             strokeWeight(4);
             noFill();
-            ellipse(position.x, position.y - 100, 60, 60);
+            ellipse(position.x, position.y + position.labelOffset - 20, 60, 60);
             strokeWeight(1);
         }
     });
