@@ -5,10 +5,10 @@ function draw() {
     // CRITICAL FIX: Ensure canvas is in the correct parent div using proper p5.js method
     if (window.gameCanvas) {
         const currentParent = window.gameCanvas.parent();
-        if (gameState === gameStateEnum.Playing && currentParent && currentParent.id() === 'Menu') {
+        if (gameState === gameStateEnum.Playing && currentParent && currentParent.elt && currentParent.elt.id === 'Menu') {
             console.log('🎨 Moving canvas from Menu to Game div');
             window.gameCanvas.parent('Game');
-        } else if (gameState === gameStateEnum.Menu && currentParent && currentParent.id() === 'Game') {
+        } else if (gameState === gameStateEnum.Menu && currentParent && currentParent.elt && currentParent.elt.id === 'Game') {
             console.log('🎨 Moving canvas from Game to Menu div');
             window.gameCanvas.parent('Menu');
         }
