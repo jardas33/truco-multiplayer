@@ -362,14 +362,17 @@ function startGame() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   
-  // Update player positions - ensure Bot 2 and Bot 3 are at same height
+  // Update player positions - ensure proper alignment and no overlap with scoring panel
   if (playerPositions) {
+    const scoringPanelHeight = 150; // Height of the scoring panel at top
+    const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+    
     playerPositions[0].x = width / 6;           // Bot 1 (left)
-    playerPositions[0].y = height / 2;
+    playerPositions[0].y = topMargin + 100;     // Below scoring panel
     playerPositions[1].x = width / 2;           // Bot 2 (top)
-    playerPositions[1].y = 100;
-    playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right) - same height as Bot 2
-    playerPositions[2].y = 100;                 // Fixed: same Y as Bot 2
+    playerPositions[1].y = topMargin + 50;      // Below scoring panel
+    playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right)
+    playerPositions[2].y = topMargin + 50;      // Same height as Bot 2
     playerPositions[3].x = width / 2;           // Player 1 (bottom)
     playerPositions[3].y = height - 100;
   }

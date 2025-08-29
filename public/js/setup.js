@@ -129,31 +129,34 @@ function setup() {
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
 
-    // Setup player positions with better spacing to prevent cards from going off-screen
+    // Setup player positions with proper alignment and scoring panel consideration
+    const scoringPanelHeight = 150; // Height of the scoring panel at top
+    const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+    
     playerPositions = [
         {
-            x: width / 2, // Swapped with Bot 3 - now at bottom-center
-            y: Math.min(height - 150, (5 * height) / 6), // Ensure minimum distance from bottom edge
-            label: "Player 1 - Team 1",
-            labelOffset: 50,
+            x: width / 6,           // Bot 1 (left)
+            y: topMargin + 100,     // Below scoring panel
+            label: "Bot 1 - Team 2",
+            labelOffset: -50,
         },
         { 
-            x: width / 2, 
-            y: Math.max(150, height / 6), // Ensure minimum distance from top edge
-            label: "Bot 1 - Team 2", 
+            x: width / 2,           // Bot 2 (top)
+            y: topMargin + 50,      // Below scoring panel
+            label: "Bot 2 - Team 1", 
             labelOffset: -50 
         },
         {
-            x: Math.min(width - 150, (5 * width) / 6), // Ensure minimum distance from right edge
-            y: height / 2,
-            label: "Bot 2 - Team 1",
+            x: (5 * width) / 6,     // Bot 3 (right)
+            y: topMargin + 50,      // Same height as Bot 2
+            label: "Bot 3 - Team 2",
             labelOffset: -50,
         },
         {
-            x: width / 6, // Swapped with Player 1 - now at bottom-left
-            y: height - 150, // Bottom-left, above the bottom edge
-            label: "Bot 3 - Team 2",
-            labelOffset: -50,
+            x: width / 2,           // Player 1 (bottom)
+            y: height - 150,        // Bottom center
+            label: "Player 1 - Team 1",
+            labelOffset: 50,
         },
     ];
     console.log('Player positions initialized');

@@ -78,30 +78,33 @@ function createUIElements(p) {
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         
-        // Update player positions using the new edge-safe positioning logic
+        // Update player positions using consistent positioning logic
         if (playerPositions && playerPositions.length >= 4) {
+            const scoringPanelHeight = 150; // Height of the scoring panel at top
+            const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+            
             playerPositions[0] = {
-                x: Math.max(150, p.windowWidth / 6), // Ensure minimum distance from left edge
-                y: p.windowHeight - 150, // Bottom-left, above the bottom edge
-                label: "Player 1 - Team 1",
+                x: p.windowWidth / 6,           // Bot 1 (left)
+                y: topMargin + 100,             // Below scoring panel
+                label: "Bot 1 - Team 2",
                 labelOffset: -50,
             };
             playerPositions[1] = { 
-                x: p.windowWidth / 2, 
-                y: Math.max(150, p.windowHeight / 6), // Ensure minimum distance from top edge
-                label: "Bot 1 - Team 2", 
+                x: p.windowWidth / 2,           // Bot 2 (top)
+                y: topMargin + 50,              // Below scoring panel
+                label: "Bot 2 - Team 1", 
                 labelOffset: -50 
             };
             playerPositions[2] = {
-                x: Math.min(p.windowWidth - 150, (5 * p.windowWidth) / 6), // Ensure minimum distance from right edge
-                y: p.windowHeight / 2,
-                label: "Bot 2 - Team 1",
+                x: (5 * p.windowWidth) / 6,     // Bot 3 (right)
+                y: topMargin + 50,              // Same height as Bot 2
+                label: "Bot 3 - Team 2",
                 labelOffset: -50,
             };
             playerPositions[3] = {
-                x: p.windowWidth / 2,
-                y: Math.min(p.windowHeight - 150, (5 * p.windowHeight) / 6), // Ensure minimum distance from bottom edge
-                label: "Bot 3 - Team 2",
+                x: p.windowWidth / 2,           // Player 1 (bottom)
+                y: p.windowHeight - 150,        // Bottom center
+                label: "Player 1 - Team 1",
                 labelOffset: 50,
             };
             
