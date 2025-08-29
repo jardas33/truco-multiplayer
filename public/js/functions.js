@@ -362,15 +362,15 @@ function startGame() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   
-  // Update player positions
+  // Update player positions - ensure Bot 2 and Bot 3 are at same height
   if (playerPositions) {
-    playerPositions[0].x = width / 6;
+    playerPositions[0].x = width / 6;           // Bot 1 (left)
     playerPositions[0].y = height / 2;
-    playerPositions[1].x = width / 2;
+    playerPositions[1].x = width / 2;           // Bot 2 (top)
     playerPositions[1].y = 100;
-    playerPositions[2].x = (5 * width) / 6;
-    playerPositions[2].y = height / 2;
-    playerPositions[3].x = width / 2;
+    playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right) - same height as Bot 2
+    playerPositions[2].y = 100;                 // Fixed: same Y as Bot 2
+    playerPositions[3].x = width / 2;           // Player 1 (bottom)
     playerPositions[3].y = height - 100;
   }
 }
@@ -544,11 +544,8 @@ function drawGameState() {
     // Draw current player info - SIMPLE TEXT (removed redundant info)
     // Current player info is now shown in the scoring panel
     
-    // Draw game state info - SIMPLE TEXT (removed redundant round info)
-    fill(255, 255, 255);
-    textSize(18);
-    textAlign(RIGHT, TOP);
-    text(`Turn: ${window.game.currentPlayerIndex + 1}/${window.game.players.length}`, width - 20, 50);
+    // Draw game state info - SIMPLE TEXT (removed redundant turn info)
+    // Turn info is not needed as it's shown in the scoring panel
     
     // Draw a simple game board border
     stroke(255, 255, 255);
