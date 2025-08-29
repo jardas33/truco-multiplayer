@@ -1,6 +1,21 @@
 function draw() {
+    // CRITICAL DEBUG: Check if draw function is being called
+    if (frameCount % 60 === 0) { // Log every second
+        console.log('🎨 DRAW FUNCTION CALLED - Frame:', frameCount, 'Canvas:', !!window.gameCanvas);
+    }
+    
     // Clear the canvas at the start of each frame
     clear();
+    
+    // CRITICAL DEBUG: Check canvas state
+    if (!window.gameCanvas) {
+        console.error('❌ NO CANVAS FOUND!');
+        return;
+    }
+    
+    // CRITICAL DEBUG: Check canvas parent
+    const currentParent = window.gameCanvas.parent();
+    console.log('🎨 Canvas parent:', currentParent?.elt?.id || 'NO PARENT');
     
     // CRITICAL FIX: Ensure canvas is in the correct parent div using proper p5.js method
     if (window.gameCanvas) {
@@ -15,17 +30,28 @@ function draw() {
     }
     
     // ALWAYS DRAW A BASIC TEST - this should be visible no matter what
+    console.log('🎨 Drawing basic test shapes...');
     fill(255, 0, 0); // Bright red
     noStroke();
     rect(50, 50, 100, 100); // Large red square
+    console.log('🎨 Red square drawn at (50, 50, 100x100)');
     
     fill(0, 255, 0); // Bright green
     ellipse(200, 100, 80, 80); // Large green circle
+    console.log('🎨 Green circle drawn at (200, 100, 80x80)');
     
     fill(0, 0, 255); // Bright blue
     textSize(32);
     textAlign(LEFT, TOP);
     text('CANVAS TEST', 50, 200); // Large blue text
+    console.log('🎨 Blue text drawn at (50, 200)');
+    
+    // CRITICAL DEBUG: Check if we can draw at all
+    fill(255, 255, 0); // Yellow
+    textSize(24);
+    textAlign(CENTER, CENTER);
+    text('DRAW FUNCTION WORKING!', width/2, height/2 - 100);
+    console.log('🎨 Yellow text drawn at center');
     
     // Draw background for all states
     push();
@@ -195,7 +221,7 @@ function draw() {
         // Draw right column
         for(let i = 0; i < rightColumnEntries.length; i++) {
             fill(218, 165, 32);
-            text((i + 10) + ".", rightColX, startY + lineHeight * i);
+            text((i + 1) + 9 + ".", rightColX, startY + lineHeight * i);
             fill(255);
             text(rightColumnEntries[i], rightColX + 45, startY + lineHeight * i);
         }
@@ -254,7 +280,7 @@ function draw() {
             text('GAME NOT PROPERLY INITIALIZED!', width/2, height/2 + 120);
             text(`Game: ${window.game ? 'YES' : 'NO'}`, width/2, height/2 + 120);
             text(`Players: ${window.game?.players ? 'YES' : 'NO'}`, width/2, height/2 + 150);
-            text(`Player Count: ${window.game?.players?.length || 'N/A'}`, width/2, height/2 + 170);
+            text(`Player Count: ${window.game?.players?.length || 'N/A'}`, width/2, height/2 + 120);
         }
     }
 }

@@ -1,6 +1,10 @@
 function setup() {
     console.log('🎨 Setting up p5.js canvas and UI elements...');
     
+    // CRITICAL TEST: Check if p5.js is working
+    console.log('🎨 p5.js test - width:', width, 'height:', height);
+    console.log('🎨 p5.js test - frameCount:', frameCount);
+    
     // Set frame rate to prevent excessive rendering
     frameRate(30); // Limit to 30 FPS instead of 60
     
@@ -30,8 +34,13 @@ function setup() {
     setTimeout(() => {
         const canvasInDOM = document.querySelector('canvas');
         console.log('Canvas in DOM:', canvasInDOM);
-        console.log('Canvas computed styles:', window.getComputedStyle(canvasInDOM));
-        console.log('Canvas parent div:', canvasInDOM?.parentElement);
+        if (canvasInDOM) {
+            console.log('Canvas computed styles:', window.getComputedStyle(canvasInDOM));
+            console.log('Canvas parent div:', canvasInDOM?.parentElement);
+            console.log('Canvas dimensions in DOM:', canvasInDOM.offsetWidth, 'x', canvasInDOM.offsetHeight);
+        } else {
+            console.error('❌ NO CANVAS FOUND IN DOM!');
+        }
     }, 100);
 
     menuDiv = select("#Menu");
@@ -171,12 +180,18 @@ function setup() {
     cardValuesCloseButton.parent(valuesDiv);
     cardValuesCloseButton.style("position", "absolute");
     cardValuesCloseButton.style("bottom", "10px");
-    cardValuesCloseButton.style("left", "50%");
-    cardValuesCloseButton.style("transform", "translateX(-50%)");
-    cardValuesCloseButton.style("z-index", "30"); // Above everything
-    cardValuesCloseButton.style("display", "block"); // Ensure it's visible
-    cardValuesCloseButton.show(); // Make sure p5.js shows it
+    cardValuesButton.style("left", "50%");
+    cardValuesButton.style("transform", "translateX(-50%)");
+    cardValuesButton.style("z-index", "30"); // Above everything
+    cardValuesButton.style("display", "block"); // Ensure it's visible
+    cardValuesButton.show(); // Make sure p5.js shows it
 
     console.log('Setup complete - canvas and UI elements initialized');
+    
+    // CRITICAL TEST: Force a redraw to see if anything works
+    setTimeout(() => {
+        console.log('🎨 Forcing redraw after setup...');
+        redraw();
+    }, 500);
 }
   
