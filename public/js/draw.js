@@ -264,31 +264,16 @@ function playCard(player, cardIndex) {
     
     console.log(`🎴 Playing card ${cardIndex} from ${player.name}'s hand`);
     
-    // Get the card from the player's hand
-    const card = player.hand[cardIndex];
-    if (!card) {
-        console.error('❌ Card not found in hand');
-        return;
+    // Use the Game class playCard method instead of duplicating logic
+    const playedCard = window.game.playCard(player, cardIndex);
+    
+    if (playedCard) {
+        console.log(`✅ Card ${playedCard.name} played by ${player.name}`);
+        console.log(`📊 Remaining cards in hand: ${player.hand.length}`);
+        
+        // Force redraw
+        redraw();
+    } else {
+        console.error('❌ Failed to play card - check if it\'s your turn');
     }
-    
-    // Remove card from hand
-    player.hand.splice(cardIndex, 1);
-    
-    // Add to played cards
-    if (!playedCards) playedCards = [];
-    playedCards.push({
-        card: card,
-        player: player
-    });
-    
-    console.log(`✅ Card ${card.name} played by ${player.name}`);
-    console.log(`📊 Remaining cards in hand: ${player.hand.length}`);
-    
-    // Move to next player
-    if (window.game.nextPlayer) {
-        window.game.nextPlayer();
-    }
-    
-    // Force redraw
-    redraw();
 }

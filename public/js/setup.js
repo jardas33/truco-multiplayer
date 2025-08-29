@@ -132,10 +132,10 @@ function setup() {
     // Setup player positions with better spacing to prevent cards from going off-screen
     playerPositions = [
         {
-            x: width / 6, // Back to original position - was working well
-            y: height - 150, // Bottom-left, above the bottom edge
+            x: width / 2, // Swapped with Bot 3 - now at bottom-center
+            y: Math.min(height - 150, (5 * height) / 6), // Ensure minimum distance from bottom edge
             label: "Player 1 - Team 1",
-            labelOffset: -50,
+            labelOffset: 50,
         },
         { 
             x: width / 2, 
@@ -150,10 +150,10 @@ function setup() {
             labelOffset: -50,
         },
         {
-            x: width / 2,
-            y: Math.min(height - 150, (5 * height) / 6), // Ensure minimum distance from bottom edge
+            x: width / 6, // Swapped with Player 1 - now at bottom-left
+            y: height - 150, // Bottom-left, above the bottom edge
             label: "Bot 3 - Team 2",
-            labelOffset: 50,
+            labelOffset: -50,
         },
     ];
     console.log('Player positions initialized');

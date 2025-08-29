@@ -401,9 +401,26 @@ function drawGameState() {
         
         // Draw player's cards - PROPER CARD IMAGES with fallbacks
         if (player.hand && player.hand.length > 0) {
+            // Calculate card spacing to ensure all cards fit within screen bounds
+            const totalCardWidth = player.hand.length * cardWidth;
+            const spacing = Math.min(cardWidth, (width - 100) / player.hand.length); // Ensure cards don't overlap too much
+            
+            // Calculate starting position to center cards around player position
+            let startX = position.x - (totalCardWidth) / 2;
+            
+            // Ensure cards don't go off the left edge
+            if (startX < 50) {
+                startX = 50;
+            }
+            
+            // Ensure cards don't go off the right edge
+            if (startX + totalCardWidth > width - 50) {
+                startX = width - 50 - totalCardWidth;
+            }
+            
             // Draw cards as proper card images with fallbacks
             for (let i = 0; i < player.hand.length; i++) {
-                const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
+                const cardX = startX + i * spacing;
                 const cardY = position.y;
                 
                 const currentCard = player.hand[i];
