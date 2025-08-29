@@ -2,11 +2,11 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const path = require('path');
 
-// Store active rooms - MOVED TO TOP to fix reference error
+// Store active rooms
 const rooms = new Map();
 
+// Middleware
 app.use(express.static('public'));
 
 // Health check endpoint for Render
@@ -20,22 +20,21 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Basic route
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
+
+// Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log(`👤 User connected: ${socket.id}`);
     
-    // Handle connection errors
-    socket.on('error', (error) => {
-        console.error(`Socket error for ${socket.id}:`, error);
-    });
-
     // Handle room creation
     socket.on('createRoom', (roomCode) => {
-        // Generate a random 6-character room code if not provided
         if (!roomCode) {
             roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         }
         
-        // Create the room
         rooms.set(roomCode, {
             players: [{
                 id: socket.id,
@@ -45,11 +44,9 @@ io.on('connection', (socket) => {
             game: null
         });
 
-        // Join the room
         socket.join(roomCode);
         socket.roomCode = roomCode;
 
-        // Send the room code and player info back to the client
         socket.emit('roomCreated', roomCode);
         io.to(roomCode).emit('playerJoined', {
             players: rooms.get(roomCode).players,
@@ -71,18 +68,15 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Add player to the room
         room.players.push({
             id: socket.id,
             name: `Player ${room.players.length + 1}`,
             isBot: false
         });
         
-        // Join the room
         socket.join(roomCode);
         socket.roomCode = roomCode;
 
-        // Notify all players in the room
         io.to(roomCode).emit('playerJoined', {
             players: room.players,
             count: room.players.length
@@ -103,20 +97,17 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Add bot to the room
         room.players.push({
             id: `bot-${Math.random().toString(36).substring(7)}`,
             name: `Bot ${room.players.length + 1}`,
             isBot: true
         });
 
-        // Notify all players in the room
         io.to(roomCode).emit('playerJoined', {
             players: room.players,
             count: room.players.length
         });
 
-        // If we have 4 players (including bots), enable start game
         if (room.players.length === 4) {
             io.to(roomCode).emit('roomFull');
         }
@@ -127,14 +118,12 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomCode);
         if (!room || room.players.length < 4) return;
 
-        // Initialize game state
         room.game = {
             deck: createDeck(),
             currentPlayer: 0,
             scores: { team1: 0, team2: 0 }
         };
 
-        // Deal cards to players
         const hands = dealCards(room.game.deck);
         room.players.forEach((player, index) => {
             if (!player.isBot) {
@@ -146,7 +135,6 @@ io.on('connection', (socket) => {
             }
         });
 
-        // Notify all players that game has started
         io.to(roomCode).emit('gameStart', room.players);
     });
 
@@ -157,16 +145,13 @@ io.on('connection', (socket) => {
         if (socket.roomCode) {
             const room = rooms.get(socket.roomCode);
             if (room) {
-                // Remove player from room
                 room.players = room.players.filter(p => p.id !== socket.id);
                 
-                // Notify remaining players
                 io.to(socket.roomCode).emit('playerLeft', {
                     players: room.players,
                     count: room.players.length
                 });
 
-                // Delete room if empty
                 if (room.players.length === 0) {
                     rooms.delete(socket.roomCode);
                 }
@@ -178,18 +163,15 @@ io.on('connection', (socket) => {
     socket.on('playCard', (data) => {
         const room = rooms.get(data.roomCode);
         if (room && room.game) {
-            // Handle card play logic
             io.to(data.roomCode).emit('cardPlayed', {
                 playerId: socket.id,
                 card: data.card
             });
 
-            // If next player is a bot, make them play after a delay
             const currentPlayerIndex = room.players.findIndex(p => p.id === socket.id);
             const nextPlayerIndex = (currentPlayerIndex + 1) % 4;
             if (room.players[nextPlayerIndex].isBot) {
                 setTimeout(() => {
-                    // Bot plays a random card from their hand
                     const hands = dealCards(room.game.deck);
                     const botHand = hands[nextPlayerIndex];
                     if (botHand && botHand.length > 0) {
@@ -199,12 +181,13 @@ io.on('connection', (socket) => {
                             card: randomCard
                         });
                     }
-                }, 1000); // Bot plays after 1 second
+                }, 1000);
             }
         }
     });
 });
 
+// Helper functions
 function createDeck() {
     const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
     const values = ['ace', '2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king'];
@@ -237,6 +220,7 @@ function dealCards(deck) {
     return hands;
 }
 
+// Server startup
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
@@ -244,4 +228,5 @@ http.listen(PORT, HOST, () => {
     console.log(`🚀 Truco game server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📱 Ready for multiplayer action!`);
+    console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
 }); 
