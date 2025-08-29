@@ -1,6 +1,6 @@
 // Global variables
 // socket is already declared in variables.js
-let gameInitialized = false;
+// gameInitialized is already declared in variables.js
 
 // Initialize socket and lobby when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
