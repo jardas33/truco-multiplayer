@@ -362,20 +362,22 @@ function startGame() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   
-  // Update player positions - ensure proper 4-corner layout and no overlap with scoring panel
+  // Update player positions - ensure PERFECT 4-corner layout
   if (playerPositions) {
     const scoringPanelHeight = 150; // Height of the scoring panel at top
     const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-    const bottomMargin = 150; // Increased margin from bottom edge for better centering
+    const leftMargin = 100; // Left margin from screen edge
+    const rightMargin = width - 100; // Right margin from screen edge
+    const bottomMargin = height - 150; // Bottom margin from screen edge
     
-    playerPositions[0].x = width / 6;           // Bot 1 (left)
-    playerPositions[0].y = topMargin + 100;     // Below scoring panel, left side
-    playerPositions[1].x = width / 2;           // Bot 2 (top) - moved lower for better centering
-    playerPositions[1].y = topMargin + 120;     // Below scoring panel, more centered
-    playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right) - moved higher to prevent going off screen
-    playerPositions[2].y = topMargin + 80;      // Below scoring panel, higher position
-    playerPositions[3].x = width / 6;           // Player 1 (bottom-left) - FIXED: moved to left side to avoid overlap
-    playerPositions[3].y = height - bottomMargin; // Bottom left, better centered on playing field
+    playerPositions[0].x = leftMargin;          // Bot 1 (TOP-LEFT) - Perfect corner position
+    playerPositions[0].y = topMargin;           // Below scoring panel, top-left corner
+    playerPositions[1].x = rightMargin;         // Bot 2 (TOP-RIGHT) - Perfect corner position
+    playerPositions[1].y = topMargin;           // Below scoring panel, top-right corner
+    playerPositions[2].x = rightMargin;         // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
+    playerPositions[2].y = bottomMargin;        // Bottom-right corner
+    playerPositions[3].x = leftMargin;          // Player 1 (BOTTOM-LEFT) - Perfect corner position
+    playerPositions[3].y = bottomMargin;        // Bottom-left corner
   }
 }
 

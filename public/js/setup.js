@@ -129,33 +129,35 @@ function setup() {
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
 
-    // Setup player positions with proper 4-corner layout and scoring panel consideration
+    // Setup player positions with PERFECT 4-corner layout
     const scoringPanelHeight = 150; // Height of the scoring panel at top
     const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-    const bottomMargin = 150; // Increased margin from bottom edge for better centering
+    const leftMargin = 100; // Left margin from screen edge
+    const rightMargin = width - 100; // Right margin from screen edge
+    const bottomMargin = height - 150; // Bottom margin from screen edge
     
     playerPositions = [
         {
-            x: width / 6,           // Bot 1 (left)
-            y: topMargin + 100,     // Below scoring panel, left side
+            x: leftMargin,          // Bot 1 (TOP-LEFT) - Perfect corner position
+            y: topMargin,           // Below scoring panel, top-left corner
             label: "Bot 1 - Team 2",
             labelOffset: -30,       // Closer to cards
         },
         { 
-            x: width / 2,           // Bot 2 (top) - moved lower for better centering
-            y: topMargin + 120,     // Below scoring panel, more centered
+            x: rightMargin,         // Bot 2 (TOP-RIGHT) - Perfect corner position
+            y: topMargin,           // Below scoring panel, top-right corner
             label: "Bot 2 - Team 1", 
             labelOffset: -30        // Closer to cards
         },
         {
-            x: (5 * width) / 6,     // Bot 3 (right) - moved higher to prevent going off screen
-            y: topMargin + 80,      // Below scoring panel, higher position
+            x: rightMargin,         // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
+            y: bottomMargin,        // Bottom-right corner
             label: "Bot 3 - Team 2",
             labelOffset: -30,       // Closer to cards
         },
         {
-            x: width / 6,           // Player 1 (bottom-left) - FIXED: moved to left side to avoid overlap
-            y: height - bottomMargin, // Bottom left, better centered on playing field
+            x: leftMargin,          // Player 1 (BOTTOM-LEFT) - Perfect corner position
+            y: bottomMargin,        // Bottom-left corner
             label: "Player 1 - Team 1",
             labelOffset: 30,        // Closer to cards
         },

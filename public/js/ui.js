@@ -78,33 +78,35 @@ function createUIElements(p) {
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         
-                 // Update player positions using consistent 4-corner positioning logic
+                 // Update player positions using PERFECT 4-corner positioning logic
          if (playerPositions && playerPositions.length >= 4) {
              const scoringPanelHeight = 150; // Height of the scoring panel at top
              const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-             const bottomMargin = 150; // Increased margin from bottom edge for better centering
+             const leftMargin = 100; // Left margin from screen edge
+             const rightMargin = p.windowWidth - 100; // Right margin from screen edge
+             const bottomMargin = p.windowHeight - 150; // Bottom margin from screen edge
              
              playerPositions[0] = {
-                 x: p.windowWidth / 6,           // Bot 1 (left)
-                 y: topMargin + 100,             // Below scoring panel, left side
+                 x: leftMargin,                  // Bot 1 (TOP-LEFT) - Perfect corner position
+                 y: topMargin,                   // Below scoring panel, top-left corner
                  label: "Bot 1 - Team 2",
                  labelOffset: -30,               // Closer to cards
              };
              playerPositions[1] = { 
-                 x: p.windowWidth / 2,           // Bot 2 (top) - moved lower for better centering
-                 y: topMargin + 120,             // Below scoring panel, more centered
+                 x: rightMargin,                 // Bot 2 (TOP-RIGHT) - Perfect corner position
+                 y: topMargin,                   // Below scoring panel, top-right corner
                  label: "Bot 2 - Team 1", 
                  labelOffset: -30                // Closer to cards
              };
              playerPositions[2] = {
-                 x: (5 * p.windowWidth) / 6,     // Bot 3 (right) - moved higher to prevent going off screen
-                 y: topMargin + 80,              // Below scoring panel, higher position
+                 x: rightMargin,                 // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
+                 y: bottomMargin,                // Bottom-right corner
                  label: "Bot 3 - Team 2",
                  labelOffset: -30,               // Closer to cards
              };
              playerPositions[3] = {
-                 x: p.windowWidth / 6,           // Player 1 (bottom-left) - FIXED: moved to left side to avoid overlap
-                 y: p.windowHeight - bottomMargin, // Bottom left, better centered on playing field
+                 x: leftMargin,                  // Player 1 (BOTTOM-LEFT) - Perfect corner position
+                 y: bottomMargin,                // Bottom-left corner
                  label: "Player 1 - Team 1",
                  labelOffset: 30,                // Closer to cards
              };
