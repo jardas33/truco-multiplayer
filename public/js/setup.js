@@ -49,13 +49,20 @@ function setup() {
         console.error('roomControls div not found!');
     }
 
-    // Create p5.js buttons with proper z-index
+    // Create p5.js buttons with proper z-index and identical styling
     instructionsButton = createButton("Instructions");
     instructionsButton.position(20, 20);
     instructionsButton.mousePressed(showInstructions);
     instructionsButton.parent('Menu');
     instructionsButton.style('z-index', '100'); // Higher z-index
     instructionsButton.style('position', 'absolute'); // Force absolute positioning
+    instructionsButton.style('padding', '10px 20px'); // Ensure consistent padding
+    instructionsButton.style('margin', '5px'); // Ensure consistent margin
+    instructionsButton.style('border', '2px solid #fff'); // Ensure consistent border
+    instructionsButton.style('background-color', 'rgba(0, 0, 0, 0.7)'); // Ensure consistent background
+    instructionsButton.style('color', 'white'); // Ensure consistent text color
+    instructionsButton.style('font-weight', 'bold'); // Ensure consistent font weight
+    instructionsButton.style('border-radius', '5px'); // Ensure consistent border radius
     instructionsButton.show();
 
     cardValuesButton = createButton("Card Values");
@@ -64,6 +71,13 @@ function setup() {
     cardValuesButton.parent('Menu');
     cardValuesButton.style('z-index', '100'); // Higher z-index
     cardValuesButton.style('position', 'absolute'); // Force absolute positioning
+    cardValuesButton.style('padding', '10px 20px'); // Ensure consistent padding
+    cardValuesButton.style('margin', '5px'); // Ensure consistent margin
+    cardValuesButton.style('border', '2px solid #fff'); // Ensure consistent border
+    cardValuesButton.style('background-color', 'rgba(0, 0, 0, 0.7)'); // Ensure consistent background
+    cardValuesButton.style('color', 'white'); // Ensure consistent text color
+    cardValuesButton.style('font-weight', 'bold'); // Ensure consistent font weight
+    cardValuesButton.style('border-radius', '5px'); // Ensure consistent border radius
     cardValuesButton.show();
     console.log('Buttons created with proper z-index and made visible');
 
