@@ -389,7 +389,11 @@ function drawGameState() {
         window.lastDrawLog = Date.now();
     }
     
-    // Draw player positions and hands
+    // Set text properties for all text rendering
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    
+    // Draw player positions and hands with SIMPLE, RELIABLE rendering
     window.game.players.forEach((player, index) => {
         const position = playerPositions[index];
         if (!position) {
@@ -397,13 +401,14 @@ function drawGameState() {
             return;
         }
         
-        // Draw player label
-        fill(255);
-        textSize(16);
-        textAlign(CENTER);
-        text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y + position.labelOffset);
+        // Draw player label - SIMPLE TEXT
+        fill(255, 255, 255); // White text
+        noStroke();
+        textSize(18);
+        textAlign(CENTER, CENTER);
+        text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y - 80);
         
-        // Draw player's cards
+        // Draw player's cards - SIMPLE RECTANGLES
         if (player.hand && player.hand.length > 0) {
             // Only log card drawing once per second to prevent spam
             if (!window.lastCardDrawLog || Date.now() - window.lastCardDrawLog > 1000) {
@@ -411,50 +416,43 @@ function drawGameState() {
                 window.lastCardDrawLog = Date.now();
             }
             
-            if (player.isBot || !showAllCards) {
-                // Draw card backs for bots or hidden cards
-                for (let i = 0; i < player.hand.length; i++) {
-                    const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
-                    const cardY = position.y;
-                    if (backCardImage) {
-                        image(backCardImage, cardX, cardY, cardWidth, cardHeight);
-                    } else {
-                        // Fallback rectangle if image not loaded
-                        fill(100);
-                        stroke(255);
-                        strokeWeight(2);
-                        rect(cardX, cardY, cardWidth, cardHeight);
-                        // Add card back text
-                        fill(255);
-                        textSize(10);
-                        textAlign(CENTER);
-                        text('CARD', cardX + cardWidth/2, cardY + cardHeight/2);
-                    }
+            // Draw cards as simple colored rectangles
+            for (let i = 0; i < player.hand.length; i++) {
+                const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
+                const cardY = position.y;
+                
+                // Draw card background
+                if (player.isBot || !showAllCards) {
+                    // Bot cards - dark blue
+                    fill(0, 0, 150);
+                    stroke(255, 255, 255);
+                } else {
+                    // Human player cards - white
+                    fill(255, 255, 255);
+                    stroke(0, 0, 0);
                 }
-            } else {
-                // Draw actual cards for human player
-                for (let i = 0; i < player.hand.length; i++) {
+                
+                strokeWeight(2);
+                rect(cardX, cardY, cardWidth, cardHeight, 5); // Rounded corners
+                
+                // Draw card text
+                if (player.isBot || !showAllCards) {
+                    fill(255, 255, 255); // White text on dark cards
+                    textSize(12);
+                    text('CARD', cardX + cardWidth/2, cardY + cardHeight/2);
+                } else {
+                    // Show card name on human player cards
+                    fill(0, 0, 0); // Black text on white cards
+                    textSize(10);
                     const card = player.hand[i];
-                    const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
-                    const cardY = position.y;
-                    
-                    if (card && card.image) {
-                        image(card.image, cardX, cardY, cardWidth, cardHeight);
-                    } else {
-                        // Fallback rectangle if image not loaded
-                        fill(255);
-                        stroke(0);
-                        strokeWeight(2);
-                        rect(cardX, cardY, cardWidth, cardHeight);
-                        // Add card name text
-                        fill(0);
-                        textSize(10);
-                        textAlign(CENTER);
-                        text(card ? card.name : 'Unknown', cardX + cardWidth/2, cardY + cardHeight/2);
-                        // Only log missing images once per second
-                        if (!window.lastMissingImageLog || Date.now() - window.lastMissingImageLog > 1000) {
-                            console.warn(`Card image missing for: ${card ? card.name : 'Unknown'}`);
-                            window.lastMissingImageLog = Date.now();
+                    if (card && card.name) {
+                        // Split long card names
+                        const words = card.name.split(' ');
+                        if (words.length >= 2) {
+                            text(words[0], cardX + cardWidth/2, cardY + cardHeight/2 - 8);
+                            text(words[2] || words[1], cardX + cardWidth/2, cardY + cardHeight/2 + 8);
+                        } else {
+                            text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
                         }
                     }
                 }
@@ -467,68 +465,65 @@ function drawGameState() {
             }
         }
         
-        // Highlight active player
+        // Highlight active player with a bright circle
         if (player.isActive) {
-            stroke(255, 255, 0);
-            strokeWeight(3);
+            stroke(255, 255, 0); // Yellow circle
+            strokeWeight(4);
             noFill();
-            ellipse(position.x, position.y - 30, 40, 40);
+            ellipse(position.x, position.y - 100, 60, 60);
             strokeWeight(1);
         }
     });
     
-    // Draw played cards in the center
+    // Draw played cards in the center - SIMPLE RECTANGLES
     if (playedCards && playedCards.length > 0) {
         playedCards.forEach((playedCard, index) => {
-            if (playedCard.card && playedCard.card.image) {
-                const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
-                const centerY = height / 2 - cardHeight / 2;
-                image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
-                
-                // Draw player indicator
-                fill(255);
-                textSize(14);
-                textAlign(CENTER);
-                text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 20);
-            } else {
-                // Fallback for played cards without images
-                const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
-                const centerY = height / 2 - cardHeight / 2;
-                fill(255);
-                stroke(0);
-                strokeWeight(2);
-                rect(centerX, centerY, cardWidth, cardHeight);
-                fill(0);
-                textSize(10);
-                textAlign(CENTER);
-                text(playedCard.card ? playedCard.card.name : 'Unknown', centerX + cardWidth/2, centerY + cardHeight/2);
-            }
+            const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
+            const centerY = height / 2 - cardHeight / 2;
+            
+            // Draw played card as simple rectangle
+            fill(200, 200, 200); // Light gray
+            stroke(0, 0, 0);
+            strokeWeight(2);
+            rect(centerX, centerY, cardWidth, cardHeight, 5);
+            
+            // Draw player indicator
+            fill(0, 0, 0);
+            textSize(14);
+            textAlign(CENTER, CENTER);
+            text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
         });
     }
     
-    // Draw game scores
-    fill(255);
-    textSize(20);
-    textAlign(LEFT);
-    text(`Team 1: ${window.game.scores.team1}`, 20, 30);
-    text(`Team 2: ${window.game.scores.team2}`, 20, 60);
-    text(`Game Value: ${window.game.gameValue}`, 20, 90);
+    // Draw game scores - SIMPLE TEXT
+    fill(255, 255, 255); // White text
+    textSize(24);
+    textAlign(LEFT, TOP);
+    text(`Team 1: ${window.game.scores.team1}`, 20, 20);
+    text(`Team 2: ${window.game.scores.team2}`, 20, 50);
+    text(`Game Value: ${window.game.gameValue}`, 20, 80);
     
-    // Draw current player info
+    // Draw current player info - SIMPLE TEXT
     if (window.game.getCurrentPlayer()) {
         const currentPlayer = window.game.getCurrentPlayer();
-        fill(255, 255, 0);
-        textSize(18);
-        textAlign(CENTER);
-        text(`Current Player: ${currentPlayer.name}`, width/2, 30);
+        fill(255, 255, 0); // Yellow text
+        textSize(20);
+        textAlign(CENTER, TOP);
+        text(`Current Player: ${currentPlayer.name}`, width/2, 20);
     }
     
-    // Draw game state info
-    fill(255);
-    textSize(16);
-    textAlign(RIGHT);
-    text(`Round: ${window.game.round + 1}`, width - 20, 30);
+    // Draw game state info - SIMPLE TEXT
+    fill(255, 255, 255);
+    textSize(18);
+    textAlign(RIGHT, TOP);
+    text(`Round: ${window.game.round + 1}`, width - 20, 20);
     text(`Turn: ${window.game.currentPlayerIndex + 1}/${window.game.players.length}`, width - 20, 50);
+    
+    // Draw a simple game board border
+    stroke(255, 255, 255);
+    strokeWeight(3);
+    noFill();
+    rect(10, 10, width - 20, height - 20);
 }
 
 // Add the missing redrawGame function

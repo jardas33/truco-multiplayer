@@ -1,7 +1,4 @@
 function draw() {
-    // Limit frame rate to prevent excessive calls
-    if (frameCount % 2 !== 0) return; // Only draw every other frame
-    
     // Clear the canvas at the start of each frame
     clear();
     
@@ -15,6 +12,14 @@ function draw() {
         background(0, 100, 0); // Dark green
     }
     pop();
+    
+    // Debug: Draw a test rectangle to ensure canvas is working
+    if (frameCount % 60 === 0) { // Every 60 frames (once per second)
+        fill(255, 0, 0); // Red
+        noStroke();
+        rect(10, 10, 20, 20);
+        console.log('🎨 Canvas test: Red square drawn at frame', frameCount);
+    }
     
     if (gameState === gameStateEnum.Menu) {
         menuDiv.show();
@@ -180,9 +185,22 @@ function draw() {
         valuesDiv.hide();
         backToMainMenuButton.show();
         
+        // Debug: Draw a test message to ensure we're in playing state
+        fill(255, 255, 0); // Yellow
+        textSize(24);
+        textAlign(CENTER, CENTER);
+        text('GAME IS RUNNING!', width/2, height/2);
+        
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
+            console.log('🎮 Calling drawGameState...');
             drawGameState();
+        } else {
+            console.error('❌ Cannot draw game state:', {
+                game: !!window.game,
+                players: window.game?.players,
+                playerCount: window.game?.players?.length
+            });
         }
     }
 }
