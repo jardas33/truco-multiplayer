@@ -396,7 +396,7 @@ function drawGameState() {
     textAlign(CENTER, CENTER);
     textSize(16);
     
-    // Draw player positions and hands with PROPER CARD IMAGES
+    // Draw player positions and hands with SIMPLIFIED RENDERING (no images)
     window.game.players.forEach((player, index) => {
         const position = playerPositions[index];
         if (!position) {
@@ -413,7 +413,7 @@ function drawGameState() {
         textAlign(CENTER, CENTER);
         text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y - 80);
         
-        // Draw player's cards - PROPER CARD IMAGES
+        // Draw player's cards - SIMPLIFIED VERSION (no images for testing)
         if (player.hand && player.hand.length > 0) {
             // Only log card drawing once per second to prevent spam
             if (!window.lastCardDrawLog || Date.now() - window.lastCardDrawLog > 1000) {
@@ -421,55 +421,44 @@ function drawGameState() {
                 window.lastCardDrawLog = Date.now();
             }
             
-            // Draw cards as proper card images
+            // Draw cards as simple colored rectangles (no images for testing)
             for (let i = 0; i < player.hand.length; i++) {
                 const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
                 const cardY = position.y;
                 
                 console.log(`🎴 Drawing card ${i} at position:`, { cardX, cardY, cardWidth, cardHeight });
                 
-                // Draw card background with rounded corners
+                // Draw card as simple colored rectangle
                 if (player.isBot || !showAllCards) {
-                    // Bot cards - dark blue with card back
+                    // Bot cards - dark blue
                     fill(0, 0, 150);
                     stroke(255, 255, 255);
                     strokeWeight(2);
                     rect(cardX, cardY, cardWidth, cardHeight, 5); // Rounded corners
                     
-                    // Draw card back image if available
-                    if (backCardImage) {
-                        image(backCardImage, cardX, cardY, cardWidth, cardHeight);
-                    } else {
-                        // Fallback text
-                        fill(255, 255, 255); // White text on dark cards
-                        textSize(12);
-                        text('CARD', cardX + cardWidth/2, cardY + cardHeight/2);
-                    }
+                    // Draw "BOT" text
+                    fill(255, 255, 255); // White text on dark cards
+                    textSize(12);
+                    text('BOT', cardX + cardWidth/2, cardY + cardHeight/2);
                 } else {
-                    // Human player cards - show actual card images
-                    const card = player.hand[i];
-                    if (card && card.image) {
-                        // Draw the actual card image
-                        image(card.image, cardX, cardY, cardWidth, cardHeight);
-                    } else {
-                        // Fallback to colored rectangle with card name
-                        fill(255, 255, 255); // White background
-                        stroke(0, 0, 0);
-                        strokeWeight(2);
-                        rect(cardX, cardY, cardWidth, cardHeight, 5);
-                        
-                        // Draw card name
-                        fill(0, 0, 0); // Black text on white cards
-                        textSize(10);
-                        if (card && card.name) {
-                            // Split long card names
-                            const words = card.name.split(' ');
-                            if (words.length >= 2) {
-                                text(words[0], cardX + cardWidth/2, cardY + cardHeight/2 - 8);
-                                text(words[2] || words[1], cardX + cardWidth/2, cardY + cardHeight/2 + 8);
-                            } else {
-                                text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
-                            }
+                    // Human player cards - white with card info
+                    fill(255, 255, 255); // White background
+                    stroke(0, 0, 0);
+                    strokeWeight(2);
+                    rect(cardX, cardY, cardWidth, cardHeight, 5);
+                    
+                    // Draw card name
+                    fill(0, 0, 0); // Black text on white cards
+                    textSize(10);
+                    const currentCard = player.hand[i];
+                    if (currentCard && currentCard.name) {
+                        // Split long card names
+                        const words = currentCard.name.split(' ');
+                        if (words.length >= 2) {
+                            text(words[0], cardX + cardWidth/2, cardY + cardHeight/2 - 8);
+                            text(words[2] || words[1], cardX + cardWidth/2, cardY + cardHeight/2 + 8);
+                        } else {
+                            text(currentCard.name, cardX + cardWidth/2, cardY + cardHeight/2);
                         }
                     }
                 }
@@ -478,15 +467,18 @@ function drawGameState() {
                 if (!player.isBot && showAllCards) {
                     // Store card position for click detection
                     if (!window.clickableCards) window.clickableCards = [];
-                    window.clickableCards.push({
-                        x: cardX,
-                        y: cardY,
-                        width: cardWidth,
-                        height: cardHeight,
-                        card: card,
-                        player: player,
-                        cardIndex: i
-                    });
+                    const currentCard = player.hand[i]; // Get the current card from the loop
+                    if (currentCard) { // Only add if card exists
+                        window.clickableCards.push({
+                            x: cardX,
+                            y: cardY,
+                            width: cardWidth,
+                            height: cardHeight,
+                            card: currentCard, // Use the properly scoped variable
+                            player: player,
+                            cardIndex: i
+                        });
+                    }
                 }
             }
         } else {
@@ -508,7 +500,7 @@ function drawGameState() {
         }
     });
     
-    // Draw played cards in the center - PROPER CARD IMAGES
+    // Draw played cards in the center - SIMPLIFIED VERSION (no images for testing)
     if (playedCards && playedCards.length > 0) {
         console.log(`🎯 Drawing ${playedCards.length} played cards`);
         playedCards.forEach((playedCard, index) => {
@@ -521,23 +513,18 @@ function drawGameState() {
             const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
             
-            // Draw played card as proper card image
-            if (playedCard.card.image) {
-                image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
-            } else {
-                // Fallback to colored rectangle
-                fill(200, 200, 200); // Light gray
-                stroke(0, 0, 0);
-                strokeWeight(2);
-                rect(centerX, centerY, cardWidth, cardHeight, 5);
-                
-                // Draw card name
-                fill(0, 0, 0);
-                textSize(14);
-                textAlign(CENTER, CENTER);
-                if (playedCard.card.name) {
-                    text(playedCard.card.name, centerX + cardWidth/2, centerY + cardHeight/2);
-                }
+            // Draw played card as simple colored rectangle (no images for testing)
+            fill(200, 200, 200); // Light gray
+            stroke(0, 0, 0);
+            strokeWeight(2);
+            rect(centerX, centerY, cardWidth, cardHeight, 5);
+            
+            // Draw card name
+            fill(0, 0, 0);
+            textSize(14);
+            textAlign(CENTER, CENTER);
+            if (playedCard.card.name) {
+                text(playedCard.card.name, centerX + cardWidth/2, centerY + cardHeight/2);
             }
             
             // Draw player indicator
