@@ -1,5 +1,5 @@
 // Global variables
-let socket = null;
+// socket is already declared in variables.js
 let gameInitialized = false;
 
 // Initialize socket and lobby when the document is ready
