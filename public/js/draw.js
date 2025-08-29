@@ -13,19 +13,39 @@ function draw() {
         return;
     }
     
-    // CRITICAL DEBUG: Check canvas parent
-    const currentParent = window.gameCanvas.parent();
-    console.log('🎨 Canvas parent:', currentParent?.elt?.id || 'NO PARENT');
-    
     // CRITICAL FIX: Ensure canvas is in the correct parent div using proper p5.js method
     if (window.gameCanvas) {
-        const currentParent = window.gameCanvas.parent();
-        if (gameState === gameStateEnum.Playing && currentParent && currentParent.elt && currentParent.elt.id === 'Menu') {
-            console.log('🎨 Moving canvas from Menu to Game div');
-            window.gameCanvas.parent('Game');
-        } else if (gameState === gameStateEnum.Menu && currentParent && currentParent.elt && currentParent.elt.id === 'Game') {
-            console.log('🎨 Moving canvas from Game to Menu div');
-            window.gameCanvas.parent('Menu');
+        try {
+            const currentParent = window.gameCanvas.parent();
+            console.log('🎨 Canvas parent:', currentParent?.elt?.id || 'NO PARENT');
+            
+            // Fix canvas parenting based on game state
+            if (gameState === gameStateEnum.Playing) {
+                // Game is running - canvas should be in Game div
+                if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Game') {
+                    console.log('🎨 Moving canvas to Game div');
+                    window.gameCanvas.parent('Game');
+                    // Force the Game div to be visible
+                    if (gameDiv) gameDiv.style('display', 'block');
+                }
+            } else if (gameState === gameStateEnum.Menu) {
+                // In menu - canvas should be in Menu div
+                if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Menu') {
+                    console.log('🎨 Moving canvas to Menu div');
+                    window.gameCanvas.parent('Menu');
+                    // Force the Menu div to be visible
+                    if (menuDiv) menuDiv.style('display', 'block');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error handling canvas parent:', error);
+            // Emergency fix: try to put canvas back in Menu div
+            try {
+                window.gameCanvas.parent('Menu');
+                console.log('🎨 Emergency canvas fix: moved to Menu div');
+            } catch (e) {
+                console.error('❌ Emergency canvas fix failed:', e);
+            }
         }
     }
     
@@ -247,6 +267,12 @@ function draw() {
         instructionsDiv.hide();
         valuesDiv.hide();
         backToMainMenuButton.show();
+        
+        // CRITICAL: Ensure Game div is visible and canvas is properly positioned
+        if (gameDiv) {
+            gameDiv.style('display', 'block');
+            gameDiv.style('z-index', '1');
+        }
         
         // Debug: Draw a test message to ensure we're in playing state
         fill(255, 255, 0); // Yellow

@@ -344,14 +344,57 @@ function startSinglePlayerGame() {
     // Start the game
     window.game.startGame();
     
-    // Use p5.js element management for proper UI transition
-    console.log('Transitioning UI to game view using p5.js...');
+    // CRITICAL: Ensure proper UI transition and canvas parenting
+    console.log('Transitioning UI to game view...');
     
-    // Let p5.js handle the UI transition in the draw() function
-    // The gameState is now set to Playing, so p5.js will automatically:
-    // - Hide menu
-    // - Show game area
-    // - Call drawGameState()
+    // Force the Game div to be visible
+    const gameElement = document.getElementById('Game');
+    if (gameElement) {
+        gameElement.style.display = 'block';
+        gameElement.style.zIndex = '1';
+        console.log('Game div made visible');
+    }
+    
+    // Hide the Menu div
+    const menuElement = document.getElementById('Menu');
+    if (menuElement) {
+        menuElement.style.display = 'none';
+        console.log('Menu div hidden');
+    }
+    
+    // Hide other elements
+    const instructionsElement = document.getElementById('Instructions');
+    if (instructionsElement) {
+        instructionsElement.style.display = 'none';
+    }
+    
+    const valuesElement = document.getElementById('Values');
+    if (valuesElement) {
+        valuesElement.style.display = 'none';
+    }
+    
+    // CRITICAL: Move canvas to Game div manually
+    if (window.gameCanvas) {
+        try {
+            console.log('Moving canvas to Game div...');
+            window.gameCanvas.parent('Game');
+            console.log('Canvas moved to Game div successfully');
+        } catch (error) {
+            console.error('Error moving canvas to Game div:', error);
+        }
+    } else {
+        console.error('No gameCanvas found!');
+    }
+    
+    // Try to show back button if available
+    if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
+        try {
+            backToMainMenuButton.show();
+            console.log('Back button shown');
+        } catch (e) {
+            console.log('Back button not available yet');
+        }
+    }
     
     // Force a redraw to trigger the UI transition
     if (typeof redraw === 'function') {
