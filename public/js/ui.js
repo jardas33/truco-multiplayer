@@ -78,35 +78,36 @@ function createUIElements(p) {
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         
-        // Update player positions using consistent positioning logic
-        if (playerPositions && playerPositions.length >= 4) {
-            const scoringPanelHeight = 150; // Height of the scoring panel at top
-            const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-            
-            playerPositions[0] = {
-                x: p.windowWidth / 6,           // Bot 1 (left)
-                y: topMargin + 100,             // Below scoring panel
-                label: "Bot 1 - Team 2",
-                labelOffset: -50,
-            };
-            playerPositions[1] = { 
-                x: p.windowWidth / 2,           // Bot 2 (top)
-                y: topMargin + 50,              // Below scoring panel
-                label: "Bot 2 - Team 1", 
-                labelOffset: -50 
-            };
-            playerPositions[2] = {
-                x: (5 * p.windowWidth) / 6,     // Bot 3 (right)
-                y: topMargin + 50,              // Same height as Bot 2
-                label: "Bot 3 - Team 2",
-                labelOffset: -50,
-            };
-            playerPositions[3] = {
-                x: p.windowWidth / 2,           // Player 1 (bottom) - same height as Bot 2
-                y: topMargin + 50,              // Same height as Bot 2 for better balance
-                label: "Player 1 - Team 1",
-                labelOffset: 50,
-            };
+                 // Update player positions using consistent 4-corner positioning logic
+         if (playerPositions && playerPositions.length >= 4) {
+             const scoringPanelHeight = 150; // Height of the scoring panel at top
+             const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+             const bottomMargin = 100; // Margin from bottom edge
+             
+             playerPositions[0] = {
+                 x: p.windowWidth / 6,           // Bot 1 (left)
+                 y: topMargin + 100,             // Below scoring panel, left side
+                 label: "Bot 1 - Team 2",
+                 labelOffset: -50,
+             };
+             playerPositions[1] = { 
+                 x: p.windowWidth / 2,           // Bot 2 (top)
+                 y: topMargin + 50,              // Below scoring panel, top center
+                 label: "Bot 2 - Team 1", 
+                 labelOffset: -50 
+             };
+             playerPositions[2] = {
+                 x: (5 * p.windowWidth) / 6,     // Bot 3 (right)
+                 y: topMargin + 100,             // Below scoring panel, right side
+                 label: "Bot 3 - Team 2",
+                 labelOffset: -50,
+             };
+             playerPositions[3] = {
+                 x: p.windowWidth / 2,           // Player 1 (bottom)
+                 y: p.windowHeight - bottomMargin, // Bottom center, above bottom edge
+                 label: "Player 1 - Team 1",
+                 labelOffset: 50,
+             };
             
             console.log('🔄 Player positions updated for new window size:', playerPositions);
         }

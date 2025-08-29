@@ -129,32 +129,33 @@ function setup() {
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
 
-    // Setup player positions with proper alignment and scoring panel consideration
+    // Setup player positions with proper 4-corner layout and scoring panel consideration
     const scoringPanelHeight = 150; // Height of the scoring panel at top
     const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+    const bottomMargin = 100; // Margin from bottom edge
     
     playerPositions = [
         {
             x: width / 6,           // Bot 1 (left)
-            y: topMargin + 100,     // Below scoring panel
+            y: topMargin + 100,     // Below scoring panel, left side
             label: "Bot 1 - Team 2",
             labelOffset: -50,
         },
         { 
             x: width / 2,           // Bot 2 (top)
-            y: topMargin + 50,      // Below scoring panel
+            y: topMargin + 50,      // Below scoring panel, top center
             label: "Bot 2 - Team 1", 
             labelOffset: -50 
         },
         {
             x: (5 * width) / 6,     // Bot 3 (right)
-            y: topMargin + 50,      // Same height as Bot 2
+            y: topMargin + 100,     // Below scoring panel, right side
             label: "Bot 3 - Team 2",
             labelOffset: -50,
         },
         {
-            x: width / 2,           // Player 1 (bottom) - same height as Bot 2
-            y: topMargin + 50,      // Same height as Bot 2 for better balance
+            x: width / 2,           // Player 1 (bottom)
+            y: height - bottomMargin, // Bottom center, above bottom edge
             label: "Player 1 - Team 1",
             labelOffset: 50,
         },
