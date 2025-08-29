@@ -577,9 +577,61 @@ function drawGameState() {
 
 // Add the missing redrawGame function
 function redrawGame() {
-    if (gameState === gameStateEnum.Playing) {
-        // Force a redraw of the game canvas
-        loop();
+    if (typeof redraw === 'function') {
+        redraw();
+        console.log('🎨 Game redrawn');
+    } else {
+        console.error('❌ redraw function not available');
+    }
+}
+
+// Add the missing showInstructions function
+function showInstructions() {
+    gameState = gameStateEnum.Instructions;
+    console.log('📖 Showing instructions');
+}
+
+// Add the missing showCardValues function
+function showCardValues() {
+    gameState = gameStateEnum.CardValues;
+    console.log('🃏 Showing card values');
+}
+
+// Add the missing closeInstructions function
+function closeInstructions() {
+    gameState = gameStateEnum.Menu;
+    console.log('❌ Closing instructions');
+}
+
+// Add the missing closeCardValues function
+function closeCardValues() {
+    gameState = gameStateEnum.Menu;
+    console.log('❌ Closing card values');
+}
+
+// Add the missing backToMainMenu function
+function backToMainMenu() {
+    gameState = gameStateEnum.Menu;
+    console.log('🏠 Returning to main menu');
+    
+    // Reset game state
+    if (window.game) {
+        window.game = null;
+    }
+    if (window.players) {
+        window.players = [];
+    }
+    playedCards = [];
+    
+    // Force redraw
+    redrawGame();
+}
+
+// Add the missing truco function
+function truco() {
+    if (window.game) {
+        console.log('🎯 Truco called!');
+        // Implement truco logic here
     }
 }
 

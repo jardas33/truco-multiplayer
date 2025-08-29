@@ -265,17 +265,19 @@ function draw() {
         instructionsCloseButton.show();
     }
     else if (gameState === gameStateEnum.Playing) {
-        menuDiv.hide();
-        gameDiv.show();
-        instructionsDiv.hide();
-        valuesDiv.hide();
-        backToMainMenuButton.show();
-        
         // CRITICAL: Ensure Game div is visible and canvas is properly positioned
         if (gameDiv) {
             gameDiv.style('display', 'block');
             gameDiv.style('z-index', '1');
         }
+        
+        // Hide other divs
+        if (menuDiv) menuDiv.style('display', 'none');
+        if (instructionsDiv) instructionsDiv.style('display', 'none');
+        if (valuesDiv) valuesDiv.style('display', 'none');
+        
+        // Show game UI buttons
+        if (backToMainMenuButton) backToMainMenuButton.show();
         
         // Debug: Draw a test message to ensure we're in playing state
         fill(255, 255, 0); // Yellow
