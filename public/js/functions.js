@@ -541,14 +541,6 @@ function drawGameState() {
         });
     }
     
-    // Draw game scores - SIMPLE TEXT
-    fill(255, 255, 255); // White text
-    textSize(24);
-    textAlign(LEFT, TOP);
-    text(`Team 1: ${window.game.scores.team1}`, 20, 20);
-    text(`Team 2: ${window.game.scores.team2}`, 20, 50);
-    text(`Game Value: ${window.game.gameValue}`, 20, 80);
-    
     // Draw current player info - SIMPLE TEXT
     if (window.game.getCurrentPlayer()) {
         const currentPlayer = window.game.getCurrentPlayer();
@@ -608,43 +600,46 @@ function drawScoringInfo() {
     const teamAlfaSets = window.game.sets ? window.game.sets.team1 : 0;
     const teamBetaSets = window.game.sets ? window.game.sets.team2 : 0;
     
-    // Draw scoring panel at the top
+    // Draw scoring panel at the top with better contrast
     push();
-    fill(0, 0, 0, 0.8); // Semi-transparent black background
-    rect(10, 10, width - 20, 120);
+    fill(0, 0, 0, 0.9); // More opaque black background for better readability
+    rect(10, 10, width - 20, 130);
     
-    // Draw team information
+    // Draw team information with larger, more readable text
     textAlign(LEFT, TOP);
-    textSize(16);
+    textSize(18); // Increased from 16
     
     // Team Alfa (Gold)
     fill(255, 215, 0);
     text("TEAM ALFA", 20, 20);
-    text(`Rounds: ${teamAlfaRounds}/2`, 20, 40);
-    text(`Games: ${teamAlfaGames}/12`, 20, 60);
-    text(`Sets: ${teamAlfaSets}`, 20, 80);
+    textSize(16);
+    text(`Rounds: ${teamAlfaRounds}/2`, 20, 45);
+    text(`Games: ${teamAlfaGames}/12`, 20, 70);
+    text(`Sets: ${teamAlfaSets}`, 20, 95);
     
     // Team Beta (Sky Blue)
     fill(135, 206, 250);
+    textSize(18);
     text("TEAM BETA", width - 150, 20);
-    text(`Rounds: ${teamBetaRounds}/2`, width - 150, 40);
-    text(`Games: ${teamBetaGames}/12`, width - 150, 60);
-    text(`Sets: ${teamBetaSets}`, width - 150, 80);
+    textSize(16);
+    text(`Rounds: ${teamBetaRounds}/2`, width - 150, 45);
+    text(`Games: ${teamBetaGames}/12`, width - 150, 70);
+    text(`Sets: ${teamBetaSets}`, width - 150, 95);
     
-    // Current round indicator
+    // Current round indicator - larger and more prominent
     fill(255, 255, 255);
-    textSize(20);
+    textSize(24); // Increased from 20
     textAlign(CENTER, TOP);
     text(`ROUND ${currentRound} OF 3`, width/2, 20);
     
     // Game progress indicator
-    textSize(14);
-    text(`Game ${teamAlfaGames + teamBetaGames + 1} of Set`, width/2, 50);
+    textSize(16); // Increased from 14
+    text(`Game ${teamAlfaGames + teamBetaGames + 1} of Set`, width/2, 55);
     
-    // Team assignments
-    textSize(12);
-    text("Player 1 + Bot 2 = Team Alfa", width/2, 80);
-    text("Bot 1 + Bot 3 = Team Beta", width/2, 100);
+    // Team assignments - clearer and more readable
+    textSize(14); // Increased from 12
+    text("Player 1 + Bot 2 = Team Alfa", width/2, 85);
+    text("Bot 1 + Bot 3 = Team Beta", width/2, 110);
     
     pop();
 }
