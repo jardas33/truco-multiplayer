@@ -5,6 +5,19 @@ window.players = [];
   
 function createDeck() {
     console.log('🃏 Creating deck...');
+    
+    // Check if card images are loaded
+    let imagesLoaded = 0;
+    let totalImages = Object.keys(cardValues).length;
+    
+    for (let cardName in cardValues) {
+        if (cardImages[cardName]) {
+            imagesLoaded++;
+        }
+    }
+    
+    console.log(`🖼️ Card images loaded: ${imagesLoaded}/${totalImages}`);
+    
     deck = [];
     let cardsCreated = 0;
     
@@ -19,7 +32,7 @@ function createDeck() {
             });
             cardsCreated++;
         } else {
-            console.warn(`⚠️ Card image missing for: ${cardName}`);
+            console.warn(`⚠️ Card image missing for: ${cardName} - using fallback`);
             // Create card with fallback
             deck.push({
                 name: cardName,
@@ -33,6 +46,16 @@ function createDeck() {
     
     console.log(`🎯 Deck created with ${cardsCreated} cards`);
     console.log('Sample cards:', deck.slice(0, 3));
+    
+    // If no images loaded, log a warning
+    if (imagesLoaded === 0) {
+        console.warn('⚠️ NO CARD IMAGES LOADED! Using fallback rendering.');
+        console.warn('💡 Check browser console for image loading errors.');
+    } else if (imagesLoaded < totalImages) {
+        console.warn(`⚠️ Only ${imagesLoaded}/${totalImages} card images loaded. Some cards will use fallback rendering.`);
+    } else {
+        console.log('🎉 All card images loaded successfully!');
+    }
 }
   
   function shuffleDeck(deck) {
