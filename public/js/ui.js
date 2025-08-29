@@ -143,16 +143,44 @@ function createUIElements(p) {
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         
-        // Update player positions using the global playerPositions array
+        // Update player positions using the new edge-safe positioning logic
         if (playerPositions && playerPositions.length >= 4) {
-            playerPositions[0].x = p.windowWidth / 6;
-            playerPositions[0].y = p.windowHeight / 2;
-            playerPositions[1].x = p.windowWidth / 2;
-            playerPositions[1].y = 100;
-            playerPositions[2].x = (5 * p.windowWidth) / 6;
-            playerPositions[2].y = p.windowHeight / 2;
-            playerPositions[3].x = p.windowWidth / 2;
-            playerPositions[3].y = p.windowHeight - 100;
+            playerPositions[0] = {
+                x: Math.max(150, p.windowWidth / 6), // Ensure minimum distance from left edge
+                y: p.windowHeight - 150, // Bottom-left, above the bottom edge
+                label: "Player 1 - Team 1",
+                labelOffset: -50,
+            };
+            playerPositions[1] = { 
+                x: p.windowWidth / 2, 
+                y: Math.max(150, p.windowHeight / 6), // Ensure minimum distance from top edge
+                label: "Bot 1 - Team 2", 
+                labelOffset: -50 
+            };
+            playerPositions[2] = {
+                x: Math.min(p.windowWidth - 150, (5 * p.windowWidth) / 6), // Ensure minimum distance from right edge
+                y: p.windowHeight / 2,
+                label: "Bot 2 - Team 1",
+                labelOffset: -50,
+            };
+            playerPositions[3] = {
+                x: p.windowWidth / 2,
+                y: Math.min(p.windowHeight - 150, (5 * p.windowHeight) / 6), // Ensure minimum distance from bottom edge
+                label: "Bot 3 - Team 2",
+                labelOffset: 50,
+            };
+            
+            console.log('🔄 Player positions updated for new window size:', playerPositions);
+        }
+        
+        // Update Truco button position if it exists
+        if (trucoButton && typeof trucoButton.position === 'function') {
+            try {
+                trucoButton.position(p.windowWidth - 150, p.windowHeight - 80);
+                console.log('🔄 Truco button repositioned for new window size');
+            } catch (error) {
+                console.warn('⚠️ Could not reposition Truco button:', error);
+            }
         }
     };
 } 

@@ -98,9 +98,11 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("Truco");
-    trucoButton.position(50, 180);
+    trucoButton.position(width - 150, height - 80); // Position in bottom-right corner
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
+    trucoButton.style('z-index', '200'); // Ensure it's above everything
+    trucoButton.style('position', 'absolute'); // Force absolute positioning
     trucoButton.hide();
 
     // Create truco response buttons
@@ -135,30 +137,30 @@ function setup() {
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
 
-    // Setup player positions
+    // Setup player positions with better spacing to prevent cards from going off-screen
     playerPositions = [
         {
-            x: width / 6,
-            y: height / 2,
+            x: Math.max(150, width / 6), // Ensure minimum distance from left edge
+            y: height - 150, // Bottom-left, above the bottom edge
             label: "Player 1 - Team 1",
             labelOffset: -50,
         },
         { 
             x: width / 2, 
-            y: 100, 
-            label: "Player 2 - Team 2", 
+            y: Math.max(150, height / 6), // Ensure minimum distance from top edge
+            label: "Bot 1 - Team 2", 
             labelOffset: -50 
         },
         {
-            x: (5 * width) / 6,
+            x: Math.min(width - 150, (5 * width) / 6), // Ensure minimum distance from right edge
             y: height / 2,
-            label: "Player 3 - Team 1",
+            label: "Bot 2 - Team 1",
             labelOffset: -50,
         },
         {
             x: width / 2,
-            y: height - 100,
-            label: "Player 4 - Team 2",
+            y: Math.min(height - 150, (5 * height) / 6), // Ensure minimum distance from bottom edge
+            label: "Bot 3 - Team 2",
             labelOffset: 50,
         },
     ];

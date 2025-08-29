@@ -582,6 +582,19 @@ function drawGameState() {
     noFill();
     rect(10, 10, width - 20, height - 20);
     
+    // Ensure Truco button is visible and properly positioned
+    if (trucoButton && typeof trucoButton.show === 'function') {
+        try {
+            trucoButton.show();
+            // Force repositioning to ensure it's visible
+            trucoButton.position(width - 150, height - 80);
+            trucoButton.style('z-index', '200');
+            trucoButton.style('position', 'absolute');
+        } catch (error) {
+            console.warn('⚠️ Could not show Truco button:', error);
+        }
+    }
+    
     console.log('✅ drawGameState completed!');
 }
 
