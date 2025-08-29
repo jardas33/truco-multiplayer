@@ -31,13 +31,15 @@ npm start
 
 ## Deployment
 
-This game is configured for deployment on DigitalOcean App Platform:
+This game is configured for deployment on Railway.app:
 
-### Option 1: DigitalOcean App Platform (Recommended)
+### Option 1: Railway.app (Recommended - Easiest)
 1. Fork this repository
-2. Create a new app on DigitalOcean App Platform
-3. Connect your GitHub repository
-4. DigitalOcean will automatically deploy your game using the `.do/app.yaml` configuration
+2. Go to [railway.app](https://railway.app) and sign up/login
+3. Click "New Project" → "Deploy from GitHub repo"
+4. Select your `truco-multiplayer` repository
+5. Railway will automatically detect it's a Node.js app and deploy
+6. Your game will be live in minutes!
 
 ### Option 2: Docker Deployment
 1. Build the Docker image: `docker build -t truco-game .`
@@ -52,9 +54,13 @@ This game is configured for deployment on DigitalOcean App Platform:
 
 ## Environment Variables
 
-For DigitalOcean deployment, you may want to set these environment variables:
+For Railway.app deployment, these environment variables are automatically handled:
+- `PORT`: Automatically set by Railway
+- `NODE_ENV`: Automatically set to production
+
+For local development, you can set:
 - `PORT`: Server port (default: 3000)
-- `NODE_ENV`: Environment (production/development)
+- `NODE_ENV`: Environment (development)
 
 ## Technologies Used
 
