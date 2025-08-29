@@ -23,12 +23,12 @@ let playerPositions = [];
 let cardWidth = 85; // Replace with the actual width of your cards
 let cardHeight = 123; // Replace with the actual height of your cards
 let playedCards = [];
-let team1Rounds = 0;
-let team2Rounds = 0;
-let team1Games = 0;
-let team2Games = 0;
-let team1Sets = 0;
-let team2Sets = 0;
+let teamAlfaRounds = 0;
+let teamBetaRounds = 0;
+let teamAlfaGames = 0;
+let teamBetaGames = 0;
+let teamAlfaSets = 0;
+let teamBetaSets = 0;
 let closeButton;
 let popup;
 let popupOnlyClose;

@@ -219,12 +219,12 @@ function startGameWithCurrentPlayers() {
     
     // Initialize game variables
     playedCards = [];
-    team1Rounds = 0;
-    team2Rounds = 0;
-    team1Games = 0;
-    team2Games = 0;
-    team1Sets = 0;
-    team2Sets = 0;
+    teamAlfaRounds = 0;
+    teamBetaRounds = 0;
+    teamAlfaGames = 0;
+    teamBetaGames = 0;
+    teamAlfaSets = 0;
+    teamBetaSets = 0;
     
     // Start the game
     window.game.startGame();
@@ -336,12 +336,12 @@ function startSinglePlayerGame() {
     
     // Initialize game variables
     playedCards = [];
-    team1Rounds = 0;
-    team2Rounds = 0;
-    team1Games = 0;
-    team2Games = 0;
-    team1Sets = 0;
-    team2Sets = 0;
+    teamAlfaRounds = 0;
+    teamBetaRounds = 0;
+    teamAlfaGames = 0;
+    teamBetaGames = 0;
+    teamAlfaSets = 0;
+    teamBetaSets = 0;
     
     // Start the game
     window.game.startGame();

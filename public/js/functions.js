@@ -381,6 +381,9 @@ function drawGameState() {
         return;
     }
     
+    // Draw scoring information at the top
+    drawScoringInfo();
+    
     // Set text properties for all text rendering
     textAlign(CENTER, CENTER);
     textSize(16);
@@ -590,6 +593,60 @@ function redrawGame() {
     } else {
         console.error('❌ redraw function not available');
     }
+}
+
+// Function to draw scoring information
+function drawScoringInfo() {
+    if (!window.game) return;
+    
+    // Get current game status
+    const currentRound = window.game.round || 1;
+    const teamAlfaRounds = window.game.getTeam1Rounds ? window.game.getTeam1Rounds() : 0;
+    const teamBetaRounds = window.game.getTeam2Rounds ? window.game.getTeam2Rounds() : 0;
+    const teamAlfaGames = window.game.games ? window.game.games.team1 : 0;
+    const teamBetaGames = window.game.games ? window.game.games.team2 : 0;
+    const teamAlfaSets = window.game.sets ? window.game.sets.team1 : 0;
+    const teamBetaSets = window.game.sets ? window.game.sets.team2 : 0;
+    
+    // Draw scoring panel at the top
+    push();
+    fill(0, 0, 0, 0.8); // Semi-transparent black background
+    rect(10, 10, width - 20, 120);
+    
+    // Draw team information
+    textAlign(LEFT, TOP);
+    textSize(16);
+    
+    // Team Alfa (Gold)
+    fill(255, 215, 0);
+    text("TEAM ALFA", 20, 20);
+    text(`Rounds: ${teamAlfaRounds}/2`, 20, 40);
+    text(`Games: ${teamAlfaGames}/12`, 20, 60);
+    text(`Sets: ${teamAlfaSets}`, 20, 80);
+    
+    // Team Beta (Sky Blue)
+    fill(135, 206, 250);
+    text("TEAM BETA", width - 150, 20);
+    text(`Rounds: ${teamBetaRounds}/2`, width - 150, 40);
+    text(`Games: ${teamBetaGames}/12`, width - 150, 60);
+    text(`Sets: ${teamBetaSets}`, width - 150, 80);
+    
+    // Current round indicator
+    fill(255, 255, 255);
+    textSize(20);
+    textAlign(CENTER, TOP);
+    text(`ROUND ${currentRound} OF 3`, width/2, 20);
+    
+    // Game progress indicator
+    textSize(14);
+    text(`Game ${teamAlfaGames + teamBetaGames + 1} of Set`, width/2, 50);
+    
+    // Team assignments
+    textSize(12);
+    text("Player 1 + Bot 2 = Team Alfa", width/2, 80);
+    text("Bot 1 + Bot 3 = Team Beta", width/2, 100);
+    
+    pop();
 }
 
 
