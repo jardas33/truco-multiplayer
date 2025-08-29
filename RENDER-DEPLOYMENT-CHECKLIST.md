@@ -1,4 +1,4 @@
-# 🚀 Render.com Deployment Checklist
+# 🚀 Render.com MCP Server Deployment Checklist
 
 ## ✅ **Pre-Deployment Checklist**
 
@@ -15,9 +15,9 @@
 - [x] All dependencies listed
 - [x] Node version specified (`>=14.0.0`)
 
-### 3. **Render Configuration** ✅
+### 3. **Render MCP Server Configuration** ✅
 - [x] `render.yaml` file created
-- [x] Service type: `web`
+- [x] Service type: `mcp`
 - [x] Environment: `node`
 - [x] Plan: `free`
 - [x] Health check path: `/health`
@@ -33,17 +33,17 @@ git commit -m "Optimize for Render.com deployment"
 git push origin main
 ```
 
-### **Step 2: Deploy on Render**
+### **Step 2: Deploy on Render MCP Server**
 1. Go to [render.com](https://render.com)
 2. Sign up/Login with GitHub
-3. Click "New +" → "Web Service"
+3. Click "New +" → "MCP Server"
 4. Connect your repository: `jardas33/truco-multiplayer`
 5. Configure:
    - **Name**: `truco-game`
    - **Environment**: `Node`
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
-6. Click "Create Web Service"
+6. Click "Create MCP Server"
 
 ### **Step 3: Wait for Deployment**
 - Build time: 2-5 minutes

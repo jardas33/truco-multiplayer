@@ -33,10 +33,10 @@ npm start
 
 This game is configured for **FREE hosting** on multiple platforms:
 
-### Option 1: Render.com (RECOMMENDED - Best Free Option)
+### Option 1: Render.com MCP Server (RECOMMENDED - Best Free Option)
 1. Fork this repository
 2. Go to [render.com](https://render.com) and sign up with GitHub
-3. Click "New +" → "Web Service"
+3. Click "New +" → "MCP Server"
 4. Connect your GitHub repository
 5. Configure: Name: `truco-game`, Environment: `Node`
 6. Your game will be live in 5-10 minutes!

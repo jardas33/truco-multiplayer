@@ -11,14 +11,14 @@
 
 ### How to Deploy:
 1. Go to [render.com](https://render.com) and sign up with GitHub
-2. Click "New +" → "Web Service"
+2. Click "New +" → "MCP Server"
 3. Connect your GitHub repository
 4. Configure:
    - **Name**: `truco-game`
    - **Environment**: `Node`
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
-5. Click "Create Web Service"
+5. Click "Create MCP Server"
 6. Your game will be live in 5-10 minutes!
 
 ---

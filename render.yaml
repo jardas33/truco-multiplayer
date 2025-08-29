@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: mcp
     name: truco-game
     env: node
     plan: free
