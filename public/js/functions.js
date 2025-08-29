@@ -512,11 +512,17 @@ function drawGameState() {
     if (playedCards && playedCards.length > 0) {
         console.log(`🎯 Drawing ${playedCards.length} played cards`);
         playedCards.forEach((playedCard, index) => {
+            // CRITICAL FIX: Add null check to prevent ReferenceError
+            if (!playedCard || !playedCard.card) {
+                console.warn(`⚠️ Invalid playedCard at index ${index}:`, playedCard);
+                return; // Skip this iteration
+            }
+            
             const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
             
             // Draw played card as proper card image
-            if (playedCard.card && playedCard.card.image) {
+            if (playedCard.card.image) {
                 image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
             } else {
                 // Fallback to colored rectangle
@@ -529,7 +535,7 @@ function drawGameState() {
                 fill(0, 0, 0);
                 textSize(14);
                 textAlign(CENTER, CENTER);
-                if (playedCard.card && playedCard.card.name) {
+                if (playedCard.card.name) {
                     text(playedCard.card.name, centerX + cardWidth/2, centerY + cardHeight/2);
                 }
             }
@@ -538,7 +544,9 @@ function drawGameState() {
             fill(0, 0, 0);
             textSize(14);
             textAlign(CENTER, CENTER);
-            text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
+            if (playedCard.player && playedCard.player.name) {
+                text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
+            }
         });
     }
     
