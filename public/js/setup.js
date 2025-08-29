@@ -28,21 +28,35 @@ function setup() {
     
     // Initially show only menu
     menuDiv.class('active');
+    menuDiv.style('display', 'block'); // Force menu to be visible
     gameDiv.removeClass('active');
+    gameDiv.style('display', 'none');
     instructionsDiv.removeClass('active');
+    instructionsDiv.style('display', 'none');
     valuesDiv.removeClass('active');
+    valuesDiv.style('display', 'none');
     
-    // Create instruction buttons
+    console.log('Menu div made visible, others hidden');
+    
+    // Create instruction buttons with proper z-index
     instructionsButton = createButton("Instructions");
     instructionsButton.position(20, 20);
     instructionsButton.mousePressed(showInstructions);
     instructionsButton.parent('Menu');
+    instructionsButton.style('z-index', '10'); // Ensure button is above canvas
+    instructionsButton.style('position', 'relative');
+    instructionsButton.show(); // Ensure button is visible
     
-    // Create card values button
+    // Create card values button with proper z-index
     cardValuesButton = createButton("Card Values");
     cardValuesButton.position(20, 60);
     cardValuesButton.mousePressed(showCardValues);
     cardValuesButton.parent('Menu');
+    cardValuesButton.style('z-index', '10'); // Ensure button is above canvas
+    cardValuesButton.style('position', 'relative');
+    cardValuesButton.show(); // Ensure button is visible
+    
+    console.log('Buttons created with proper z-index and made visible');
     
     // Create text div for instructions
     let instructionsTextDiv = createDiv('');

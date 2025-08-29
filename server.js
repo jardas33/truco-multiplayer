@@ -224,9 +224,37 @@ function dealCards(deck) {
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-http.listen(PORT, HOST, () => {
-    console.log(`🚀 Truco game server running on port ${PORT}`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📱 Ready for multiplayer action!`);
-    console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
-}); 
+// Add error handling for server startup
+http.on('error', (error) => {
+    console.error('❌ Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+        console.error('❌ Port is already in use');
+    } else if (error.code === 'EACCES') {
+        console.error('❌ Permission denied to bind to port');
+    }
+    process.exit(1);
+});
+
+// Add process error handling
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
+try {
+    http.listen(PORT, HOST, () => {
+        console.log(`🚀 Truco game server running on port ${PORT}`);
+        console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📱 Ready for multiplayer action!`);
+        console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
+        console.log(`✅ Server startup complete`);
+    });
+} catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+} 
