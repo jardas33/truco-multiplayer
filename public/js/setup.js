@@ -132,7 +132,7 @@ function setup() {
     // Setup player positions with proper 4-corner layout and scoring panel consideration
     const scoringPanelHeight = 150; // Height of the scoring panel at top
     const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-    const bottomMargin = 100; // Margin from bottom edge
+    const bottomMargin = 150; // Increased margin from bottom edge for better centering
     
     playerPositions = [
         {
@@ -142,20 +142,20 @@ function setup() {
             labelOffset: -50,
         },
         { 
-            x: width / 2,           // Bot 2 (top)
-            y: topMargin + 50,      // Below scoring panel, top center
+            x: width / 2,           // Bot 2 (top) - moved lower for better centering
+            y: topMargin + 120,     // Below scoring panel, more centered
             label: "Bot 2 - Team 1", 
             labelOffset: -50 
         },
         {
-            x: (5 * width) / 6,     // Bot 3 (right)
-            y: topMargin + 100,     // Below scoring panel, right side
+            x: (5 * width) / 6,     // Bot 3 (right) - moved higher to prevent going off screen
+            y: topMargin + 80,      // Below scoring panel, higher position
             label: "Bot 3 - Team 2",
             labelOffset: -50,
         },
         {
-            x: width / 2,           // Player 1 (bottom)
-            y: height - bottomMargin, // Bottom center, above bottom edge
+            x: width / 2,           // Player 1 (bottom) - moved higher for better centering
+            y: height - bottomMargin, // Bottom center, better centered on playing field
             label: "Player 1 - Team 1",
             labelOffset: 50,
         },

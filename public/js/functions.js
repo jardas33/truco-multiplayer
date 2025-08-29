@@ -366,16 +366,16 @@ function windowResized() {
   if (playerPositions) {
     const scoringPanelHeight = 150; // Height of the scoring panel at top
     const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-    const bottomMargin = 100; // Margin from bottom edge
+    const bottomMargin = 150; // Increased margin from bottom edge for better centering
     
     playerPositions[0].x = width / 6;           // Bot 1 (left)
     playerPositions[0].y = topMargin + 100;     // Below scoring panel, left side
-    playerPositions[1].x = width / 2;           // Bot 2 (top)
-    playerPositions[1].y = topMargin + 50;      // Below scoring panel, top center
-    playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right)
-    playerPositions[2].y = topMargin + 100;     // Below scoring panel, right side
-    playerPositions[3].x = width / 2;           // Player 1 (bottom)
-    playerPositions[3].y = height - bottomMargin; // Bottom center, above bottom edge
+    playerPositions[1].x = width / 2;           // Bot 2 (top) - moved lower for better centering
+    playerPositions[1].y = topMargin + 120;     // Below scoring panel, more centered
+    playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right) - moved higher to prevent going off screen
+    playerPositions[2].y = topMargin + 80;      // Below scoring panel, higher position
+    playerPositions[3].x = width / 2;           // Player 1 (bottom) - moved higher for better centering
+    playerPositions[3].y = height - bottomMargin; // Bottom center, better centered on playing field
   }
 }
 

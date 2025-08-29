@@ -82,7 +82,7 @@ function createUIElements(p) {
          if (playerPositions && playerPositions.length >= 4) {
              const scoringPanelHeight = 150; // Height of the scoring panel at top
              const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
-             const bottomMargin = 100; // Margin from bottom edge
+             const bottomMargin = 150; // Increased margin from bottom edge for better centering
              
              playerPositions[0] = {
                  x: p.windowWidth / 6,           // Bot 1 (left)
@@ -91,20 +91,20 @@ function createUIElements(p) {
                  labelOffset: -50,
              };
              playerPositions[1] = { 
-                 x: p.windowWidth / 2,           // Bot 2 (top)
-                 y: topMargin + 50,              // Below scoring panel, top center
+                 x: p.windowWidth / 2,           // Bot 2 (top) - moved lower for better centering
+                 y: topMargin + 120,             // Below scoring panel, more centered
                  label: "Bot 2 - Team 1", 
                  labelOffset: -50 
              };
              playerPositions[2] = {
-                 x: (5 * p.windowWidth) / 6,     // Bot 3 (right)
-                 y: topMargin + 100,             // Below scoring panel, right side
+                 x: (5 * p.windowWidth) / 6,     // Bot 3 (right) - moved higher to prevent going off screen
+                 y: topMargin + 80,              // Below scoring panel, higher position
                  label: "Bot 3 - Team 2",
                  labelOffset: -50,
              };
              playerPositions[3] = {
-                 x: p.windowWidth / 2,           // Player 1 (bottom)
-                 y: p.windowHeight - bottomMargin, // Bottom center, above bottom edge
+                 x: p.windowWidth / 2,           // Player 1 (bottom) - moved higher for better centering
+                 y: p.windowHeight - bottomMargin, // Bottom center, better centered on playing field
                  label: "Player 1 - Team 1",
                  labelOffset: 50,
              };
