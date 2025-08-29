@@ -12,10 +12,27 @@ function setup() {
     canvas.style('left', '0');
     canvas.style('z-index', '1'); // Canvas behind HTML elements but visible
     canvas.style('pointer-events', 'none'); // Allow clicks to pass through to HTML elements
+    
+    // CRITICAL: Ensure canvas is properly sized and visible
+    canvas.style('width', windowWidth + 'px');
+    canvas.style('height', windowHeight + 'px');
+    canvas.style('background-color', 'rgba(255, 0, 0, 0.1)'); // Slight red tint for debugging
+    
     console.log('Canvas created and positioned');
+    console.log('Canvas dimensions:', { width: windowWidth, height: windowHeight });
+    console.log('Canvas element:', canvas);
+    console.log('Canvas parent:', canvas.parent());
 
     // Store canvas reference globally for easy access
     window.gameCanvas = canvas;
+    
+    // Debug: Check if canvas is actually in the DOM
+    setTimeout(() => {
+        const canvasInDOM = document.querySelector('canvas');
+        console.log('Canvas in DOM:', canvasInDOM);
+        console.log('Canvas computed styles:', window.getComputedStyle(canvasInDOM));
+        console.log('Canvas parent div:', canvasInDOM?.parentElement);
+    }, 100);
 
     menuDiv = select("#Menu");
     gameDiv = select("#Game");

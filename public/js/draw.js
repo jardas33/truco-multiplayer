@@ -14,6 +14,19 @@ function draw() {
         }
     }
     
+    // ALWAYS DRAW A BASIC TEST - this should be visible no matter what
+    fill(255, 0, 0); // Bright red
+    noStroke();
+    rect(50, 50, 100, 100); // Large red square
+    
+    fill(0, 255, 0); // Bright green
+    ellipse(200, 100, 80, 80); // Large green circle
+    
+    fill(0, 0, 255); // Bright blue
+    textSize(32);
+    textAlign(LEFT, TOP);
+    text('CANVAS TEST', 50, 200); // Large blue text
+    
     // Draw background for all states
     push();
     imageMode(CORNER);
