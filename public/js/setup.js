@@ -154,8 +154,8 @@ function setup() {
             labelOffset: -30,       // Closer to cards
         },
         {
-            x: width / 2,           // Player 1 (bottom) - moved higher for better centering
-            y: height - bottomMargin, // Bottom center, better centered on playing field
+            x: width / 6,           // Player 1 (bottom-left) - FIXED: moved to left side to avoid overlap
+            y: height - bottomMargin, // Bottom left, better centered on playing field
             label: "Player 1 - Team 1",
             labelOffset: 30,        // Closer to cards
         },

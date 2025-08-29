@@ -374,8 +374,8 @@ function windowResized() {
     playerPositions[1].y = topMargin + 120;     // Below scoring panel, more centered
     playerPositions[2].x = (5 * width) / 6;     // Bot 3 (right) - moved higher to prevent going off screen
     playerPositions[2].y = topMargin + 80;      // Below scoring panel, higher position
-    playerPositions[3].x = width / 2;           // Player 1 (bottom) - moved higher for better centering
-    playerPositions[3].y = height - bottomMargin; // Bottom center, better centered on playing field
+    playerPositions[3].x = width / 6;           // Player 1 (bottom-left) - FIXED: moved to left side to avoid overlap
+    playerPositions[3].y = height - bottomMargin; // Bottom left, better centered on playing field
   }
 }
 

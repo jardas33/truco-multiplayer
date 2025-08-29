@@ -103,8 +103,8 @@ function createUIElements(p) {
                  labelOffset: -30,               // Closer to cards
              };
              playerPositions[3] = {
-                 x: p.windowWidth / 2,           // Player 1 (bottom) - moved higher for better centering
-                 y: p.windowHeight - bottomMargin, // Bottom center, better centered on playing field
+                 x: p.windowWidth / 6,           // Player 1 (bottom-left) - FIXED: moved to left side to avoid overlap
+                 y: p.windowHeight - bottomMargin, // Bottom left, better centered on playing field
                  label: "Player 1 - Team 1",
                  labelOffset: 30,                // Closer to cards
              };
