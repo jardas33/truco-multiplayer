@@ -382,7 +382,11 @@ function drawGameState() {
         return;
     }
 
-    console.log('Drawing game state with players:', window.game.players);
+    // Only log once per second to prevent spam
+    if (!window.lastDrawLog || Date.now() - window.lastDrawLog > 1000) {
+        console.log('Drawing game state with players:', window.game.players);
+        window.lastDrawLog = Date.now();
+    }
     
     // Draw player positions and hands
     window.game.players.forEach((player, index) => {

@@ -200,8 +200,9 @@ function addBot() {
 function startGameWithCurrentPlayers() {
     console.log('Starting game with current players...');
     
-    // Initialize game state
+    // Initialize game state FIRST
     gameState = gameStateEnum.Playing;
+    console.log('Game state set to:', gameState);
     
     // Create players array with one human player and three bots
     let players = [
@@ -228,19 +229,48 @@ function startGameWithCurrentPlayers() {
     // Start the game
     window.game.startGame();
     
-    // Update UI using p5.js functions
-    if (typeof select === 'function') {
-        menuDiv.style('display', 'none');
-        gameDiv.style('display', 'block');
-        instructionsDiv.style('display', 'none');
-        valuesDiv.style('display', 'none');
-        if (backToMainMenuButton) backToMainMenuButton.show();
-    } else {
-        // Fallback to DOM manipulation
-        document.getElementById('Menu').style.display = 'none';
-        document.getElementById('Game').style.display = 'block';
-        document.getElementById('Instructions').style.display = 'none';
-        document.getElementById('Values').style.display = 'none';
+    // Force UI transition - use direct DOM manipulation for reliability
+    console.log('Transitioning UI to game view...');
+    
+    // Hide menu
+    const menuElement = document.getElementById('Menu');
+    if (menuElement) {
+        menuElement.style.display = 'none';
+        console.log('Menu hidden');
+    }
+    
+    // Show game area
+    const gameElement = document.getElementById('Game');
+    if (gameElement) {
+        gameElement.style.display = 'block';
+        console.log('Game area shown');
+    }
+    
+    // Hide other elements
+    const instructionsElement = document.getElementById('Instructions');
+    if (instructionsElement) {
+        instructionsElement.style.display = 'none';
+    }
+    
+    const valuesElement = document.getElementById('Values');
+    if (valuesElement) {
+        valuesElement.style.display = 'none';
+    }
+    
+    // Try to show back button if available
+    if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
+        try {
+            backToMainMenuButton.show();
+            console.log('Back button shown');
+        } catch (e) {
+            console.log('Back button not available yet');
+        }
+    }
+    
+    // Force a redraw if p5.js is available
+    if (typeof redraw === 'function') {
+        redraw();
+        console.log('Forced p5.js redraw');
     }
     
     console.log('Game started successfully');
