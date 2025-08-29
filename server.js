@@ -4,6 +4,9 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
+// Store active rooms - MOVED TO TOP to fix reference error
+const rooms = new Map();
+
 app.use(express.static('public'));
 
 // Health check endpoint for Render
@@ -16,9 +19,6 @@ app.get('/health', (req, res) => {
         environment: process.env.NODE_ENV || 'development'
     });
 });
-
-// Store active rooms
-const rooms = new Map();
 
 io.on('connection', (socket) => {
     console.log(`👤 User connected: ${socket.id}`);
@@ -190,7 +190,8 @@ io.on('connection', (socket) => {
             if (room.players[nextPlayerIndex].isBot) {
                 setTimeout(() => {
                     // Bot plays a random card from their hand
-                    const botHand = room.game.hands[nextPlayerIndex];
+                    const hands = dealCards(room.game.deck);
+                    const botHand = hands[nextPlayerIndex];
                     if (botHand && botHand.length > 0) {
                         const randomCard = botHand[Math.floor(Math.random() * botHand.length)];
                         io.to(data.roomCode).emit('cardPlayed', {
@@ -205,13 +206,35 @@ io.on('connection', (socket) => {
 });
 
 function createDeck() {
-    // Create and return a shuffled deck
-    // Implementation similar to your local version
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const values = ['ace', '2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king'];
+    const deck = [];
+    
+    for (const suit of suits) {
+        for (const value of values) {
+            deck.push({ suit, value });
+        }
+    }
+    
+    // Shuffle the deck
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    
+    return deck;
 }
 
 function dealCards(deck) {
-    // Deal cards to players
-    // Implementation similar to your local version
+    const hands = [[], [], [], []];
+    
+    // Deal 3 cards to each player
+    for (let i = 0; i < 12; i++) {
+        const playerIndex = i % 4;
+        hands[playerIndex].push(deck[i]);
+    }
+    
+    return hands;
 }
 
 const PORT = process.env.PORT || 3000;
