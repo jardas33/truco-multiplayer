@@ -97,33 +97,33 @@ function createUIElements(p) {
     messageParagrph.style("transform", "translate(-50%, -50%)");
     messageParagrph.parent(popup);
 
-    // Setup player positions
-    playerPositions = [
-        {
-            x: p.width / 6,
-            y: p.height / 2,
-            label: "Player 1 - Team 1",
-            labelOffset: -50,
-        },
-        { 
-            x: p.width / 2, 
-            y: 100, 
-            label: "Player 2 - Team 2", 
-            labelOffset: -50 
-        },
-        {
-            x: (5 * p.width) / 6,
-            y: p.height / 2,
-            label: "Player 3 - Team 1",
-            labelOffset: -50,
-        },
-        {
-            x: p.width / 2,
-            y: p.height - cardHeight - 100,
-            label: "Player 4 - Team 2",
-            labelOffset: cardHeight + 20,
-        },
-    ];
+    // Setup player positions - REMOVED DUPLICATE (handled in setup.js)
+    // playerPositions = [
+    //     {
+    //         x: p.width / 6,
+    //         y: p.height / 2,
+    //         label: "Player 1 - Team 1",
+    //         labelOffset: -50,
+    //     },
+    //     { 
+    //         x: p.width / 2, 
+    //         y: 100, 
+    //         label: "Player 2 - Team 2", 
+    //         labelOffset: -50 
+    //     },
+    //     {
+    //         x: (5 * p.width) / 6,
+    //         y: p.height / 2,
+    //         label: "Player 3 - Team 1",
+    //         labelOffset: -50,
+    //     },
+    //     {
+    //         x: p.width / 2,
+    //         y: p.height - cardHeight - 100,
+    //         label: "Player 4 - Team 2",
+    //         labelOffset: cardHeight + 20,
+    //     },
+    // ];
 
     // Initialize socket.io connection
     socket = io();
@@ -143,16 +143,16 @@ function createUIElements(p) {
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         
-        // Update player positions
-        if (playerPositions) {
-            playerPositions[0].x = p.width / 6;
-            playerPositions[0].y = p.height / 2;
-            playerPositions[1].x = p.width / 2;
+        // Update player positions using the global playerPositions array
+        if (playerPositions && playerPositions.length >= 4) {
+            playerPositions[0].x = p.windowWidth / 6;
+            playerPositions[0].y = p.windowHeight / 2;
+            playerPositions[1].x = p.windowWidth / 2;
             playerPositions[1].y = 100;
-            playerPositions[2].x = (5 * p.width) / 6;
-            playerPositions[2].y = p.height / 2;
-            playerPositions[3].x = p.width / 2;
-            playerPositions[3].y = p.height - cardHeight - 100;
+            playerPositions[2].x = (5 * p.windowWidth) / 6;
+            playerPositions[2].y = p.windowHeight / 2;
+            playerPositions[3].x = p.windowWidth / 2;
+            playerPositions[3].y = p.windowHeight - 100;
         }
     };
 } 

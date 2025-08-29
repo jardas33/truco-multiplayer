@@ -1,10 +1,37 @@
 function preload() {
-    // Load background image
-    backgroundImage = loadImage("Images/background.jpg");
-    backCardImage = loadImage("Images/cardBack.jpg");
-    popupframeImage = loadImage("Images/popup_frame.png");
+    console.log('🖼️ Starting image preload...');
     
-    // Load card images
+    // Load background image
+    try {
+        backgroundImage = loadImage("Images/background.jpg", 
+            () => console.log('✅ Background image loaded'),
+            () => console.error('❌ Failed to load background image')
+        );
+    } catch (error) {
+        console.error('❌ Error loading background image:', error);
+    }
+    
+    // Load card back image
+    try {
+        backCardImage = loadImage("Images/cardBack.jpg",
+            () => console.log('✅ Card back image loaded'),
+            () => console.error('❌ Failed to load card back image')
+        );
+    } catch (error) {
+        console.error('❌ Error loading card back image:', error);
+    }
+    
+    // Load popup frame image
+    try {
+        popupframeImage = loadImage("Images/popup_frame.png",
+            () => console.log('✅ Popup frame image loaded'),
+            () => console.error('❌ Failed to load popup frame image')
+        );
+    } catch (error) {
+        console.error('❌ Error loading popup frame image:', error);
+    }
+    
+    // Load card images with error handling
     let cardNames = {
         "Queen of diamonds": "Images/queen_of_diamonds.png",
         "Jack of clubs": "Images/jack_of_clubs.png",
@@ -48,8 +75,31 @@ function preload() {
         "4 of hearts": "Images/4_of_hearts.png",
     };
     
+    let loadedImages = 0;
+    let totalImages = Object.keys(cardNames).length;
+    
     for (let name in cardNames) {
-        cardImages[name] = loadImage(cardNames[name]);
+        try {
+            cardImages[name] = loadImage(cardNames[name],
+                () => {
+                    loadedImages++;
+                    console.log(`✅ Card image loaded: ${name} (${loadedImages}/${totalImages})`);
+                    if (loadedImages === totalImages) {
+                        console.log('🎉 All card images loaded successfully!');
+                    }
+                },
+                () => {
+                    console.error(`❌ Failed to load card image: ${name}`);
+                    // Create a fallback colored rectangle
+                    cardImages[name] = null;
+                }
+            );
+        } catch (error) {
+            console.error(`❌ Error loading card image ${name}:`, error);
+            cardImages[name] = null;
+        }
     }
+    
+    console.log('🖼️ Image preload initiated for', totalImages, 'card images');
 }
   

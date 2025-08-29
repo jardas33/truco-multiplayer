@@ -385,13 +385,17 @@ function drawGameState() {
     // Only log once per second to prevent spam
     if (!window.lastDrawLog || Date.now() - window.lastDrawLog > 1000) {
         console.log('Drawing game state with players:', window.game.players);
+        console.log('Player hands:', window.game.players.map(p => ({ name: p.name, hand: p.hand?.length || 0 })));
         window.lastDrawLog = Date.now();
     }
     
     // Draw player positions and hands
     window.game.players.forEach((player, index) => {
         const position = playerPositions[index];
-        if (!position) return;
+        if (!position) {
+            console.error(`No position found for player ${index}:`, player);
+            return;
+        }
         
         // Draw player label
         fill(255);
@@ -401,6 +405,8 @@ function drawGameState() {
         
         // Draw player's cards
         if (player.hand && player.hand.length > 0) {
+            console.log(`Drawing ${player.hand.length} cards for ${player.name}:`, player.hand);
+            
             if (player.isBot || !showAllCards) {
                 // Draw card backs for bots or hidden cards
                 for (let i = 0; i < player.hand.length; i++) {
@@ -411,7 +417,14 @@ function drawGameState() {
                     } else {
                         // Fallback rectangle if image not loaded
                         fill(100);
+                        stroke(255);
+                        strokeWeight(2);
                         rect(cardX, cardY, cardWidth, cardHeight);
+                        // Add card back text
+                        fill(255);
+                        textSize(10);
+                        textAlign(CENTER);
+                        text('CARD', cardX + cardWidth/2, cardY + cardHeight/2);
                     }
                 }
             } else {
@@ -421,18 +434,25 @@ function drawGameState() {
                     const cardX = position.x - (player.hand.length * cardWidth) / 2 + i * cardWidth;
                     const cardY = position.y;
                     
-                    if (card.image) {
+                    if (card && card.image) {
                         image(card.image, cardX, cardY, cardWidth, cardHeight);
                     } else {
                         // Fallback rectangle if image not loaded
                         fill(255);
+                        stroke(0);
+                        strokeWeight(2);
                         rect(cardX, cardY, cardWidth, cardHeight);
+                        // Add card name text
                         fill(0);
-                        textSize(12);
-                        text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
+                        textSize(10);
+                        textAlign(CENTER);
+                        text(card ? card.name : 'Unknown', cardX + cardWidth/2, cardY + cardHeight/2);
+                        console.warn(`Card image missing for: ${card ? card.name : 'Unknown'}`);
                     }
                 }
             }
+        } else {
+            console.warn(`No hand found for player ${player.name}`);
         }
         
         // Highlight active player
@@ -458,6 +478,18 @@ function drawGameState() {
                 textSize(14);
                 textAlign(CENTER);
                 text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 20);
+            } else {
+                // Fallback for played cards without images
+                const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
+                const centerY = height / 2 - cardHeight / 2;
+                fill(255);
+                stroke(0);
+                strokeWeight(2);
+                rect(centerX, centerY, cardWidth, cardHeight);
+                fill(0);
+                textSize(10);
+                textAlign(CENTER);
+                text(playedCard.card ? playedCard.card.name : 'Unknown', centerX + cardWidth/2, centerY + cardHeight/2);
             }
         });
     }
@@ -473,9 +505,18 @@ function drawGameState() {
     // Draw current player info
     if (window.game.getCurrentPlayer()) {
         const currentPlayer = window.game.getCurrentPlayer();
-        text(`Current Player: ${currentPlayer.name}`, 20, 120);
-        text(`Team: ${currentPlayer.team}`, 20, 150);
+        fill(255, 255, 0);
+        textSize(18);
+        textAlign(CENTER);
+        text(`Current Player: ${currentPlayer.name}`, width/2, 30);
     }
+    
+    // Draw game state info
+    fill(255);
+    textSize(16);
+    textAlign(RIGHT);
+    text(`Round: ${window.game.round + 1}`, width - 20, 30);
+    text(`Turn: ${window.game.currentPlayerIndex + 1}/${window.game.players.length}`, width - 20, 50);
 }
 
 // Add the missing redrawGame function

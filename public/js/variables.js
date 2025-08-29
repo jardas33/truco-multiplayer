@@ -100,10 +100,10 @@ let cardValues = {
     "4 of diamonds": 17,
     "4 of spades": 17,
     "4 of hearts": 17,
-  };
-  
-  // Card images
-  let cardImages = {};
+};
+
+// Card images - MUST match the names in cardValues exactly
+let cardImages = {};
 
 // Global variables
 let socket = null;

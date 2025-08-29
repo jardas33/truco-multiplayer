@@ -4,16 +4,36 @@ let isMultiplayerMode = false;
 window.players = [];
   
 function createDeck() {
+    console.log('🃏 Creating deck...');
     deck = [];
-    for (let card in cardValues) {
-      deck.push({
-        name: card,
-        value: cardValues[card],
-        image: cardImages[card],
-        isClickable: false,
-      });
+    let cardsCreated = 0;
+    
+    for (let cardName in cardValues) {
+        const cardImage = cardImages[cardName];
+        if (cardImage) {
+            deck.push({
+                name: cardName,
+                value: cardValues[cardName],
+                image: cardImage,
+                isClickable: false,
+            });
+            cardsCreated++;
+        } else {
+            console.warn(`⚠️ Card image missing for: ${cardName}`);
+            // Create card with fallback
+            deck.push({
+                name: cardName,
+                value: cardValues[cardName],
+                image: null, // Will use fallback rendering
+                isClickable: false,
+            });
+            cardsCreated++;
+        }
     }
-  }
+    
+    console.log(`🎯 Deck created with ${cardsCreated} cards`);
+    console.log('Sample cards:', deck.slice(0, 3));
+}
   
   function shuffleDeck(deck) {
     if (deck.length > 0) {
@@ -25,10 +45,19 @@ function createDeck() {
   }
   
   function distributeCards(players, deck) {
+    console.log('🎴 Distributing cards to players...');
+    console.log('Players to receive cards:', players.map(p => p.name));
+    console.log('Deck size before distribution:', deck.length);
+    
     for (let player of players) {
-      player.hand = deck.splice(0, 3);
+        const playerCards = deck.splice(0, 3);
+        player.hand = playerCards;
+        console.log(`🎯 ${player.name} received ${playerCards.length} cards:`, playerCards.map(c => c.name));
     }
-  }
+    
+    console.log('Deck size after distribution:', deck.length);
+    console.log('Player hands after distribution:', players.map(p => ({ name: p.name, handSize: p.hand?.length || 0 })));
+}
   
   window.Game = class Game {
     constructor(players) {
