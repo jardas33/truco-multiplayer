@@ -2,15 +2,15 @@ function draw() {
     // Clear the canvas at the start of each frame
     clear();
     
-    // CRITICAL FIX: Ensure canvas is in the correct parent div
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-        if (gameState === gameStateEnum.Playing && canvas.parentElement?.id === 'Menu') {
+    // CRITICAL FIX: Ensure canvas is in the correct parent div using proper p5.js method
+    if (window.gameCanvas) {
+        const currentParent = window.gameCanvas.parent();
+        if (gameState === gameStateEnum.Playing && currentParent && currentParent.id() === 'Menu') {
             console.log('🎨 Moving canvas from Menu to Game div');
-            canvas.parent('Game');
-        } else if (gameState === gameStateEnum.Menu && canvas.parentElement?.id === 'Game') {
+            window.gameCanvas.parent('Game');
+        } else if (gameState === gameStateEnum.Menu && currentParent && currentParent.id() === 'Game') {
             console.log('🎨 Moving canvas from Game to Menu div');
-            canvas.parent('Menu');
+            window.gameCanvas.parent('Menu');
         }
     }
     
@@ -239,9 +239,9 @@ function draw() {
             textSize(20);
             textAlign(CENTER, CENTER);
             text('GAME NOT PROPERLY INITIALIZED!', width/2, height/2 + 120);
-            text(`Game: ${window.game ? 'YES' : 'NO'}`, width/2, height/2 + 150);
-            text(`Players: ${window.game?.players ? 'YES' : 'NO'}`, width/2, height/2 + 170);
-            text(`Player Count: ${window.game?.players?.length || 'N/A'}`, width/2, height/2 + 190);
+            text(`Game: ${window.game ? 'YES' : 'NO'}`, width/2, height/2 + 120);
+            text(`Players: ${window.game?.players ? 'YES' : 'NO'}`, width/2, height/2 + 150);
+            text(`Player Count: ${window.game?.players?.length || 'N/A'}`, width/2, height/2 + 170);
         }
     }
 }
