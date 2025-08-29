@@ -38,6 +38,15 @@ function setup() {
     
     console.log('Menu div made visible, others hidden');
     
+    // Ensure the room controls (HTML buttons) are visible above the canvas
+    const roomControls = document.getElementById('roomControls');
+    if (roomControls) {
+        roomControls.style.display = 'block';
+        roomControls.style.zIndex = '20'; // Above canvas
+        roomControls.style.position = 'relative';
+        console.log('Room controls made visible with z-index 20');
+    }
+    
     // Create instruction buttons with proper z-index
     instructionsButton = createButton("Instructions");
     instructionsButton.position(20, 20);
