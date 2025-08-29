@@ -119,15 +119,24 @@ function setupButtonListeners() {
         };
     }
 
-    // Start Game button
-    const startGameBtn = document.getElementById('startGameBtn');
-    if (startGameBtn) {
-        startGameBtn.onclick = () => {
-            console.log('Start Game clicked');
-            startGameWithCurrentPlayers();
-        };
-    }
-}
+         // Start Game button
+     const startGameBtn = document.getElementById('startGameBtn');
+     if (startGameBtn) {
+         startGameBtn.onclick = () => {
+             console.log('Start Game clicked');
+             startGameWithCurrentPlayers();
+         };
+     }
+     
+     // Start Single Player Game button
+     const startSinglePlayerBtn = document.getElementById('startSinglePlayerBtn');
+     if (startSinglePlayerBtn) {
+         startSinglePlayerBtn.onclick = () => {
+             console.log('Start Single Player Game clicked');
+             startSinglePlayerGame();
+         };
+     }
+ }
 
 function createRoom() {
     if (!socket) {
@@ -239,5 +248,43 @@ function hideRoomControls() {
     }
 }
 
-// Initialize when the document is ready
-document.addEventListener('DOMContentLoaded', initGame); 
+ function startSinglePlayerGame() {
+     console.log('Starting single player game...');
+     
+     // Create players array with one human player and three bots
+     let players = [
+         new Player("Player 1", "team1", false),
+         new Player("Bot 1", "team2", true),
+         new Player("Bot 2", "team1", true),
+         new Player("Bot 3", "team2", true)
+     ];
+     
+     console.log("Players created:", players);
+     
+     // Initialize game with players
+     window.game = new Game(players);
+     
+     // Initialize game variables
+     playedCards = [];
+     team1Rounds = 0;
+     team2Rounds = 0;
+     team1Games = 0;
+     team2Games = 0;
+     team1Sets = 0;
+     team2Sets = 0;
+     
+     // Start the game
+     window.game.startGame();
+     
+     // Update UI
+     menuDiv.style('display', 'none');
+     gameDiv.style('display', 'block');
+     instructionsDiv.style('display', 'none');
+     valuesDiv.style('display', 'none');
+     backToMainMenuButton.show();
+     
+     console.log('Single player game started successfully');
+ }
+ 
+ // Initialize when the document is ready
+ document.addEventListener('DOMContentLoaded', initGame); 

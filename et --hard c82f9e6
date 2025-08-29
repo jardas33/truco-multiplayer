@@ -1,0 +1,10 @@
+[33meb9192c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix: Update game state management and UI display
+[33m24c1d5b[m Fix: Add drawing functions and game state management
+[33m8d2f912[m Fix: Improve game initialization and multiplayer synchronization
+[33mc184919[m Fix: Improve socket connection, error handling, and UI visibility issues
+[33me8a7429[m Update game code with new features and improvements
+[33mb730d49[m Fix game initialization and start game functionality
+[33mc82f9e6[m Update game variables, preload, and player functionality
+[33mfcd49ca[m Revert instructions back to working HTML-based version
+[33m3dd0160[m Revert instructions to earlier working version with canvas rendering
+[33m6e6b05a[m Fix instructions close button to match card values implementation

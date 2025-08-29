@@ -1,17 +1,22 @@
 {
   "name": "truco",
   "version": "1.0.0",
-  "description": "Online multiplayer Truco game",
+  "description": "Online multiplayer Truco game with Socket.IO for DigitalOcean deployment",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No build step required'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["truco", "card-game", "p5js", "multiplayer", "socketio"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

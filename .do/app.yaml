@@ -1,0 +1,21 @@
+name: truco-game
+services:
+- name: truco-server
+  source_dir: /
+  github:
+    repo: your-username/truco
+    branch: main
+  run_command: npm start
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 3000
+  routes:
+  - path: /
+  health_check:
+    http_path: /
+    initial_delay_seconds: 10
+    interval_seconds: 10
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 3

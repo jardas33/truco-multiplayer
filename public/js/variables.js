@@ -104,3 +104,10 @@ let cardValues = {
   
   // Card images
   let cardImages = {};
+
+// Global variables
+let socket = null;
+let gameInitialized = false;
+let currentRoom = null;
+let playerHand = null;
+let playerPosition = null;

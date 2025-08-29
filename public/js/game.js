@@ -67,10 +67,10 @@ function createDeck() {
       backToMainMenuButton.show();
       trucoButton.show();
       
-      // If first player is a bot, it plays automatically
-      if (this.players[this.currentPlayerIndex].isBot) {
-        setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
-      }
+              // If first player is a bot, it plays automatically
+        if (this.players[this.currentPlayerIndex].isBot) {
+          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+        }
       
       console.log("Game started successfully");
     }
@@ -89,7 +89,7 @@ function createDeck() {
       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
   
       if (this.players[this.currentPlayerIndex].isBot) {
-        setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
+        setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
       }
     }
   
@@ -171,7 +171,7 @@ function createDeck() {
           this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
           
           if (this.players[this.currentPlayerIndex].isBot) {
-            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
+            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
           }
         }, timeEndRound);
       }
@@ -226,7 +226,7 @@ function createDeck() {
       // Show truco response buttons for next player
       let nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
       if (this.players[nextPlayerIndex].isBot) {
-        setTimeout(() => this.players[nextPlayerIndex].botRespondTruco(this), timeBots);
+        setTimeout(() => this.players[nextPlayerIndex].botRespondTruco(), timeBots);
       } else {
         buttonAcceptTruco.show();
         buttonRejectTruco.show();
@@ -260,7 +260,7 @@ function createDeck() {
         openPopup(true);
   
         if (this.players[this.currentPlayerIndex].isBot) {
-          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
+          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
         }
       } else if (response === 2) {  // Reject
         if (this.initialTrucoCallerIndex !== null) {
@@ -287,7 +287,7 @@ function createDeck() {
   
         let nextPlayerIndex = (this.initialTrucoCallerIndex) % this.players.length;
         if (this.players[nextPlayerIndex].isBot) {
-          setTimeout(() => this.players[nextPlayerIndex].botRespondTruco(this), timeBots);
+          setTimeout(() => this.players[nextPlayerIndex].botRespondTruco(), timeBots);
         }
       }
   
@@ -314,6 +314,65 @@ function createDeck() {
   
     updatePlayers(players) {
       this.players = players;
+    }
+
+    restartGame() {
+      // Reset game state for a new game
+      this.scores = { team1: 0, team2: 0 };
+      this.gameValue = 1;
+      this.trucoState = false;
+      this.initialTrucoCallerIndex = null;
+      this.roundResults = [];
+      this.IsDraw = false;
+      this.roundWinner = null;
+      this.winningstruc = null;
+      this.currentPlayerIndex = 0;
+      this.startRoundPlayer = 0;
+      this.round = 0;
+      playedCards = [];
+      
+      // Reset player states
+      this.players.forEach(player => {
+        player.isActive = false;
+        player.hand = [];
+      });
+      
+      // Make first player active
+      this.players[0].isActive = true;
+    }
+
+    handleCardPlay(card, playerId) {
+      // Handle a card played by another player in multiplayer mode
+      if (this.trucoState === true) {
+        return; // Game is paused during truco decision
+      }
+
+      // Find the player who played the card
+      const player = this.players.find(p => p.id === playerId);
+      if (!player) return;
+
+      // Remove the card from the player's hand
+      const cardIndex = player.hand.findIndex(c => c.name === card.name);
+      if (cardIndex !== -1) {
+        const playedCard = player.hand.splice(cardIndex, 1)[0];
+        
+        // Calculate card position in the center
+        let playerPos = playerPositions[this.currentPlayerIndex];
+        let cardPosX = lerp(playerPos.x, width/2, 0.5);
+        let cardPosY = lerp(playerPos.y, height/2, 0.5);
+
+        playedCards.push({
+          card: playedCard,
+          player: player,
+          position: { x: cardPosX, y: cardPosY }
+        });
+
+        if (playedCards.length === this.players.length) {
+          this.endRound();
+        } else {
+          this.nextPlayer();
+        }
+      }
     }
   }
   
@@ -371,12 +430,12 @@ function windowResized() {
     window.players = [];
     
     // Create human player
-    window.players.push(new Player(1, "Player 1", "team1", false));
+    window.players.push(new Player("Player 1", "team1", false));
     
     // Create bot players
-    window.players.push(new Player(2, "Bot 1", "team2", true));
-    window.players.push(new Player(3, "Bot 2", "team1", true));
-    window.players.push(new Player(4, "Bot 3", "team2", true));
+    window.players.push(new Player("Bot 1", "team2", true));
+    window.players.push(new Player("Bot 2", "team1", true));
+    window.players.push(new Player("Bot 3", "team2", true));
 
     createDeck();
     shuffleDeck(deck);

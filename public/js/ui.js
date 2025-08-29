@@ -40,11 +40,23 @@ function createUIElements(p) {
     buttonRaiseTruco = p.createButton("Raise Truco");
 
     buttonAcceptTruco.position(10, 180);
-    buttonAcceptTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 1));
+    buttonAcceptTruco.mousePressed(() => {
+      if (window.game) {
+        window.game.respondTruco(window.game.getCurrentPlayer(), 1);
+      }
+    });
     buttonRejectTruco.position(10, 210);
-    buttonRejectTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 2));
+    buttonRejectTruco.mousePressed(() => {
+      if (window.game) {
+        window.game.respondTruco(window.game.getCurrentPlayer(), 2);
+      }
+    });
     buttonRaiseTruco.position(10, 240);
-    buttonRaiseTruco.mousePressed(() => game.respondTruco(game.getCurrentPlayer(), 3));
+    buttonRaiseTruco.mousePressed(() => {
+      if (window.game) {
+        window.game.respondTruco(window.game.getCurrentPlayer(), 3);
+      }
+    });
 
     buttonAcceptTruco.parent(gameDiv);
     buttonRejectTruco.parent(gameDiv);
