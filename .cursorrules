@@ -1,0 +1,25 @@
+# Cursor Configuration for Render MCP Integration
+
+## MCP Server Setup
+- Use the MCP server configuration in `mcp-server-config.json`
+- Connect to Render services through MCP protocol
+- Enable direct deployment and management capabilities
+
+## Render Integration
+- Access Render dashboard through MCP
+- Deploy applications directly from Cursor
+- Monitor deployment status and logs
+- Manage environment variables and settings
+
+## Development Workflow
+- Use MCP to check Render service status
+- Deploy code changes automatically
+- Monitor application performance
+- Access Render logs for debugging
+
+## Commands Available
+- Deploy to Render
+- Check service status
+- View logs
+- Update environment variables
+- Scale services

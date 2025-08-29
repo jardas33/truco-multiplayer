@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "build": "npm install",
+    "mcp": "node start-mcp-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["truco", "card-game", "p5js", "multiplayer", "socketio"],
@@ -15,6 +16,9 @@
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/server": "^0.4.0"
   },
   "engines": {
     "node": ">=14.0.0"
