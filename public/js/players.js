@@ -15,22 +15,28 @@ class Player {
         throw new Error("This method can only be called on a bot.");
       }
   
-      console.log("Bot is making a decision.");
+      console.log(`🤖 Bot ${this.name} is making a decision.`);
+      
+      // Check if it's actually this bot's turn
+      if (window.game && window.game.currentPlayerIndex !== window.game.players.indexOf(this)) {
+        console.log(`❌ Bot ${this.name} tried to play out of turn!`);
+        return;
+      }
   
       // Check if Truco has not been called
       if (window.game && (window.game.trucoState === false || !window.game.trucoState)) {
         // The bot randomly decides whether to call Truco
         if (Math.random() < 0.1 && !isInTrucoPhase) { // 1% chance to call Truco
-          console.log("Bot is calling Truco.");
+          console.log(`🤖 Bot ${this.name} is calling Truco.`);
           truco();
         } else {
           // The bot plays a random card from its hand
-          console.log("Bot is playing a random card.");
+          console.log(`🤖 Bot ${this.name} is playing a random card.`);
           let cardIndex = Math.floor(Math.random() * this.hand.length);
           window.game.playCard(this, cardIndex);
         }
       } else {
-        console.log("Bot is making Truco decision.");
+        console.log(`🤖 Bot ${this.name} is making Truco decision.`);
         if (typeof botDecision === 'function') {
           botDecision();
         }

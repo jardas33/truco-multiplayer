@@ -129,9 +129,9 @@ function setup() {
     buttonRejectTruco.hide();
     buttonRaiseTruco.hide();
 
-    // Setup player positions with PERFECT 4-corner layout
+    // Setup player positions with PERFECT 4-corner layout - FIXED positioning
     const scoringPanelHeight = 150; // Height of the scoring panel at top
-    const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+    const topMargin = scoringPanelHeight + 100; // Increased margin below scoring panel for better spacing
     const leftMargin = 100; // Left margin from screen edge
     const rightMargin = width - 100; // Right margin from screen edge
     const bottomMargin = height - 150; // Bottom margin from screen edge
@@ -139,13 +139,13 @@ function setup() {
     playerPositions = [
         {
             x: leftMargin,          // Bot 1 (TOP-LEFT) - Perfect corner position
-            y: topMargin,           // Below scoring panel, top-left corner
+            y: topMargin,           // Below scoring panel, top-left corner - MOVED DOWN
             label: "Bot 1 - Team 2",
             labelOffset: -30,       // Closer to cards
         },
         { 
             x: rightMargin,         // Bot 2 (TOP-RIGHT) - Perfect corner position
-            y: topMargin,           // Below scoring panel, top-right corner
+            y: topMargin,           // Below scoring panel, top-right corner - MOVED DOWN
             label: "Bot 2 - Team 1", 
             labelOffset: -30        // Closer to cards
         },

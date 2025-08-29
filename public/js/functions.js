@@ -362,18 +362,18 @@ function startGame() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   
-  // Update player positions - ensure PERFECT 4-corner layout
+  // Update player positions - ensure PERFECT 4-corner layout - FIXED positioning
   if (playerPositions) {
     const scoringPanelHeight = 150; // Height of the scoring panel at top
-    const topMargin = scoringPanelHeight + 50; // Extra margin below scoring panel
+    const topMargin = scoringPanelHeight + 100; // Increased margin below scoring panel for better spacing
     const leftMargin = 100; // Left margin from screen edge
     const rightMargin = width - 100; // Right margin from screen edge
     const bottomMargin = height - 150; // Bottom margin from screen edge
     
     playerPositions[0].x = leftMargin;          // Bot 1 (TOP-LEFT) - Perfect corner position
-    playerPositions[0].y = topMargin;           // Below scoring panel, top-left corner
+    playerPositions[0].y = topMargin;           // Below scoring panel, top-left corner - MOVED DOWN
     playerPositions[1].x = rightMargin;         // Bot 2 (TOP-RIGHT) - Perfect corner position
-    playerPositions[1].y = topMargin;           // Below scoring panel, top-right corner
+    playerPositions[1].y = topMargin;           // Below scoring panel, top-right corner - MOVED DOWN
     playerPositions[2].x = rightMargin;         // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
     playerPositions[2].y = bottomMargin;        // Bottom-right corner
     playerPositions[3].x = leftMargin;          // Player 1 (BOTTOM-LEFT) - Perfect corner position

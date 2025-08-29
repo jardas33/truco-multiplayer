@@ -132,26 +132,41 @@ function createDeck() {
         return; // Game is paused during truco decision
       }
   
+      // Deactivate current player
       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = false);
       this.players[this.currentPlayerIndex].isActive = false;
       
+      // Move to next player
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
       
+      // Activate next player
       this.players[this.currentPlayerIndex].isActive = true;
       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+      
+      console.log(`🔄 Turn moved to: ${this.players[this.currentPlayerIndex].name} (Player ${this.currentPlayerIndex + 1})`);
   
+      // If it's a bot's turn, make them play
       if (this.players[this.currentPlayerIndex].isBot) {
+        console.log(`🤖 Bot ${this.currentPlayerIndex + 1} is thinking...`);
         setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+      } else {
+        console.log(`👤 Human player ${this.currentPlayerIndex + 1} can now play`);
       }
     }
   
     playCard(player, cardIndex) {
+      console.log(`🎯 playCard called by: ${player.name} (Player ${player.id})`);
+      console.log(`🎯 Current turn: ${this.players[this.currentPlayerIndex].name} (Player ${this.currentPlayerIndex + 1})`);
+      console.log(`🎯 Game state: ${gameState}, Truco state: ${this.trucoState}`);
+      
       if (gameState !== gameStateEnum.Playing || 
           player !== this.players[this.currentPlayerIndex] || 
           this.trucoState === true) {
+        console.log(`❌ playCard rejected: Invalid game state or turn`);
         return null;
       }
   
+      console.log(`✅ Card played successfully by ${player.name}`);
       player.isActive = false;
   
       // Calculate card position in the center
@@ -165,10 +180,14 @@ function createDeck() {
         player: player,
         position: { x: cardPosX, y: cardPosY }
       });
+      
+      console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
   
       if (playedCards.length === this.players.length) {
+        console.log(`🏁 Round complete, ending round...`);
         this.endRound();
       } else {
+        console.log(`⏭️ Moving to next player...`);
         this.nextPlayer();
       }
   
