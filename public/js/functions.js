@@ -405,7 +405,11 @@ function drawGameState() {
         
         // Draw player's cards
         if (player.hand && player.hand.length > 0) {
-            console.log(`Drawing ${player.hand.length} cards for ${player.name}:`, player.hand);
+            // Only log card drawing once per second to prevent spam
+            if (!window.lastCardDrawLog || Date.now() - window.lastCardDrawLog > 1000) {
+                console.log(`Drawing ${player.hand.length} cards for ${player.name}:`, player.hand);
+                window.lastCardDrawLog = Date.now();
+            }
             
             if (player.isBot || !showAllCards) {
                 // Draw card backs for bots or hidden cards
@@ -447,12 +451,20 @@ function drawGameState() {
                         textSize(10);
                         textAlign(CENTER);
                         text(card ? card.name : 'Unknown', cardX + cardWidth/2, cardY + cardHeight/2);
-                        console.warn(`Card image missing for: ${card ? card.name : 'Unknown'}`);
+                        // Only log missing images once per second
+                        if (!window.lastMissingImageLog || Date.now() - window.lastMissingImageLog > 1000) {
+                            console.warn(`Card image missing for: ${card ? card.name : 'Unknown'}`);
+                            window.lastMissingImageLog = Date.now();
+                        }
                     }
                 }
             }
         } else {
-            console.warn(`No hand found for player ${player.name}`);
+            // Only log missing hands once per second
+            if (!window.lastMissingHandLog || Date.now() - window.lastMissingHandLog > 1000) {
+                console.warn(`No hand found for player ${player.name}`);
+                window.lastMissingHandLog = Date.now();
+            }
         }
         
         // Highlight active player

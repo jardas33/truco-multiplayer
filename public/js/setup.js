@@ -1,6 +1,9 @@
 function setup() {
     console.log('🎨 Setting up p5.js canvas and UI elements...');
     
+    // Set frame rate to prevent excessive rendering
+    frameRate(30); // Limit to 30 FPS instead of 60
+    
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('Menu');
     canvas.style('display', 'block');

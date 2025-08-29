@@ -1,4 +1,7 @@
 function draw() {
+    // Limit frame rate to prevent excessive calls
+    if (frameCount % 2 !== 0) return; // Only draw every other frame
+    
     // Clear the canvas at the start of each frame
     clear();
     
@@ -177,7 +180,8 @@ function draw() {
         valuesDiv.hide();
         backToMainMenuButton.show();
         
-        if (window.game) {
+        // Only draw game state if game is properly initialized
+        if (window.game && window.game.players && window.game.players.length > 0) {
             drawGameState();
         }
     }
