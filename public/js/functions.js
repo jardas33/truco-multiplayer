@@ -370,11 +370,11 @@ function windowResized() {
     const rightMargin = width - 100; // Right margin from screen edge
     const bottomMargin = height - 150; // Bottom margin from screen edge
     
-    playerPositions[0].x = leftMargin;          // Bot 2 (TOP-LEFT) - Top position - FIXED LABEL
+    playerPositions[0].x = leftMargin;          // Bot 2 (TOP-LEFT) - Top position
     playerPositions[0].y = topMargin + 50;      // Below scoring panel, top-left corner - MOVED DOWN MORE
-    playerPositions[1].x = rightMargin;         // Bot 1 (BOTTOM-RIGHT) - Bottom position - FIXED LABEL
+    playerPositions[1].x = rightMargin;         // Bot 2 (BOTTOM-RIGHT) - Bottom position - CORRECTED LABEL
     playerPositions[1].y = bottomMargin;        // Bottom-right corner
-    playerPositions[2].x = leftMargin;          // Bot 3 (BOTTOM-LEFT) - Bottom position
+    playerPositions[2].x = leftMargin;          // Bot 1 (BOTTOM-LEFT) - Bottom position - CORRECTED LABEL
     playerPositions[2].y = bottomMargin;        // Bottom-left corner
     playerPositions[3].x = rightMargin;         // Player 1 (TOP-RIGHT) - Top position
     playerPositions[3].y = topMargin + 50;      // Below scoring panel, top-right corner - MOVED DOWN MORE

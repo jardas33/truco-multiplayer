@@ -145,21 +145,21 @@ function setup() {
     
     playerPositions = [
         {
-            x: leftMargin,          // Bot 2 (TOP-LEFT) - Top position - FIXED LABEL
+            x: leftMargin,          // Bot 2 (TOP-LEFT) - Top position
             y: topMargin + 50,      // Below scoring panel, top-left corner - MOVED DOWN MORE
             label: "Bot 2 - Team 2",
             labelOffset: -80,       // Above cards (top player) - REASONABLE distance
         },
         { 
-            x: rightMargin,         // Bot 1 (BOTTOM-RIGHT) - Bottom position - FIXED LABEL
+            x: rightMargin,         // Bot 2 (BOTTOM-RIGHT) - Bottom position - CORRECTED LABEL
             y: bottomMargin,        // Bottom-right corner
-            label: "Bot 1 - Team 1", 
+            label: "Bot 2 - Team 1", 
             labelOffset: -80        // Above cards (bottom player) - CONSISTENT with top
         },
         {
-            x: leftMargin,          // Bot 3 (BOTTOM-LEFT) - Bottom position
+            x: leftMargin,          // Bot 1 (BOTTOM-LEFT) - Bottom position - CORRECTED LABEL
             y: bottomMargin,        // Bottom-left corner
-            label: "Bot 3 - Team 2",
+            label: "Bot 1 - Team 2",
             labelOffset: -80,       // Above cards (bottom player) - CONSISTENT with top
         },
         {
