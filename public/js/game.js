@@ -230,51 +230,128 @@ function createDeck() {
     endRound() {
       console.log(`🏁 endRound called with ${playedCards.length} played cards`);
       
-      // Find the winning card
+      // Find the winning card and check for draws
       let winningCard = playedCards[0];
+      let isDraw = false;
+      let drawCards = [playedCards[0]];
+      
       for (let i = 1; i < playedCards.length; i++) {
         if (playedCards[i].card.value < winningCard.card.value) {
+          // New winner found
           winningCard = playedCards[i];
+          isDraw = false;
+          drawCards = [playedCards[i]];
+        } else if (playedCards[i].card.value === winningCard.card.value) {
+          // Draw detected
+          isDraw = true;
+          drawCards.push(playedCards[i]);
         }
       }
       
-             console.log(`🏆 Winning card: ${winningCard.card.name} by ${winningCard.player.name} (playerIndex: ${winningCard.player.playerIndex})`);
+      console.log(`🏆 Winning card: ${winningCard.card.name} by ${winningCard.player.name} (playerIndex: ${winningCard.player.playerIndex})`);
+      if (isDraw) {
+        console.log(`🤝 Draw detected with ${drawCards.length} cards of equal value`);
+      }
 
-       // Show round result popup
-       popupMessage = `🏆 ROUND COMPLETE! 🏆\n\nWinning card: ${winningCard.card.name}\n\nWinner: ${winningCard.player.name}\n\nTeam: ${winningCard.player.team === "team1" ? "Team Alfa" : "Team Beta"}`;
-       try {
-         openPopup(true);
-       } catch (error) {
-         console.warn('⚠️ Could not show round result popup, continuing with game');
-       }
-
-       // Determine winning team
-       let winningTeam = winningCard.player.team;
-      if (winningTeam === 1) {
-        this.scores.team1++;
+      // Show round result popup
+      if (isDraw) {
+        popupMessage = `🤝 ROUND DRAW! 🤝\n\nMultiple cards with equal value:\n${drawCards.map(pc => `${pc.card.name} by ${pc.player.name}`).join('\n')}\n\nRound winner will be determined by previous round results.`;
       } else {
-        this.scores.team2++;
+        popupMessage = `🏆 ROUND COMPLETE! 🏆\n\nWinning card: ${winningCard.card.name}\n\nWinner: ${winningCard.player.name}\n\nTeam: ${winningCard.player.team === "team1" ? "Team Alfa" : "Team Beta"}`;
+      }
+      
+      try {
+        openPopup(true);
+      } catch (error) {
+        console.warn('⚠️ Could not show round result popup, continuing with game');
+      }
+
+      // Determine round winner based on draw rules
+      let roundWinner = null;
+      if (isDraw) {
+        // Apply draw rules: 
+        // - If draw in round 1: winner will be determined by round 2
+        // - If draw in round 2 or 3: winner is the team that won round 1
+        if (this.roundResults.length === 0) {
+          // Draw in first round - no winner yet
+          roundWinner = null;
+        } else {
+          // Draw in round 2 or 3 - winner is the team that won round 1
+          roundWinner = this.roundResults[0].winner;
+        }
+      } else {
+        // No draw - use the winning card's team
+        roundWinner = winningCard.player.team;
+      }
+
+      // Update scores only if there's a clear winner
+      if (roundWinner) {
+        if (roundWinner === "team1") {
+          this.scores.team1++;
+          console.log(`📊 Team Alfa wins round ${this.roundResults.length + 1}. Score: ${this.scores.team1}-${this.scores.team2}`);
+        } else if (roundWinner === "team2") {
+          this.scores.team2++;
+          console.log(`📊 Team Beta wins round ${this.roundResults.length + 1}. Score: ${this.scores.team1}-${this.scores.team2}`);
+        }
+      } else {
+        console.log(`🤝 Round ${this.roundResults.length + 1} is a draw. No score change.`);
       }
   
       // Store round result
       this.roundResults.push({
-        winner: winningTeam,
-        cards: playedCards.map(pc => pc.card)
+        winner: roundWinner,
+        cards: playedCards.map(pc => pc.card),
+        isDraw: isDraw
       });
   
-      // Check if a team has won the game
+      // Check if a team has won the game (need 2 clear wins)
       if (this.scores.team1 >= 2) {
         this.games.team1 += this.gameValue;
-        this.endGame("Team 1");
+        this.endGame("Team Alfa");
       } else if (this.scores.team2 >= 2) {
         this.games.team2 += this.gameValue;
-        this.endGame("Team 2");
+        this.endGame("Team Beta");
+      } else if (this.roundResults.length >= 3) {
+        // All 3 rounds played but no team has 2 wins
+        // Determine winner based on draw rules
+        let finalWinner = null;
+        if (this.roundResults[0].winner) {
+          // First round had a winner - they win the game
+          finalWinner = this.roundResults[0].winner;
+        } else if (this.roundResults[1].winner) {
+          // Second round had a winner - they win the game
+          finalWinner = this.roundResults[1].winner;
+        }
+        
+        if (finalWinner) {
+          if (finalWinner === "team1") {
+            this.games.team1 += this.gameValue;
+            this.endGame("Team Alfa");
+          } else {
+            this.games.team2 += this.gameValue;
+            this.endGame("Team Beta");
+          }
+        } else {
+          // All rounds were draws - this shouldn't happen in practice
+          console.error("❌ All rounds were draws - unexpected game state");
+          // Default to Team Alfa (first player's team)
+          this.games.team1 += this.gameValue;
+          this.endGame("Team Alfa");
+        }
       } else {
         // Prepare for next round
         setTimeout(() => {
           playedCards = [];
-          // FIXED: Use playerIndex instead of string ID
-          this.currentPlayerIndex = winningCard.player.playerIndex;
+          
+          // Determine who starts next round
+          if (roundWinner) {
+            // Clear winner - they start next round
+            this.currentPlayerIndex = winningCard.player.playerIndex;
+          } else {
+            // Draw - first player starts next round
+            this.currentPlayerIndex = 0;
+          }
+          
           this.startRoundPlayer = this.currentPlayerIndex;
           
           // Safety check to ensure valid player index
