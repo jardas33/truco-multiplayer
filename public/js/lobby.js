@@ -501,9 +501,9 @@ function updatePlayerList(players) {
                 teamDisplay = 'Team Beta 🟣';
             }
             
-            playerListHTML += `<div style="margin: 5px 0; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9;">
-                <strong>${playerType}:</strong> ${nickname}<br>
-                <small>${teamDisplay}</small>
+            playerListHTML += `<div style="margin: 5px 0; padding: 8px; border: 1px solid #4CAF50; border-radius: 4px; background-color: rgba(0, 100, 0, 0.8); color: white;">
+                <strong style="color: #FFD700;">${playerType}:</strong> ${nickname}<br>
+                <small style="color: #E0E0E0;">${teamDisplay}</small>
             </div>`;
         });
         

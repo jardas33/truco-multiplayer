@@ -1,0 +1,156 @@
+/* Lobby Text Visibility Fixes */
+
+/* Room Controls - Fix text visibility */
+.room-controls {
+    background-color: rgba(0, 0, 0, 0.9) !important; /* Darker background for better contrast */
+    color: white !important; /* Ensure all text is white by default */
+}
+
+/* Room input styling */
+#roomInput {
+    background-color: rgba(0, 0, 0, 0.8) !important; /* Darker background */
+}
+
+/* Button styling - Improve text visibility */
+button {
+    background-color: rgba(0, 0, 0, 0.8) !important; /* Darker background */
+    color: white !important; /* White text for better contrast */
+}
+
+button:hover {
+    color: white !important; /* Maintain white text on hover */
+}
+
+/* Player List - Fix text visibility */
+#playerList div {
+    padding: 8px !important;
+    background-color: rgba(0, 100, 0, 0.8) !important; /* Darker green background */
+    color: white !important; /* White text for better contrast */
+    border: 1px solid #4CAF50 !important;
+}
+
+#playerList div strong {
+    color: #FFD700 !important; /* Gold color for player type labels */
+}
+
+#playerList div small {
+    color: #E0E0E0 !important; /* Light gray but still visible on dark background */
+}
+
+/* Player Customization Panel - Fix text visibility */
+#playerCustomization {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(76, 175, 80, 0.3) 100%) !important; /* Darker background with green tint */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+    color: white !important; /* Ensure all text is white by default */
+}
+
+#playerCustomization h4 {
+    color: #4CAF50 !important; /* Brighter green for better visibility */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important; /* Add text shadow for better readability */
+}
+
+#playerCustomization label {
+    color: #E0E0E0 !important; /* Light gray but visible on dark background */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important; /* Add text shadow */
+}
+
+/* Team buttons - Ensure text is always visible */
+#team1Btn, #team2Btn {
+    color: white !important; /* Ensure white text */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important; /* Add text shadow for better readability */
+}
+
+#team1Btn:hover {
+    color: white !important; /* Maintain white text on hover */
+}
+
+#team2Btn:hover {
+    color: white !important; /* Maintain white text on hover */
+}
+
+/* Ensure all text in the room controls is visible */
+.room-controls * {
+    color: inherit !important; /* Inherit the white color from parent */
+}
+
+/* Specific overrides for better visibility */
+.room-controls button {
+    color: white !important; /* Force white text on all buttons */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important; /* Add text shadow for better readability */
+}
+
+.room-controls input {
+    color: white !important; /* Force white text on inputs */
+}
+
+/* Add text shadow to all text elements for better readability */
+.room-controls h3,
+.room-controls h4,
+.room-controls label,
+.room-controls div {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Nickname input styling */
+#nicknameInput {
+    background-color: rgba(255, 255, 255, 0.9) !important; /* Light background for input */
+    color: #333 !important; /* Dark text for input */
+}
+
+/* Override inline styles for player customization */
+#playerCustomization[style*="background-color: rgba(76, 175, 80, 0.1)"] {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(76, 175, 80, 0.3) 100%) !important;
+}
+
+/* Override inline styles for buttons */
+#changeNicknameBtn[style*="background-color: #2196F3"] {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+#team1Btn[style*="background-color: #FF9800"] {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+#team2Btn[style*="background-color: #9C27B0"] {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%) !important;
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Force all text in room controls to be visible */
+.room-controls,
+.room-controls *,
+.room-controls button,
+.room-controls input,
+.room-controls label,
+.room-controls div,
+.room-controls h3,
+.room-controls h4 {
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Specific exceptions for better contrast */
+#playerList div strong {
+    color: #FFD700 !important; /* Gold for player types */
+}
+
+#playerList div small {
+    color: #E0E0E0 !important; /* Light gray for team info */
+}
+
+#playerCustomization h4 {
+    color: #4CAF50 !important; /* Bright green for title */
+}
+
+#playerCustomization label {
+    color: #E0E0E0 !important; /* Light gray for labels */
+}
+
+#nicknameInput {
+    color: #333 !important; /* Dark text for input field */
+}

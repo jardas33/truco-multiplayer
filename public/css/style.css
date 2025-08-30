@@ -301,6 +301,8 @@ canvas {
     border: 2px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.9); /* Light background for input */
+    color: #333; /* Dark text for input */
     transition: border-color 0.3s ease;
 }
 
