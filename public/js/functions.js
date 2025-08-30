@@ -631,13 +631,16 @@ function drawGameState() {
                 }
             }
             
-            // Draw player indicator
-            fill(0, 0, 0);
-            textSize(14);
-            textAlign(CENTER, CENTER);
-            if (playedCard.player && playedCard.player.name) {
-                text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
-            }
+                         // Draw player indicator - MUCH MORE VISIBLE
+             fill(255, 255, 255); // Bright white text
+             textSize(16); // Larger font size
+             textAlign(CENTER, CENTER);
+             stroke(0, 0, 0); // Black outline for contrast
+             strokeWeight(2); // Thick outline
+             if (playedCard.player && playedCard.player.name) {
+                 text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
+             }
+             noStroke(); // Reset stroke for other elements
         });
     }
     
