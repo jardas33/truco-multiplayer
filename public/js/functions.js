@@ -380,10 +380,10 @@ function windowResized() {
     playerPositions[3].y = topMargin + 50;      // Below scoring panel, top-right corner - MOVED DOWN MORE
     
     // Update label offsets to maintain proper spacing
-    playerPositions[0].labelOffset = -80;       // Bot 1 - above cards (top player)
-    playerPositions[1].labelOffset = 80;        // Bot 2 - below cards (bottom player)
-    playerPositions[2].labelOffset = 80;        // Bot 3 - below cards (bottom player)
-    playerPositions[3].labelOffset = -80;       // Player 1 - above cards (top player)
+    playerPositions[0].labelOffset = -150;      // Bot 1 - much higher above cards (top player) - FIXED
+    playerPositions[1].labelOffset = 150;       // Bot 2 - much lower below cards (bottom player) - FIXED
+    playerPositions[2].labelOffset = 150;       // Bot 3 - much lower below cards (bottom player) - FIXED
+    playerPositions[3].labelOffset = -150;      // Player 1 - much higher above cards (top player) - FIXED
   }
 }
 
