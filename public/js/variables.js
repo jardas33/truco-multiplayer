@@ -34,6 +34,7 @@ let popup;
 let popupOnlyClose;
 let popupMessage;
 let popupTimeoutId;
+let messageParagrph;
 let playerWinner = "1";
 let startButton;
 let instructionsButton;

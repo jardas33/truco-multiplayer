@@ -77,15 +77,28 @@ function handleEndOfGame(winningTeam) {
 function openPopup(onlyClose) {
   popupOnlyClose = onlyClose;
 
+  // Safety check: ensure popup elements exist
+  if (!popup || !messageParagrph) {
+    console.warn('⚠️ Popup elements not initialized, skipping popup display');
+    return;
+  }
+
   /*if (popup.style("display") === "block") {
     return;
   }*/
   if (popupMessage == "") {
     popupMessage = "No values to display";
   }
-  popup.show();
-  messageParagrph.elt.textContent = popupMessage;
-  popupTimeoutId = setTimeout(function () { closePopup(); }, timePopUpAutoClose);
+  
+  try {
+    popup.show();
+    if (messageParagrph.elt) {
+      messageParagrph.elt.textContent = popupMessage;
+    }
+    popupTimeoutId = setTimeout(function () { closePopup(); }, timePopUpAutoClose);
+  } catch (error) {
+    console.error('❌ Error showing popup:', error);
+  }
 }
 
 function closePopup() {
@@ -94,13 +107,23 @@ function closePopup() {
     popupTimeoutId = null;
   }
 
-  if (popupOnlyClose) {
-    popup.hide();
-  } else {
-    popup.hide();
-    if (window.game && window.game.startGame) {
-      window.game.startGame();
+  // Safety check: ensure popup exists
+  if (!popup) {
+    console.warn('⚠️ Popup not initialized, cannot close');
+    return;
+  }
+
+  try {
+    if (popupOnlyClose) {
+      popup.hide();
+    } else {
+      popup.hide();
+      if (window.game && window.game.startGame) {
+        window.game.startGame();
+      }
     }
+  } catch (error) {
+    console.error('❌ Error closing popup:', error);
   }
 }
 

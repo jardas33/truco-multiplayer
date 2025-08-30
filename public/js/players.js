@@ -32,7 +32,15 @@ class Player {
         // The bot randomly decides whether to call Truco
         if (Math.random() < 0.1 && !isInTrucoPhase) { // 1% chance to call Truco
           console.log(`🤖 Bot ${this.name} is calling Truco.`);
-          truco();
+          try {
+            truco();
+          } catch (error) {
+            console.error(`❌ Bot ${this.name} failed to call Truco:`, error);
+            // Fallback: just play a card instead
+            console.log(`🤖 Bot ${this.name} falling back to playing a card.`);
+            let cardIndex = Math.floor(Math.random() * this.hand.length);
+            window.game.playCard(this, cardIndex);
+          }
         } else {
           // The bot plays a random card from its hand
           console.log(`🤖 Bot ${this.name} is playing a random card.`);
