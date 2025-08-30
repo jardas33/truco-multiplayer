@@ -447,22 +447,22 @@ function createDeck() {
            }
          }
          
-       } else if (response === 2) {  // Reject
-         console.log(`❌ Truco rejected! Game ends immediately`);
-         
-         // Determine winning team (the team that called Truco)
-         let winningTeam = this.trucoCallerTeam;
-         let winningTeamName = winningTeam === "team1" ? "Team Alfa" : "Team Beta";
-         
-         // Award games to the winning team
-         if (winningTeam === "team1") {
-           this.games.team1 += this.potentialGameValue || 3;
-         } else {
-           this.games.team2 += this.potentialGameValue || 3;
-         }
-         
-                   // Show rejection message
-          popupMessage = `❌ TRUCO REJECTED! ❌\n\n${winningTeamName} has rejected the Truco challenge!\n\nGame ends immediately and ${winningTeamName} wins ${this.potentialGameValue || 3} games.\n\nA new game will start shortly.`;
+               } else if (response === 2) {  // Reject
+          console.log(`❌ Truco rejected! Game ends immediately`);
+          
+          // Determine winning team (the team that called Truco)
+          let winningTeam = this.trucoCallerTeam;
+          let winningTeamName = winningTeam === "team1" ? "Team Alfa" : "Team Beta";
+          
+          // Award games to the winning team - ONLY 1 GAME when rejected!
+          if (winningTeam === "team1") {
+            this.games.team1 += 1; // Only 1 game when rejected
+          } else {
+            this.games.team2 += 1; // Only 1 game when rejected
+          }
+          
+                    // Show rejection message
+           popupMessage = `❌ TRUCO REJECTED! ❌\n\n${winningTeamName} has rejected the Truco challenge!\n\nGame ends immediately and ${winningTeamName} wins 1 game.\n\nA new game will start shortly.`;
           try {
             openPopup(true);
           } catch (error) {

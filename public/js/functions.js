@@ -22,7 +22,7 @@ function truco() {
   let nextPlayerIndex = (window.game.currentPlayerIndex + 1) % window.game.players.length;
   
   // Set popup message
-  popupMessage = `🎯 TRUCO CALLED! 🎯\n\n${window.game.players[window.game.currentPlayerIndex].name} has called Truco!\n\nGame is now worth ${window.game.potentialGameValue} games instead of 1.\n\n${window.game.players[nextPlayerIndex].name} must now respond: Accept, Reject, or Raise.`;
+  popupMessage = `🎯 TRUCO CALLED! 🎯\n\n${window.game.players[window.game.currentPlayerIndex].name} has called Truco!\n\nIf accepted, this game will be worth ${window.game.potentialGameValue} games instead of 1.\nIf rejected, the caller wins only 1 game.\n\n${window.game.players[nextPlayerIndex].name} must now respond: Accept, Reject, or Raise.`;
   
   // Show popup
   try {
