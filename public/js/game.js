@@ -238,10 +238,18 @@ function createDeck() {
         }
       }
       
-      console.log(`🏆 Winning card: ${winningCard.card.name} by ${winningCard.player.name} (playerIndex: ${winningCard.player.playerIndex})`);
-  
-      // Determine winning team
-      let winningTeam = winningCard.player.team;
+             console.log(`🏆 Winning card: ${winningCard.card.name} by ${winningCard.player.name} (playerIndex: ${winningCard.player.playerIndex})`);
+
+       // Show round result popup
+       popupMessage = `🏆 ROUND COMPLETE! 🏆\n\nWinning card: ${winningCard.card.name}\n\nWinner: ${winningCard.player.name}\n\nTeam: ${winningCard.player.team === "team1" ? "Team Alfa" : "Team Beta"}`;
+       try {
+         openPopup(true);
+       } catch (error) {
+         console.warn('⚠️ Could not show round result popup, continuing with game');
+       }
+
+       // Determine winning team
+       let winningTeam = winningCard.player.team;
       if (winningTeam === 1) {
         this.scores.team1++;
       } else {
@@ -291,17 +299,41 @@ function createDeck() {
          endGame(winner) {
        console.log(`🏁 Game ended! Winner: ${winner}`);
        
+       // Show game end popup
+       popupMessage = `🏁 GAME ENDED! 🏁\n\nWinner: ${winner}\n\nFinal Score:\nTeam Alfa: ${this.games.team1} games\nTeam Beta: ${this.games.team2} games`;
+       try {
+         openPopup(true);
+       } catch (error) {
+         console.warn('⚠️ Could not show game end popup, continuing with game');
+       }
+       
        // Check if a team has won the set
        if (this.games.team1 >= 12) {
          this.sets.team1++;
          this.games.team1 = 0;
          this.games.team2 = 0;
          console.log(`🏆 Team Alfa won the set! Total sets: ${this.sets.team1}`);
+         
+         // Show set win popup
+         popupMessage = `🏆 SET COMPLETE! 🏆\n\nTeam Alfa has won the set!\n\nTotal Sets:\nTeam Alfa: ${this.sets.team1}\nTeam Beta: ${this.sets.team2}`;
+         try {
+           openPopup(true);
+         } catch (error) {
+           console.warn('⚠️ Could not show set win popup, continuing with game');
+         }
        } else if (this.games.team2 >= 12) {
          this.sets.team2++;
          this.games.team1 = 0;
          this.games.team2 = 0;
          console.log(`🏆 Team Beta won the set! Total sets: ${this.sets.team2}`);
+         
+         // Show set win popup
+         popupMessage = `🏆 SET COMPLETE! 🏆\n\nTeam Beta has won the set!\n\nTotal Sets:\nTeam Alfa: ${this.sets.team1}\nTeam Beta: ${this.sets.team2}`;
+         try {
+           openPopup(true);
+         } catch (error) {
+           console.warn('⚠️ Could not show set win popup, continuing with game');
+         }
        }
    
        // Reset for next game
@@ -397,13 +429,13 @@ function createDeck() {
          this.lastActionWasRaise = false;
          this.potentialGameValue = 0;
    
-         // Show acceptance message
-         popupMessage = `Truco accepted! Game now worth ${this.gameValue} games`;
-         try {
-           openPopup(true);
-         } catch (error) {
-           console.warn('⚠️ Could not show popup, continuing with game');
-         }
+                   // Show acceptance message
+          popupMessage = `✅ TRUCO ACCEPTED! ✅\n\n${this.players[this.currentPlayerIndex].name} has accepted the Truco challenge!\n\nGame continues and is now worth ${this.gameValue} games.\n\n${this.players[this.currentPlayerIndex].name} can now play their card.`;
+          try {
+            openPopup(true);
+          } catch (error) {
+            console.warn('⚠️ Could not show popup, continuing with game');
+          }
    
          // Make the Truco caller active and continue game
          if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
@@ -429,13 +461,13 @@ function createDeck() {
            this.games.team2 += this.potentialGameValue || 3;
          }
          
-         // Show rejection message
-         popupMessage = `Truco rejected! ${winningTeamName} wins ${this.potentialGameValue || 3} games`;
-         try {
-           openPopup(true);
-         } catch (error) {
-           console.warn('⚠️ Could not show popup, continuing with game');
-         }
+                   // Show rejection message
+          popupMessage = `❌ TRUCO REJECTED! ❌\n\n${winningTeamName} has rejected the Truco challenge!\n\nGame ends immediately and ${winningTeamName} wins ${this.potentialGameValue || 3} games.\n\nA new game will start shortly.`;
+          try {
+            openPopup(true);
+          } catch (error) {
+            console.warn('⚠️ Could not show popup, continuing with game');
+          }
          
          // Reset Truco state
          this.trucoState = false;
@@ -484,13 +516,13 @@ function createDeck() {
          
          this.currentPlayerIndex = nextPlayerIndex;
          
-         // Show raise message
-         popupMessage = `Truco raised to ${this.potentialGameValue} games! ${this.players[nextPlayerIndex].name} must respond`;
-         try {
-           openPopup(true);
-         } catch (error) {
-           console.warn('⚠️ Could not show popup, continuing with game');
-         }
+                   // Show raise message
+          popupMessage = `📈 TRUCO RAISED! 📈\n\n${this.players[this.currentPlayerIndex].name} has raised the Truco to ${this.potentialGameValue} games!\n\n${this.players[nextPlayerIndex].name} must now respond: Accept, Reject, or Raise further.\n\nCurrent game value: ${this.potentialGameValue} games`;
+          try {
+            openPopup(true);
+          } catch (error) {
+            console.warn('⚠️ Could not show popup, continuing with game');
+          }
    
          // If next player is a bot, make them respond
          if (this.players[nextPlayerIndex].isBot) {

@@ -194,6 +194,46 @@ function setup() {
     cardValuesCloseButton.style("display", "block"); // Ensure it's visible
     cardValuesCloseButton.show(); // Make sure p5.js shows it
 
+    // Create popup elements for Truco notifications
+    popup = createDiv();
+    popup.class('popup');
+    popup.parent(gameDiv);
+    popup.style('position', 'absolute');
+    popup.style('top', '50%');
+    popup.style('left', '50%');
+    popup.style('transform', 'translate(-50%, -50%)');
+    popup.style('background-color', 'rgba(0, 0, 0, 0.9)');
+    popup.style('color', 'white');
+    popup.style('padding', '20px');
+    popup.style('border-radius', '10px');
+    popup.style('border', '2px solid #ff4444');
+    popup.style('z-index', '1000');
+    popup.style('text-align', 'center');
+    popup.style('min-width', '300px');
+    popup.style('font-size', '18px');
+    popup.style('font-weight', 'bold');
+    popup.hide();
+
+    // Create popup message paragraph
+    messageParagrph = createP('');
+    messageParagrph.parent(popup);
+    messageParagrph.style('margin', '0');
+    messageParagrph.style('padding', '10px 0');
+    messageParagrph.style('text-align', 'center');
+
+    // Create close button for popup
+    closeButton = createButton("Close");
+    closeButton.parent(popup);
+    closeButton.mousePressed(closePopup);
+    closeButton.style('margin-top', '15px');
+    closeButton.style('padding', '10px 20px');
+    closeButton.style('background-color', '#ff4444');
+    closeButton.style('color', 'white');
+    closeButton.style('border', 'none');
+    closeButton.style('border-radius', '5px');
+    closeButton.style('cursor', 'pointer');
+    closeButton.style('font-weight', 'bold');
+
     console.log('Setup complete - canvas and UI elements initialized');
 }
   
