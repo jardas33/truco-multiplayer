@@ -22,7 +22,11 @@ function truco() {
   let nextPlayerIndex = (window.game.currentPlayerIndex + 1) % window.game.players.length;
   
   // Set popup message
-  popupMessage = `🎯 ${window.game.players[window.game.currentPlayerIndex].name} called Truco!`;
+  if (window.game.gameValue > 1) {
+    popupMessage = `📈 ${window.game.players[window.game.currentPlayerIndex].name} raised Truco to ${window.game.potentialGameValue} games!`;
+  } else {
+    popupMessage = `🎯 ${window.game.players[window.game.currentPlayerIndex].name} called Truco!`;
+  }
   
   // Show popup
   try {
@@ -329,10 +333,38 @@ function botDecision() {
 
 
 function showTrucoButton() {
-  if (window.game && window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
-    trucoButton.show()
+  if (!window.game) {
+    trucoButton.hide();
+    return;
+  }
+  
+  const currentPlayer = window.game.players[window.game.currentPlayerIndex];
+  if (!currentPlayer) {
+    trucoButton.hide();
+    return;
+  }
+  
+  // Check if it's the human player's turn
+  if (window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
+    // Check if this is a raise attempt during an ongoing Truco game
+    if (window.game.gameValue > 1) {
+      // This is a raise - only show button if it's the opposing team's turn
+      const currentPlayerTeam = currentPlayer.team;
+      if (currentPlayerTeam !== window.game.trucoCallerTeam) {
+        // Can raise - show button with raise text
+        trucoButton.html("RAISE TRUCO");
+        trucoButton.show();
+      } else {
+        // Cannot raise on own team's turn
+        trucoButton.hide();
+      }
+    } else {
+      // Initial Truco call - show button with normal text
+      trucoButton.html("TRUCO");
+      trucoButton.show();
+    }
   } else {
-    trucoButton.hide()
+    trucoButton.hide();
   }
 }
 

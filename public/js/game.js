@@ -83,24 +83,26 @@ function createDeck() {
 }
   
   window.Game = class Game {
-    constructor(players) {
-      this.players = players;
-      this.currentPlayerIndex = 0;
-      this.startRoundPlayer = 0;
-      this.round = 0;
-      this.scores = { team1: 0, team2: 0 };
-      this.games = { team1: 0, team2: 0 };
-      this.sets = { team1: 0, team2: 0 };
-      this.gameValue = 1;
-      this.potentialGameValue = 0;
-      this.trucoState = false;
-      this.initialTrucoCallerIndex = null;
-      this.roundResults = [];
-      this.IsDraw = false;
-      this.roundWinner = null;
-      this.winningstruc = null;
-      console.log("Game initialized with players:", players);
-    }
+         constructor(players) {
+       this.players = players;
+       this.currentPlayerIndex = 0;
+       this.startRoundPlayer = 0;
+       this.round = 0;
+       this.scores = { team1: 0, team2: 0 };
+       this.games = { team1: 0, team2: 0 };
+       this.sets = { team1: 0, team2: 0 };
+       this.gameValue = 1;
+       this.potentialGameValue = 0;
+       this.trucoState = false;
+       this.initialTrucoCallerIndex = null;
+       this.roundResults = [];
+       this.IsDraw = false;
+       this.roundWinner = null;
+       this.winningstruc = null;
+       this.currentTrucoValue = 1;
+       this.trucoCallerTeam = null;
+       console.log("Game initialized with players:", players);
+     }
   
          startGame() {
        console.log("Starting game...");
@@ -116,13 +118,14 @@ function createDeck() {
          }
        });
        
-       // Reset Truco state
-       this.trucoState = false;
-       this.initialTrucoCallerIndex = null;
-       this.lastActionWasRaise = false;
-       this.potentialGameValue = 0;
-       this.trucoCallerTeam = null;
-       isInTrucoPhase = false;
+               // Reset Truco state
+        this.trucoState = false;
+        this.initialTrucoCallerIndex = null;
+        this.lastActionWasRaise = false;
+        this.potentialGameValue = 0;
+        this.trucoCallerTeam = null;
+        this.currentTrucoValue = 1;
+        isInTrucoPhase = false;
        
        this.currentPlayerIndex = 0;
        this.players[this.currentPlayerIndex].isActive = true;
@@ -418,19 +421,20 @@ function createDeck() {
        setTimeout(() => {
          console.log(`🔄 Starting new game...`);
          
-         // Reset game state
-         this.scores = { team1: 0, team2: 0 };
-         this.gameValue = 1;
-         this.trucoState = false;
-         this.initialTrucoCallerIndex = null;
-         this.lastActionWasRaise = false;
-         this.potentialGameValue = 0;
-         this.trucoCallerTeam = null;
-         this.roundResults = [];
-         playedCards = [];
-         
-         // Reset Truco phase
-         isInTrucoPhase = false;
+                   // Reset game state
+          this.scores = { team1: 0, team2: 0 };
+          this.gameValue = 1;
+          this.trucoState = false;
+          this.initialTrucoCallerIndex = null;
+          this.lastActionWasRaise = false;
+          this.potentialGameValue = 0;
+          this.trucoCallerTeam = null;
+          this.currentTrucoValue = 1;
+          this.roundResults = [];
+          playedCards = [];
+          
+          // Reset Truco phase
+          isInTrucoPhase = false;
          
          // Create and distribute new cards
          createDeck();
@@ -459,14 +463,40 @@ function createDeck() {
        }, timeEndRound);
      }
   
-    requestTruco(player) {
+        requestTruco(player) {
       if (this.trucoState !== null || player !== this.players[this.currentPlayerIndex]) {
         return false;
       }
-  
+   
+      // Check if this is a raise attempt during an ongoing Truco game
+      if (this.gameValue > 1) {
+        // This is a raise - check if it's the opposing team's turn
+        const currentPlayerTeam = this.players[this.currentPlayerIndex].team;
+        if (currentPlayerTeam === this.trucoCallerTeam) {
+          console.log(`❌ Cannot raise Truco - it's the calling team's turn`);
+          return false;
+        }
+        
+        // Calculate new game value
+        if (this.gameValue === 3) {
+          this.potentialGameValue = 6;
+        } else if (this.gameValue === 6) {
+          this.potentialGameValue = 9;
+        } else if (this.gameValue === 9) {
+          this.potentialGameValue = 12;
+        } else {
+          console.log(`❌ Cannot raise beyond 12 games`);
+          return false;
+        }
+        
+        console.log(`📈 Truco raised from ${this.gameValue} to ${this.potentialGameValue} games`);
+      } else {
+        // This is the initial Truco call
+        this.potentialGameValue = 3;
+      }
+   
       this.trucoState = true;
       this.initialTrucoCallerIndex = this.currentPlayerIndex;
-      this.potentialGameValue = 3;
       
       // Show truco response buttons for next player
       let nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
@@ -491,21 +521,25 @@ function createDeck() {
          respondTruco(player, response) {
        console.log(`🎯 Truco response from ${player.name}: ${response === 1 ? 'Accept' : response === 2 ? 'Reject' : 'Raise'}`);
        
-       if (response === 1) {  // Accept
-         console.log(`✅ Truco accepted! Game now worth ${this.potentialGameValue} games`);
-         
-         // Set the final game value
-         this.gameValue = this.potentialGameValue;
-         this.trucoState = false; // Resume normal gameplay
-         isInTrucoPhase = false;
-         
-         // Return control to the player who called Truco
-         this.currentPlayerIndex = this.initialTrucoCallerIndex;
-         
-         // Reset Truco state
-         this.initialTrucoCallerIndex = null;
-         this.lastActionWasRaise = false;
-         this.potentialGameValue = 0;
+               if (response === 1) {  // Accept
+          console.log(`✅ Truco accepted! Game now worth ${this.potentialGameValue} games`);
+          
+          // Set the final game value
+          this.gameValue = this.potentialGameValue;
+          this.trucoState = false; // Resume normal gameplay
+          isInTrucoPhase = false;
+          
+          // Store the current Truco state for potential raises
+          this.currentTrucoValue = this.potentialGameValue;
+          this.trucoCallerTeam = this.players[this.initialTrucoCallerIndex].team;
+          
+          // Return control to the player who called Truco
+          this.currentPlayerIndex = this.initialTrucoCallerIndex;
+          
+          // Reset some Truco state but keep important info for raises
+          this.initialTrucoCallerIndex = null;
+          this.lastActionWasRaise = false;
+          this.potentialGameValue = 0;
    
                                        // Show acceptance message
            popupMessage = `✅ Truco accepted! Game worth ${this.gameValue} games.`;
@@ -680,20 +714,22 @@ function createDeck() {
       this.players = players;
     }
 
-    restartGame() {
-      // Reset game state for a new game
-      this.scores = { team1: 0, team2: 0 };
-      this.gameValue = 1;
-      this.trucoState = false;
-      this.initialTrucoCallerIndex = null;
-      this.roundResults = [];
-      this.IsDraw = false;
-      this.roundWinner = null;
-      this.winningstruc = null;
-      this.currentPlayerIndex = 0;
-      this.startRoundPlayer = 0;
-      this.round = 0;
-      playedCards = [];
+         restartGame() {
+       // Reset game state for a new game
+       this.scores = { team1: 0, team2: 0 };
+       this.gameValue = 1;
+       this.trucoState = false;
+       this.initialTrucoCallerIndex = null;
+       this.roundResults = [];
+       this.IsDraw = false;
+       this.roundWinner = null;
+       this.winningstruc = null;
+       this.currentPlayerIndex = 0;
+       this.startRoundPlayer = 0;
+       this.round = 0;
+       this.currentTrucoValue = 1;
+       this.trucoCallerTeam = null;
+       playedCards = [];
       
       // Reset player states
       this.players.forEach(player => {
