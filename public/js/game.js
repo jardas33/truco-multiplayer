@@ -437,6 +437,13 @@ function createDeck() {
             console.warn('⚠️ Could not show popup, continuing with game');
           }
    
+         // Hide Truco response buttons
+         if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
+           buttonAcceptTruco.hide();
+           buttonRejectTruco.hide();
+           buttonRaiseTruco.hide();
+         }
+         
          // Make the Truco caller active and continue game
          if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
            this.players[this.currentPlayerIndex].isActive = true;
@@ -468,6 +475,13 @@ function createDeck() {
           } catch (error) {
             console.warn('⚠️ Could not show popup, continuing with game');
           }
+         
+         // Hide Truco response buttons
+         if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
+           buttonAcceptTruco.hide();
+           buttonRejectTruco.hide();
+           buttonRaiseTruco.hide();
+         }
          
          // Reset Truco state
          this.trucoState = false;
@@ -530,10 +544,25 @@ function createDeck() {
          } else {
            // Human player - show response buttons
            if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
+             // Position buttons in the center of the screen
+             const buttonWidth = 200;
+             const buttonHeight = 50;
+             const buttonSpacing = 20;
+             const totalWidth = buttonWidth * 3 + buttonSpacing * 2;
+             const startX = (windowWidth - totalWidth) / 2;
+             const buttonY = windowHeight / 2 + 100; // Below the popup
+             
+             // Position Accept button (left)
+             buttonAcceptTruco.position(startX, buttonY);
              buttonAcceptTruco.show();
+             
+             // Position Reject button (center)
+             buttonRejectTruco.position(startX + buttonWidth + buttonSpacing, buttonY);
              buttonRejectTruco.show();
+             
              // Only show raise button if game value can still be increased
              if (this.potentialGameValue < 12) {
+               buttonRaiseTruco.position(startX + (buttonWidth + buttonSpacing) * 2, buttonY);
                buttonRaiseTruco.show();
              }
            }

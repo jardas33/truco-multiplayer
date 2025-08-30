@@ -44,10 +44,25 @@ function truco() {
     // Human player - show response buttons
     console.log(`👤 Human player ${window.game.players[nextPlayerIndex].name} can respond to Truco`);
     if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
+      // Position buttons in the center of the screen
+      const buttonWidth = 200;
+      const buttonHeight = 50;
+      const buttonSpacing = 20;
+      const totalWidth = buttonWidth * 3 + buttonSpacing * 2;
+      const startX = (windowWidth - totalWidth) / 2;
+      const buttonY = windowHeight / 2 + 100; // Below the popup
+      
+      // Position Accept button (left)
+      buttonAcceptTruco.position(startX, buttonY);
       buttonAcceptTruco.show();
+      
+      // Position Reject button (center)
+      buttonRejectTruco.position(startX + buttonWidth + buttonSpacing, buttonY);
       buttonRejectTruco.show();
+      
       // Only show raise button if game value can still be increased
       if (window.game.potentialGameValue < 12) {
+        buttonRaiseTruco.position(startX + (buttonWidth + buttonSpacing) * 2, buttonY);
         buttonRaiseTruco.show();
       }
     }

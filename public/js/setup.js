@@ -104,24 +104,61 @@ function setup() {
     trucoButton.style('font-weight', 'bold'); // Bold text
     trucoButton.hide();
 
-    // Create truco response buttons
-    buttonAcceptTruco = createButton("Accept Truco");
-    buttonRejectTruco = createButton("Reject Truco");
-    buttonRaiseTruco = createButton("Raise Truco");
+    // Create truco response buttons with proper styling and positioning
+    buttonAcceptTruco = createButton("✅ ACCEPT TRUCO");
+    buttonRejectTruco = createButton("❌ REJECT TRUCO");
+    buttonRaiseTruco = createButton("📈 RAISE TRUCO");
 
-    buttonAcceptTruco.position(10, 180);
+    // Style Accept button (Green)
+    buttonAcceptTruco.style('background-color', '#28a745');
+    buttonAcceptTruco.style('color', 'white');
+    buttonAcceptTruco.style('border', 'none');
+    buttonAcceptTruco.style('border-radius', '8px');
+    buttonAcceptTruco.style('font-weight', 'bold');
+    buttonAcceptTruco.style('font-size', '16px');
+    buttonAcceptTruco.style('padding', '15px 25px');
+    buttonAcceptTruco.style('cursor', 'pointer');
+    buttonAcceptTruco.style('z-index', '1000');
+    buttonAcceptTruco.style('position', 'absolute');
+    buttonAcceptTruco.style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
+
+    // Style Reject button (Red)
+    buttonRejectTruco.style('background-color', '#dc3545');
+    buttonRejectTruco.style('color', 'white');
+    buttonRejectTruco.style('border', 'none');
+    buttonRejectTruco.style('border-radius', '8px');
+    buttonRejectTruco.style('font-weight', 'bold');
+    buttonRejectTruco.style('font-size', '16px');
+    buttonRejectTruco.style('padding', '15px 25px');
+    buttonRejectTruco.style('cursor', 'pointer');
+    buttonRejectTruco.style('z-index', '1000');
+    buttonRejectTruco.style('position', 'absolute');
+    buttonRejectTruco.style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
+
+    // Style Raise button (Blue)
+    buttonRaiseTruco.style('background-color', '#007bff');
+    buttonRaiseTruco.style('color', 'white');
+    buttonRaiseTruco.style('border', 'none');
+    buttonRaiseTruco.style('border-radius', '8px');
+    buttonRaiseTruco.style('font-weight', 'bold');
+    buttonRaiseTruco.style('font-size', '16px');
+    buttonRaiseTruco.style('padding', '15px 25px');
+    buttonRaiseTruco.style('cursor', 'pointer');
+    buttonRaiseTruco.style('z-index', '1000');
+    buttonRaiseTruco.style('position', 'absolute');
+    buttonRaiseTruco.style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
+
+    // Set button event handlers
     buttonAcceptTruco.mousePressed(() => {
         if (window.game) {
             window.game.respondTruco(window.game.getCurrentPlayer(), 1);
         }
     });
-    buttonRejectTruco.position(10, 210);
     buttonRejectTruco.mousePressed(() => {
         if (window.game) {
             window.game.respondTruco(window.game.getCurrentPlayer(), 2);
         }
     });
-    buttonRaiseTruco.position(10, 240);
     buttonRaiseTruco.mousePressed(() => {
         if (window.game) {
             window.game.respondTruco(window.game.getCurrentPlayer(), 3);
