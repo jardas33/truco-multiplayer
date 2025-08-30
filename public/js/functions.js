@@ -119,6 +119,18 @@ function openPopup(onlyClose) {
     if (messageParagrph.elt) {
       messageParagrph.elt.textContent = popupMessage;
     }
+    
+    // Reset and animate progress bar
+    if (popupProgressFill) {
+      popupProgressFill.style('width', '100%');
+      // Animate progress bar from 100% to 0% over the auto-close time
+      setTimeout(() => {
+        if (popupProgressFill) {
+          popupProgressFill.style('width', '0%');
+        }
+      }, 100);
+    }
+    
     popupTimeoutId = setTimeout(function () { closePopup(); }, timePopUpAutoClose);
   } catch (error) {
     console.error('❌ Error showing popup:', error);

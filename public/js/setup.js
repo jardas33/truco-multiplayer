@@ -202,16 +202,19 @@ function setup() {
     popup.style('top', '50%');
     popup.style('left', '50%');
     popup.style('transform', 'translate(-50%, -50%)');
-    popup.style('background-color', 'rgba(0, 0, 0, 0.9)');
+    popup.style('background-color', 'rgba(0, 0, 0, 0.95)');
     popup.style('color', 'white');
-    popup.style('padding', '20px');
-    popup.style('border-radius', '10px');
-    popup.style('border', '2px solid #ff4444');
+    popup.style('padding', '30px');
+    popup.style('border-radius', '15px');
+    popup.style('border', '3px solid #ff4444');
     popup.style('z-index', '1000');
     popup.style('text-align', 'center');
-    popup.style('min-width', '300px');
-    popup.style('font-size', '18px');
+    popup.style('min-width', '350px');
+    popup.style('max-width', '500px');
+    popup.style('font-size', '20px');
     popup.style('font-weight', 'bold');
+    popup.style('box-shadow', '0 10px 30px rgba(0, 0, 0, 0.8)');
+    popup.style('cursor', 'default');
     popup.hide();
 
     // Create popup message paragraph
@@ -220,6 +223,16 @@ function setup() {
     messageParagrph.style('margin', '0');
     messageParagrph.style('padding', '10px 0');
     messageParagrph.style('text-align', 'center');
+    
+    // Create instruction text
+    let instructionText = createP('Click Close or wait for auto-close');
+    instructionText.parent(popup);
+    instructionText.style('margin', '0 0 15px 0');
+    instructionText.style('padding', '0');
+    instructionText.style('text-align', 'center');
+    instructionText.style('color', '#cccccc');
+    instructionText.style('font-size', '14px');
+    instructionText.style('font-style', 'italic');
 
     // Create close button for popup
     closeButton = createButton("Close");
@@ -233,6 +246,25 @@ function setup() {
     closeButton.style('border-radius', '5px');
     closeButton.style('cursor', 'pointer');
     closeButton.style('font-weight', 'bold');
+    
+    // Create progress bar for popup auto-close
+    popupProgressBar = createDiv();
+    popupProgressBar.parent(popup);
+    popupProgressBar.style('width', '100%');
+    popupProgressBar.style('height', '4px');
+    popupProgressBar.style('background-color', '#333');
+    popupProgressBar.style('border-radius', '2px');
+    popupProgressBar.style('margin-top', '15px');
+    popupProgressBar.style('overflow', 'hidden');
+    
+    // Create progress bar fill
+    popupProgressFill = createDiv();
+    popupProgressFill.parent(popupProgressBar);
+    popupProgressFill.style('width', '100%');
+    popupProgressFill.style('height', '100%');
+    popupProgressFill.style('background-color', '#ff4444');
+    popupProgressFill.style('transition', 'width 0.1s linear');
+    popupProgressFill.style('transform-origin', 'left');
 
     console.log('Setup complete - canvas and UI elements initialized');
 }

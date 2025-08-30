@@ -1,7 +1,7 @@
 // Setup Variables
 let timeBots = 2000; //time bots take to play
 let timeEndRound = 3000; //time bots take to play
-let timePopUpAutoClose = 5000; // time it takes to popup of rounds to close
+let timePopUpAutoClose = 15000; // time it takes to popup of rounds to close (increased to 15 seconds)
 let selfPlayer = 1;
 let showAllCards = true;
 
@@ -36,6 +36,8 @@ let popupOnlyClose;
 let popupMessage;
 let popupTimeoutId;
 let messageParagrph;
+let popupProgressBar;
+let popupProgressFill;
 let playerWinner = "1";
 let startButton;
 let instructionsButton;
