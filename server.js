@@ -35,6 +35,8 @@ io.on('connection', (socket) => {
             roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         }
         
+        console.log(`🏠 Creating room: ${roomCode} for user: ${socket.id}`);
+        
         rooms.set(roomCode, {
             players: [{
                 id: socket.id,
@@ -52,18 +54,24 @@ io.on('connection', (socket) => {
             players: rooms.get(roomCode).players,
             count: 1
         });
+        
+        console.log(`✅ Room ${roomCode} created successfully`);
     });
 
     // Handle room joining
     socket.on('joinRoom', (roomCode) => {
         const room = rooms.get(roomCode);
         
+        console.log(`🚪 User ${socket.id} attempting to join room: ${roomCode}`);
+        
         if (!room) {
+            console.log(`❌ Room ${roomCode} not found`);
             socket.emit('error', 'Room not found');
             return;
         }
 
         if (room.players.length >= 4) {
+            console.log(`❌ Room ${roomCode} is full`);
             socket.emit('error', 'Room is full');
             return;
         }
@@ -76,6 +84,8 @@ io.on('connection', (socket) => {
         
         socket.join(roomCode);
         socket.roomCode = roomCode;
+
+        console.log(`✅ User ${socket.id} joined room ${roomCode}. Total players: ${room.players.length}`);
 
         io.to(roomCode).emit('playerJoined', {
             players: room.players,
@@ -115,27 +125,26 @@ io.on('connection', (socket) => {
 
     // Handle game start
     socket.on('startGame', (roomCode) => {
+        console.log(`🎮 Starting game in room: ${roomCode}`);
+        
         const room = rooms.get(roomCode);
-        if (!room || room.players.length < 4) return;
+        if (!room) {
+            console.log(`❌ Room ${roomCode} not found for game start`);
+            return;
+        }
+        
+        if (room.players.length < 4) {
+            console.log(`❌ Room ${roomCode} needs 4 players, has ${room.players.length}`);
+            socket.emit('error', 'Need 4 players to start the game');
+            return;
+        }
 
-        room.game = {
-            deck: createDeck(),
-            currentPlayer: 0,
-            scores: { team1: 0, team2: 0 }
-        };
+        console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
-        const hands = dealCards(room.game.deck);
-        room.players.forEach((player, index) => {
-            if (!player.isBot) {
-                io.to(player.id).emit('gameStarted', {
-                    hand: hands[index],
-                    position: index,
-                    players: room.players
-                });
-            }
-        });
-
+        // ✅ Emit gameStart event to all players in the room
         io.to(roomCode).emit('gameStart', room.players);
+        
+        console.log(`🎯 Game started successfully in room ${roomCode}`);
     });
 
     // Handle disconnection
@@ -161,29 +170,76 @@ io.on('connection', (socket) => {
 
     // Handle game events
     socket.on('playCard', (data) => {
-        const room = rooms.get(data.roomCode);
-        if (room && room.game) {
-            io.to(data.roomCode).emit('cardPlayed', {
-                playerId: socket.id,
-                card: data.card
-            });
-
-            const currentPlayerIndex = room.players.findIndex(p => p.id === socket.id);
-            const nextPlayerIndex = (currentPlayerIndex + 1) % 4;
-            if (room.players[nextPlayerIndex].isBot) {
-                setTimeout(() => {
-                    const hands = dealCards(room.game.deck);
-                    const botHand = hands[nextPlayerIndex];
-                    if (botHand && botHand.length > 0) {
-                        const randomCard = botHand[Math.floor(Math.random() * botHand.length)];
-                        io.to(data.roomCode).emit('cardPlayed', {
-                            playerId: room.players[nextPlayerIndex].id,
-                            card: randomCard
-                        });
-                    }
-                }, 1000);
-            }
+        console.log(`🃏 Card played in room: ${socket.roomCode}`);
+        
+        if (!socket.roomCode) {
+            console.log(`❌ User ${socket.id} not in a room`);
+            return;
         }
+        
+        const room = rooms.get(socket.roomCode);
+        if (!room) {
+            console.log(`❌ Room ${socket.roomCode} not found for card play`);
+            return;
+        }
+
+        // ✅ Emit card played event to all players in the room
+        io.to(socket.roomCode).emit('cardPlayed', {
+            playerId: socket.id,
+            cardIndex: data.cardIndex || 0,
+            card: data.card
+        });
+
+        console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
+    });
+
+    // ✅ Handle Truco requests
+    socket.on('requestTruco', (data) => {
+        console.log(`🎯 Truco requested in room: ${socket.roomCode}`);
+        
+        if (!socket.roomCode) {
+            console.log(`❌ User ${socket.id} not in a room`);
+            return;
+        }
+        
+        const room = rooms.get(socket.roomCode);
+        if (!room) {
+            console.log(`❌ Room ${socket.roomCode} not found for Truco request`);
+            return;
+        }
+
+        // Emit Truco called event to all players in the room
+        io.to(socket.roomCode).emit('trucoCalled', {
+            caller: socket.id,
+            roomCode: socket.roomCode
+        });
+
+        console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
+    });
+
+    // ✅ Handle Truco responses
+    socket.on('respondTruco', (data) => {
+        console.log(`🎯 Truco response in room: ${socket.roomCode}`);
+        
+        if (!socket.roomCode) {
+            console.log(`❌ User ${socket.id} not in a room`);
+            return;
+        }
+        
+        const room = rooms.get(socket.roomCode);
+        if (!room) {
+            console.log(`❌ Room ${socket.roomCode} not found for Truco response`);
+            return;
+        }
+
+        // Emit Truco response event to all players in the room
+        io.to(socket.roomCode).emit('trucoResponded', {
+            responder: socket.id,
+            response: data.response,
+            roomCode: socket.roomCode
+        });
+
+        console.log(`✅ Truco response event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });
 });
 

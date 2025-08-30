@@ -186,13 +186,14 @@ function closePopup() {
 }
 
 function startTrucoGame() {
-  if (socket) {
+  if (socket && window.roomId) {
     // Online mode - check if enough players
-    if (window.players && Object.keys(window.players).length < 2) {
+    if (window.players && window.players.length < 2) {
       alert('Need at least 2 players to start the game');
       return;
     }
-    socket.emit('start-game', { roomCode: currentRoom });
+    console.log('Starting multiplayer game in room:', window.roomId);
+    socket.emit('startGame', window.roomId); // ✅ Fixed event name and room ID
   } else {
     // Local mode
     gameState = gameStateEnum.Playing;
@@ -204,21 +205,23 @@ function startTrucoGame() {
   }
 
   // Hide menu and show game
-  menuDiv.style('display', 'none');
-  gameDiv.style('display', 'block');
+  if (menuDiv) menuDiv.style('display', 'none');
+  if (gameDiv) gameDiv.style('display', 'block');
 }
 
 function backToMainMenu() {
   gameState = gameStateEnum.Menu;
-  menuDiv.class('active');
-  instructionsDiv.removeClass('active');
-  valuesDiv.removeClass('active');
-  gameDiv.removeClass('active');
+  if (menuDiv) menuDiv.class('active');
+  if (instructionsDiv) instructionsDiv.removeClass('active');
+  if (valuesDiv) valuesDiv.removeClass('active');
+  if (gameDiv) gameDiv.removeClass('active');
   
   // If in online mode, leave the room
-  if (socket && currentRoom) {
-    socket.emit('leave-room', { roomCode: currentRoom });
-    currentRoom = null;
+  if (socket && window.roomId) {
+    console.log('Leaving room:', window.roomId);
+    socket.emit('disconnect'); // ✅ Use disconnect event to leave room
+    window.roomId = null;
+    window.players = null;
   }
 }
 
@@ -380,45 +383,66 @@ function showTrucoButton() {
 function setupSocketHandlers() {
   if (!socket) return;
 
-  socket.on('player-joined', function(data) {
+  // ✅ Fixed event names to match server
+  socket.on('playerJoined', function(data) {
     console.log('Player joined:', data);
     // Update player list
     updatePlayerList(data.players);
   });
 
-  socket.on('game-started', function(data) {
-    console.log('Game started:', data);
+  socket.on('gameStart', function(players) {
+    console.log('Game starting with players:', players);
     gameState = gameStateEnum.Playing;
-    window.game = new window.Game(data.players);
-    if (window.game.restartGame) {
-      window.game.restartGame();
+    
+    // ✅ Store players globally for multiplayer
+    window.players = players;
+    
+    // Initialize multiplayer game
+    if (window.game && window.game.startGame) {
+      window.game.startGame();
     }
-    window.game.startGame();
     
     // Hide menu and show game
-    menuDiv.style('display', 'none');
-    gameDiv.style('display', 'block');
+    if (menuDiv) menuDiv.style('display', 'none');
+    if (gameDiv) gameDiv.style('display', 'block');
   });
 
-  socket.on('card-played', function(data) {
+  socket.on('cardPlayed', function(data) {
     console.log('Card played:', data);
-    if (data.player !== selfPlayer && window.game) {
-      let player = window.game.players[data.player - 1];
-      window.game.playCard(player, data.cardIndex);
+    if (data.playerId !== socket.id && window.game) {
+      // ✅ Handle multiplayer card playing
+      let playerIndex = data.playerId;
+      let cardIndex = data.cardIndex || 0;
+      
+      if (window.game.players[playerIndex]) {
+        window.game.playCard(window.game.players[playerIndex], cardIndex);
+      }
     }
   });
 
-  socket.on('truco-called', function(data) {
+  socket.on('trucoCalled', function(data) {
     console.log('Truco called:', data);
     if (window.game && data.caller !== window.game.currentPlayerIndex) {
       truco();
     }
   });
 
-  socket.on('player-left', function(data) {
+  socket.on('playerLeft', function(data) {
     console.log('Player left:', data);
     // Update player list
     updatePlayerList(data.players);
+  });
+
+  // ✅ Add error handling
+  socket.on('error', function(message) {
+    console.error('Server error:', message);
+    alert('Server error: ' + message);
+  });
+
+  // ✅ Add room full notification
+  socket.on('roomFull', function() {
+    console.log('Room is full');
+    alert('Room is full!');
   });
 }
 

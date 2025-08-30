@@ -219,9 +219,10 @@ function createDeck() {
         this.nextPlayer();
       }
   
-      if (isMultiplayerMode) {
+      if (isMultiplayerMode && socket && window.roomId) {
+        console.log('Emitting multiplayer card play');
         socket.emit('playCard', {
-          roomId: roomId,
+          roomCode: window.roomId,
           cardIndex: cardIndex,
           card: card
         });
@@ -515,9 +516,10 @@ function createDeck() {
         buttonRaiseTruco.show();
       }
   
-      if (isMultiplayerMode) {
+      if (isMultiplayerMode && socket && window.roomId) {
+        console.log('Emitting multiplayer Truco request');
         socket.emit('requestTruco', {
-          roomId: roomId,
+          roomCode: window.roomId,
           playerId: playerId
         });
       }
@@ -706,9 +708,10 @@ function createDeck() {
        }
    
        // Emit to multiplayer if needed
-       if (isMultiplayerMode && socket) {
+       if (isMultiplayerMode && socket && window.roomId) {
+         console.log('Emitting multiplayer Truco response');
          socket.emit('respondTruco', {
-           roomId: roomId,
+           roomCode: window.roomId,
            playerId: playerId,
            response: response
          });
@@ -804,35 +807,17 @@ function createDeck() {
         isMultiplayerMode = true;
         gameState = gameStateEnum.Playing;
         
-        // Initialize game
-        window.game = new window.Game(window.players || []);
-        createDeck();
-        shuffleDeck(deck);
+        console.log("Multiplayer mode enabled, room ID:", window.roomId);
+        console.log("Players:", window.players);
         
-        // Listen for game started event which includes player hands
-        socket.on('gameStarted', (data) => {
-            console.log('Received game data:', data);
-            playerHand = data.hand;
-            playerPosition = data.position;
-            window.game.updatePlayers(data.players);
-            window.game.currentPlayerIndex = 0;
-            
-            // Show game UI elements
-            backToMainMenuButton.show();
-            trucoButton.show();
-            
-            // Force redraw
-            redrawGame();
-        });
-
-        // Listen for card played events
-        socket.on('cardPlayed', (data) => {
-            console.log('Card played:', data);
-            if (data.playerId !== socket.id) {
-                window.game.handleCardPlay(data.card, data.playerId);
-                redrawGame();
-            }
-        });
+        // Initialize game with multiplayer players
+        if (window.players && window.players.length >= 2) {
+            window.game = new window.Game(window.players);
+            console.log("Multiplayer game initialized successfully");
+        } else {
+            console.error("Not enough players for multiplayer game");
+            return;
+        }
     }
 }
 

@@ -76,7 +76,27 @@ function setupSocketListeners() {
         console.log('Game starting with players:', players);
         hideRoomControls();
         window.players = players;  // Store players for the game
-        startTrucoGame();  // This will now wait for 'gameStarted' event
+        
+        // ✅ Initialize multiplayer game immediately
+        console.log('Initializing multiplayer game...');
+        gameState = gameStateEnum.Playing;
+        
+        // Create game instance with multiplayer players
+        window.game = new Game(players);
+        
+        // Start the game
+        if (window.game.startGame) {
+            window.game.startGame();
+        }
+        
+        // Transition to game view
+        const menuElement = document.getElementById('Menu');
+        const gameElement = document.getElementById('Game');
+        
+        if (menuElement) menuElement.style.display = 'none';
+        if (gameElement) gameElement.style.display = 'block';
+        
+        console.log('Multiplayer game started successfully');
     });
 
     socket.on('error', (message) => {
