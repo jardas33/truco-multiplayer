@@ -65,24 +65,45 @@ function setupSocketListeners() {
     });
 
     socket.on('playerJoined', (data) => {
-        console.log('Player joined:', data);
+        console.log('👤 Player joined:', data);
         updatePlayerList(data.players);
+        
+        // ✅ Enable start button when we have exactly 4 players
         if (data.count === 4) {
+            console.log('🎯 Room is full with 4 players - enabling start button');
             enableStartButton();
+        } else {
+            console.log(`📊 Room has ${data.count}/4 players`);
         }
     });
 
     socket.on('gameStart', (players) => {
-        console.log('Game starting with players:', players);
+        console.log('🎮 Game starting with players:', players);
         hideRoomControls();
         window.players = players;  // Store players for the game
         
         // ✅ Initialize multiplayer game immediately
-        console.log('Initializing multiplayer game...');
+        console.log('🚀 Initializing multiplayer game...');
         gameState = gameStateEnum.Playing;
         
+        // ✅ Create proper multiplayer players with correct team assignments
+        let multiplayerPlayers = [];
+        players.forEach((player, index) => {
+            let team = "team1"; // Default team
+            if (index === 0 || index === 2) {
+                team = "team1"; // Player 1 and Bot 2 = Team Alfa
+            } else {
+                team = "team2"; // Bot 1 and Bot 3 = Team Beta
+            }
+            
+            // Create Player object with proper team assignment
+            let newPlayer = new Player(player.name, team, player.isBot, index);
+            multiplayerPlayers.push(newPlayer);
+            console.log(`👤 Created player: ${newPlayer.name} (${team}) - Bot: ${newPlayer.isBot}`);
+        });
+        
         // Create game instance with multiplayer players
-        window.game = new Game(players);
+        window.game = new Game(multiplayerPlayers);
         
         // Start the game
         if (window.game.startGame) {
@@ -96,7 +117,7 @@ function setupSocketListeners() {
         if (menuElement) menuElement.style.display = 'none';
         if (gameElement) gameElement.style.display = 'block';
         
-        console.log('Multiplayer game started successfully');
+        console.log('✅ Multiplayer game started successfully with', multiplayerPlayers.length, 'players');
     });
 
     socket.on('error', (message) => {
@@ -218,82 +239,19 @@ function addBot() {
 }
 
 function startGameWithCurrentPlayers() {
-    console.log('Starting game with current players...');
+    console.log('Starting multiplayer game with current players...');
     
-    // Initialize game state FIRST
-    gameState = gameStateEnum.Playing;
-    console.log('Game state set to:', gameState);
-    
-    // Create players array with one human player and three bots
-    let players = [
-        new Player("Player 1", "Team 1", false),
-        new Player("Bot 1", "Team 2", true),
-        new Player("Bot 2", "Team 1", true),
-        new Player("Bot 3", "Team 2", true)
-    ];
-    
-    console.log("Players created:", players);
-    
-    // Initialize game with players
-    window.game = new Game(players);
-    
-    // Initialize game variables
-    playedCards = [];
-    teamAlfaRounds = 0;
-    teamBetaRounds = 0;
-    teamAlfaGames = 0;
-    teamBetaGames = 0;
-    teamAlfaSets = 0;
-    teamBetaSets = 0;
-    
-    // Start the game
-    window.game.startGame();
-    
-    // Force UI transition - use direct DOM manipulation for reliability
-    console.log('Transitioning UI to game view...');
-    
-    // Hide menu
-    const menuElement = document.getElementById('Menu');
-    if (menuElement) {
-        menuElement.style.display = 'none';
-        console.log('Menu hidden');
+    if (!socket || !window.roomId) {
+        console.error('Cannot start multiplayer game - no socket or room ID');
+        return;
     }
     
-    // Show game area
-    const gameElement = document.getElementById('Game');
-    if (gameElement) {
-        gameElement.style.display = 'block';
-        console.log('Game area shown');
-    }
+    // ✅ Emit startGame event to server to start multiplayer game
+    console.log('Emitting startGame event to server for room:', window.roomId);
+    socket.emit('startGame', window.roomId);
     
-    // Hide other elements
-    const instructionsElement = document.getElementById('Instructions');
-    if (instructionsElement) {
-        instructionsElement.style.display = 'none';
-    }
-    
-    const valuesElement = document.getElementById('Values');
-    if (valuesElement) {
-        valuesElement.style.display = 'none';
-    }
-    
-    // Try to show back button if available
-    if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
-        try {
-            backToMainMenuButton.show();
-            console.log('Back button shown');
-        } catch (e) {
-            console.log('Back button not available yet');
-        }
-    }
-    
-    // Force a redraw if p5.js is available
-    if (typeof redraw === 'function') {
-        redraw();
-        console.log('Forced p5.js redraw');
-    }
-    
-    console.log('Game started successfully');
+    // The actual game initialization will happen in the 'gameStart' socket event handler
+    console.log('Start game event emitted - waiting for server response...');
 }
 
 function updateLobbyUI(inRoom) {
@@ -313,8 +271,17 @@ function updateLobbyUI(inRoom) {
 function updatePlayerList(players) {
     const playerList = document.getElementById('playerList');
     if (playerList) {
-        playerList.innerHTML = '<h3>Players in Room:</h3>' + 
-            players.map(p => `<div>${p.name || 'Player'} ${p.isBot ? '(Bot)' : ''}</div>`).join('');
+        console.log('📋 Updating player list with:', players);
+        
+        let playerListHTML = '<h3>Players in Room:</h3>';
+        players.forEach((player, index) => {
+            const playerType = player.isBot ? '🤖 Bot' : '👤 Player';
+            const team = (index === 0 || index === 2) ? 'Team Alfa' : 'Team Beta';
+            playerListHTML += `<div>${playerType}: ${player.name} (${team})</div>`;
+        });
+        
+        playerList.innerHTML = playerListHTML;
+        console.log('✅ Player list updated');
     }
 }
 
@@ -322,6 +289,8 @@ function enableStartButton() {
     const startGameBtn = document.getElementById('startGameBtn');
     if (startGameBtn) {
         startGameBtn.disabled = false;
+        startGameBtn.style.display = 'inline-block';
+        console.log('✅ Start button enabled - 4 players ready');
     }
 }
 

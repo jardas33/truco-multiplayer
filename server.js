@@ -95,30 +95,42 @@ io.on('connection', (socket) => {
 
     // Handle adding bots
     socket.on('addBot', (roomCode) => {
+        console.log(`🤖 Adding bot to room: ${roomCode}`);
+        
         const room = rooms.get(roomCode);
         
         if (!room) {
+            console.log(`❌ Room ${roomCode} not found for bot addition`);
             socket.emit('error', 'Room not found');
             return;
         }
 
         if (room.players.length >= 4) {
+            console.log(`❌ Room ${roomCode} is full, cannot add bot`);
             socket.emit('error', 'Room is full');
             return;
         }
 
+        const botNumber = room.players.length + 1;
+        const botId = `bot-${Math.random().toString(36).substring(7)}`;
+        const botName = `Bot ${botNumber}`;
+        
         room.players.push({
-            id: `bot-${Math.random().toString(36).substring(7)}`,
-            name: `Bot ${room.players.length + 1}`,
+            id: botId,
+            name: botName,
             isBot: true
         });
 
+        console.log(`✅ Bot ${botName} (${botId}) added to room ${roomCode}. Total players: ${room.players.length}`);
+
+        // ✅ Emit updated player list to all players in the room
         io.to(roomCode).emit('playerJoined', {
             players: room.players,
             count: room.players.length
         });
 
         if (room.players.length === 4) {
+            console.log(`🎯 Room ${roomCode} is now full with 4 players`);
             io.to(roomCode).emit('roomFull');
         }
     });
