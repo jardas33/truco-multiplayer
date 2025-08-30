@@ -495,6 +495,7 @@ function createDeck() {
         this.potentialGameValue = 3;
         this.trucoCallerTeam = this.players[this.currentPlayerIndex].team;
         console.log(`🎯 ${player.name} calling initial Truco for 3 games`);
+        console.log(`📊 Current game value: ${this.gameValue}, Potential value: ${this.potentialGameValue}`);
       }
    
       this.trucoState = true;
@@ -529,6 +530,7 @@ function createDeck() {
        
                if (response === 1) {  // Accept
           console.log(`✅ Truco accepted! Game now worth ${this.potentialGameValue} games`);
+          console.log(`📊 Previous game value: ${this.gameValue}, New game value: ${this.potentialGameValue}`);
           
           // Set the final game value
           this.gameValue = this.potentialGameValue;
@@ -582,15 +584,21 @@ function createDeck() {
           let winningTeam = this.trucoCallerTeam;
           let winningTeamName = winningTeam === "team1" ? "Team Alfa" : "Team Beta";
           
-          // Award games to the winning team - ONLY 1 GAME when rejected!
+          // Award games to the winning team based on CURRENT game value (not potential raised value)
+          let gamesWon = this.gameValue; // Use current game value, not potential raised value
+          console.log(`📊 Rejecting Truco - Current game value: ${this.gameValue}, Potential raised value: ${this.potentialGameValue}`);
+          console.log(`📊 Awarding ${gamesWon} games (current value, not raised value)`);
+          
           if (winningTeam === "team1") {
-            this.games.team1 += 1; // Only 1 game when rejected
+            this.games.team1 += gamesWon;
           } else {
-            this.games.team2 += 1; // Only 1 game when rejected
+            this.games.team2 += gamesWon;
           }
           
-                                         // Show rejection message
-            popupMessage = `❌ Truco rejected! ${winningTeamName} wins 1 game.`;
+          console.log(`🏆 ${winningTeamName} wins ${gamesWon} games by rejecting Truco!`);
+          
+          // Show rejection message with correct game count
+          popupMessage = `❌ Truco rejected! ${winningTeamName} wins ${gamesWon} games.`;
           try {
             openPopup(true);
           } catch (error) {
