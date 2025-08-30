@@ -102,30 +102,39 @@ function createDeck() {
       console.log("Game initialized with players:", players);
     }
   
-    startGame() {
-      console.log("Starting game...");
-      createDeck();
-      shuffleDeck(deck);
-      distributeCards(this.players, deck);
-      
-      this.currentPlayerIndex = 0;
-      this.players[this.currentPlayerIndex].isActive = true;
-      playedCards = [];
-      
-      // Make cards clickable for first player
-      this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
-      
-      // Show game UI elements
-      backToMainMenuButton.show();
-      trucoButton.show();
-      
-              // If first player is a bot, it plays automatically
-        if (this.players[this.currentPlayerIndex].isBot) {
-          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
-        }
-      
-      console.log("Game started successfully");
-    }
+         startGame() {
+       console.log("Starting game...");
+       createDeck();
+       shuffleDeck(deck);
+       distributeCards(this.players, deck);
+       
+       // Ensure all players have correct playerIndex
+       this.players.forEach((player, index) => {
+         if (player.playerIndex === null || player.playerIndex === undefined) {
+           player.playerIndex = index;
+           console.log(`🔧 Fixed playerIndex for ${player.name}: ${index}`);
+         }
+       });
+       
+       this.currentPlayerIndex = 0;
+       this.players[this.currentPlayerIndex].isActive = true;
+       playedCards = [];
+       
+       // Make cards clickable for first player
+       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+       
+       // Show game UI elements
+       backToMainMenuButton.show();
+       trucoButton.show();
+       
+       // If first player is a bot, it plays automatically
+       if (this.players[this.currentPlayerIndex].isBot) {
+         setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+       }
+       
+       console.log("Game started successfully");
+       console.log("Player indices:", this.players.map(p => `${p.name}: ${p.playerIndex}`));
+     }
   
     nextPlayer() {
       if (this.trucoState === true) {

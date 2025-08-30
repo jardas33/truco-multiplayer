@@ -243,10 +243,10 @@ function mousePressed() {
                 if (window.game && window.game.getCurrentPlayer() === clickableCard.player) {
                     console.log('✅ It\'s your turn! Playing card:', clickableCard.card.name);
                     
-                    // Play the card
-                    playCard(clickableCard.player, clickableCard.cardIndex);
+                    // Play the card using the Game class method
+                    window.game.playCard(clickableCard.player, clickableCard.cardIndex);
                 } else {
-                    console.log('❌ Not your turn!');
+                    console.log('❌ Not your turn! Current player:', window.game?.getCurrentPlayer()?.name);
                 }
                 
                 break;
@@ -255,25 +255,4 @@ function mousePressed() {
     }
 }
 
-// Function to play a card
-function playCard(player, cardIndex) {
-    if (!window.game || !player || cardIndex === undefined) {
-        console.error('❌ Cannot play card - invalid parameters');
-        return;
-    }
-    
-    console.log(`🎴 Playing card ${cardIndex} from ${player.name}'s hand`);
-    
-    // Use the Game class playCard method instead of duplicating logic
-    const playedCard = window.game.playCard(player, cardIndex);
-    
-    if (playedCard) {
-        console.log(`✅ Card ${playedCard.name} played by ${player.name}`);
-        console.log(`📊 Remaining cards in hand: ${player.hand.length}`);
-        
-        // Force redraw
-        redraw();
-    } else {
-        console.error('❌ Failed to play card - check if it\'s your turn');
-    }
-}
+// REMOVED: Duplicate playCard function - using Game class method directly

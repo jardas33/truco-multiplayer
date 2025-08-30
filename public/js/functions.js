@@ -35,38 +35,7 @@ function truco() {
   trucoButton.hide();
 }
 
-function mouseReleased() {
-  if (gameState !== gameStateEnum.Playing) {
-    return null;
-  }
-  if (window.game && window.game.getCurrentPlayer()) {
-    let player = window.game.getCurrentPlayer();
-    let xBase =
-      playerPositions[selfPlayer - 1].x -
-      ((cardWidth + 10) * player.hand.length - 10) / 2;
-    for (let i = 0; i < player.hand.length; i++) {
-      let card = player.hand[i];
-      let x = xBase + i * (cardWidth + 10);
-      let y = playerPositions[selfPlayer - 1].y;
-      if (
-        dist(mouseX, mouseY, x + cardWidth / 2, y + cardHeight / 2) <
-        cardWidth / 2
-      ) {
-                 // Emit card played to other players (only in multiplayer mode)
-         if (socket && !isSinglePlayerMode) {
-           socket.emit('card-played', {
-             roomCode: currentRoom,
-             player: selfPlayer,
-             cardIndex: i
-           });
-         }
-        window.game.playCard(player, i);
-        break;
-      }
-    }
-  }
-  return false;
-}
+// REMOVED: Broken mouseReleased function - using mousePressed in draw.js instead
 
 function endGameAndHandleSet(winningTeam) {
   if (winningTeam === "team1") {
@@ -399,6 +368,9 @@ function drawGameState() {
     // Set text properties for all text rendering
     textAlign(CENTER, CENTER);
     textSize(16);
+    
+    // Clear clickable cards array at the start of each draw cycle
+    window.clickableCards = [];
     
     // Draw player positions and hands with PROPER CARD IMAGES and fallbacks
     window.game.players.forEach((player, index) => {
