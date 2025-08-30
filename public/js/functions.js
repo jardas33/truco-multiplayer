@@ -615,34 +615,41 @@ function drawScoringInfo() {
     
     // Draw scoring panel at the top with better contrast and more height
     push();
+    
+    // Draw background panel
     fill(0, 0, 0, 0.95); // Almost solid black background for maximum readability
     rect(10, 10, width - 20, 150);
     
-    // Draw team information with much larger, clearer text
+    // Reset all text properties for consistent rendering
+    noStroke();
     textAlign(LEFT, TOP);
     
-    // Team Alfa (Bright White) - Left side - IMPROVED READABILITY
+    // Team Alfa (Left side) - STABLE TEXT RENDERING
     fill(255, 255, 255); // Bright white for maximum contrast
-    textSize(24); // Slightly larger text
+    textSize(24);
     text("TEAM ALFA", 25, 25);
+    
     textSize(22);
     text(`Rounds: ${teamAlfaRounds}/2`, 25, 55);
     text(`Games: ${teamAlfaGames}/12`, 25, 85);
     text(`Sets: ${teamAlfaSets}`, 25, 115);
     
-    // Team Beta (Bright White) - Right side - IMPROVED READABILITY
+    // Team Beta (Right side) - STABLE TEXT RENDERING
     fill(255, 255, 255); // Bright white for maximum contrast
     textSize(24);
     text("TEAM BETA", width - 180, 25);
+    
     textSize(22);
     text(`Rounds: ${teamBetaRounds}/2`, width - 180, 55);
     text(`Games: ${teamBetaGames}/12`, width - 180, 85);
     text(`Sets: ${teamBetaSets}`, width - 180, 115);
     
+    // Center section - STABLE TEXT RENDERING
+    textAlign(CENTER, TOP);
+    
     // Current round indicator - Center, very prominent
     fill(255, 255, 0); // Bright yellow for maximum visibility
-    textSize(30); // Even larger text
-    textAlign(CENTER, TOP);
+    textSize(30);
     text(`ROUND ${currentRound} OF 3`, width/2, 25);
     
     // Game progress indicator - Center, below round
