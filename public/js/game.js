@@ -116,6 +116,14 @@ function createDeck() {
          }
        });
        
+       // Reset Truco state
+       this.trucoState = false;
+       this.initialTrucoCallerIndex = null;
+       this.lastActionWasRaise = false;
+       this.potentialGameValue = 0;
+       this.trucoCallerTeam = null;
+       isInTrucoPhase = false;
+       
        this.currentPlayerIndex = 0;
        this.players[this.currentPlayerIndex].isActive = true;
        playedCards = [];
@@ -280,52 +288,66 @@ function createDeck() {
       }
     }
   
-    endGame(winner) {
-      // Check if a team has won the set
-      if (this.games.team1 >= 12) {
-        this.sets.team1++;
-        this.games.team1 = 0;
-        this.games.team2 = 0;
-      } else if (this.games.team2 >= 12) {
-        this.sets.team2++;
-        this.games.team1 = 0;
-        this.games.team2 = 0;
-      }
-  
-      // Reset for next game
-      setTimeout(() => {
-        this.scores = { team1: 0, team2: 0 };
-        this.gameValue = 1;
-        this.trucoState = null;
-        this.roundResults = [];
-        playedCards = [];
-        
-        // Create and distribute new cards
-        createDeck();
-        shuffleDeck(deck);
-        distributeCards(this.players, deck);
-        
-        // Start with next player
-        this.currentPlayerIndex = (this.startRoundPlayer + 1) % this.players.length;
-        this.startRoundPlayer = this.currentPlayerIndex;
-        
-        // Safety check to ensure valid player index
-        if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
-          this.players[this.currentPlayerIndex].isActive = true;
-          this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
-          
-          if (this.players[this.currentPlayerIndex].isBot) {
-            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
-          }
-        } else {
-          console.error(`❌ Invalid player index in endGame: ${this.currentPlayerIndex}`);
-          // Fallback to first player
-          this.currentPlayerIndex = 0;
-          this.players[0].isActive = true;
-          this.players[0].hand.forEach(card => card.isClickable = true);
-        }
-      }, timeEndRound);
-    }
+         endGame(winner) {
+       console.log(`🏁 Game ended! Winner: ${winner}`);
+       
+       // Check if a team has won the set
+       if (this.games.team1 >= 12) {
+         this.sets.team1++;
+         this.games.team1 = 0;
+         this.games.team2 = 0;
+         console.log(`🏆 Team Alfa won the set! Total sets: ${this.sets.team1}`);
+       } else if (this.games.team2 >= 12) {
+         this.sets.team2++;
+         this.games.team1 = 0;
+         this.games.team2 = 0;
+         console.log(`🏆 Team Beta won the set! Total sets: ${this.sets.team2}`);
+       }
+   
+       // Reset for next game
+       setTimeout(() => {
+         console.log(`🔄 Starting new game...`);
+         
+         // Reset game state
+         this.scores = { team1: 0, team2: 0 };
+         this.gameValue = 1;
+         this.trucoState = false;
+         this.initialTrucoCallerIndex = null;
+         this.lastActionWasRaise = false;
+         this.potentialGameValue = 0;
+         this.trucoCallerTeam = null;
+         this.roundResults = [];
+         playedCards = [];
+         
+         // Reset Truco phase
+         isInTrucoPhase = false;
+         
+         // Create and distribute new cards
+         createDeck();
+         shuffleDeck(deck);
+         distributeCards(this.players, deck);
+         
+         // Start with next player
+         this.currentPlayerIndex = (this.startRoundPlayer + 1) % this.players.length;
+         this.startRoundPlayer = this.currentPlayerIndex;
+         
+         // Safety check to ensure valid player index
+         if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
+           this.players[this.currentPlayerIndex].isActive = true;
+           this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+           
+           if (this.players[this.currentPlayerIndex].isBot) {
+             setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+           }
+         } else {
+           console.error(`❌ Invalid player index in endGame: ${this.currentPlayerIndex}`);
+           // Fallback to first player
+           this.currentPlayerIndex = 0;
+           this.players[0].isActive = true;
+           this.players[0].hand.forEach(card => card.isClickable = true);
+         }
+       }, timeEndRound);
+     }
   
     requestTruco(player) {
       if (this.trucoState !== null || player !== this.players[this.currentPlayerIndex]) {
@@ -356,62 +378,152 @@ function createDeck() {
       return true;
     }
   
-    respondTruco(player, response) {
-      if (response === 1) {  // Accept
-        this.gameValue = this.potentialGameValue;
-        this.trucoState = null;
-        
-        if (this.lastActionWasRaise) {
-          this.currentPlayerIndex = this.initialTrucoCallerIndex;
-          this.lastActionWasRaise = false;
-          this.initialTrucoCallerIndex = null;
-        } else {
-          this.currentPlayerIndex = this.initialTrucoCallerIndex;
-        }
-  
-        popupMessage = (this.gameValue === 3) ? 'Truco accepted' : 'Raise accepted';
-        openPopup(true);
-  
-        if (this.players[this.currentPlayerIndex].isBot) {
-          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
-        }
-      } else if (response === 2) {  // Reject
-        if (this.initialTrucoCallerIndex !== null) {
-          let winningTeam = this.players[this.initialTrucoCallerIndex].team;
-          if (winningTeam === 1) {
-            this.games.team1 += this.gameValue;
-          } else {
-            this.games.team2 += this.gameValue;
-          }
-        }
-        this.endGame(this.players[this.initialTrucoCallerIndex].team === 1 ? "Team 1" : "Team 2");
-      } else if (response === 3) {  // Raise
-        this.lastActionWasRaise = true;
-        
-        if (this.potentialGameValue === 3) {
-          this.potentialGameValue = 6;
-        } else if (this.potentialGameValue + 3 <= 12) {
-          this.potentialGameValue += 3;
-        }
-  
-        if (this.potentialGameValue === 12) {
-          buttonRaiseTruco.hide();
-        }
-  
-        let nextPlayerIndex = (this.initialTrucoCallerIndex) % this.players.length;
-        if (this.players[nextPlayerIndex].isBot) {
-          setTimeout(() => this.players[nextPlayerIndex].botRespondTruco(), timeBots);
-        }
-      }
-  
-      if (isMultiplayerMode) {
-        socket.emit('respondTruco', {
-          roomId: roomId,
-          playerId: playerId,
-          response: response
-        });
-      }
-    }
+         respondTruco(player, response) {
+       console.log(`🎯 Truco response from ${player.name}: ${response === 1 ? 'Accept' : response === 2 ? 'Reject' : 'Raise'}`);
+       
+       if (response === 1) {  // Accept
+         console.log(`✅ Truco accepted! Game now worth ${this.potentialGameValue} games`);
+         
+         // Set the final game value
+         this.gameValue = this.potentialGameValue;
+         this.trucoState = false; // Resume normal gameplay
+         isInTrucoPhase = false;
+         
+         // Return control to the player who called Truco
+         this.currentPlayerIndex = this.initialTrucoCallerIndex;
+         
+         // Reset Truco state
+         this.initialTrucoCallerIndex = null;
+         this.lastActionWasRaise = false;
+         this.potentialGameValue = 0;
+   
+         // Show acceptance message
+         popupMessage = `Truco accepted! Game now worth ${this.gameValue} games`;
+         try {
+           openPopup(true);
+         } catch (error) {
+           console.warn('⚠️ Could not show popup, continuing with game');
+         }
+   
+         // Make the Truco caller active and continue game
+         if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
+           this.players[this.currentPlayerIndex].isActive = true;
+           this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+           
+           if (this.players[this.currentPlayerIndex].isBot) {
+             setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+           }
+         }
+         
+       } else if (response === 2) {  // Reject
+         console.log(`❌ Truco rejected! Game ends immediately`);
+         
+         // Determine winning team (the team that called Truco)
+         let winningTeam = this.trucoCallerTeam;
+         let winningTeamName = winningTeam === "team1" ? "Team Alfa" : "Team Beta";
+         
+         // Award games to the winning team
+         if (winningTeam === "team1") {
+           this.games.team1 += this.potentialGameValue || 3;
+         } else {
+           this.games.team2 += this.potentialGameValue || 3;
+         }
+         
+         // Show rejection message
+         popupMessage = `Truco rejected! ${winningTeamName} wins ${this.potentialGameValue || 3} games`;
+         try {
+           openPopup(true);
+         } catch (error) {
+           console.warn('⚠️ Could not show popup, continuing with game');
+         }
+         
+         // Reset Truco state
+         this.trucoState = false;
+         isInTrucoPhase = false;
+         this.initialTrucoCallerIndex = null;
+         this.lastActionWasRaise = false;
+         this.potentialGameValue = 0;
+         
+         // End the current game and start a new one
+         setTimeout(() => {
+           this.endGame(winningTeamName);
+         }, 2000);
+         
+       } else if (response === 3) {  // Raise
+         console.log(`📈 Truco raised!`);
+         
+         // Increase game value
+         if (this.potentialGameValue === 3) {
+           this.potentialGameValue = 6;
+         } else if (this.potentialGameValue === 6) {
+           this.potentialGameValue = 9;
+         } else if (this.potentialGameValue === 9) {
+           this.potentialGameValue = 12;
+         } else if (this.potentialGameValue < 12) {
+           this.potentialGameValue += 3;
+         }
+         
+         // Cap at 12 games maximum
+         if (this.potentialGameValue > 12) {
+           this.potentialGameValue = 12;
+         }
+         
+         console.log(`📈 Game value raised to ${this.potentialGameValue} games`);
+         
+         // Mark that this was a raise action
+         this.lastActionWasRaise = true;
+         
+         // Move to the next player in the opposing team for their response
+         let nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+         
+         // Keep moving until we find a player from the opposing team
+         while (this.players[nextPlayerIndex].team === this.trucoCallerTeam && 
+                nextPlayerIndex !== this.initialTrucoCallerIndex) {
+           nextPlayerIndex = (nextPlayerIndex + 1) % this.players.length;
+         }
+         
+         this.currentPlayerIndex = nextPlayerIndex;
+         
+         // Show raise message
+         popupMessage = `Truco raised to ${this.potentialGameValue} games! ${this.players[nextPlayerIndex].name} must respond`;
+         try {
+           openPopup(true);
+         } catch (error) {
+           console.warn('⚠️ Could not show popup, continuing with game');
+         }
+   
+         // If next player is a bot, make them respond
+         if (this.players[nextPlayerIndex].isBot) {
+           setTimeout(() => this.players[nextPlayerIndex].botRespondTruco(), 1000);
+         } else {
+           // Human player - show response buttons
+           if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
+             buttonAcceptTruco.show();
+             buttonRejectTruco.show();
+             // Only show raise button if game value can still be increased
+             if (this.potentialGameValue < 12) {
+               buttonRaiseTruco.show();
+             }
+           }
+         }
+       }
+   
+       // Hide response buttons for current player
+       if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
+         buttonAcceptTruco.hide();
+         buttonRejectTruco.hide();
+         buttonRaiseTruco.hide();
+       }
+   
+       // Emit to multiplayer if needed
+       if (isMultiplayerMode && socket) {
+         socket.emit('respondTruco', {
+           roomId: roomId,
+           playerId: playerId,
+           response: response
+         });
+       }
+     }
   
     getTeam1Rounds() {
       return this.scores.team1;

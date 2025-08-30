@@ -60,10 +60,33 @@ class Player {
         throw new Error("This method can only be called on a bot.");
       }
 
-      console.log("Bot is responding to Truco call.");
+      console.log(`🤖 Bot ${this.name} is responding to Truco call.`);
       
-      // Bot randomly decides whether to accept, reject, or raise
-      let decision = Math.floor(Math.random() * 3) + 1; // 1 = accept, 2 = reject, 3 = raise
+      if (!window.game) {
+        console.error('❌ No game instance found for bot Truco response');
+        return;
+      }
+
+      // Bot makes decision based on current game value and team strategy
+      let decision;
+      const currentValue = window.game.potentialGameValue || 3;
+      
+      if (currentValue >= 12) {
+        // Can't raise anymore, must accept or reject
+        decision = Math.random() < 0.7 ? 1 : 2; // 70% accept, 30% reject
+      } else {
+        // Can still raise
+        const random = Math.random();
+        if (random < 0.4) {
+          decision = 1; // 40% accept
+        } else if (random < 0.8) {
+          decision = 2; // 40% reject
+        } else {
+          decision = 3; // 20% raise
+        }
+      }
+      
+      console.log(`🤖 Bot ${this.name} decided: ${decision === 1 ? 'Accept' : decision === 2 ? 'Reject' : 'Raise'}`);
       
       // Make the decision after a short delay
       setTimeout(() => {

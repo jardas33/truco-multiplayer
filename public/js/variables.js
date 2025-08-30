@@ -17,6 +17,7 @@ let buttonAcceptTruco; // Declare the variable at the top of your script
 let buttonRejectTruco;
 let buttonRaiseTruco;
 let isInTrucoPhase = false;
+let isSinglePlayerMode = false; // Add missing variable for Truco logic
 
 let deck = [];
 let playerPositions = [];

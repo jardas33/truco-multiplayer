@@ -1,38 +1,62 @@
 function truco() {
+  console.log(`🎯 Truco called by ${window.game?.players[window.game?.currentPlayerIndex]?.name}`);
+  
+  if (!window.game) {
+    console.error('❌ No game instance found');
+    return;
+  }
 
+  // Set Truco state
   isInTrucoPhase = true;
-  if (window.game) {
-    window.game.trucoState = true;
-    popupMessage = `Truco called`;
+  window.game.trucoState = true;
+  
+  // Initialize Truco values if this is the first call
+  if (!window.game.potentialGameValue) {
+    window.game.potentialGameValue = 3; // Start with 3 games
+    window.game.initialTrucoCallerIndex = window.game.currentPlayerIndex;
+    window.game.lastActionWasRaise = false;
+    window.game.trucoCallerTeam = window.game.players[window.game.currentPlayerIndex].team;
+  }
+
+  // Set popup message
+  popupMessage = `Truco called! Game now worth ${window.game.potentialGameValue} games`;
+  
+  // Show popup
+  try {
     openPopup(true);
+  } catch (error) {
+    console.warn('⚠️ Could not show popup, continuing with game');
+  }
 
-    if (!window.game.potentialGameValue) {
-      window.game.potentialGameValue = 3;
-      window.game.initialTrucoCallerIndex = window.game.currentPlayerIndex;
-      window.game.lastActionWasRaise = false;
-    }
+  // Move to next player (opponent) for response
+  let nextPlayerIndex = (window.game.currentPlayerIndex + 1) % window.game.players.length;
+  window.game.currentPlayerIndex = nextPlayerIndex;
+  
+  console.log(`🔄 Turn moved to ${window.game.players[nextPlayerIndex].name} for Truco response`);
 
-         // Emit truco call to other players (only in multiplayer mode)
-     if (socket && !isSinglePlayerMode) {
-       socket.emit('truco-called', {
-         roomCode: currentRoom,
-         caller: window.game.currentPlayerIndex
-       });
-     }
-
-    let opponentIndex = window.game.currentPlayerIndex === window.game.players.length - 1 ? 0 : window.game.currentPlayerIndex + 1;
-    window.game.currentPlayerIndex = opponentIndex;
-
-    if (window.game.players[opponentIndex].isBot) {
-      window.game.players[opponentIndex].botPlay();
-    } else {
+  // If next player is a bot, make them respond to Truco
+  if (window.game.players[nextPlayerIndex].isBot) {
+    console.log(`🤖 Bot ${window.game.players[nextPlayerIndex].name} responding to Truco`);
+    setTimeout(() => {
+      window.game.players[nextPlayerIndex].botRespondTruco();
+    }, 1000);
+  } else {
+    // Human player - show response buttons
+    console.log(`👤 Human player ${window.game.players[nextPlayerIndex].name} can respond to Truco`);
+    if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
       buttonAcceptTruco.show();
       buttonRejectTruco.show();
-      buttonRaiseTruco.show();
+      // Only show raise button if game value can still be increased
+      if (window.game.potentialGameValue < 12) {
+        buttonRaiseTruco.show();
+      }
     }
   }
 
-  trucoButton.hide();
+  // Hide Truco button for current player
+  if (trucoButton) {
+    trucoButton.hide();
+  }
 }
 
 // REMOVED: Broken mouseReleased function - using mousePressed in draw.js instead
