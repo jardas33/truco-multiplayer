@@ -489,14 +489,20 @@ function createDeck() {
           return false;
         }
         
-        console.log(`📈 Truco raised from ${this.gameValue} to ${this.potentialGameValue} games`);
+        console.log(`📈 ${player.name} raising Truco from ${this.gameValue} to ${this.potentialGameValue} games`);
       } else {
         // This is the initial Truco call
         this.potentialGameValue = 3;
+        this.trucoCallerTeam = this.players[this.currentPlayerIndex].team;
+        console.log(`🎯 ${player.name} calling initial Truco for 3 games`);
       }
    
       this.trucoState = true;
       this.initialTrucoCallerIndex = this.currentPlayerIndex;
+      this.lastActionWasRaise = true;
+      this.potentialGameValue = this.potentialGameValue || 3;
+      this.trucoCallerTeam = this.trucoCallerTeam || this.players[this.currentPlayerIndex].team;
+      this.currentTrucoValue = this.potentialGameValue;
       
       // Show truco response buttons for next player
       let nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
@@ -531,7 +537,10 @@ function createDeck() {
           
           // Store the current Truco state for potential raises
           this.currentTrucoValue = this.potentialGameValue;
-          this.trucoCallerTeam = this.players[this.initialTrucoCallerIndex].team;
+          
+          // IMPORTANT: After accepting a raise, the calling team can now raise again
+          // Reset the caller team to allow the original team to raise again
+          this.trucoCallerTeam = null;
           
           // Return control to the player who called Truco
           this.currentPlayerIndex = this.initialTrucoCallerIndex;
