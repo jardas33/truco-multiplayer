@@ -370,20 +370,20 @@ function windowResized() {
     const rightMargin = width - 100; // Right margin from screen edge
     const bottomMargin = height - 150; // Bottom margin from screen edge
     
-    playerPositions[0].x = leftMargin;          // Bot 1 (TOP-LEFT) - Perfect corner position
-    playerPositions[0].y = topMargin + 50;      // Below scoring panel, top-left corner - MOVED DOWN MORE
-    playerPositions[1].x = rightMargin;         // Bot 2 (TOP-RIGHT) - Perfect corner position
-    playerPositions[1].y = topMargin;           // Below scoring panel, top-right corner - MOVED DOWN
-    playerPositions[2].x = rightMargin;         // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
-    playerPositions[2].y = bottomMargin;        // Bottom-right corner
-    playerPositions[3].x = leftMargin;          // Player 1 (BOTTOM-LEFT) - Perfect corner position
-    playerPositions[3].y = bottomMargin + 50;   // Bottom-left corner - MOVED DOWN MORE
+    playerPositions[0].x = leftMargin;          // Bot 1 (TOP-LEFT) - Top position
+    playerPositions[0].y = topMargin;           // Below scoring panel, top-left corner
+    playerPositions[1].x = rightMargin;         // Bot 2 (BOTTOM-RIGHT) - Bottom position
+    playerPositions[1].y = bottomMargin;        // Bottom-right corner
+    playerPositions[2].x = leftMargin;          // Bot 3 (BOTTOM-LEFT) - Bottom position
+    playerPositions[2].y = bottomMargin;        // Bottom-left corner
+    playerPositions[3].x = rightMargin;         // Player 1 (TOP-RIGHT) - Top position
+    playerPositions[3].y = topMargin;           // Below scoring panel, top-right corner
     
     // Update label offsets to maintain proper spacing
-    playerPositions[0].labelOffset = -80;       // Bot 1 - much higher above cards
-    playerPositions[1].labelOffset = -80;       // Bot 2 - much higher above cards
-    playerPositions[2].labelOffset = 80;        // Bot 3 - much higher above cards (below for bottom player)
-    playerPositions[3].labelOffset = 80;        // Player 1 - much higher above cards (below for bottom player)
+    playerPositions[0].labelOffset = -80;       // Bot 1 - above cards (top player)
+    playerPositions[1].labelOffset = 80;        // Bot 2 - below cards (bottom player)
+    playerPositions[2].labelOffset = 80;        // Bot 3 - below cards (bottom player)
+    playerPositions[3].labelOffset = -80;       // Player 1 - above cards (top player)
   }
 }
 

@@ -145,28 +145,28 @@ function setup() {
     
     playerPositions = [
         {
-            x: leftMargin,          // Bot 1 (TOP-LEFT) - Perfect corner position
-            y: topMargin + 50,      // Below scoring panel, top-left corner - MOVED DOWN MORE
+            x: leftMargin,          // Bot 1 (TOP-LEFT) - Top position
+            y: topMargin,           // Below scoring panel, top-left corner
             label: "Bot 1 - Team 2",
-            labelOffset: -80,       // Much higher above cards
+            labelOffset: -80,       // Above cards (top player)
         },
         { 
-            x: rightMargin,         // Bot 2 (TOP-RIGHT) - Perfect corner position
-            y: topMargin,           // Below scoring panel, top-right corner - MOVED DOWN
-            label: "Bot 2 - Team 1", 
-            labelOffset: -80        // Much higher above cards
-        },
-        {
-            x: rightMargin,         // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
+            x: rightMargin,         // Bot 2 (BOTTOM-RIGHT) - Bottom position
             y: bottomMargin,        // Bottom-right corner
-            label: "Bot 3 - Team 2",
-            labelOffset: 80,        // Much higher above cards (below for bottom player)
+            label: "Bot 2 - Team 1", 
+            labelOffset: 80         // Below cards (bottom player)
         },
         {
-            x: leftMargin,          // Player 1 (BOTTOM-LEFT) - Perfect corner position
-            y: bottomMargin + 50,   // Bottom-left corner - MOVED DOWN MORE
+            x: leftMargin,          // Bot 3 (BOTTOM-LEFT) - Bottom position
+            y: bottomMargin,        // Bottom-left corner
+            label: "Bot 3 - Team 2",
+            labelOffset: 80,        // Below cards (bottom player)
+        },
+        {
+            x: rightMargin,         // Player 1 (TOP-RIGHT) - Top position
+            y: topMargin,           // Below scoring panel, top-right corner
             label: "Player 1 - Team 1",
-            labelOffset: 80,        // Much higher above cards (below for bottom player)
+            labelOffset: -80,       // Above cards (top player)
         },
     ];
     console.log('Player positions initialized');
