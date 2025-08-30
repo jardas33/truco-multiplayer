@@ -153,10 +153,27 @@ io.on('connection', (socket) => {
 
         console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
-        // ✅ Emit gameStart event to all players in the room
-        io.to(roomCode).emit('gameStart', room.players);
+        // ✅ Create shared deck and distribute cards to all players
+        const deck = createDeck();
+        const hands = dealCards(deck);
         
-        console.log(`🎯 Game started successfully in room ${roomCode}`);
+        // ✅ Store game state in room for synchronization
+        room.game = {
+            deck: deck,
+            hands: hands,
+            currentPlayer: 0,
+            playedCards: [],
+            scores: { team1: 0, team2: 0 }
+        };
+
+        // ✅ Emit gameStart event with hands to all players in the room
+        io.to(roomCode).emit('gameStart', {
+            players: room.players,
+            hands: hands,
+            currentPlayer: 0
+        });
+        
+        console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
     });
 
     // Handle disconnection
@@ -195,12 +212,75 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ Emit card played event to all players in the room
+        // ✅ Find the player who played the card
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            console.log(`❌ Player ${socket.id} not found in room`);
+            return;
+        }
+
+        // ✅ Get the card from the player's hand
+        const cardIndex = data.cardIndex || 0;
+        if (!room.game || !room.game.hands || !room.game.hands[room.players.indexOf(player)]) {
+            console.log(`❌ No hands found for player ${player.name}`);
+            return;
+        }
+
+        const playerHand = room.game.hands[room.players.indexOf(player)];
+        if (cardIndex >= playerHand.length) {
+            console.log(`❌ Invalid card index ${cardIndex} for player ${player.name}`);
+            return;
+        }
+
+        const playedCard = playerHand[cardIndex];
+        
+        // ✅ Remove card from hand
+        playerHand.splice(cardIndex, 1);
+        
+        // ✅ Add to played cards
+        if (!room.game.playedCards) room.game.playedCards = [];
+        room.game.playedCards.push({
+            player: player,
+            card: playedCard,
+            playerIndex: room.players.indexOf(player)
+        });
+
+        console.log(`✅ ${player.name} played ${playedCard.name} in room ${socket.roomCode}`);
+
+        // ✅ Emit card played event to all players in the room with synchronized data
         io.to(socket.roomCode).emit('cardPlayed', {
             playerId: socket.id,
-            cardIndex: data.cardIndex || 0,
-            card: data.card
+            playerName: player.name,
+            cardIndex: cardIndex,
+            card: playedCard,
+            playerIndex: room.players.indexOf(player),
+            allHands: room.game.hands, // Send updated hands to all players
+            playedCards: room.game.playedCards // Send all played cards
         });
+
+        // ✅ Check if round is complete
+        if (room.game.playedCards.length === 4) {
+            console.log(`🏁 Round complete in room ${socket.roomCode}`);
+            // Reset for next round
+            room.game.playedCards = [];
+            // Move to next player
+            room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            
+            // Emit round complete event
+            io.to(socket.roomCode).emit('roundComplete', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.game.hands
+            });
+        } else {
+            // Move to next player
+            room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            
+            // Emit turn change event
+            io.to(socket.roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.game.hands
+            });
+        }
 
         console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });

@@ -104,21 +104,27 @@ function createDeck() {
        console.log("Game initialized with players:", players);
      }
   
-         startGame() {
-       console.log("Starting game...");
-       createDeck();
-       shuffleDeck(deck);
-       distributeCards(this.players, deck);
-       
-       // Ensure all players have correct playerIndex
-       this.players.forEach((player, index) => {
-         if (player.playerIndex === null || player.playerIndex === undefined) {
-           player.playerIndex = index;
-           console.log(`🔧 Fixed playerIndex for ${player.name}: ${index}`);
-         }
-       });
-       
-               // Reset Truco state
+                   startGame() {
+        console.log("Starting game...");
+        
+        // ✅ In multiplayer mode, cards are already distributed by server
+        if (!isMultiplayerMode) {
+          createDeck();
+          shuffleDeck(deck);
+          distributeCards(this.players, deck);
+        } else {
+          console.log("🎴 Multiplayer mode - using server-synchronized cards");
+        }
+        
+        // Ensure all players have correct playerIndex
+        this.players.forEach((player, index) => {
+          if (player.playerIndex === null || player.playerIndex === undefined) {
+            player.playerIndex = index;
+            console.log(`🔧 Fixed playerIndex for ${player.name}: ${index}`);
+          }
+        });
+        
+        // Reset Truco state
         this.trucoState = false;
         this.initialTrucoCallerIndex = null;
         this.lastActionWasRaise = false;
@@ -126,26 +132,37 @@ function createDeck() {
         this.trucoCallerTeam = null;
         this.currentTrucoValue = 1;
         isInTrucoPhase = false;
-       
-       this.currentPlayerIndex = 0;
-       this.players[this.currentPlayerIndex].isActive = true;
-       playedCards = [];
-       
-       // Make cards clickable for first player
-       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
-       
-       // Show game UI elements
-       backToMainMenuButton.show();
-       trucoButton.show();
-       
-       // If first player is a bot, it plays automatically
-       if (this.players[this.currentPlayerIndex].isBot) {
-         setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
-       }
-       
-       console.log("Game started successfully");
-       console.log("Player indices:", this.players.map(p => `${p.name}: ${p.playerIndex}`));
-     }
+        
+        // ✅ Use server-synchronized current player or default to 0
+        if (isMultiplayerMode && window.currentPlayer !== undefined) {
+          this.currentPlayerIndex = window.currentPlayer;
+        } else {
+          this.currentPlayerIndex = 0;
+        }
+        
+        this.players[this.currentPlayerIndex].isActive = true;
+        playedCards = [];
+        
+        // Make cards clickable for current player
+        this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+        
+        // Show game UI elements
+        if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
+          backToMainMenuButton.show();
+        }
+        if (typeof trucoButton !== 'undefined' && trucoButton) {
+          trucoButton.show();
+        }
+        
+        // If current player is a bot, it plays automatically
+        if (this.players[this.currentPlayerIndex].isBot) {
+          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+        }
+        
+        console.log("Game started successfully");
+        console.log("Player indices:", this.players.map(p => `${p.name}: ${p.playerIndex}`));
+        console.log("Current player:", this.currentPlayerIndex);
+      }
   
     nextPlayer() {
       if (this.trucoState === true) {

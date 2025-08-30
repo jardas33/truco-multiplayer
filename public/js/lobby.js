@@ -77,10 +77,14 @@ function setupSocketListeners() {
         }
     });
 
-    socket.on('gameStart', (players) => {
-        console.log('🎮 Game starting with players:', players);
+    socket.on('gameStart', (gameData) => {
+        console.log('🎮 Game starting with synchronized data:', gameData);
         hideRoomControls();
-        window.players = players;  // Store players for the game
+        
+        // ✅ Store synchronized game data
+        window.players = gameData.players;
+        window.gameHands = gameData.hands;
+        window.currentPlayer = gameData.currentPlayer;
         
         // ✅ Initialize multiplayer game immediately
         console.log('🚀 Initializing multiplayer game...');
@@ -88,7 +92,7 @@ function setupSocketListeners() {
         
         // ✅ Create proper multiplayer players with correct team assignments
         let multiplayerPlayers = [];
-        players.forEach((player, index) => {
+        gameData.players.forEach((player, index) => {
             let team = "team1"; // Default team
             if (index === 0 || index === 2) {
                 team = "team1"; // Player 1 and Bot 2 = Team Alfa
@@ -98,14 +102,24 @@ function setupSocketListeners() {
             
             // Create Player object with proper team assignment
             let newPlayer = new Player(player.name, team, player.isBot, index);
+            
+            // ✅ Assign synchronized cards from server
+            if (gameData.hands && gameData.hands[index]) {
+                newPlayer.hand = gameData.hands[index];
+                console.log(`🎴 ${newPlayer.name} received cards:`, newPlayer.hand.map(c => c.name));
+            }
+            
             multiplayerPlayers.push(newPlayer);
             console.log(`👤 Created player: ${newPlayer.name} (${team}) - Bot: ${newPlayer.isBot}`);
         });
         
-        // Create game instance with multiplayer players
+        // ✅ Create game instance with synchronized multiplayer players
         window.game = new Game(multiplayerPlayers);
         
-        // Start the game
+        // ✅ Set current player from server
+        window.game.currentPlayerIndex = gameData.currentPlayer;
+        
+        // ✅ Start the game with synchronized state
         if (window.game.startGame) {
             window.game.startGame();
         }
@@ -118,6 +132,7 @@ function setupSocketListeners() {
         if (gameElement) gameElement.style.display = 'block';
         
         console.log('✅ Multiplayer game started successfully with', multiplayerPlayers.length, 'players');
+        console.log('🎴 All players have synchronized cards from server');
     });
 
     socket.on('error', (message) => {
@@ -128,6 +143,69 @@ function setupSocketListeners() {
     socket.on('playerDisconnected', (data) => {
         console.log('Player disconnected:', data);
         updatePlayerList(data.players);
+    });
+
+    // ✅ Handle synchronized card playing
+    socket.on('cardPlayed', (data) => {
+        console.log('🃏 Card played event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for card played event');
+            return;
+        }
+        
+        // ✅ Update all player hands with synchronized data
+        if (data.allHands) {
+            data.allHands.forEach((hand, index) => {
+                if (window.game.players[index]) {
+                    window.game.players[index].hand = hand;
+                    console.log(`🔄 Updated ${window.game.players[index].name} hand:`, hand.map(c => c.name));
+                }
+            });
+        }
+        
+        // ✅ Update played cards
+        if (data.playedCards) {
+            window.playedCards = data.playedCards.map(pc => ({
+                card: pc.card,
+                player: window.game.players[pc.playerIndex],
+                position: { x: width/2, y: height/2 }
+            }));
+            console.log('🔄 Updated played cards:', window.playedCards.length);
+        }
+        
+        // ✅ Force game redraw to show synchronized state
+        if (typeof redraw === 'function') {
+            redraw();
+        }
+        
+        console.log('✅ Card played event synchronized successfully');
+    });
+
+    // ✅ Handle turn changes
+    socket.on('turnChanged', (data) => {
+        console.log('🔄 Turn changed event received:', data);
+        
+        if (!window.game) return;
+        
+        // ✅ Update current player
+        window.game.currentPlayerIndex = data.currentPlayer;
+        
+        // ✅ Update all player hands
+        if (data.allHands) {
+            data.allHands.forEach((hand, index) => {
+                if (window.game.players[index]) {
+                    window.game.players[index].hand = hand;
+                }
+            });
+        }
+        
+        // ✅ Force game redraw
+        if (typeof redraw === 'function') {
+            redraw();
+        }
+        
+        console.log('✅ Turn changed to player:', data.currentPlayer);
     });
 }
 
