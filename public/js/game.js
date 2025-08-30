@@ -6,6 +6,12 @@ window.players = [];
 function createDeck() {
     console.log('🃏 Creating deck...');
     
+    // Ensure cardImages is available
+    if (typeof cardImages === 'undefined') {
+        console.error('❌ cardImages not defined! Initializing empty object.');
+        window.cardImages = {};
+    }
+    
     // Check if card images are loaded
     let imagesLoaded = 0;
     let totalImages = Object.keys(cardValues).length;
@@ -51,6 +57,7 @@ function createDeck() {
     if (imagesLoaded === 0) {
         console.warn('⚠️ NO CARD IMAGES LOADED! Using fallback rendering.');
         console.warn('💡 Check browser console for image loading errors.');
+        console.warn('🔍 Image paths should be relative to:', window.location.origin);
     } else if (imagesLoaded < totalImages) {
         console.warn(`⚠️ Only ${imagesLoaded}/${totalImages} card images loaded. Some cards will use fallback rendering.`);
     } else {

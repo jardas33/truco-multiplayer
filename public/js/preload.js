@@ -5,6 +5,12 @@ function preload() {
     const baseUrl = window.location.origin;
     console.log('🌐 Base URL:', baseUrl);
     
+    // Initialize cardImages object if it doesn't exist
+    if (typeof cardImages === 'undefined') {
+        window.cardImages = {};
+        console.log('🔄 Initialized cardImages object');
+    }
+    
     // Load background image
     try {
         backgroundImage = loadImage(`${baseUrl}/Images/background.jpg`, 
@@ -90,6 +96,8 @@ function preload() {
                     console.log(`✅ Card image loaded: ${name} (${loadedImages}/${totalImages})`);
                     if (loadedImages === totalImages) {
                         console.log('🎉 All card images loaded successfully!');
+                        // Ensure cardImages is globally accessible
+                        window.cardImages = cardImages;
                     }
                 },
                 () => {
@@ -104,6 +112,24 @@ function preload() {
         }
     }
     
+    // Ensure cardImages is globally accessible immediately
+    window.cardImages = cardImages;
+    
     console.log('🖼️ Image preload initiated for', totalImages, 'card images');
+    
+    // Add a timeout to check if images loaded
+    setTimeout(() => {
+        let finalLoaded = 0;
+        for (let name in cardImages) {
+            if (cardImages[name]) finalLoaded++;
+        }
+        console.log(`📊 Final image loading status: ${finalLoaded}/${totalImages} images loaded`);
+        
+        if (finalLoaded === 0) {
+            console.error('🚨 CRITICAL: No card images loaded! Check image paths and network.');
+        } else if (finalLoaded < totalImages) {
+            console.warn(`⚠️ Only ${finalLoaded}/${totalImages} card images loaded. Some cards will use fallback rendering.`);
+        }
+    }, 5000); // Check after 5 seconds
 }
   

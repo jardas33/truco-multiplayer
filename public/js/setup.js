@@ -1,6 +1,14 @@
 function setup() {
     console.log('Setting up p5.js canvas and UI elements...');
     
+    // CRITICAL: Ensure card images are loaded before proceeding
+    if (typeof preload === 'function') {
+        console.log('🖼️ Calling preload function to load card images...');
+        preload();
+    } else {
+        console.error('❌ Preload function not found! Card images may not load properly.');
+    }
+    
     // Set frame rate to prevent excessive rendering
     frameRate(30); // Limit to 30 FPS instead of 60
     
