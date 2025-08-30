@@ -148,25 +148,25 @@ function setup() {
             x: leftMargin,          // Bot 1 (TOP-LEFT) - Top position
             y: topMargin + 50,      // Below scoring panel, top-left corner - MOVED DOWN MORE
             label: "Bot 1 - Team 2",
-            labelOffset: -150,      // Much higher above cards (top player) - FIXED
+            labelOffset: -80,       // Above cards (top player) - REASONABLE distance
         },
         { 
             x: rightMargin,         // Bot 2 (BOTTOM-RIGHT) - Bottom position
             y: bottomMargin,        // Bottom-right corner
             label: "Bot 2 - Team 1", 
-            labelOffset: 150        // Much lower below cards (bottom player) - FIXED
+            labelOffset: -80        // Above cards (bottom player) - CONSISTENT with top
         },
         {
             x: leftMargin,          // Bot 3 (BOTTOM-LEFT) - Bottom position
             y: bottomMargin,        // Bottom-left corner
             label: "Bot 3 - Team 2",
-            labelOffset: 150,       // Much lower below cards (bottom player) - FIXED
+            labelOffset: -80,       // Above cards (bottom player) - CONSISTENT with top
         },
         {
             x: rightMargin,         // Player 1 (TOP-RIGHT) - Top position
             y: topMargin + 50,      // Below scoring panel, top-right corner - MOVED DOWN MORE
             label: "Player 1 - Team 1",
-            labelOffset: -150,      // Much higher above cards (top player) - FIXED
+            labelOffset: -80,       // Above cards (top player) - REASONABLE distance
         },
     ];
     console.log('Player positions initialized');
