@@ -464,11 +464,11 @@ function createDeck() {
     for (const suit of suits) {
         for (const value of values) {
             // ✅ Create cards with the exact format the client expects
-            const cardName = `${value}_of_${suit}`;
+            const cardName = `${value.charAt(0).toUpperCase() + value.slice(1)} of ${suit}`;
             deck.push({ 
                 suit: suit, 
                 value: value,
-                name: cardName,  // ✅ Add name property
+                name: cardName,  // ✅ Use proper capitalized format: "Ace of diamonds"
                 isClickable: false  // ✅ Add isClickable property
             });
         }
