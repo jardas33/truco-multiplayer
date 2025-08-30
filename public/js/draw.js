@@ -153,27 +153,27 @@ function draw() {
         const rightColX = boxX + boxWidth/2 + 80;
         
         const leftColumnEntries = [
-            "Queen of diamonds",
-            "Queen of clubs",
-            "Queen of hearts",
-            "Queen of spades",
-            "King of clubs",
-            "King of diamonds",
-            "King of spades",
-            "King of hearts",
-            "Jack of clubs"
+            "Queen of diamonds (1)",
+            "Jack of clubs (2)",
+            "5 of clubs (3)",
+            "4 of clubs (4)",
+            "7 of hearts (5)",
+            "Ace of spades (6)",
+            "7 of diamonds (7)",
+            "All 3's (8)",
+            "All 2's (9)"
         ];
         
         const rightColumnEntries = [
-            "Jack of diamonds",
-            "Jack of spades",
-            "Jack of hearts",
-            "Ace of spades",
-            "Ace of diamonds",
-            "Ace of hearts",
-            "Ace of clubs",
-            "7 of hearts",
-            "7 of diamonds"
+            "Aces (10)",
+            "Kings (11)",
+            "Queens (12)",
+            "Jacks (13)",
+            "7's (14)",
+            "6's (15)",
+            "5's (16)",
+            "4's (17)",
+            "Standard power"
         ];
         
         // Draw left column

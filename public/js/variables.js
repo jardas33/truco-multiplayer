@@ -62,48 +62,55 @@ let gameStateEnum = {
 };
 let gameState = gameStateEnum.Menu;
 
-// Card values
+// Card values - Correct Brazilian Truco hierarchy
 let cardValues = {
-    "Queen of diamonds": 1,
-    "Queen of clubs": 2,
-    "Queen of hearts": 3,
-    "Queen of spades": 4,
-    "Jack of clubs": 5,
-    "Jack of diamonds": 6,
-    "Jack of spades": 7,
-    "Jack of hearts": 8,
-    "King of clubs": 9,
-    "King of diamonds": 10,
+    // Top 7 most powerful cards (special Truco cards)
+    "Queen of diamonds": 1,    // First most powerful
+    "Jack of clubs": 2,        // Second most powerful
+    "5 of clubs": 3,           // Third most powerful
+    "4 of clubs": 4,           // Fourth most powerful
+    "7 of hearts": 5,          // Fifth most powerful
+    "Ace of spades": 6,        // Sixth most powerful
+    "7 of diamonds": 7,        // Seventh most powerful
+    
+    // All three's - Eighth most powerful
+    "3 of clubs": 8,
+    "3 of diamonds": 8,
+    "3 of hearts": 8,
+    "3 of spades": 8,
+    
+    // All two's - Ninth most powerful
+    "2 of clubs": 9,
+    "2 of diamonds": 9,
+    "2 of hearts": 9,
+    "2 of spades": 9,
+    
+    // Standard card power (remaining cards)
+    "Ace of clubs": 10,
+    "Ace of diamonds": 10,
+    "Ace of hearts": 10,
+    "King of clubs": 11,
+    "King of diamonds": 11,
     "King of spades": 11,
-    "King of hearts": 12,
-    "Ace of spades": 13,
-    "Ace of diamonds": 14,
-    "Ace of hearts": 15,
-    "Ace of clubs": 16,
-    "7 of hearts": 17,
-    "7 of diamonds": 18,
-    "7 of spades": 19,
-    "7 of clubs": 20,
-    "6 of diamonds": 21,
-    "6 of spades": 22,
-    "6 of hearts": 23,
-    "6 of clubs": 24,
-    "5 of diamonds": 25,
-    "5 of spades": 26,
-    "5 of hearts": 27,
-    "5 of clubs": 28,
-    "4 of diamonds": 29,
-    "4 of spades": 30,
-    "4 of hearts": 31,
-    "4 of clubs": 32,
-    "3 of diamonds": 33,
-    "3 of spades": 34,
-    "3 of hearts": 35,
-    "3 of clubs": 36,
-    "2 of diamonds": 37,
-    "2 of spades": 38,
-    "2 of hearts": 39,
-    "2 of clubs": 40
+    "King of hearts": 11,
+    "Queen of clubs": 12,
+    "Queen of hearts": 12,
+    "Queen of spades": 12,
+    "Jack of diamonds": 13,
+    "Jack of spades": 13,
+    "Jack of hearts": 13,
+    "7 of clubs": 14,
+    "7 of spades": 14,
+    "6 of clubs": 15,
+    "6 of diamonds": 15,
+    "6 of spades": 15,
+    "6 of hearts": 15,
+    "5 of diamonds": 16,
+    "5 of spades": 16,
+    "5 of hearts": 16,
+    "4 of diamonds": 17,
+    "4 of spades": 17,
+    "4 of hearts": 17
 };
 
 // Card images - MUST match the names in cardValues exactly
