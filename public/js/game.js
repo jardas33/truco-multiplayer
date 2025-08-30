@@ -195,17 +195,19 @@ function createDeck() {
       }
     }
   
-    playCard(player, cardIndex) {
-      console.log(`🎯 playCard called by: ${player.name} (Player ${player.id})`);
-      console.log(`🎯 Current turn: ${this.players[this.currentPlayerIndex].name} (Player ${this.currentPlayerIndex + 1})`);
-      console.log(`🎯 Game state: ${gameState}, Truco state: ${this.trucoState}`);
-      
-      if (gameState !== gameStateEnum.Playing || 
-          player !== this.players[this.currentPlayerIndex] || 
-          this.trucoState === true) {
-        console.log(`❌ playCard rejected: Invalid game state or turn`);
-        return null;
-      }
+         playCard(player, cardIndex) {
+       console.log(`🎯 playCard called by: ${player.name} (Player ${player.playerIndex})`);
+       console.log(`🎯 Current turn: ${this.players[this.currentPlayerIndex].name} (Player ${this.currentPlayerIndex})`);
+       console.log(`🎯 Game state: ${gameState}, Truco state: ${this.trucoState}`);
+       
+       // ✅ STRICT TURN VALIDATION - Only current player can play
+       if (gameState !== gameStateEnum.Playing || 
+           player.playerIndex !== this.currentPlayerIndex || 
+           this.trucoState === true) {
+         console.log(`❌ playCard rejected: Invalid game state or turn`);
+         console.log(`❌ Player ${player.name} (${player.playerIndex}) tried to play but it's ${this.players[this.currentPlayerIndex].name}'s turn (${this.currentPlayerIndex})`);
+         return null;
+       }
   
       console.log(`✅ Card played successfully by ${player.name}`);
       player.isActive = false;

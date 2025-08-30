@@ -343,7 +343,14 @@ function createDeck() {
     
     for (const suit of suits) {
         for (const value of values) {
-            deck.push({ suit, value });
+            // ✅ Create cards with the exact format the client expects
+            const cardName = `${value}_of_${suit}`;
+            deck.push({ 
+                suit: suit, 
+                value: value,
+                name: cardName,  // ✅ Add name property
+                isClickable: false  // ✅ Add isClickable property
+            });
         }
     }
     
@@ -352,6 +359,9 @@ function createDeck() {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
+    
+    console.log(`🎴 Server created deck with ${deck.length} cards`);
+    console.log(`🎯 Sample cards:`, deck.slice(0, 3).map(c => c.name));
     
     return deck;
 }

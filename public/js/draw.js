@@ -231,24 +231,50 @@ function draw() {
 
 // Add mouse click detection for card gameplay
 function mousePressed() {
-    if (gameState === gameStateEnum.Playing && window.clickableCards) {
-        // Check if any card was clicked
-        for (let clickableCard of window.clickableCards) {
-            if (mouseX >= clickableCard.x && mouseX <= clickableCard.x + clickableCard.width &&
-                mouseY >= clickableCard.y && mouseY <= clickableCard.y + clickableCard.height) {
+    if (gameState !== gameStateEnum.Playing || !window.game) {
+        console.log('❌ Game not in playing state or no game instance');
+        return;
+    }
+    
+    // ✅ Get the current player whose turn it is
+    const currentPlayer = window.game.getCurrentPlayer();
+    if (!currentPlayer || !currentPlayer.hand) {
+        console.log('❌ No current player or hand found');
+        return;
+    }
+    
+    // ✅ STRICT VALIDATION: Only allow human players to click cards
+    if (currentPlayer.isBot) {
+        console.log(`❌ Bot ${currentPlayer.name} cannot click cards`);
+        return;
+    }
+    
+    // ✅ DOUBLE-CHECK: Verify this is actually the current player's turn
+    if (currentPlayer.playerIndex !== window.game.currentPlayerIndex) {
+        console.log(`❌ ${currentPlayer.name} tried to click but it's not their turn. Current: ${window.game.currentPlayerIndex}, Player: ${currentPlayer.playerIndex}`);
+        return;
+    }
+    
+    console.log(`🎯 ${currentPlayer.name} (Player ${currentPlayer.playerIndex}) is clicking cards on their turn`);
+    
+    // Check if any card in the current player's hand was clicked
+    for (let i = 0; i < currentPlayer.hand.length; i++) {
+        const card = currentPlayer.hand[i];
+        if (card && card.isClickable) {
+            const cardX = width/2 - (currentPlayer.hand.length * cardWidth)/2 + i * cardWidth;
+            const cardY = height - cardHeight - 20;
+            
+            if (mouseX >= cardX && mouseX <= cardX + cardWidth &&
+                mouseY >= cardY && mouseY <= cardY + cardHeight) {
+                console.log(`🎯 Card clicked: ${card.name} at index ${i} by ${currentPlayer.name}`);
                 
-                console.log('🎴 Card clicked:', clickableCard.card.name);
-                
-                // Check if it's the player's turn
-                if (window.game && window.game.getCurrentPlayer() === clickableCard.player) {
-                    console.log('✅ It\'s your turn! Playing card:', clickableCard.card.name);
-                    
-                    // Play the card using the Game class method
-                    window.game.playCard(clickableCard.player, clickableCard.cardIndex);
+                // ✅ Play the card through the game logic
+                const playedCard = window.game.playCard(currentPlayer, i);
+                if (playedCard) {
+                    console.log(`✅ Card played successfully: ${playedCard.name} by ${currentPlayer.name}`);
                 } else {
-                    console.log('❌ Not your turn! Current player:', window.game?.getCurrentPlayer()?.name);
+                    console.log(`❌ Card play failed for ${currentPlayer.name}`);
                 }
-                
                 break;
             }
         }
