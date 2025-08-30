@@ -407,11 +407,21 @@ function drawGameState() {
             return;
         }
         
-        // Draw player label - SIMPLE TEXT
+        // Draw player label - SIMPLE TEXT with better visibility
         fill(255, 255, 255); // White text
         noStroke();
         textSize(18);
         textAlign(CENTER, CENTER);
+        
+        // Ensure text is always visible by using a contrasting color for bottom players
+        if (position.labelOffset > 0) {
+            // Bottom players - use bright green for better visibility
+            fill(0, 255, 0);
+        } else {
+            // Top players - use white
+            fill(255, 255, 255);
+        }
+        
         text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y + position.labelOffset);
         
         // Draw player's cards - PROPER CARD IMAGES with fallbacks
