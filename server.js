@@ -365,22 +365,26 @@ io.on('connection', (socket) => {
 
     // ✅ Handle player nickname changes
     socket.on('changeNickname', (data) => {
-        console.log(`✏️ Nickname change requested in room: ${socket.roomCode}`);
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`✏️ Nickname change requested in room: ${roomCode}`);
         
-        if (!socket.roomCode) {
+        if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
+            socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for nickname change`);
+            console.log(`❌ Room ${roomCode} not found for nickname change`);
+            socket.emit('error', 'Room not found');
             return;
         }
 
         const player = room.players.find(p => p.id === socket.id);
         if (!player) {
             console.log(`❌ Player ${socket.id} not found in room`);
+            socket.emit('error', 'Player not found in room');
             return;
         }
 
@@ -403,32 +407,36 @@ io.on('connection', (socket) => {
         console.log(`✅ ${player.name} changed nickname to: ${newNickname}`);
 
         // Emit updated player list to all players in the room
-        io.to(socket.roomCode).emit('playerJoined', {
+        io.to(roomCode).emit('playerJoined', {
             players: room.players,
             count: room.players.length
         });
 
-        console.log(`✅ Nickname change event emitted for user ${socket.id} in room ${socket.roomCode}`);
+        console.log(`✅ Nickname change event emitted for user ${socket.id} in room ${roomCode}`);
     });
 
     // ✅ Handle player team selection
     socket.on('selectTeam', (data) => {
-        console.log(`🏆 Team selection requested in room: ${socket.roomCode}`);
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🏆 Team selection requested in room: ${roomCode}`);
         
-        if (!socket.roomCode) {
+        if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
+            socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for team selection`);
+            console.log(`❌ Room ${roomCode} not found for team selection`);
+            socket.emit('error', 'Room not found');
             return;
         }
 
         const player = room.players.find(p => p.id === socket.id);
         if (!player) {
             console.log(`❌ Player ${socket.id} not found in room`);
+            socket.emit('error', 'Player not found in room');
             return;
         }
 
@@ -446,12 +454,12 @@ io.on('connection', (socket) => {
         console.log(`✅ ${player.nickname} joined ${requestedTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}`);
 
         // Emit updated player list to all players in the room
-        io.to(socket.roomCode).emit('playerJoined', {
+        io.to(roomCode).emit('playerJoined', {
             players: room.players,
             count: room.players.length
         });
 
-        console.log(`✅ Team selection event emitted for user ${socket.id} in room ${socket.roomCode}`);
+        console.log(`✅ Team selection event emitted for user ${socket.id} in room ${roomCode}`);
     });
 });
 

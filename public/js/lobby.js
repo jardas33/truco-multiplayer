@@ -66,121 +66,28 @@ function setupSocketListeners() {
         showPlayerCustomization(); // ✅ Show customization panel when joining room
     });
 
+    socket.on('gameStart', (data) => {
+        console.log('🎮 Game starting with players:', data);
+        startMultiplayerGame(data);
+    });
+
+    // ✅ Add error handling for server responses
+    socket.on('error', (errorMessage) => {
+        console.error('❌ Server error:', errorMessage);
+        alert(`Error: ${errorMessage}`);
+    });
+
+    // ✅ Enable start button when we have exactly 4 players
     socket.on('playerJoined', (data) => {
-        console.log('👤 Player joined:', data);
+        console.log('✅ Player joined room:', data);
         updatePlayerList(data.players);
         
-        // ✅ Enable start button when we have exactly 4 players
         if (data.count === 4) {
             console.log('🎯 Room is full with 4 players - enabling start button');
             enableStartButton();
         } else {
             console.log(`📊 Room has ${data.count}/4 players`);
         }
-    });
-
-    socket.on('gameStart', (gameData) => {
-        console.log('🎮 Game starting with synchronized data:', gameData);
-        hideRoomControls();
-        
-        // ✅ Store synchronized game data
-        window.players = gameData.players;
-        window.gameHands = gameData.hands;
-        window.currentPlayer = gameData.currentPlayer;
-        
-        // ✅ Initialize multiplayer game immediately
-        console.log('🚀 Initializing multiplayer game...');
-        gameState = gameStateEnum.Playing;
-        
-        // ✅ Create proper multiplayer players with custom team assignments
-        let multiplayerPlayers = [];
-        gameData.players.forEach((player, index) => {
-            // Use custom team if assigned, otherwise auto-assign
-            let team = player.team;
-            if (!team) {
-                // Auto-assign based on index if no team chosen
-                if (index === 0 || index === 2) {
-                    team = "team1"; // Player 1 and Bot 2 = Team Alfa
-                } else {
-                    team = "team2"; // Bot 1 and Bot 3 = Team Beta
-                }
-            }
-            
-            // Use nickname if available, otherwise use name
-            const playerName = player.nickname || player.name;
-            
-            // Create Player object with proper team assignment
-            let newPlayer = new Player(playerName, team, player.isBot, index);
-            
-            // ✅ Assign synchronized cards from server with proper formatting
-            if (gameData.hands && gameData.hands[index]) {
-                // ✅ Convert server card format to client format
-                const serverCards = gameData.hands[index];
-                newPlayer.hand = serverCards.map(card => ({
-                    ...card, // Keep all server properties
-                    isClickable: false, // Will be set by game logic
-                    image: cardImages[card.name] || null // Try to get image from loaded images
-                }));
-                
-                console.log(`🎴 ${newPlayer.name} received ${newPlayer.hand.length} cards:`, newPlayer.hand.map(c => c.name));
-                console.log(`🖼️ ${newPlayer.name} card images loaded:`, newPlayer.hand.filter(c => c.image).length);
-            } else {
-                console.warn(`⚠️ No cards received for ${newPlayer.name} at index ${index}`);
-            }
-            
-            multiplayerPlayers.push(newPlayer);
-            console.log(`👤 Created player: ${newPlayer.name} (${team}) - Bot: ${newPlayer.isBot}`);
-        });
-        
-        // ✅ Set multiplayer mode globally
-        window.isMultiplayerMode = true;
-        isMultiplayerMode = true;
-        
-        // ✅ Create game instance with synchronized multiplayer players
-        window.game = new Game(multiplayerPlayers);
-        
-        // ✅ Set current player from server
-        window.game.currentPlayerIndex = gameData.currentPlayer;
-        
-        // ✅ Make current player's cards clickable
-        if (window.game.players[gameData.currentPlayer]) {
-            const currentPlayer = window.game.players[gameData.currentPlayer];
-            if (!currentPlayer.isBot) {
-                // Human player - make cards clickable
-                currentPlayer.hand.forEach(card => {
-                    card.isClickable = true;
-                });
-                console.log(`✅ Made ${currentPlayer.name}'s cards clickable for first turn`);
-            } else {
-                // Bot player - trigger bot play
-                console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
-                setTimeout(() => {
-                    if (currentPlayer.botPlay) {
-                        currentPlayer.botPlay();
-                    }
-                }, 1000);
-            }
-        }
-        
-        // ✅ Start the game with synchronized state
-        if (window.game.startGame) {
-            window.game.startGame();
-        }
-        
-        // Transition to game view
-        const menuElement = document.getElementById('Menu');
-        const gameElement = document.getElementById('Game');
-        
-        if (menuElement) menuElement.style.display = 'none';
-        if (gameElement) gameElement.style.display = 'block';
-        
-        console.log('✅ Multiplayer game started successfully with', multiplayerPlayers.length, 'players');
-        console.log('🎴 All players have synchronized cards from server');
-    });
-
-    socket.on('error', (message) => {
-        console.error('Server error:', message);
-        alert(message);
     });
 
     // ✅ Handle nickname change success
