@@ -18,6 +18,9 @@ function truco() {
     window.game.trucoCallerTeam = window.game.players[window.game.currentPlayerIndex].team;
   }
 
+  // Move to next player (opponent) for response
+  let nextPlayerIndex = (window.game.currentPlayerIndex + 1) % window.game.players.length;
+  
   // Set popup message
   popupMessage = `🎯 TRUCO CALLED! 🎯\n\n${window.game.players[window.game.currentPlayerIndex].name} has called Truco!\n\nGame is now worth ${window.game.potentialGameValue} games instead of 1.\n\n${window.game.players[nextPlayerIndex].name} must now respond: Accept, Reject, or Raise.`;
   
@@ -27,9 +30,6 @@ function truco() {
   } catch (error) {
     console.warn('⚠️ Could not show popup, continuing with game');
   }
-
-  // Move to next player (opponent) for response
-  let nextPlayerIndex = (window.game.currentPlayerIndex + 1) % window.game.players.length;
   window.game.currentPlayerIndex = nextPlayerIndex;
   
   console.log(`🔄 Turn moved to ${window.game.players[nextPlayerIndex].name} for Truco response`);
