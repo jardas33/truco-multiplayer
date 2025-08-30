@@ -497,12 +497,13 @@ function drawGameState() {
             }
         }
         
-        // Highlight active player with a bright circle - BIGGER to fit player name
+        // Highlight active player with a bright circle - BIGGER to fit player name, centered on text
         if (player.isActive) {
             stroke(255, 255, 0); // Yellow circle
             strokeWeight(4);
             noFill();
-            ellipse(position.x, position.y + position.labelOffset - 20, 100, 100);
+            // Position circle exactly centered on the player text
+            ellipse(position.x, position.y + position.labelOffset, 100, 100);
             strokeWeight(1);
         }
     });
