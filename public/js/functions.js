@@ -371,13 +371,13 @@ function windowResized() {
     const bottomMargin = height - 150; // Bottom margin from screen edge
     
     playerPositions[0].x = leftMargin;          // Bot 1 (TOP-LEFT) - Perfect corner position
-    playerPositions[0].y = topMargin;           // Below scoring panel, top-left corner - MOVED DOWN
+    playerPositions[0].y = topMargin + 50;      // Below scoring panel, top-left corner - MOVED DOWN MORE
     playerPositions[1].x = rightMargin;         // Bot 2 (TOP-RIGHT) - Perfect corner position
     playerPositions[1].y = topMargin;           // Below scoring panel, top-right corner - MOVED DOWN
     playerPositions[2].x = rightMargin;         // Bot 3 (BOTTOM-RIGHT) - Perfect corner position
     playerPositions[2].y = bottomMargin;        // Bottom-right corner
     playerPositions[3].x = leftMargin;          // Player 1 (BOTTOM-LEFT) - Perfect corner position
-    playerPositions[3].y = bottomMargin;        // Bottom-left corner
+    playerPositions[3].y = bottomMargin + 50;   // Bottom-left corner - MOVED DOWN MORE
   }
 }
 
