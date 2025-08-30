@@ -41,6 +41,8 @@ io.on('connection', (socket) => {
             players: [{
                 id: socket.id,
                 name: `Player 1`,
+                nickname: `Player 1`,
+                team: null, // No team assigned yet
                 isBot: false
             }],
             game: null
@@ -79,6 +81,8 @@ io.on('connection', (socket) => {
         room.players.push({
             id: socket.id,
             name: `Player ${room.players.length + 1}`,
+            nickname: `Player ${room.players.length + 1}`,
+            team: null, // No team assigned yet
             isBot: false
         });
         
@@ -118,6 +122,8 @@ io.on('connection', (socket) => {
         room.players.push({
             id: botId,
             name: botName,
+            nickname: botName,
+            team: null, // Bots will be assigned teams automatically
             isBot: true
         });
 
@@ -150,6 +156,29 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Need 4 players to start the game');
             return;
         }
+
+        // ✅ Auto-assign teams to players who haven't chosen yet
+        let team1Count = 0;
+        let team2Count = 0;
+        
+        room.players.forEach(player => {
+            if (player.team === null) {
+                // Auto-assign team based on current distribution
+                if (team1Count < 2) {
+                    player.team = 'team1';
+                    team1Count++;
+                } else if (team2Count < 2) {
+                    player.team = 'team2';
+                    team2Count++;
+                }
+            } else {
+                // Count existing team assignments
+                if (player.team === 'team1') team1Count++;
+                else if (player.team === 'team2') team2Count++;
+            }
+        });
+
+        console.log(`✅ Team distribution: Team 1 (${team1Count}), Team 2 (${team2Count})`);
 
         console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
@@ -332,6 +361,97 @@ io.on('connection', (socket) => {
         });
 
         console.log(`✅ Truco response event emitted for user ${socket.id} in room ${socket.roomCode}`);
+    });
+
+    // ✅ Handle player nickname changes
+    socket.on('changeNickname', (data) => {
+        console.log(`✏️ Nickname change requested in room: ${socket.roomCode}`);
+        
+        if (!socket.roomCode) {
+            console.log(`❌ User ${socket.id} not in a room`);
+            return;
+        }
+        
+        const room = rooms.get(socket.roomCode);
+        if (!room) {
+            console.log(`❌ Room ${socket.roomCode} not found for nickname change`);
+            return;
+        }
+
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            console.log(`❌ Player ${socket.id} not found in room`);
+            return;
+        }
+
+        // Validate nickname length (max 12 characters)
+        const newNickname = data.nickname.trim();
+        if (newNickname.length === 0 || newNickname.length > 12) {
+            socket.emit('error', 'Nickname must be between 1 and 12 characters');
+            return;
+        }
+
+        // Check if nickname is already taken
+        const nicknameTaken = room.players.some(p => p.nickname === newNickname && p.id !== socket.id);
+        if (nicknameTaken) {
+            socket.emit('error', 'Nickname already taken');
+            return;
+        }
+
+        // Update player nickname
+        player.nickname = newNickname;
+        console.log(`✅ ${player.name} changed nickname to: ${newNickname}`);
+
+        // Emit updated player list to all players in the room
+        io.to(socket.roomCode).emit('playerJoined', {
+            players: room.players,
+            count: room.players.length
+        });
+
+        console.log(`✅ Nickname change event emitted for user ${socket.id} in room ${socket.roomCode}`);
+    });
+
+    // ✅ Handle player team selection
+    socket.on('selectTeam', (data) => {
+        console.log(`🏆 Team selection requested in room: ${socket.roomCode}`);
+        
+        if (!socket.roomCode) {
+            console.log(`❌ User ${socket.id} not in a room`);
+            return;
+        }
+        
+        const room = rooms.get(socket.roomCode);
+        if (!room) {
+            console.log(`❌ Room ${socket.roomCode} not found for team selection`);
+            return;
+        }
+
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            console.log(`❌ Player ${socket.id} not found in room`);
+            return;
+        }
+
+        const requestedTeam = data.team; // 'team1' or 'team2'
+        
+        // Check if team is full (max 2 players per team)
+        const teamCount = room.players.filter(p => p.team === requestedTeam).length;
+        if (teamCount >= 2) {
+            socket.emit('error', 'Team is full (max 2 players per team)');
+            return;
+        }
+
+        // Update player team
+        player.team = requestedTeam;
+        console.log(`✅ ${player.nickname} joined ${requestedTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}`);
+
+        // Emit updated player list to all players in the room
+        io.to(socket.roomCode).emit('playerJoined', {
+            players: room.players,
+            count: room.players.length
+        });
+
+        console.log(`✅ Team selection event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });
 });
 

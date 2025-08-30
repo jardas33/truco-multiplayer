@@ -56,12 +56,14 @@ function setupSocketListeners() {
         window.roomId = id;
         document.getElementById('roomInput').value = id;
         updateLobbyUI(true);
+        showPlayerCustomization(); // ✅ Show customization panel when creating room
     });
 
     socket.on('roomJoined', (id) => {
         console.log('Joined room:', id);
         window.roomId = id;
         updateLobbyUI(true);
+        showPlayerCustomization(); // ✅ Show customization panel when joining room
     });
 
     socket.on('playerJoined', (data) => {
@@ -90,18 +92,25 @@ function setupSocketListeners() {
         console.log('🚀 Initializing multiplayer game...');
         gameState = gameStateEnum.Playing;
         
-        // ✅ Create proper multiplayer players with correct team assignments
+        // ✅ Create proper multiplayer players with custom team assignments
         let multiplayerPlayers = [];
         gameData.players.forEach((player, index) => {
-            let team = "team1"; // Default team
-            if (index === 0 || index === 2) {
-                team = "team1"; // Player 1 and Bot 2 = Team Alfa
-            } else {
-                team = "team2"; // Bot 1 and Bot 3 = Team Beta
+            // Use custom team if assigned, otherwise auto-assign
+            let team = player.team;
+            if (!team) {
+                // Auto-assign based on index if no team chosen
+                if (index === 0 || index === 2) {
+                    team = "team1"; // Player 1 and Bot 2 = Team Alfa
+                } else {
+                    team = "team2"; // Bot 1 and Bot 3 = Team Beta
+                }
             }
             
+            // Use nickname if available, otherwise use name
+            const playerName = player.nickname || player.name;
+            
             // Create Player object with proper team assignment
-            let newPlayer = new Player(player.name, team, player.isBot, index);
+            let newPlayer = new Player(playerName, team, player.isBot, index);
             
             // ✅ Assign synchronized cards from server with proper formatting
             if (gameData.hands && gameData.hands[index]) {
@@ -172,6 +181,18 @@ function setupSocketListeners() {
     socket.on('error', (message) => {
         console.error('Server error:', message);
         alert(message);
+    });
+
+    // ✅ Handle nickname change success
+    socket.on('nicknameChanged', (data) => {
+        console.log('✅ Nickname changed successfully:', data);
+        // The playerJoined event will update the player list
+    });
+
+    // ✅ Handle team selection success
+    socket.on('teamSelected', (data) => {
+        console.log('✅ Team selected successfully:', data);
+        // The playerJoined event will update the player list
     });
 
     socket.on('playerDisconnected', (data) => {
@@ -347,6 +368,31 @@ function setupButtonListeners() {
             startSinglePlayerGame();
         };
     }
+
+    // ✅ Player Customization Buttons
+    const changeNicknameBtn = document.getElementById('changeNicknameBtn');
+    if (changeNicknameBtn) {
+        changeNicknameBtn.onclick = () => {
+            console.log('Change Nickname clicked');
+            changeNickname();
+        };
+    }
+
+    const team1Btn = document.getElementById('team1Btn');
+    if (team1Btn) {
+        team1Btn.onclick = () => {
+            console.log('Team 1 (Alfa) clicked');
+            selectTeam('team1');
+        };
+    }
+
+    const team2Btn = document.getElementById('team2Btn');
+    if (team2Btn) {
+        team2Btn.onclick = () => {
+            console.log('Team 2 (Beta) clicked');
+            selectTeam('team2');
+        };
+    }
 }
 
 function createRoom() {
@@ -445,8 +491,20 @@ function updatePlayerList(players) {
         let playerListHTML = '<h3>Players in Room:</h3>';
         players.forEach((player, index) => {
             const playerType = player.isBot ? '🤖 Bot' : '👤 Player';
-            const team = (index === 0 || index === 2) ? 'Team Alfa' : 'Team Beta';
-            playerListHTML += `<div>${playerType}: ${player.name} (${team})</div>`;
+            const nickname = player.nickname || player.name;
+            
+            // Show team assignment if available, otherwise show "No Team"
+            let teamDisplay = 'No Team';
+            if (player.team === 'team1') {
+                teamDisplay = 'Team Alfa 🟠';
+            } else if (player.team === 'team2') {
+                teamDisplay = 'Team Beta 🟣';
+            }
+            
+            playerListHTML += `<div style="margin: 5px 0; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9;">
+                <strong>${playerType}:</strong> ${nickname}<br>
+                <small>${teamDisplay}</small>
+            </div>`;
         });
         
         playerList.innerHTML = playerListHTML;
@@ -563,6 +621,61 @@ function startSinglePlayerGame() {
     }
     
     console.log('Single player game started successfully');
+}
+
+// ✅ Player Customization Functions
+function changeNickname() {
+    const nicknameInput = document.getElementById('nicknameInput');
+    if (!nicknameInput || !socket || !window.roomId) {
+        console.error('Cannot change nickname - missing elements or not in room');
+        return;
+    }
+    
+    const newNickname = nicknameInput.value.trim();
+    if (newNickname.length === 0) {
+        alert('Please enter a nickname');
+        return;
+    }
+    
+    if (newNickname.length > 12) {
+        alert('Nickname must be 12 characters or less');
+        return;
+    }
+    
+    console.log(`🔄 Changing nickname to: ${newNickname}`);
+    
+    // Emit nickname change to server
+    socket.emit('changeNickname', {
+        roomCode: window.roomId,
+        nickname: newNickname
+    });
+    
+    // Clear input
+    nicknameInput.value = '';
+}
+
+function selectTeam(team) {
+    if (!socket || !window.roomId) {
+        console.error('Cannot select team - not in room');
+        return;
+    }
+    
+    console.log(`🏆 Selecting team: ${team}`);
+    
+    // Emit team selection to server
+    socket.emit('selectTeam', {
+        roomCode: window.roomId,
+        team: team
+    });
+}
+
+// ✅ Show player customization when joining room
+function showPlayerCustomization() {
+    const playerCustomization = document.getElementById('playerCustomization');
+    if (playerCustomization) {
+        playerCustomization.style.display = 'block';
+        console.log('✅ Player customization panel shown');
+    }
 }
 
 // Initialize when the document is ready

@@ -19,10 +19,30 @@
           <input type="text" id="roomInput" placeholder="Room Code" />
           <button id="createRoomBtn">Create Room</button>
           <button id="joinRoomBtn">Join Room</button>
-                     <button id="addBotBtn" style="display: none;">Add Bot</button>
-           <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
-           <button id="startSinglePlayerBtn">Start Single Player Game</button>
-           <div id="playerList"></div>
+          
+          <!-- Player Customization Section -->
+          <div id="playerCustomization" style="margin: 20px 0; padding: 15px; border: 2px solid #4CAF50; border-radius: 8px; background-color: rgba(76, 175, 80, 0.1); display: none;">
+            <h4>🎯 Customize Your Player</h4>
+            
+            <!-- Nickname Change -->
+            <div style="margin: 10px 0;">
+              <label for="nicknameInput">Nickname (max 12 chars):</label>
+              <input type="text" id="nicknameInput" maxlength="12" placeholder="Enter nickname" style="margin-left: 10px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+              <button id="changeNicknameBtn" style="margin-left: 10px; padding: 5px 10px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Change</button>
+            </div>
+            
+            <!-- Team Selection -->
+            <div style="margin: 10px 0;">
+              <label>Choose Team:</label>
+              <button id="team1Btn" style="margin-left: 10px; padding: 8px 15px; background-color: #FF9800; color: white; border: none; border-radius: 4px; cursor: pointer;">Team Alfa</button>
+              <button id="team2Btn" style="margin-left: 10px; padding: 8px 15px; background-color: #9C27B0; color: white; border: none; border-radius: 4px; cursor: pointer;">Team Beta</button>
+            </div>
+          </div>
+          
+          <button id="addBotBtn" style="display: none;">Add Bot</button>
+          <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
+          <button id="startSinglePlayerBtn">Start Single Player Game</button>
+          <div id="playerList"></div>
         </div>
       </div>
       <div id="Instructions"></div>
