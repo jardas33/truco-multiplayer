@@ -16,10 +16,12 @@ class Player {
       }
   
       console.log(`🤖 Bot ${this.name} is making a decision.`);
+      console.log(`🤖 Current game state: currentPlayerIndex=${window.game?.currentPlayerIndex}, my index=${window.game?.players.indexOf(this)}`);
       
       // Check if it's actually this bot's turn
       if (window.game && window.game.currentPlayerIndex !== window.game.players.indexOf(this)) {
         console.log(`❌ Bot ${this.name} tried to play out of turn!`);
+        console.log(`❌ Expected: ${window.game.currentPlayerIndex}, Got: ${window.game.players.indexOf(this)}`);
         return;
       }
   

@@ -404,25 +404,24 @@ function drawGameState() {
     window.game.players.forEach((player, index) => {
         const position = playerPositions[index];
         if (!position) {
+            console.warn(`No position found for player ${index}: ${player.name}`);
             return;
         }
         
-        // Draw player label - SIMPLE TEXT with better visibility
-        fill(255, 255, 255); // White text
+        // Draw player label - STABLE TEXT RENDERING with better visibility
         noStroke();
         textSize(18);
         textAlign(CENTER, CENTER);
         
-        // Ensure text is always visible by using a contrasting color for bottom players
-        if (position.labelOffset > 0) {
-            // Bottom players - use bright green for better visibility
-            fill(0, 255, 0);
-        } else {
-            // Top players - use white
-            fill(255, 255, 255);
-        }
+        // Use consistent white color for all player names for maximum readability
+        fill(255, 255, 255); // Bright white for all players
         
-        text(player.name + (player.isBot ? ' (Bot)' : ''), position.x, position.y + position.labelOffset);
+        // Ensure stable text positioning
+        const textX = position.x;
+        const textY = position.y + position.labelOffset;
+        
+        // Draw player name with stable positioning
+        text(player.name + (player.isBot ? ' (Bot)' : ''), textX, textY);
         
         // Draw player's cards - PROPER CARD IMAGES with fallbacks
         if (player.hand && player.hand.length > 0) {

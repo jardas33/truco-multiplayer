@@ -129,9 +129,12 @@ function createDeck() {
   
     nextPlayer() {
       if (this.trucoState === true) {
+        console.log(`⏸️ Game paused during truco decision`);
         return; // Game is paused during truco decision
       }
   
+      console.log(`🔄 nextPlayer called - Current player: ${this.currentPlayerIndex}`);
+      
       // Deactivate current player
       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = false);
       this.players[this.currentPlayerIndex].isActive = false;
@@ -144,6 +147,7 @@ function createDeck() {
       this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
       
       console.log(`🔄 Turn moved to: ${this.players[this.currentPlayerIndex].name} (Player ${this.currentPlayerIndex + 1})`);
+      console.log(`🔄 Active player: ${this.players[this.currentPlayerIndex].name}, isBot: ${this.players[this.currentPlayerIndex].isBot}`);
   
       // If it's a bot's turn, make them play
       if (this.players[this.currentPlayerIndex].isBot) {
