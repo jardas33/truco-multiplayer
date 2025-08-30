@@ -648,6 +648,26 @@ function drawGameState() {
             // Draw played card as proper card image if available, otherwise fallback
             if (playedCard.card.image) {
                 image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
+            } else if (playedCard.card.name && window.getCardImage) {
+                // Try to get card image using the helper function
+                const cardImage = window.getCardImage(playedCard.card.name);
+                if (cardImage) {
+                    image(cardImage, centerX, centerY, cardWidth, cardHeight);
+                } else {
+                    // Fallback to colored rectangle
+                    fill(200, 200, 200); // Light gray
+                    stroke(0, 0, 0);
+                    strokeWeight(2);
+                    rect(centerX, centerY, cardWidth, cardHeight, 5);
+                    
+                    // Draw card name
+                    fill(0, 0, 0);
+                    textSize(14);
+                    textAlign(CENTER, CENTER);
+                    if (playedCard.card.name) {
+                        text(playedCard.card.name, centerX + cardWidth/2, centerY + cardHeight/2);
+                    }
+                }
             } else {
                 // Fallback to colored rectangle
                 fill(200, 200, 200); // Light gray

@@ -115,6 +115,46 @@ function preload() {
     // Ensure cardImages is globally accessible immediately
     window.cardImages = cardImages;
     
+    // CRITICAL: Add a helper function to normalize card names
+    window.getCardImage = function(cardName) {
+        if (!cardName) return null;
+        
+        // Try exact match first
+        if (cardImages[cardName]) {
+            return cardImages[cardName];
+        }
+        
+        // Try to normalize the name
+        let normalizedName = cardName;
+        
+        // Handle common variations
+        if (cardName.includes('_')) {
+            // Convert "queen_of_diamonds" to "Queen of diamonds"
+            normalizedName = cardName.split('_').map((word, index) => {
+                if (index === 0) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }
+                return word;
+            }).join(' ');
+        } else if (cardName.includes(' ')) {
+            // Convert "Queen of diamonds" to "queen_of_diamonds"
+            normalizedName = cardName.toLowerCase().replace(/\s+/g, '_');
+        }
+        
+        // Try normalized name
+        if (cardImages[normalizedName]) {
+            return cardImages[normalizedName];
+        }
+        
+        // Try original name again
+        if (cardImages[cardName]) {
+            return cardImages[cardName];
+        }
+        
+        console.warn(`⚠️ No image found for card: ${cardName} (tried: ${normalizedName})`);
+        return null;
+    };
+    
     console.log('🖼️ Image preload initiated for', totalImages, 'card images');
     
     // Add a timeout to check if images loaded
