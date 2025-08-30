@@ -236,22 +236,23 @@ function setup() {
     popup.class('popup');
     popup.parent(gameDiv);
     popup.style('position', 'absolute');
-    popup.style('top', '50%');
+    popup.style('top', '25%'); // Position above center (where cards are played)
     popup.style('left', '50%');
-    popup.style('transform', 'translate(-50%, -50%)');
-    popup.style('background-color', 'rgba(0, 0, 0, 0.95)');
+    popup.style('transform', 'translateX(-50%)'); // Only center horizontally
+    popup.style('background-color', 'rgba(0, 0, 0, 0.85)'); // More transparent
     popup.style('color', 'white');
-    popup.style('padding', '30px');
+    popup.style('padding', '25px');
     popup.style('border-radius', '15px');
     popup.style('border', '3px solid #ff4444');
     popup.style('z-index', '1000');
     popup.style('text-align', 'center');
-    popup.style('min-width', '350px');
-    popup.style('max-width', '500px');
-    popup.style('font-size', '20px');
+    popup.style('min-width', '400px');
+    popup.style('max-width', '600px');
+    popup.style('font-size', '18px');
     popup.style('font-weight', 'bold');
-    popup.style('box-shadow', '0 10px 30px rgba(0, 0, 0, 0.8)');
+    popup.style('box-shadow', '0 8px 25px rgba(0, 0, 0, 0.7)');
     popup.style('cursor', 'default');
+    popup.style('backdrop-filter', 'blur(5px)'); // Add subtle blur effect
     popup.hide();
 
     // Create popup message paragraph

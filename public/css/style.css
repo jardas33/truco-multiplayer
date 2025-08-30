@@ -94,40 +94,43 @@ button:disabled {
 
 .popup {
     position: fixed;
-    top: 50%;
+    top: 25%; /* Position above center to not cover played cards */
     left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.95);
+    transform: translateX(-50%); /* Only center horizontally */
+    background-color: rgba(0, 0, 0, 0.85); /* More transparent */
     color: white;
-    padding: 30px;
+    padding: 25px;
     border-radius: 15px;
     border: 3px solid #ff4444;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
     z-index: 1000;
     text-align: center;
-    min-width: 350px;
-    max-width: 500px;
-    font-size: 20px;
+    min-width: 400px;
+    max-width: 600px;
+    font-size: 18px;
     font-weight: bold;
     animation: popupFadeIn 0.3s ease-in-out;
+    backdrop-filter: blur(5px); /* Add subtle blur effect */
 }
 
 @keyframes popupFadeIn {
     from {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
+        transform: translateX(-50%) scale(0.8);
     }
     to {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translateX(-50%) scale(1);
     }
 }
 
 .popup p {
     margin: 0 0 20px 0;
     padding: 0;
-    line-height: 1.4;
+    line-height: 1.5;
     color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Add text shadow for better readability */
+    font-weight: 500;
 }
 
 .popup button {
