@@ -175,6 +175,10 @@ function createDeck() {
   
       // Calculate card position in the center
       let playerPos = playerPositions[this.currentPlayerIndex];
+      if (!playerPos) {
+        console.error(`❌ No player position found for index ${this.currentPlayerIndex}`);
+        playerPos = { x: width/2, y: height/2 }; // Fallback to center
+      }
       let cardPosX = lerp(playerPos.x, width/2, 0.5);
       let cardPosY = lerp(playerPos.y, height/2, 0.5);
   
@@ -207,6 +211,8 @@ function createDeck() {
     }
   
     endRound() {
+      console.log(`🏁 endRound called with ${playedCards.length} played cards`);
+      
       // Find the winning card
       let winningCard = playedCards[0];
       for (let i = 1; i < playedCards.length; i++) {
@@ -214,6 +220,8 @@ function createDeck() {
           winningCard = playedCards[i];
         }
       }
+      
+      console.log(`🏆 Winning card: ${winningCard.card.name} by ${winningCard.player.name} (playerIndex: ${winningCard.player.playerIndex})`);
   
       // Determine winning team
       let winningTeam = winningCard.player.team;
@@ -240,13 +248,24 @@ function createDeck() {
         // Prepare for next round
         setTimeout(() => {
           playedCards = [];
-          this.currentPlayerIndex = winningCard.player.id - 1;
+          // FIXED: Use playerIndex instead of string ID
+          this.currentPlayerIndex = winningCard.player.playerIndex;
           this.startRoundPlayer = this.currentPlayerIndex;
-          this.players[this.currentPlayerIndex].isActive = true;
-          this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
           
-          if (this.players[this.currentPlayerIndex].isBot) {
-            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+          // Safety check to ensure valid player index
+          if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
+            this.players[this.currentPlayerIndex].isActive = true;
+            this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+            
+            if (this.players[this.currentPlayerIndex].isBot) {
+              setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+            }
+          } else {
+            console.error(`❌ Invalid player index: ${this.currentPlayerIndex}`);
+            // Fallback to first player
+            this.currentPlayerIndex = 0;
+            this.players[0].isActive = true;
+            this.players[0].hand.forEach(card => card.isClickable = true);
           }
         }, timeEndRound);
       }
@@ -280,11 +299,21 @@ function createDeck() {
         // Start with next player
         this.currentPlayerIndex = (this.startRoundPlayer + 1) % this.players.length;
         this.startRoundPlayer = this.currentPlayerIndex;
-        this.players[this.currentPlayerIndex].isActive = true;
-        this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
         
-        if (this.players[this.currentPlayerIndex].isBot) {
-          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(this), timeBots);
+        // Safety check to ensure valid player index
+        if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
+          this.players[this.currentPlayerIndex].isActive = true;
+          this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+          
+          if (this.players[this.currentPlayerIndex].isBot) {
+            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+          }
+        } else {
+          console.error(`❌ Invalid player index in endGame: ${this.currentPlayerIndex}`);
+          // Fallback to first player
+          this.currentPlayerIndex = 0;
+          this.players[0].isActive = true;
+          this.players[0].hand.forEach(card => card.isClickable = true);
         }
       }, timeEndRound);
     }
@@ -433,6 +462,10 @@ function createDeck() {
         
         // Calculate card position in the center
         let playerPos = playerPositions[this.currentPlayerIndex];
+        if (!playerPos) {
+          console.error(`❌ No player position found for index ${this.currentPlayerIndex}`);
+          playerPos = { x: width/2, y: height/2 }; // Fallback to center
+        }
         let cardPosX = lerp(playerPos.x, width/2, 0.5);
         let cardPosY = lerp(playerPos.y, height/2, 0.5);
 
@@ -504,13 +537,13 @@ function windowResized() {
     gameState = gameStateEnum.Playing;
     window.players = [];
     
-    // Create human player
-    window.players.push(new Player("Player 1", "team1", false));
+    // Create human player (Player 1 - Team Alfa)
+    window.players.push(new Player("Player 1", "team1", false, 0));
     
-    // Create bot players
-    window.players.push(new Player("Bot 1", "team2", true));
-    window.players.push(new Player("Bot 2", "team1", true));
-    window.players.push(new Player("Bot 3", "team2", true));
+    // Create bot players with correct team assignments
+    window.players.push(new Player("Bot 1", "team2", true, 1));  // Team Beta
+    window.players.push(new Player("Bot 2", "team1", true, 2));  // Team Alfa  
+    window.players.push(new Player("Bot 3", "team2", true, 3));  // Team Beta
 
     createDeck();
     shuffleDeck(deck);

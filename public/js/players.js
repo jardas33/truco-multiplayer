@@ -1,11 +1,13 @@
 class Player {
-    constructor(name, team, isBot = false) {
+    constructor(name, team, isBot = false, playerIndex = null) {
       this.name = name;
       this.team = team;
       this.isBot = isBot;
       this.hand = [];
       this.isActive = false;
       this.roundResults = [];
+      // Store the numeric player index for game logic
+      this.playerIndex = playerIndex;
       // Generate a unique ID based on name and team
       this.id = this.name.replace(/\s+/g, '') + Math.random().toString(36).substr(2, 9);
     }
