@@ -371,13 +371,13 @@ function windowResized() {
     const bottomMargin = height - 150; // Bottom margin from screen edge
     
     playerPositions[0].x = leftMargin;          // Bot 1 (TOP-LEFT) - Top position
-    playerPositions[0].y = topMargin;           // Below scoring panel, top-left corner
+    playerPositions[0].y = topMargin + 50;      // Below scoring panel, top-left corner - MOVED DOWN MORE
     playerPositions[1].x = rightMargin;         // Bot 2 (BOTTOM-RIGHT) - Bottom position
     playerPositions[1].y = bottomMargin;        // Bottom-right corner
     playerPositions[2].x = leftMargin;          // Bot 3 (BOTTOM-LEFT) - Bottom position
     playerPositions[2].y = bottomMargin;        // Bottom-left corner
     playerPositions[3].x = rightMargin;         // Player 1 (TOP-RIGHT) - Top position
-    playerPositions[3].y = topMargin;           // Below scoring panel, top-right corner
+    playerPositions[3].y = topMargin + 50;      // Below scoring panel, top-right corner - MOVED DOWN MORE
     
     // Update label offsets to maintain proper spacing
     playerPositions[0].labelOffset = -80;       // Bot 1 - above cards (top player)

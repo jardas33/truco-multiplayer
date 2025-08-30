@@ -146,7 +146,7 @@ function setup() {
     playerPositions = [
         {
             x: leftMargin,          // Bot 1 (TOP-LEFT) - Top position
-            y: topMargin,           // Below scoring panel, top-left corner
+            y: topMargin + 50,      // Below scoring panel, top-left corner - MOVED DOWN MORE
             label: "Bot 1 - Team 2",
             labelOffset: -80,       // Above cards (top player)
         },
@@ -164,7 +164,7 @@ function setup() {
         },
         {
             x: rightMargin,         // Player 1 (TOP-RIGHT) - Top position
-            y: topMargin,           // Below scoring panel, top-right corner
+            y: topMargin + 50,      // Below scoring panel, top-right corner - MOVED DOWN MORE
             label: "Player 1 - Team 1",
             labelOffset: -80,       // Above cards (top player)
         },
