@@ -145,28 +145,28 @@ function setup() {
     
     playerPositions = [
         {
-            x: leftMargin,          // Bot 2 (TOP-LEFT) - Top position
+            x: leftMargin,          // Player 1 (TOP-LEFT) - Top position - ACTUAL PLAYER ORDER
             y: topMargin + 50,      // Below scoring panel, top-left corner - MOVED DOWN MORE
-            label: "Bot 2 - Team 2",
+            label: "Player 1 - Team 1",
             labelOffset: -80,       // Above cards (top player) - REASONABLE distance
         },
         { 
-            x: rightMargin,         // Bot 2 (BOTTOM-RIGHT) - Bottom position - CORRECTED LABEL
-            y: bottomMargin,        // Bottom-right corner
-            label: "Bot 2 - Team 1", 
-            labelOffset: -80        // Above cards (bottom player) - CONSISTENT with top
+            x: rightMargin,         // Bot 1 (TOP-RIGHT) - Top position - ACTUAL PLAYER ORDER
+            y: topMargin + 50,      // Below scoring panel, top-right corner - MOVED DOWN MORE
+            label: "Bot 1 - Team 2", 
+            labelOffset: -80        // Above cards (top player) - CONSISTENT with top
         },
         {
-            x: leftMargin,          // Bot 1 (BOTTOM-LEFT) - Bottom position - CORRECTED LABEL
+            x: leftMargin,          // Bot 2 (BOTTOM-LEFT) - Bottom position - ACTUAL PLAYER ORDER
             y: bottomMargin,        // Bottom-left corner
-            label: "Bot 1 - Team 2",
+            label: "Bot 2 - Team 1",
             labelOffset: -80,       // Above cards (bottom player) - CONSISTENT with top
         },
         {
-            x: rightMargin,         // Player 1 (TOP-RIGHT) - Top position
-            y: topMargin + 50,      // Below scoring panel, top-right corner - MOVED DOWN MORE
-            label: "Player 1 - Team 1",
-            labelOffset: -80,       // Above cards (top player) - REASONABLE distance
+            x: rightMargin,         // Bot 3 (BOTTOM-RIGHT) - Bottom position - ACTUAL PLAYER ORDER
+            y: bottomMargin,        // Bottom-right corner
+            label: "Bot 3 - Team 2",
+            labelOffset: -80,       // Above cards (bottom player) - CONSISTENT with top
         },
     ];
     console.log('Player positions initialized');
