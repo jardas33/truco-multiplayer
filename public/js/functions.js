@@ -497,12 +497,12 @@ function drawGameState() {
             }
         }
         
-        // Highlight active player with a bright circle
+        // Highlight active player with a bright circle - BIGGER to fit player name
         if (player.isActive) {
             stroke(255, 255, 0); // Yellow circle
             strokeWeight(4);
             noFill();
-            ellipse(position.x, position.y + position.labelOffset - 20, 60, 60);
+            ellipse(position.x, position.y + position.labelOffset - 20, 100, 100);
             strokeWeight(1);
         }
     });
@@ -563,8 +563,8 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible
-            trucoButton.position(width - 150, height - 80);
+            // Force repositioning to ensure it's visible - CENTERED
+            trucoButton.position(width/2 - 75, height - 100);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
         } catch (error) {
