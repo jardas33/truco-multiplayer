@@ -378,6 +378,12 @@ function windowResized() {
     playerPositions[2].y = bottomMargin;        // Bottom-right corner
     playerPositions[3].x = leftMargin;          // Player 1 (BOTTOM-LEFT) - Perfect corner position
     playerPositions[3].y = bottomMargin + 50;   // Bottom-left corner - MOVED DOWN MORE
+    
+    // Update label offsets to maintain proper spacing
+    playerPositions[0].labelOffset = -80;       // Bot 1 - much higher above cards
+    playerPositions[1].labelOffset = -80;       // Bot 2 - much higher above cards
+    playerPositions[2].labelOffset = 80;        // Bot 3 - much higher above cards (below for bottom player)
+    playerPositions[3].labelOffset = 80;        // Player 1 - much higher above cards (below for bottom player)
   }
 }
 
