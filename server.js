@@ -430,16 +430,28 @@ io.on('connection', (socket) => {
                 allHands: room.game.hands
             });
         } else {
-            // ✅ CRITICAL FIX: Don't move to next player immediately for bot plays
-            // The client-side bot logic needs to complete first
-            // Only move to next player after the bot has finished playing
-            console.log(`🔄 Current player ${room.game.currentPlayer} played card, waiting for turn completion`);
-            
-            // Emit turn change event with current player (not next player)
-            io.to(socket.roomCode).emit('turnChanged', {
-                currentPlayer: room.game.currentPlayer,
-                allHands: room.game.hands
-            });
+            // ✅ CRITICAL FIX: Handle turn progression based on player type
+            if (currentPlayer.isBot) {
+                // Bot player - don't move to next player immediately
+                // The client-side bot logic needs to complete first
+                console.log(`🔄 Bot ${currentPlayer.name} played card, waiting for turn completion`);
+                
+                // Emit turn change event with current player (not next player)
+                io.to(socket.roomCode).emit('turnChanged', {
+                    currentPlayer: room.game.currentPlayer,
+                    allHands: room.game.hands
+                });
+            } else {
+                // Human player - move to next player immediately
+                console.log(`🔄 Human player ${currentPlayer.name} played card, moving to next player`);
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+                
+                // Emit turn change event with the new current player
+                io.to(socket.roomCode).emit('turnChanged', {
+                    currentPlayer: room.game.currentPlayer,
+                    allHands: room.game.hands
+                });
+            }
         }
 
         console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
