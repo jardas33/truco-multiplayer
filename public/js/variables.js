@@ -23,7 +23,7 @@ let deck = [];
 let playerPositions = [];
 let cardWidth = 80; // Replace with the actual width of your cards
 let cardHeight = 123; // Replace with the actual height of your cards
-let playedCards = [];
+// ✅ REMOVED: Local playedCards variable that was shadowing window.playedCards
 let teamAlfaRounds = 0;
 let teamBetaRounds = 0;
 let teamAlfaGames = 0;

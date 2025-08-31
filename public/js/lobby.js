@@ -239,11 +239,8 @@ function setupSocketListeners() {
                 };
             }).filter(Boolean); // Remove null entries
             
-            // ✅ CRITICAL FIX: Synchronize local playedCards variable
-            if (typeof playedCards !== 'undefined') {
-                playedCards = [...window.playedCards];
-                console.log('🔄 Synchronized local playedCards variable:', playedCards.length);
-            }
+            // ✅ CRITICAL FIX: Ensure window.playedCards is properly set
+            console.log('🔄 Window playedCards updated:', window.playedCards.length);
             
             console.log('🔄 Updated played cards:', window.playedCards.length);
             console.log('🔄 Played cards structure:', window.playedCards);
@@ -277,6 +274,13 @@ function setupSocketListeners() {
         window.game.players.forEach((player, index) => {
             const wasActive = player.isActive;
             player.isActive = (index === data.currentPlayer);
+            
+            // ✅ CRITICAL FIX: Reset hasPlayedThisTurn flag for new turn
+            if (index === data.currentPlayer) {
+                player.hasPlayedThisTurn = false;
+                console.log(`🔄 Reset hasPlayedThisTurn for ${player.name} (new turn)`);
+            }
+            
             console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
         });
         
@@ -312,43 +316,52 @@ function setupSocketListeners() {
                     card.isClickable = true;
                 });
                 console.log(`✅ Made ${currentPlayer.name}'s cards clickable`);
-            } else {
-                // Bot player - trigger bot play
-                console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
-                
-                // ✅ CRITICAL FIX: Synchronize local playedCards variable
-                if (typeof playedCards !== 'undefined' && window.playedCards) {
-                    playedCards = [...window.playedCards];
-                    console.log('🔄 Synchronized local playedCards variable in turnChanged:', playedCards.length);
-                }
-                
-                // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
-                setTimeout(() => {
-                    // Double-check that it's still this bot's turn and they have cards
-                    if (window.game && 
-                        window.game.currentPlayerIndex === data.currentPlayer && 
-                        window.game.players[data.currentPlayer] &&
-                        window.game.players[data.currentPlayer].isBot &&
-                        window.game.players[data.currentPlayer].hand && 
-                        window.game.players[data.currentPlayer].hand.length > 0) {
-                        
-                        const bot = window.game.players[data.currentPlayer];
-                        console.log(`🤖 Bot ${bot.name} confirmed turn - playing card`);
-                        
-                        // Bot plays a random card
-                        const randomCardIndex = Math.floor(Math.random() * bot.hand.length);
-                        const selectedCard = bot.hand[randomCardIndex];
-                        console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} at index ${randomCardIndex}`);
-                        
-                        // ✅ CRITICAL FIX: Create clean card object to prevent serialization issues
-                        const cleanCard = {
-                            name: selectedCard.name,
-                            value: selectedCard.value,
-                            suit: selectedCard.suit || null,
-                            // DO NOT include: image, position, or any DOM/p5.js references
-                        };
-                        
-                                                    // Emit bot card play to server
+                            } else {
+                    // Bot player - trigger bot play
+                    console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
+                    
+                    // ✅ CRITICAL FIX: Prevent bot from playing multiple times
+                    if (currentPlayer.hasPlayedThisTurn) {
+                        console.log(`🤖 Bot ${currentPlayer.name} already played this turn - skipping`);
+                        return;
+                    }
+                    
+                    // ✅ CRITICAL FIX: Ensure window.playedCards is available
+                    if (window.playedCards) {
+                        console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
+                    }
+                    
+                    // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
+                    setTimeout(() => {
+                        // Double-check that it's still this bot's turn and they have cards
+                        if (window.game && 
+                            window.game.currentPlayerIndex === data.currentPlayer && 
+                            window.game.players[data.currentPlayer] &&
+                            window.game.players[data.currentPlayer].isBot &&
+                            window.game.players[data.currentPlayer].hand && 
+                            window.game.players[data.currentPlayer].hand.length > 0 &&
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
+                            
+                            const bot = window.game.players[data.currentPlayer];
+                            console.log(`🤖 Bot ${bot.name} confirmed turn - playing card`);
+                            
+                            // ✅ CRITICAL FIX: Mark bot as having played this turn
+                            bot.hasPlayedThisTurn = true;
+                            
+                            // Bot plays a random card
+                            const randomCardIndex = Math.floor(Math.random() * bot.hand.length);
+                            const selectedCard = bot.hand[randomCardIndex];
+                            console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} at index ${randomCardIndex}`);
+                            
+                            // ✅ CRITICAL FIX: Create clean card object to prevent serialization issues
+                            const cleanCard = {
+                                name: selectedCard.name,
+                                value: selectedCard.value,
+                                suit: selectedCard.suit || null,
+                                // DO NOT include: image, position, or any DOM/p5.js references
+                            };
+                            
+                            // Emit bot card play to server
                             socket.emit('playCard', {
                                 roomCode: window.roomId,
                                 cardIndex: randomCardIndex,
@@ -368,7 +381,7 @@ function setupSocketListeners() {
                             console.log(`🤖 Bot turn validation failed - skipping bot play`);
                         }
                     }, 1500); // Increased delay to prevent rapid bot actions
-            }
+                }
         }
         
         // ✅ Force game redraw
