@@ -332,36 +332,46 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ CRITICAL FIX: Restore original working turn validation
+        // ✅ CRITICAL FIX: Improved turn validation for bot plays
         const playerIndex = room.players.indexOf(player);
-        console.log(`🃏 Turn validation: Current player: ${room.game.currentPlayer}, Player index: ${playerIndex}, Player: ${player.name}`);
-        console.log(`🃏 Client sent playerIndex: ${data.playerIndex}, Server calculated: ${playerIndex}`);
+        const clientPlayerIndex = data.playerIndex;
         
-        // ✅ CRITICAL FIX: Use the client's playerIndex for turn validation
-        // The client sends the correct player index based on the game state
-        if (room.game.currentPlayer !== data.playerIndex) {
-            console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Client sent: ${data.playerIndex}`);
+        console.log(`🃏 Turn validation: Current player: ${room.game.currentPlayer}, Player index: ${playerIndex}, Player: ${player.name}`);
+        console.log(`🃏 Client sent playerIndex: ${clientPlayerIndex}, Server calculated: ${playerIndex}`);
+        
+        // ✅ CRITICAL FIX: Validate that the client's playerIndex matches the current player
+        // This ensures the correct player (including bots) is playing on their turn
+        if (room.game.currentPlayer !== clientPlayerIndex) {
+            console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Client sent: ${clientPlayerIndex}`);
             socket.emit('error', 'Not your turn');
             return;
         }
+        
+        // ✅ CRITICAL FIX: Validate that the player making the request is the correct player
+        // For bots, the client (human player) is acting on behalf of the bot
+        const currentPlayer = room.players[clientPlayerIndex];
+        if (!currentPlayer) {
+            console.log(`❌ Invalid player index: ${clientPlayerIndex}`);
+            socket.emit('error', 'Invalid player');
+            return;
+        }
+        
+        console.log(`✅ Turn validation passed: ${currentPlayer.name} (${clientPlayerIndex}) is playing on their turn`);
 
         // ✅ Get the card from the player's hand
         const cardIndex = data.cardIndex || 0;
         
-        // ✅ CRITICAL FIX: Use client's playerIndex for accessing hands
-        // This ensures consistency between client and server player indexing
-        const clientPlayerIndex = data.playerIndex;
         console.log(`🃏 Client playerIndex: ${clientPlayerIndex}, Server playerIndex: ${playerIndex}`);
         
         if (!room.game.hands || !room.game.hands[clientPlayerIndex]) {
-            console.log(`❌ No hands found for player ${player.name} at index ${clientPlayerIndex}`);
+            console.log(`❌ No hands found for player ${currentPlayer.name} at index ${clientPlayerIndex}`);
             socket.emit('error', 'Invalid game state');
             return;
         }
 
         const playerHand = room.game.hands[clientPlayerIndex];
         if (cardIndex < 0 || cardIndex >= playerHand.length) {
-            console.log(`❌ Invalid card index ${cardIndex} for player ${player.name}. Hand size: ${playerHand.length}`);
+            console.log(`❌ Invalid card index ${cardIndex} for player ${currentPlayer.name}. Hand size: ${playerHand.length}`);
             socket.emit('error', 'Invalid card index');
             return;
         }
@@ -374,12 +384,12 @@ io.on('connection', (socket) => {
         // ✅ Add to played cards
         if (!room.game.playedCards) room.game.playedCards = [];
         room.game.playedCards.push({
-            player: player,
+            player: currentPlayer, // ✅ Use currentPlayer for consistency
             card: playedCard,
-            playerIndex: clientPlayerIndex // ✅ Use client's playerIndex for consistency
+            playerIndex: clientPlayerIndex
         });
 
-        console.log(`✅ ${player.name} played ${playedCard.name} in room ${socket.roomCode}`);
+        console.log(`✅ ${currentPlayer.name} played ${playedCard.name} in room ${socket.roomCode}`);
 
         // ✅ CRITICAL FIX: Create clean, serializable played cards array
         const cleanPlayedCards = room.game.playedCards.map(playedCard => ({
@@ -397,11 +407,11 @@ io.on('connection', (socket) => {
 
         // ✅ Emit card played event to all players in the room with synchronized data
         io.to(socket.roomCode).emit('cardPlayed', {
-            playerId: socket.id,
-            playerName: player.name,
+            playerId: currentPlayer.id, // ✅ Use currentPlayer.id for bots
+            playerName: currentPlayer.name, // ✅ Use currentPlayer.name for bots
             cardIndex: cardIndex,
             card: playedCard,
-            playerIndex: clientPlayerIndex, // ✅ Use client's playerIndex for consistency
+            playerIndex: clientPlayerIndex,
             allHands: room.game.hands, // Send updated hands to all players
             playedCards: cleanPlayedCards // Send clean, serializable played cards
         });
