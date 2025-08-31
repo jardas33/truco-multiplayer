@@ -154,3 +154,70 @@ button:hover {
 #nicknameInput {
     color: #333 !important; /* Dark text for input field */
 }
+
+/* Room Controls Styling */
+.room-controls {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.room-controls input,
+.room-controls button {
+    margin: 10px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.room-controls input {
+    background-color: #f5f5f5;
+    border: 2px solid #ddd;
+    color: #333;
+    min-width: 200px;
+}
+
+.room-controls input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.room-controls button {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+.room-controls button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.room-controls button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ✅ New button styles */
+#removeBotBtn {
+    background-color: #f44336 !important; /* Red for remove */
+}
+
+#removeBotBtn:hover {
+    background-color: #da190b !important;
+}
+
+#backToMainMenuBtn {
+    background-color: #2196F3 !important; /* Blue for navigation */
+    margin-top: 20px;
+}
+
+#backToMainMenuBtn:hover {
+    background-color: #1976D2 !important;
+}

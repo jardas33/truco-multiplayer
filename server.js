@@ -101,6 +101,36 @@ io.on('connection', (socket) => {
         });
     });
 
+    // ✅ Handle room leaving
+    socket.on('leaveRoom', (roomCode) => {
+        console.log(`🚪 User ${socket.id} leaving room: ${roomCode}`);
+        
+        const room = rooms.get(roomCode);
+        if (!room) {
+            console.log(`❌ Room ${roomCode} not found for user leaving`);
+            return;
+        }
+
+        // Remove user from room
+        room.players = room.players.filter(p => p.id !== socket.id);
+        socket.leave(roomCode);
+        socket.roomCode = null;
+
+        console.log(`✅ User ${socket.id} left room ${roomCode}. Total players: ${room.players.length}`);
+
+        // Emit player left event to remaining players
+        io.to(roomCode).emit('playerLeft', {
+            players: room.players,
+            count: room.players.length
+        });
+
+        // If room is empty, delete it
+        if (room.players.length === 0) {
+            rooms.delete(roomCode);
+            console.log(`🗑️ Room ${roomCode} deleted (empty)`);
+        }
+    });
+
     // Handle adding bots
     socket.on('addBot', (roomCode) => {
         console.log(`🤖 Adding bot to room: ${roomCode}`);
@@ -142,6 +172,40 @@ io.on('connection', (socket) => {
         if (room.players.length === 4) {
             console.log(`🎯 Room ${roomCode} is now full with 4 players`);
             io.to(roomCode).emit('roomFull');
+        }
+    });
+
+    // ✅ Handle bot removal
+    socket.on('removeBot', (roomCode) => {
+        console.log(`🤖 Removing bot from room: ${roomCode}`);
+        
+        const room = rooms.get(roomCode);
+        if (!room) {
+            console.log(`❌ Room ${roomCode} not found for bot removal`);
+            return;
+        }
+
+        // Find the last bot in the room
+        const botIndex = room.players.findIndex(player => player.isBot);
+        if (botIndex === -1) {
+            console.log(`❌ No bots found in room ${roomCode} to remove`);
+            socket.emit('error', 'No bots to remove');
+            return;
+        }
+
+        // Remove the bot
+        const removedBot = room.players.splice(botIndex, 1)[0];
+        console.log(`✅ Bot ${removedBot.name} removed from room ${roomCode}. Total players: ${room.players.length}`);
+
+        // ✅ Emit updated player list to all players in the room
+        io.to(roomCode).emit('playerJoined', {
+            players: room.players,
+            count: room.players.length
+        });
+
+        // If room is no longer full, emit roomNotFull event
+        if (room.players.length < 4) {
+            io.to(roomCode).emit('roomNotFull');
         }
     });
 

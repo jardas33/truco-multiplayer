@@ -421,6 +421,15 @@ function setupButtonListeners() {
         };
     }
 
+    // ✅ Remove Bot button
+    const removeBotBtn = document.getElementById('removeBotBtn');
+    if (removeBotBtn) {
+        removeBotBtn.onclick = () => {
+            console.log('Remove Bot clicked');
+            removeBot();
+        };
+    }
+
     // Start Game button
     const startGameBtn = document.getElementById('startGameBtn');
     if (startGameBtn) {
@@ -436,6 +445,15 @@ function setupButtonListeners() {
         startSinglePlayerBtn.onclick = () => {
             console.log('Start Single Player Game clicked');
             startSinglePlayerGame();
+        };
+    }
+
+    // ✅ Back to Main Menu button
+    const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
+    if (backToMainMenuBtn) {
+        backToMainMenuBtn.onclick = () => {
+            console.log('Back to Main Menu clicked');
+            leaveRoomAndReturnToMenu();
         };
     }
 
@@ -542,14 +560,20 @@ function startGameWithCurrentPlayers() {
 function updateLobbyUI(inRoom) {
     console.log('Updating lobby UI, inRoom:', inRoom);
     const addBotBtn = document.getElementById('addBotBtn');
+    const removeBotBtn = document.getElementById('removeBotBtn');
     const startGameBtn = document.getElementById('startGameBtn');
+    const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
     
     if (inRoom) {
         if (addBotBtn) addBotBtn.style.display = 'inline-block';
+        if (removeBotBtn) removeBotBtn.style.display = 'inline-block';
         if (startGameBtn) startGameBtn.style.display = 'inline-block';
+        if (backToMainMenuBtn) backToMainMenuBtn.style.display = 'inline-block';
     } else {
         if (addBotBtn) addBotBtn.style.display = 'none';
+        if (removeBotBtn) removeBotBtn.style.display = 'none';
         if (startGameBtn) startGameBtn.style.display = 'none';
+        if (backToMainMenuBtn) backToMainMenuBtn.style.display = 'none';
     }
 }
 
@@ -1064,4 +1088,68 @@ function logMultiplayerGameState() {
     
     console.log('🏠 Room ID:', window.roomId);
     console.log('🔌 Socket connected:', socket ? socket.connected : 'No socket');
+}
+
+function removeBot() {
+    if (!socket || !window.roomId) {
+        console.error('Socket not initialized or not in a room');
+        return;
+    }
+
+    console.log('Removing bot from room:', window.roomId);
+    socket.emit('removeBot', window.roomId);
+}
+
+// ✅ Function to leave room and return to main menu
+function leaveRoomAndReturnToMenu() {
+    if (!socket || !window.roomId) {
+        console.error('Socket not initialized or not in a room');
+        return;
+    }
+
+    console.log('Leaving room and returning to main menu:', window.roomId);
+    
+    // Emit leave room event to server
+    socket.emit('leaveRoom', window.roomId);
+    
+    // Clear room state
+    window.roomId = null;
+    window.players = null;
+    window.isMultiplayerMode = false;
+    
+    // Reset game state
+    if (window.game) {
+        window.game = null;
+    }
+    
+    // Reset UI to main menu
+    gameState = gameStateEnum.Menu;
+    window.gameState = gameStateEnum.Menu;
+    
+    // Hide game div and show menu div
+    if (gameDiv) gameDiv.style('display', 'none');
+    if (menuDiv) menuDiv.style('display', 'block');
+    
+    // Reset lobby UI
+    updateLobbyUI(false);
+    
+    // Hide player customization
+    const playerCustomization = document.getElementById('playerCustomization');
+    if (playerCustomization) {
+        playerCustomization.style.display = 'none';
+    }
+    
+    // Clear room input
+    const roomInput = document.getElementById('roomInput');
+    if (roomInput) {
+        roomInput.value = '';
+    }
+    
+    // Clear player list
+    const playerList = document.getElementById('playerList');
+    if (playerList) {
+        playerList.innerHTML = '';
+    }
+    
+    console.log('✅ Successfully returned to main menu');
 }
