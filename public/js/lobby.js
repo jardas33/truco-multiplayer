@@ -562,6 +562,75 @@ function setupSocketListeners() {
         
         console.log('✅ Round completion synchronized successfully');
     });
+    
+    // ✅ Handle new game started event
+    socket.on('newGameStarted', (data) => {
+        console.log('🎮 New game started event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for new game event');
+            return;
+        }
+        
+        // Clear played cards for new game
+        window.playedCards = [];
+        console.log('🔄 Cleared played cards for new game');
+        
+        // Update current player
+        if (data.currentPlayer !== undefined) {
+            window.game.currentPlayerIndex = data.currentPlayer;
+            console.log('🔄 New game - current player:', data.currentPlayer);
+            
+            // Update player active states for new game
+            window.game.players.forEach((player, index) => {
+                player.isActive = (index === data.currentPlayer);
+                console.log(`🔄 New game - Player ${player.name} (${index}) isActive: ${player.isActive}`);
+            });
+        }
+        
+        // Update hands
+        if (data.allHands) {
+            data.allHands.forEach((hand, index) => {
+                if (window.game.players[index]) {
+                    const clientHand = hand.map(card => {
+                        const cardImage = getCardImageWithFallback(card.name);
+                        return {
+                            ...card,
+                            isClickable: false,
+                            image: cardImage
+                        };
+                    });
+                    
+                    window.game.players[index].hand = clientHand;
+                    console.log(`🔄 New game - updated ${window.game.players[index].name} hand:`, clientHand.map(c => c.name));
+                }
+            });
+        }
+        
+        // Update game scores
+        if (data.scores) {
+            updateGameScores(data.scores);
+            console.log('🔄 New game - scores reset:', data.scores);
+        }
+        
+        // Reset bot flags for new game
+        window.game.players.forEach(player => {
+            if (player.isBot) {
+                player.hasPlayedThisTurn = false;
+                console.log(`🔄 New game - reset hasPlayedThisTurn for ${player.name}`);
+            }
+        });
+        
+        // Show new game message
+        showNewGameMessage();
+        
+        // Force game redraw to show new game state
+        if (typeof redraw === 'function') {
+            redraw();
+        }
+        
+        console.log('✅ New game started successfully');
+    });
 }
 
 // ✅ CRITICAL FIX: Function to display round winner message
@@ -711,6 +780,80 @@ function showGameWinnerMessage(winningTeam) {
             messageDiv.remove();
         }
     }, 6000);
+}
+
+// ✅ CRITICAL FIX: Function to display new game message
+function showNewGameMessage() {
+    // Remove any existing new game message
+    const existingMessage = document.getElementById('newGameMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create new game message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'newGameMessage';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        padding: 25px 35px;
+        border-radius: 20px;
+        font-size: 22px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        z-index: 1002;
+        border: 4px solid #2E7D32;
+        min-width: 320px;
+    `;
+    
+    messageDiv.innerHTML = `
+        <button id="closeNewGameBtn" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        ">✕</button>
+        <div style="margin-bottom: 15px;">🃏 NEW GAME STARTED! 🃏</div>
+        <div style="font-size: 18px; margin-bottom: 10px;">Fresh cards dealt!</div>
+        <div style="font-size: 16px; margin-top: 10px;">Scores reset to 0-0</div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Add close button functionality
+    const closeBtn = document.getElementById('closeNewGameBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        });
+    }
+    
+    // Auto-remove message after 4 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 4000);
 }
 
 // ✅ CRITICAL FIX: Function to update game scores display

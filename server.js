@@ -514,7 +514,31 @@ io.on('connection', (socket) => {
                 console.log(`🎮 Team 2 wins the game!`);
             }
             
-            // ✅ CRITICAL FIX: Don't reset playedCards immediately
+            // ✅ CRITICAL FIX: If game is won, start a new game after delay
+            if (gameWinner) {
+                console.log(`🎮 Game won by ${gameWinner}, starting new game in 5 seconds...`);
+                
+                // Clear played cards immediately for game winner
+                room.game.playedCards = [];
+                
+                // Emit round complete event with scoring information
+                io.to(socket.roomCode).emit('roundComplete', {
+                    currentPlayer: room.game.currentPlayer,
+                    allHands: room.game.hands,
+                    roundWinner: roundWinner,
+                    scores: room.game.scores,
+                    gameWinner: gameWinner
+                });
+                
+                // Start new game after 5 seconds
+                setTimeout(() => {
+                    startNewGame(room);
+                }, 5000);
+                
+                return; // Don't continue with normal round logic
+            }
+            
+            // ✅ CRITICAL FIX: Don't reset playedCards immediately for normal rounds
             // Keep them visible until the next round starts
             console.log(`🏁 Round complete - keeping ${room.game.playedCards.length} played cards visible`);
             
@@ -907,22 +931,22 @@ function dealCards(deck) {
 // ✅ CRITICAL FIX: Function to determine round winner based on Brazilian Truco rules
 function determineRoundWinner(playedCards) {
     console.log(`🏆 Determining round winner from ${playedCards.length} played cards`);
-    
+
     if (!playedCards || playedCards.length !== 4) {
         console.error(`❌ Invalid playedCards for round winner determination:`, playedCards);
         return null;
     }
-    
+
     // Find the highest value card (lowest number = highest power in Brazilian Truco)
     let highestCard = null;
     let highestValue = Infinity;
-    
+
     playedCards.forEach((playedCard, index) => {
         const card = playedCard.card;
         const player = playedCard.player;
-        
+
         console.log(`🏆 Card ${index}: ${card.name} (value: ${card.value}) played by ${player.name}`);
-        
+
         if (card.value < highestValue) {
             highestValue = card.value;
             highestCard = {
@@ -934,9 +958,58 @@ function determineRoundWinner(playedCards) {
             console.log(`🏆 New highest card: ${card.name} (${card.value}) by ${player.name}`);
         }
     });
-    
+
     console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
     return highestCard;
+}
+
+// ✅ CRITICAL FIX: Function to start a new game after a team wins
+function startNewGame(room) {
+    console.log(`🎮 Starting new game in room: ${room.id}`);
+    
+    try {
+        // Reset game scores for new game
+        room.game.scores = { team1: 0, team2: 0 };
+        console.log(`🔄 Reset scores for new game`);
+        
+        // Clear played cards
+        room.game.playedCards = [];
+        console.log(`🔄 Cleared played cards`);
+        
+        // Reset all players' hasPlayedThisTurn flags
+        room.players.forEach(player => {
+            if (player.isBot) {
+                player.hasPlayedThisTurn = false;
+            }
+        });
+        console.log(`🔄 Reset player turn flags`);
+        
+        // Create new deck and deal cards
+        const deck = createDeck();
+        const hands = dealCards(deck, room.players.length);
+        
+        // Update game state
+        room.game.hands = hands;
+        room.game.currentPlayer = 0; // Start with first player
+        room.game.playedCards = [];
+        
+        // Update player hands
+        room.players.forEach((player, index) => {
+            player.hand = hands[index];
+        });
+        
+        console.log(`🔄 New game started with fresh deck and hands`);
+        
+        // Emit new game started event
+        io.to(room.id).emit('newGameStarted', {
+            currentPlayer: room.game.currentPlayer,
+            allHands: room.game.hands,
+            scores: room.game.scores
+        });
+        
+    } catch (error) {
+        console.error(`❌ Error starting new game:`, error);
+    }
 }
 
 // Server startup
