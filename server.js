@@ -411,6 +411,21 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // ✅ CRITICAL FIX: Prevent bots from playing multiple cards in one turn
+        if (currentPlayer.isBot) {
+            // Check if this bot has already played a card this turn
+            const botPlayedThisTurn = room.game.playedCards.some(pc => 
+                pc.playerIndex === clientPlayerIndex && 
+                pc.player.id === currentPlayer.id
+            );
+            
+            if (botPlayedThisTurn) {
+                console.log(`❌ Bot ${currentPlayer.name} already played a card this turn - ignoring duplicate play`);
+                socket.emit('error', 'Bot already played this turn');
+                return;
+            }
+        }
+        
         console.log(`✅ Turn validation passed: ${currentPlayer.name} (${clientPlayerIndex}) is playing on their turn`);
 
         // ✅ Get the card from the player's hand
@@ -478,6 +493,13 @@ io.on('connection', (socket) => {
             // ✅ CRITICAL FIX: Don't reset playedCards immediately
             // Keep them visible until the next round starts
             console.log(`🏁 Round complete - keeping ${room.game.playedCards.length} played cards visible`);
+            
+            // ✅ CRITICAL FIX: Reset all players' hasPlayedThisTurn flags for new round
+            room.players.forEach(player => {
+                if (player.isBot) {
+                    player.hasPlayedThisTurn = false;
+                }
+            });
             
             // Move to next player
             room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
