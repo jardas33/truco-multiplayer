@@ -51,6 +51,38 @@ function setupSocketListeners() {
         return;
     }
 
+    socket.on('connect', () => {
+        console.log('✅ Connected to server');
+        hideReconnectionUI();
+        
+        // Attempt to rejoin room if we were in one before disconnection
+        if (window.roomId) {
+            console.log('🔄 Attempting to rejoin room after reconnection:', window.roomId);
+            socket.emit('joinRoom', window.roomId);
+        }
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('❌ Connection error:', error);
+        showReconnectionUI();
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ Disconnected from server');
+        showReconnectionUI();
+    });
+
+    socket.on('reconnect', () => {
+        console.log('✅ Reconnected to server');
+        hideReconnectionUI();
+        
+        // Attempt to rejoin room if we were in one
+        if (window.roomId) {
+            console.log('🔄 Attempting to rejoin room after reconnection:', window.roomId);
+            socket.emit('joinRoom', window.roomId);
+        }
+    });
+
     socket.on('roomCreated', (id) => {
         console.log('Room created:', id);
         window.roomId = id;
@@ -68,6 +100,20 @@ function setupSocketListeners() {
 
     socket.on('gameStart', (data) => {
         console.log('🎮 Game starting with players:', data);
+        
+        // ✅ Validate multiplayer data before starting
+        if (!data.players || data.players.length !== 4) {
+            console.error('❌ Invalid multiplayer data - missing or incorrect player count');
+            socket.emit('error', 'Invalid game data received');
+            return;
+        }
+        
+        if (!data.hands || data.hands.length !== 4) {
+            console.error('❌ Invalid multiplayer data - missing or incorrect hands');
+            socket.emit('error', 'Invalid game data received');
+            return;
+        }
+        
         startMultiplayerGame(data);
     });
 
@@ -105,9 +151,18 @@ function setupSocketListeners() {
     socket.on('playerDisconnected', (data) => {
         console.log('Player disconnected:', data);
         updatePlayerList(data.players);
+        
+        // ✅ Check if we still have enough players to continue
+        if (data.count < 2) {
+            console.log('❌ Not enough players to continue game');
+            if (window.game) {
+                // End the current game
+                window.game.endGame('Game ended - not enough players');
+            }
+        }
     });
 
-    // ✅ Handle synchronized card playing
+    // ✅ Handle synchronized card playing with improved error handling
     socket.on('cardPlayed', (data) => {
         console.log('🃏 Card played event received:', data);
         
@@ -116,16 +171,19 @@ function setupSocketListeners() {
             return;
         }
         
-        // ✅ Update all player hands with synchronized data
+        // ✅ Update all player hands with synchronized data and fallback handling
         if (data.allHands) {
             data.allHands.forEach((hand, index) => {
                 if (window.game.players[index]) {
-                    // ✅ Convert server card format to client format
-                    const clientHand = hand.map(card => ({
-                        ...card, // Keep all server properties
-                        isClickable: false, // Will be set by game logic
-                        image: cardImages[card.name] || null // Try to get image from loaded images
-                    }));
+                    // ✅ Convert server card format to client format with fallback
+                    const clientHand = hand.map(card => {
+                        const cardImage = getCardImageWithFallback(card.name);
+                        return {
+                            ...card, // Keep all server properties
+                            isClickable: false, // Will be set by game logic
+                            image: cardImage // Use fallback function
+                        };
+                    });
                     
                     window.game.players[index].hand = clientHand;
                     console.log(`🔄 Updated ${window.game.players[index].name} hand:`, clientHand.map(c => c.name));
@@ -174,25 +232,34 @@ function setupSocketListeners() {
         console.log('✅ Card played event synchronized successfully');
     });
 
-    // ✅ Handle turn changes
+    // ✅ Handle turn changes with improved validation
     socket.on('turnChanged', (data) => {
         console.log('🔄 Turn changed event received:', data);
         
         if (!window.game) return;
         
+        // ✅ Validate new current player index
+        if (data.currentPlayer < 0 || data.currentPlayer >= 4) {
+            console.error('❌ Invalid current player index:', data.currentPlayer);
+            return;
+        }
+        
         // ✅ Update current player
         window.game.currentPlayerIndex = data.currentPlayer;
         
-        // ✅ Update all player hands with proper formatting
+        // ✅ Update all player hands with proper formatting and fallback
         if (data.allHands) {
             data.allHands.forEach((hand, index) => {
                 if (window.game.players[index]) {
-                    // ✅ Convert server card format to client format
-                    const clientHand = hand.map(card => ({
-                        ...card, // Keep all server properties
-                        isClickable: false, // Will be set by game logic
-                        image: cardImages[card.name] || null // Try to get image from loaded images
-                    }));
+                    // ✅ Convert server card format to client format with fallback
+                    const clientHand = hand.map(card => {
+                        const cardImage = getCardImageWithFallback(card.name);
+                        return {
+                            ...card, // Keep all server properties
+                            isClickable: false, // Will be set by game logic
+                            image: cardImage // Use fallback function
+                        };
+                    });
                     
                     window.game.players[index].hand = clientHand;
                 }
@@ -586,4 +653,171 @@ function showPlayerCustomization() {
 }
 
 // Initialize when the document is ready
-document.addEventListener('DOMContentLoaded', initGame); 
+document.addEventListener('DOMContentLoaded', initGame);
+
+// ✅ Add reconnection UI functions
+function showReconnectionUI() {
+    const reconnectionDiv = document.getElementById('reconnectionUI');
+    if (reconnectionDiv) {
+        reconnectionDiv.style.display = 'block';
+    }
+    
+    // Show reconnection message
+    const messageDiv = document.getElementById('reconnectionMessage');
+    if (messageDiv) {
+        messageDiv.textContent = 'Connection lost. Attempting to reconnect...';
+    }
+}
+
+function hideReconnectionUI() {
+    const reconnectionDiv = document.getElementById('reconnectionUI');
+    if (reconnectionDiv) {
+        reconnectionDiv.style.display = 'none';
+    }
+}
+
+// ✅ Add card image fallback function
+function getCardImageWithFallback(cardName) {
+    // First try to get the actual image
+    if (cardImages && cardImages[cardName]) {
+        return cardImages[cardName];
+    }
+    
+    // Fallback to card back image if available
+    if (typeof cardBackImage !== 'undefined' && cardBackImage) {
+        console.log(`⚠️ Using fallback image for card: ${cardName}`);
+        return cardBackImage;
+    }
+    
+    // Ultimate fallback - return null (will use text rendering)
+    console.warn(`⚠️ No image available for card: ${cardName} - using text rendering`);
+    return null;
+}
+
+// ✅ Add multiplayer game initialization function
+function startMultiplayerGame(data) {
+    console.log('🎮 Starting multiplayer game with server data:', data);
+    
+    try {
+        // Set game state to Playing
+        window.gameState = gameStateEnum.Playing;
+        gameState = gameStateEnum.Playing;
+        
+        // Set multiplayer mode
+        window.isMultiplayerMode = true;
+        
+        // Initialize players from server data
+        window.players = data.players.map((player, index) => {
+            // Convert server player data to client Player objects
+            const clientPlayer = new Player(
+                player.nickname || player.name, 
+                player.team || (index < 2 ? 'team1' : 'team2'), // Auto-assign teams if not set
+                player.isBot || false,
+                index
+            );
+            
+            // Set the hand from server data
+            if (data.hands && data.hands[index]) {
+                clientPlayer.hand = data.hands[index].map(card => {
+                    const cardImage = getCardImageWithFallback(card.name);
+                    return {
+                        ...card,
+                        image: cardImage,
+                        isClickable: false
+                    };
+                });
+            }
+            
+            return clientPlayer;
+        });
+        
+        console.log('✅ Players initialized for multiplayer:', window.players);
+        
+        // Store current player from server
+        window.currentPlayer = data.currentPlayer || 0;
+        
+        // Initialize game
+        window.game = new Game(window.players);
+        
+        // Initialize game variables
+        playedCards = [];
+        teamAlfaRounds = 0;
+        teamBetaRounds = 0;
+        teamAlfaGames = 0;
+        teamBetaGames = 0;
+        teamAlfaSets = 0;
+        teamBetaSets = 0;
+        
+        // Start the game
+        window.game.startGame();
+        
+        // Transition UI to game view
+        console.log('🔄 Transitioning UI to multiplayer game view...');
+        
+        // Force the Game div to be visible
+        const gameElement = document.getElementById('Game');
+        if (gameElement) {
+            gameElement.style.display = 'block';
+            gameElement.style.zIndex = '1';
+            console.log('✅ Game div made visible');
+        }
+        
+        // Hide the Menu div
+        const menuElement = document.getElementById('Menu');
+        if (menuElement) {
+            menuElement.style.display = 'none';
+            console.log('✅ Menu div hidden');
+        }
+        
+        // Hide other elements
+        const instructionsElement = document.getElementById('Instructions');
+        if (instructionsElement) {
+            instructionsElement.style.display = 'none';
+        }
+        
+        const valuesElement = document.getElementById('Values');
+        if (valuesElement) {
+            valuesElement.style.display = 'none';
+        }
+        
+        // Move canvas to Game div
+        if (window.gameCanvas) {
+            try {
+                console.log('🔄 Moving canvas to Game div...');
+                window.gameCanvas.parent('Game');
+                console.log('✅ Canvas moved to Game div successfully');
+            } catch (error) {
+                console.error('❌ Error moving canvas to Game div:', error);
+            }
+        } else {
+            console.error('❌ No gameCanvas found!');
+        }
+        
+        // Show back button if available
+        if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
+            try {
+                backToMainMenuButton.show();
+                console.log('✅ Back button shown');
+            } catch (e) {
+                console.log('⚠️ Back button not available yet');
+            }
+        }
+        
+        // Force a redraw to trigger the UI transition
+        if (typeof redraw === 'function') {
+            redraw();
+            console.log('✅ Forced p5.js redraw to trigger UI transition');
+        }
+        
+        console.log('🎉 Multiplayer game started successfully');
+        
+    } catch (error) {
+        console.error('❌ Error starting multiplayer game:', error);
+        alert('Failed to start multiplayer game. Please try again.');
+        
+        // Reset to menu state
+        window.gameState = gameStateEnum.Menu;
+        gameState = gameStateEnum.Menu;
+        window.isMultiplayerMode = false;
+    }
+} 

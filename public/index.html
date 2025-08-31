@@ -17,6 +17,13 @@
     <main>
       <div id="Menu">
         <div id="roomControls" class="room-controls">
+          <!-- ✅ Reconnection UI -->
+          <div id="reconnectionUI" style="display: none; margin: 20px 0; padding: 15px; border: 2px solid #f44336; border-radius: 8px; background-color: rgba(244, 67, 54, 0.1); text-align: center;">
+            <h4 style="color: #f44336; margin: 0 0 10px 0;">⚠️ Connection Lost</h4>
+            <div id="reconnectionMessage" style="color: #f44336; margin-bottom: 10px;">Connection lost. Attempting to reconnect...</div>
+            <div style="color: #666; font-size: 14px;">Please wait while we reconnect to the server...</div>
+          </div>
+          
           <input type="text" id="roomInput" placeholder="Room Code" />
           <button id="createRoomBtn">Create Room</button>
           <button id="joinRoomBtn">Join Room</button>

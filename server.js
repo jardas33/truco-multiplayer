@@ -232,12 +232,20 @@ io.on('connection', (socket) => {
         
         if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
+            socket.emit('error', 'Not in a room');
             return;
         }
         
         const room = rooms.get(socket.roomCode);
         if (!room) {
             console.log(`❌ Room ${socket.roomCode} not found for card play`);
+            socket.emit('error', 'Room not found');
+            return;
+        }
+
+        if (!room.game) {
+            console.log(`❌ No active game in room ${socket.roomCode}`);
+            socket.emit('error', 'No active game');
             return;
         }
 
@@ -245,19 +253,30 @@ io.on('connection', (socket) => {
         const player = room.players.find(p => p.id === socket.id);
         if (!player) {
             console.log(`❌ Player ${socket.id} not found in room`);
+            socket.emit('error', 'Player not found in room');
+            return;
+        }
+
+        // ✅ Validate it's the player's turn
+        const playerIndex = room.players.indexOf(player);
+        if (room.game.currentPlayer !== playerIndex) {
+            console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Player: ${playerIndex}`);
+            socket.emit('error', 'Not your turn');
             return;
         }
 
         // ✅ Get the card from the player's hand
         const cardIndex = data.cardIndex || 0;
-        if (!room.game || !room.game.hands || !room.game.hands[room.players.indexOf(player)]) {
+        if (!room.game.hands || !room.game.hands[playerIndex]) {
             console.log(`❌ No hands found for player ${player.name}`);
+            socket.emit('error', 'Invalid game state');
             return;
         }
 
-        const playerHand = room.game.hands[room.players.indexOf(player)];
-        if (cardIndex >= playerHand.length) {
-            console.log(`❌ Invalid card index ${cardIndex} for player ${player.name}`);
+        const playerHand = room.game.hands[playerIndex];
+        if (cardIndex < 0 || cardIndex >= playerHand.length) {
+            console.log(`❌ Invalid card index ${cardIndex} for player ${player.name}. Hand size: ${playerHand.length}`);
+            socket.emit('error', 'Invalid card index');
             return;
         }
 
@@ -271,7 +290,7 @@ io.on('connection', (socket) => {
         room.game.playedCards.push({
             player: player,
             card: playedCard,
-            playerIndex: room.players.indexOf(player)
+            playerIndex: playerIndex
         });
 
         console.log(`✅ ${player.name} played ${playedCard.name} in room ${socket.roomCode}`);
@@ -282,7 +301,7 @@ io.on('connection', (socket) => {
             playerName: player.name,
             cardIndex: cardIndex,
             card: playedCard,
-            playerIndex: room.players.indexOf(player),
+            playerIndex: playerIndex,
             allHands: room.game.hands, // Send updated hands to all players
             playedCards: room.game.playedCards // Send all played cards
         });
@@ -314,48 +333,95 @@ io.on('connection', (socket) => {
         console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });
 
-    // ✅ Handle Truco requests
+    // ✅ Handle Truco requests with improved validation
     socket.on('requestTruco', (data) => {
         console.log(`🎯 Truco requested in room: ${socket.roomCode}`);
         
         if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
+            socket.emit('error', 'Not in a room');
             return;
         }
         
         const room = rooms.get(socket.roomCode);
         if (!room) {
             console.log(`❌ Room ${socket.roomCode} not found for Truco request`);
+            socket.emit('error', 'Room not found');
+            return;
+        }
+
+        if (!room.game) {
+            console.log(`❌ No active game in room ${socket.roomCode}`);
+            socket.emit('error', 'No active game');
+            return;
+        }
+
+        // ✅ Validate it's the player's turn
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            console.log(`❌ Player ${socket.id} not found in room`);
+            socket.emit('error', 'Player not found in room');
+            return;
+        }
+
+        const playerIndex = room.players.indexOf(player);
+        if (room.game.currentPlayer !== playerIndex) {
+            console.log(`❌ Player ${player.name} tried to call Truco out of turn`);
+            socket.emit('error', 'Not your turn');
             return;
         }
 
         // Emit Truco called event to all players in the room
         io.to(socket.roomCode).emit('trucoCalled', {
             caller: socket.id,
+            callerName: player.name,
             roomCode: socket.roomCode
         });
 
         console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });
 
-    // ✅ Handle Truco responses
+    // ✅ Handle Truco responses with improved validation
     socket.on('respondTruco', (data) => {
         console.log(`🎯 Truco response in room: ${socket.roomCode}`);
         
         if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
+            socket.emit('error', 'Not in a room');
             return;
         }
         
         const room = rooms.get(socket.roomCode);
         if (!room) {
             console.log(`❌ Room ${socket.roomCode} not found for Truco response`);
+            socket.emit('error', 'Room not found');
+            return;
+        }
+
+        if (!room.game) {
+            console.log(`❌ No active game in room ${socket.roomCode}`);
+            socket.emit('error', 'No active game');
+            return;
+        }
+
+        // ✅ Validate response data
+        if (!data.response || ![1, 2, 3].includes(data.response)) {
+            console.log(`❌ Invalid Truco response: ${data.response}`);
+            socket.emit('error', 'Invalid response');
+            return;
+        }
+
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            console.log(`❌ Player ${socket.id} not found in room`);
+            socket.emit('error', 'Player not found in room');
             return;
         }
 
         // Emit Truco response event to all players in the room
         io.to(socket.roomCode).emit('trucoResponded', {
             responder: socket.id,
+            responderName: player.name,
             response: data.response,
             roomCode: socket.roomCode
         });

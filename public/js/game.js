@@ -114,21 +114,49 @@ function createDeck() {
                    startGame() {
         console.log("Starting game...");
         
-        // ✅ In multiplayer mode, cards are already distributed by server
-        if (!isMultiplayerMode) {
-          createDeck();
-          shuffleDeck(deck);
-          distributeCards(this.players, deck);
+        // ✅ In multiplayer mode, validate server data before proceeding
+        if (isMultiplayerMode) {
+            if (!window.players || window.players.length !== 4) {
+                console.error('❌ Invalid multiplayer state - missing or incorrect player count');
+                console.error('Players:', window.players);
+                return;
+            }
+            
+            // Validate that all players have required properties
+            const validPlayers = window.players.every(player => 
+                player && 
+                player.name && 
+                player.team && 
+                typeof player.isBot === 'boolean' &&
+                player.hand && 
+                Array.isArray(player.hand)
+            );
+            
+            if (!validPlayers) {
+                console.error('❌ Invalid multiplayer state - players missing required properties');
+                console.error('Players validation failed:', window.players);
+                return;
+            }
+            
+            console.log("🎴 Multiplayer mode - using server-synchronized cards");
+            console.log("🎯 Player validation passed:", window.players.map(p => ({
+                name: p.name,
+                team: p.team,
+                isBot: p.isBot,
+                handSize: p.hand?.length || 0
+            })));
         } else {
-          console.log("🎴 Multiplayer mode - using server-synchronized cards");
+            createDeck();
+            shuffleDeck(deck);
+            distributeCards(this.players, deck);
         }
         
         // Ensure all players have correct playerIndex
         this.players.forEach((player, index) => {
-          if (player.playerIndex === null || player.playerIndex === undefined) {
-            player.playerIndex = index;
-            console.log(`🔧 Fixed playerIndex for ${player.name}: ${index}`);
-          }
+            if (player.playerIndex === null || player.playerIndex === undefined) {
+                player.playerIndex = index;
+                console.log(`🔧 Fixed playerIndex for ${player.name}: ${index}`);
+            }
         });
         
         // Reset Truco state
@@ -142,9 +170,15 @@ function createDeck() {
         
         // ✅ Use server-synchronized current player or default to 0
         if (isMultiplayerMode && window.currentPlayer !== undefined) {
-          this.currentPlayerIndex = window.currentPlayer;
+            this.currentPlayerIndex = window.currentPlayer;
         } else {
-          this.currentPlayerIndex = 0;
+            this.currentPlayerIndex = 0;
+        }
+        
+        // ✅ Validate current player index
+        if (this.currentPlayerIndex < 0 || this.currentPlayerIndex >= this.players.length) {
+            console.error(`❌ Invalid current player index: ${this.currentPlayerIndex}`);
+            this.currentPlayerIndex = 0; // Fallback to first player
         }
         
         this.players[this.currentPlayerIndex].isActive = true;
@@ -155,20 +189,21 @@ function createDeck() {
         
         // Show game UI elements
         if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
-          backToMainMenuButton.show();
+            backToMainMenuButton.show();
         }
         if (typeof trucoButton !== 'undefined' && trucoButton) {
-          trucoButton.show();
+            trucoButton.show();
         }
         
         // If current player is a bot, it plays automatically
         if (this.players[this.currentPlayerIndex].isBot) {
-          setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
+            setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
         }
         
         console.log("Game started successfully");
         console.log("Player indices:", this.players.map(p => `${p.name}: ${p.playerIndex}`));
         console.log("Current player:", this.currentPlayerIndex);
+        console.log("Game mode:", isMultiplayerMode ? "Multiplayer" : "Single Player");
       }
   
     nextPlayer() {
@@ -215,10 +250,23 @@ function createDeck() {
          console.log(`❌ Player ${player.name} (${player.playerIndex}) tried to play but it's ${this.players[this.currentPlayerIndex].name}'s turn (${this.currentPlayerIndex})`);
          return null;
        }
-  
-      console.log(`✅ Card played successfully by ${player.name}`);
+
+       // ✅ Validate card index
+       if (cardIndex < 0 || cardIndex >= player.hand.length) {
+         console.error(`❌ Invalid card index: ${cardIndex}, hand size: ${player.hand.length}`);
+         return null;
+       }
+
+       // ✅ Validate card exists
+       const card = player.hand[cardIndex];
+       if (!card) {
+         console.error(`❌ Card not found at index: ${cardIndex}`);
+         return null;
+       }
+
+      console.log(`✅ Card played successfully by ${player.name}: ${card.name}`);
       player.isActive = false;
-  
+
       // Calculate card position in the center
       let playerPos = playerPositions[this.currentPlayerIndex];
       if (!playerPos) {
@@ -227,16 +275,22 @@ function createDeck() {
       }
       let cardPosX = lerp(playerPos.x, width/2, 0.5);
       let cardPosY = lerp(playerPos.y, height/2, 0.5);
-  
-      let card = player.hand.splice(cardIndex, 1)[0];
+
+      // ✅ Remove card from hand with validation
+      const removedCard = player.hand.splice(cardIndex, 1)[0];
+      if (!removedCard) {
+        console.error(`❌ Failed to remove card from hand at index: ${cardIndex}`);
+        return null;
+      }
+
       playedCards.push({
-        card: card,
+        card: removedCard,
         player: player,
         position: { x: cardPosX, y: cardPosY }
       });
       
       console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
-  
+
       if (playedCards.length === this.players.length) {
         console.log(`🏁 Round complete, ending round...`);
         this.endRound();
@@ -244,17 +298,24 @@ function createDeck() {
         console.log(`⏭️ Moving to next player...`);
         this.nextPlayer();
       }
-  
+
+      // ✅ Emit to multiplayer server with improved error handling
       if (isMultiplayerMode && socket && window.roomId) {
-        console.log('Emitting multiplayer card play');
-        socket.emit('playCard', {
-          roomCode: window.roomId,
-          cardIndex: cardIndex,
-          card: card
-        });
+        try {
+          console.log('🔄 Emitting multiplayer card play to server');
+          socket.emit('playCard', {
+            roomCode: window.roomId,
+            cardIndex: cardIndex,
+            card: removedCard
+          });
+          console.log('✅ Card play event emitted successfully');
+        } catch (error) {
+          console.error('❌ Failed to emit card play event:', error);
+          // Continue with local game state even if server communication fails
+        }
       }
-  
-      return card;
+
+      return removedCard;
     }
   
     endRound() {
