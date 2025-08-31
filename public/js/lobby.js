@@ -627,11 +627,25 @@ function setupSocketListeners() {
         }
         
         console.log('✅ Game completion handled successfully - waiting for new game to start');
+        
+        // 🔍 DEBUG: Check if we're waiting for newGameStarted event
+        console.log('🔍 Waiting for newGameStarted event...');
+        console.log('🔍 Current window.game.scores:', window.game?.scores);
+        console.log('🔍 Current window.game.games:', window.game?.games);
+        
+        // 🔍 DEBUG: Set a fallback timer to check if newGameStarted is received
+        setTimeout(() => {
+            console.log('🔍 Fallback check: 10 seconds passed, checking if newGameStarted was received...');
+            console.log('🔍 Current window.game.scores:', window.game?.scores);
+            console.log('🔍 Current window.game.games:', window.game?.games);
+            console.log('🔍 Current player hands:', window.game?.players?.map(p => ({ name: p.name, handLength: p.hand?.length || 0 })));
+        }, 10000);
     });
     
     // ✅ Handle new game started event
     socket.on('newGameStarted', (data) => {
         console.log('🎮 New game started event received:', data);
+        console.log('🔍 DEBUG: newGameStarted event received with data:', data);
         
         if (!window.game) {
             console.log('❌ No game instance found for new game event');
