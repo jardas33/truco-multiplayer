@@ -527,6 +527,15 @@ function setupButtonListeners() {
             selectTeam('team2');
         };
     }
+    
+    // ✅ Copy Room Code button
+    const copyRoomCodeBtn = document.getElementById('copyRoomCodeBtn');
+    if (copyRoomCodeBtn) {
+        copyRoomCodeBtn.onclick = () => {
+            console.log('Copy Room Code clicked');
+            copyRoomCode();
+        };
+    }
 }
 
 function createRoom() {
@@ -617,6 +626,9 @@ function updateLobbyUI(inRoom) {
     const startGameBtn = document.getElementById('startGameBtn');
     const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
     
+    // Room code display - show when in a room
+    const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+    
     if (inRoom) {
         // Hide room creation/joining options
         if (createRoomBtn) createRoomBtn.style.display = 'none';
@@ -628,6 +640,15 @@ function updateLobbyUI(inRoom) {
         if (removeBotBtn) removeBotBtn.style.display = 'inline-block';
         if (startGameBtn) startGameBtn.style.display = 'inline-block';
         if (backToMainMenuBtn) backToMainMenuBtn.style.display = 'inline-block';
+        
+        // Show room code display
+        if (roomCodeDisplay && window.roomId) {
+            roomCodeDisplay.style.display = 'block';
+            const roomCodeText = document.getElementById('roomCodeText');
+            if (roomCodeText) {
+                roomCodeText.textContent = window.roomId;
+            }
+        }
     } else {
         // Show room creation/joining options
         if (createRoomBtn) createRoomBtn.style.display = 'inline-block';
@@ -639,6 +660,11 @@ function updateLobbyUI(inRoom) {
         if (removeBotBtn) removeBotBtn.style.display = 'none';
         if (startGameBtn) startGameBtn.style.display = 'none';
         if (backToMainMenuBtn) backToMainMenuBtn.style.display = 'none';
+        
+        // Hide room code display
+        if (roomCodeDisplay) {
+            roomCodeDisplay.style.display = 'none';
+        }
     }
 }
 
@@ -1231,4 +1257,80 @@ function leaveRoomAndReturnToMenu() {
     }
     
     console.log('✅ Successfully returned to main menu');
+}
+
+// ✅ Function to copy room code to clipboard
+function copyRoomCode() {
+    if (!window.roomId) {
+        console.error('No room ID to copy');
+        return;
+    }
+    
+    try {
+        // Use modern clipboard API if available
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(window.roomId).then(() => {
+                showCopySuccess();
+            }).catch(err => {
+                console.error('Failed to copy using clipboard API:', err);
+                fallbackCopyRoomCode();
+            });
+        } else {
+            // Fallback for older browsers or non-secure contexts
+            fallbackCopyRoomCode();
+        }
+    } catch (error) {
+        console.error('Error copying room code:', error);
+        fallbackCopyRoomCode();
+    }
+}
+
+// ✅ Fallback copy method for older browsers
+function fallbackCopyRoomCode() {
+    const roomCodeText = document.getElementById('roomCodeText');
+    if (!roomCodeText) {
+        console.error('Room code text element not found');
+        return;
+    }
+    
+    // Create a temporary textarea element
+    const textArea = document.createElement('textarea');
+    textArea.value = window.roomId;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    
+    // Select and copy the text
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess();
+        } else {
+            console.error('Fallback copy failed');
+        }
+    } catch (err) {
+        console.error('Fallback copy error:', err);
+    }
+    
+    // Clean up
+    document.body.removeChild(textArea);
+}
+
+// ✅ Show copy success message
+function showCopySuccess() {
+    const copySuccessMessage = document.getElementById('copySuccessMessage');
+    if (copySuccessMessage) {
+        copySuccessMessage.style.display = 'block';
+        
+        // Hide the message after 3 seconds
+        setTimeout(() => {
+            copySuccessMessage.style.display = 'none';
+        }, 3000);
+    }
+    
+    console.log('✅ Room code copied to clipboard:', window.roomId);
 }

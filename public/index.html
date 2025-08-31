@@ -28,6 +28,18 @@
           <button id="createRoomBtn">Create Room</button>
           <button id="joinRoomBtn">Join Room</button>
           
+          <!-- Room Code Display and Copy Button -->
+          <div id="roomCodeDisplay" style="display: none; margin: 20px 0; padding: 15px; border: 2px solid #4CAF50; border-radius: 8px; background-color: rgba(76, 175, 80, 0.1);">
+            <h4 style="color: #4CAF50; margin: 0 0 10px 0;">🎮 Room Created!</h4>
+            <div style="margin: 10px 0; font-size: 18px; color: white;">
+              <strong>Room Code:</strong> <span id="roomCodeText" style="color: #4CAF50; font-family: monospace; font-size: 20px;"></span>
+            </div>
+            <button id="copyRoomCodeBtn" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+              📋 Copy Room Code
+            </button>
+            <div id="copySuccessMessage" style="display: none; color: #4CAF50; margin-top: 10px; font-weight: bold;">✅ Room code copied to clipboard!</div>
+          </div>
+          
           <!-- Player Customization Section -->
           <div id="playerCustomization" style="margin: 20px 0; padding: 15px; border: 2px solid #4CAF50; border-radius: 8px; background-color: rgba(76, 175, 80, 0.1); display: none;">
             <h4>🎯 Customize Your Player</h4>
