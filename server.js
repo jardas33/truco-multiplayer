@@ -341,13 +341,19 @@ io.on('connection', (socket) => {
 
         // ✅ Get the card from the player's hand
         const cardIndex = data.cardIndex || 0;
-        if (!room.game.hands || !room.game.hands[playerIndex]) {
-            console.log(`❌ No hands found for player ${player.name}`);
+        
+        // ✅ CRITICAL FIX: Use client's playerIndex for accessing hands
+        // This ensures consistency between client and server player indexing
+        const clientPlayerIndex = data.playerIndex;
+        console.log(`🃏 Client playerIndex: ${clientPlayerIndex}, Server playerIndex: ${playerIndex}`);
+        
+        if (!room.game.hands || !room.game.hands[clientPlayerIndex]) {
+            console.log(`❌ No hands found for player ${player.name} at index ${clientPlayerIndex}`);
             socket.emit('error', 'Invalid game state');
             return;
         }
 
-        const playerHand = room.game.hands[playerIndex];
+        const playerHand = room.game.hands[clientPlayerIndex];
         if (cardIndex < 0 || cardIndex >= playerHand.length) {
             console.log(`❌ Invalid card index ${cardIndex} for player ${player.name}. Hand size: ${playerHand.length}`);
             socket.emit('error', 'Invalid card index');

@@ -273,10 +273,16 @@ function setupSocketListeners() {
         window.game.currentPlayerIndex = data.currentPlayer;
         
         // ✅ CRITICAL FIX: Update player active states for turn indicator
+        console.log(`🔄 Updating player active states. Server currentPlayer: ${data.currentPlayer}`);
         window.game.players.forEach((player, index) => {
+            const wasActive = player.isActive;
             player.isActive = (index === data.currentPlayer);
-            console.log(`🔄 Player ${player.name} (${index}) isActive: ${player.isActive}`);
+            console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
         });
+        
+        // ✅ DEBUG: Verify the active player
+        const activePlayer = window.game.players.find(p => p.isActive);
+        console.log(`🔄 Active player after update: ${activePlayer ? activePlayer.name : 'None'} (${activePlayer ? window.game.players.indexOf(activePlayer) : 'N/A'})`);
         
         // ✅ Update all player hands with proper formatting and fallback
         if (data.allHands) {
