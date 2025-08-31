@@ -261,22 +261,31 @@ function mousePressed() {
     for (let i = 0; i < currentPlayer.hand.length; i++) {
         const card = currentPlayer.hand[i];
         if (card && card.isClickable) {
-            const cardX = width/2 - (currentPlayer.hand.length * cardWidth)/2 + i * cardWidth;
-            const cardY = height - cardHeight - 20;
-            
-            if (mouseX >= cardX && mouseX <= cardX + cardWidth &&
-                mouseY >= cardY && mouseY <= cardY + cardHeight) {
-                console.log(`🎯 Card clicked: ${card.name} at index ${i} by ${currentPlayer.name}`);
+            // ✅ FIXED: Use the stored card position from rendering for perfect click detection
+            if (card.position) {
+                const cardX = card.position.x;
+                const cardY = card.position.y;
                 
-                // ✅ Play the card through the game logic
-                const playedCard = window.game.playCard(currentPlayer, i);
-                if (playedCard) {
-                    console.log(`✅ Card played successfully: ${playedCard.name} by ${currentPlayer.name}`);
-                } else {
-                    console.log(`❌ Card play failed for ${currentPlayer.name}`);
+                console.log(`🎯 Checking card ${i}: ${card.name} at (${cardX}, ${cardY}) - Mouse at (${mouseX}, ${mouseY})`);
+                
+                if (mouseX >= cardX && mouseX <= cardX + cardWidth &&
+                    mouseY >= cardY && mouseY <= cardY + cardHeight) {
+                    console.log(`🎯 Card clicked: ${card.name} at index ${i} by ${currentPlayer.name}`);
+                    
+                    // ✅ Play the card through the game logic
+                    const playedCard = window.game.playCard(currentPlayer, i);
+                    if (playedCard) {
+                        console.log(`✅ Card played successfully: ${playedCard.name} by ${currentPlayer.name}`);
+                    } else {
+                        console.log(`❌ Card play failed for ${currentPlayer.name}`);
+                    }
+                    break;
                 }
-                break;
+            } else {
+                console.warn(`⚠️ Card ${i} has no position stored:`, card);
             }
+        } else {
+            console.log(`⚠️ Card ${i} not clickable:`, card);
         }
     }
 }

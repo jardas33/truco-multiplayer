@@ -706,8 +706,19 @@ function startMultiplayerGame(data) {
         // Set multiplayer mode
         window.isMultiplayerMode = true;
         
+        // ✅ CRITICAL: Validate server data before proceeding
+        if (!data.players || data.players.length !== 4) {
+            throw new Error(`Invalid player count: ${data.players?.length || 0}`);
+        }
+        
+        if (!data.hands || data.hands.length !== 4) {
+            throw new Error(`Invalid hands count: ${data.hands?.length || 0}`);
+        }
+        
         // Initialize players from server data
         window.players = data.players.map((player, index) => {
+            console.log(`🎯 Initializing player ${index}:`, player);
+            
             // Convert server player data to client Player objects
             const clientPlayer = new Player(
                 player.nickname || player.name, 
@@ -723,9 +734,14 @@ function startMultiplayerGame(data) {
                     return {
                         ...card,
                         image: cardImage,
-                        isClickable: false
+                        isClickable: false, // Will be set by game logic
+                        position: null // Will be set by rendering
                     };
                 });
+                console.log(`✅ Player ${clientPlayer.name} hand initialized with ${clientPlayer.hand.length} cards`);
+            } else {
+                console.error(`❌ No hand data for player ${index}`);
+                clientPlayer.hand = [];
             }
             
             return clientPlayer;
@@ -735,9 +751,11 @@ function startMultiplayerGame(data) {
         
         // Store current player from server
         window.currentPlayer = data.currentPlayer || 0;
+        console.log(`🎯 Current player index: ${window.currentPlayer}`);
         
         // Initialize game
         window.game = new Game(window.players);
+        console.log('✅ Game instance created');
         
         // Initialize game variables
         playedCards = [];
@@ -750,6 +768,13 @@ function startMultiplayerGame(data) {
         
         // Start the game
         window.game.startGame();
+        console.log('✅ Game started');
+        
+        // ✅ CRITICAL: Ensure player positions are initialized
+        if (!playerPositions || playerPositions.length === 0) {
+            console.warn('⚠️ Player positions not initialized, calling setupPlayerPositions');
+            setupPlayerPositions();
+        }
         
         // Transition UI to game view
         console.log('🔄 Transitioning UI to multiplayer game view...');
@@ -820,4 +845,49 @@ function startMultiplayerGame(data) {
         gameState = gameStateEnum.Menu;
         window.isMultiplayerMode = false;
     }
-} 
+}
+
+// ✅ Add function to setup player positions for multiplayer
+function setupPlayerPositions() {
+    console.log('🎯 Setting up player positions for multiplayer game');
+    
+    // Get current window dimensions
+    const currentWidth = window.innerWidth || 800;
+    const currentHeight = window.innerHeight || 600;
+    
+    // Setup player positions with PERFECT 4-corner layout
+    const scoringPanelHeight = 150; // Height of the scoring panel at top
+    const topMargin = scoringPanelHeight + 100; // Increased margin below scoring panel
+    const leftMargin = 100; // Left margin from screen edge
+    const rightMargin = currentWidth - 100; // Right margin from screen edge
+    const bottomMargin = currentHeight - 150; // Bottom margin from screen edge
+    
+    playerPositions = [
+        {
+            x: leftMargin,          // Player 1 (TOP-LEFT) - Top position
+            y: topMargin + 50,      // Below scoring panel, top-left corner
+            label: "Player 1 - Team 1",
+            labelOffset: -80,       // Above cards
+        },
+        { 
+            x: rightMargin,         // Bot 1 (TOP-RIGHT) - Top position
+            y: topMargin + 50,      // Below scoring panel, top-right corner
+            label: "Bot 1 - Team 2", 
+            labelOffset: -80        // Above cards
+        },
+        {
+            x: leftMargin,          // Bot 2 (BOTTOM-LEFT) - Bottom position
+            y: bottomMargin,        // Bottom-left corner
+            label: "Bot 2 - Team 1",
+            labelOffset: -80,       // Above cards
+        },
+        {
+            x: rightMargin,         // Bot 3 (BOTTOM-RIGHT) - Bottom position
+            y: bottomMargin,        // Bottom-right corner
+            label: "Bot 3 - Team 2",
+            labelOffset: -80,       // Above cards
+        },
+    ];
+    
+    console.log('✅ Player positions initialized for multiplayer:', playerPositions);
+}

@@ -560,6 +560,21 @@ function drawGameState() {
                 
                 const currentCard = player.hand[i];
                 
+                // ✅ CRITICAL FIX: Store card position for click detection
+                if (!currentCard.position) {
+                    currentCard.position = { x: cardX, y: cardY };
+                } else {
+                    currentCard.position.x = cardX;
+                    currentCard.position.y = cardY;
+                }
+                
+                // ✅ CRITICAL FIX: Ensure cards are clickable for current player
+                if (window.game && window.game.currentPlayerIndex === index && !player.isBot) {
+                    currentCard.isClickable = true;
+                } else {
+                    currentCard.isClickable = false;
+                }
+                
                 if (player.isBot || !showAllCards) {
                     // Bot cards - dark blue with card back
                     fill(0, 0, 150);

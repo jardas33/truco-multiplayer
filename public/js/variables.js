@@ -21,7 +21,7 @@ let isSinglePlayerMode = false; // Add missing variable for Truco logic
 
 let deck = [];
 let playerPositions = [];
-let cardWidth = 85; // Replace with the actual width of your cards
+let cardWidth = 80; // Replace with the actual width of your cards
 let cardHeight = 123; // Replace with the actual height of your cards
 let playedCards = [];
 let teamAlfaRounds = 0;
@@ -61,6 +61,28 @@ let gameStateEnum = {
   CardValues: "cardValues",
 };
 let gameState = gameStateEnum.Menu;
+
+// ✅ Add missing global variables for multiplayer
+let width = window.innerWidth || 800;  // Default width
+let height = window.innerHeight || 600; // Default height
+
+// ✅ Add utility functions
+function lerp(start, end, amt) {
+    return start + (end - start) * amt;
+}
+
+// ✅ Add window resize handler to update dimensions
+function updateDimensions() {
+    width = window.innerWidth || 800;
+    height = window.innerHeight || 600;
+}
+
+// Add event listener for window resize
+if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateDimensions);
+    // Initialize dimensions
+    updateDimensions();
+}
 
 // Card values - Correct Brazilian Truco hierarchy
 let cardValues = {
