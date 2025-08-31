@@ -477,14 +477,11 @@ function drawGameState() {
         textSize(18);
         textAlign(CENTER, CENTER);
         
-        // ✅ CRITICAL FIX: Show turn indicator and player identification
+        // ✅ CRITICAL FIX: Show player identification (turn indicated by yellow circle only)
         let playerLabel = player.name + (player.isBot ? ' (Bot)' : '');
         
-        // Add turn indicator
-        if (window.game && window.game.currentPlayerIndex === index) {
-            playerLabel += ' [TURN]';
-            fill(255, 255, 0); // Yellow for current turn
-        } else if (player.isLocalPlayer) {
+        // Set text color based on player type (no turn text in multiplayer)
+        if (player.isLocalPlayer) {
             playerLabel += ' [YOU]';
             fill(0, 255, 0); // Green for local player
         } else {
