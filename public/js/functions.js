@@ -619,10 +619,12 @@ function drawGameState() {
     });
     
     // Draw played cards in the center - PROPER CARD IMAGES with fallbacks
-    // ✅ DEBUGGING: Log played cards structure to diagnose rendering issues
     if (window.playedCards && window.playedCards.length > 0) {
-        console.log('🎨 Rendering played cards:', window.playedCards.length, 'cards');
-        console.log('🎨 Played cards data:', window.playedCards);
+        // ✅ REDUCED LOGGING: Only log once per render cycle for performance
+        if (!window.lastPlayedCardsLog || window.lastPlayedCardsLog !== window.playedCards.length) {
+            console.log('🎨 Rendering played cards:', window.playedCards.length, 'cards');
+            window.lastPlayedCardsLog = window.playedCards.length;
+        }
         
         window.playedCards.forEach((playedCard, index) => {
             // CRITICAL FIX: Add null check to prevent ReferenceError
@@ -634,21 +636,16 @@ function drawGameState() {
             const centerX = width / 2 - (window.playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
             
-            console.log(`🎨 Rendering card ${index}: ${playedCard.card.name} at (${centerX}, ${centerY})`);
-            
             // Draw played card as proper card image if available, otherwise fallback
             if (playedCard.card.image) {
-                console.log(`🎨 Drawing card image for ${playedCard.card.name}`);
                 image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
             } else if (playedCard.card.name && window.getCardImageWithFallback) {
                 // Try to get card image using the helper function
                 const cardImage = window.getCardImageWithFallback(playedCard.card.name);
                 if (cardImage) {
-                    console.log(`🎨 Drawing fallback image for ${playedCard.card.name}`);
                     image(cardImage, centerX, centerY, cardWidth, cardHeight);
                 } else {
                     // Fallback to colored rectangle
-                    console.log(`🎨 Drawing fallback rectangle for ${playedCard.card.name}`);
                     fill(200, 200, 200); // Light gray
                     stroke(0, 0, 0);
                     strokeWeight(2);
@@ -664,7 +661,6 @@ function drawGameState() {
                 }
             } else {
                 // Fallback to colored rectangle
-                console.log(`🎨 Drawing basic rectangle for ${playedCard.card.name}`);
                 fill(200, 200, 200); // Light gray
                 stroke(0, 0, 0);
                 strokeWeight(2);

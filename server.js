@@ -31,8 +31,24 @@ io.on('connection', (socket) => {
     
     // Handle room creation
     socket.on('createRoom', (roomCode) => {
-        if (!roomCode) {
+        // ✅ INPUT VALIDATION: Ensure room code is valid
+        if (roomCode && typeof roomCode === 'string') {
+            roomCode = roomCode.trim().toUpperCase();
+            // Only allow alphanumeric characters
+            if (!/^[A-Z0-9]+$/.test(roomCode)) {
+                console.log(`❌ Invalid room code format: ${roomCode}`);
+                socket.emit('error', 'Invalid room code format. Use only letters and numbers.');
+                return;
+            }
+        } else {
             roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+        
+        // ✅ CHECK: Ensure room code doesn't already exist
+        if (rooms.has(roomCode)) {
+            console.log(`❌ Room code ${roomCode} already exists`);
+            socket.emit('error', 'Room code already exists. Please try a different one.');
+            return;
         }
         
         console.log(`🏠 Creating room: ${roomCode} for user: ${socket.id}`);
@@ -251,17 +267,30 @@ io.on('connection', (socket) => {
         console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
         // ✅ Create shared deck and distribute cards to all players
-        const deck = createDeck();
-        const hands = dealCards(deck);
-        
-        // ✅ Store game state in room for synchronization
-        room.game = {
-            deck: deck,
-            hands: hands,
-            currentPlayer: 0,
-            playedCards: [],
-            scores: { team1: 0, team2: 0 }
-        };
+        try {
+            const deck = createDeck();
+            const hands = dealCards(deck);
+            
+            // ✅ VALIDATION: Ensure hands are properly created
+            if (!hands || hands.length !== 4 || hands.some(hand => !Array.isArray(hand) || hand.length !== 3)) {
+                throw new Error('Invalid hands created');
+            }
+            
+            // ✅ Store game state in room for synchronization
+            room.game = {
+                deck: deck,
+                hands: hands,
+                currentPlayer: 0,
+                playedCards: [],
+                scores: { team1: 0, team2: 0 }
+            };
+            
+            console.log(`✅ Game state initialized successfully for room ${roomCode}`);
+        } catch (error) {
+            console.error(`❌ Failed to initialize game for room ${roomCode}:`, error);
+            socket.emit('error', 'Failed to start game. Please try again.');
+            return;
+        }
 
         // ✅ Emit gameStart event with hands to all players in the room
         io.to(roomCode).emit('gameStart', {

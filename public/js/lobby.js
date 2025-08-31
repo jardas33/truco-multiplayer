@@ -385,22 +385,33 @@ function setupSocketListeners() {
                                 playerIndex: data.currentPlayer
                             });
                             
-                            // Emit bot card play to server
-                            socket.emit('playCard', {
-                                roomCode: window.roomId,
-                                cardIndex: cardIndex,
-                                card: cleanCard,
-                                playerIndex: data.currentPlayer
-                            });
-                            
-                            // ✅ CRITICAL FIX: Emit bot turn complete after playing card
-                            // This tells the server to move to the next player
-                            setTimeout(() => {
-                                socket.emit('botTurnComplete', {
-                                    roomCode: window.roomId
+                            // ✅ CRITICAL FIX: Add error handling for bot card play
+                            try {
+                                // Emit bot card play to server
+                                socket.emit('playCard', {
+                                    roomCode: window.roomId,
+                                    cardIndex: cardIndex,
+                                    card: cleanCard,
+                                    playerIndex: data.currentPlayer
                                 });
-                                console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
-                            }, 500); // Small delay to ensure card play is processed first
+                                
+                                // ✅ CRITICAL FIX: Emit bot turn complete after playing card
+                                // This tells the server to move to the next player
+                                setTimeout(() => {
+                                    try {
+                                        socket.emit('botTurnComplete', {
+                                            roomCode: window.roomId
+                                        });
+                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                                    } catch (turnCompleteError) {
+                                        console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                        bot.hasPlayedThisTurn = false; // Reset flag for retry
+                                    }
+                                }, 500); // Small delay to ensure card play is processed first
+                            } catch (playCardError) {
+                                console.error(`❌ Bot ${bot.name} playCard failed:`, playCardError);
+                                bot.hasPlayedThisTurn = false; // Reset flag for retry
+                            }
                         } else {
                             console.log(`🤖 Bot turn validation failed - skipping bot play`);
                             console.log(`🤖 Validation details:`, {
