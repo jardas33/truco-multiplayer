@@ -506,6 +506,7 @@ function setupSocketListeners() {
         }
         
         // ✅ CRITICAL FIX: Game winner is now handled separately in gameComplete event
+        // RoundComplete events no longer include gameWinner data
         
         // ✅ Update current player for next round
         if (data.currentPlayer !== undefined) {
@@ -517,6 +518,12 @@ function setupSocketListeners() {
                 player.isActive = (index === data.currentPlayer);
                 console.log(`🔄 New round - Player ${player.name} (${index}) isActive: ${player.isActive}`);
             });
+        }
+        
+        // ✅ CRITICAL FIX: Ensure this is NOT a game completion (should be handled by gameComplete)
+        if (data.gameWinner) {
+            console.log(`⚠️ WARNING: roundComplete received with gameWinner - this should not happen!`);
+            console.log(`⚠️ Data:`, data);
         }
         
         // ✅ Update all player hands for new round
@@ -561,6 +568,7 @@ function setupSocketListeners() {
     // ✅ Handle game complete event (when a team wins the game)
     socket.on('gameComplete', (data) => {
         console.log('🎮 Game complete event received:', data);
+        console.log('🔍 DEBUG: gameComplete event received with data:', data);
         
         if (!window.game) {
             console.log('❌ No game instance found for game complete event');

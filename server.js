@@ -569,13 +569,13 @@ io.on('connection', (socket) => {
             // Move to next player
             room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
             
-            // ✅ Emit round complete event with scoring information
+            // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             io.to(socket.roomCode).emit('roundComplete', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands,
                 roundWinner: roundWinner,
-                scores: room.game.scores,
-                gameWinner: gameWinner
+                scores: room.game.scores
+                // ✅ CRITICAL FIX: gameWinner is NOT sent with roundComplete
             });
             
             // ✅ CRITICAL FIX: Clear played cards after a delay to allow them to be visible
