@@ -488,7 +488,6 @@ function drawGameState() {
         
         // Set text color based on player type (no turn text in multiplayer)
         if (player.isLocalPlayer) {
-            playerLabel += ' [YOU]';
             fill(0, 255, 0); // Green for local player
         } else {
             fill(255, 255, 255); // White for other players
@@ -498,8 +497,13 @@ function drawGameState() {
         const textX = position.x;
         const textY = position.y + position.labelOffset;
         
-        // Draw player name with stable positioning
+        // Draw player name on first line
         text(playerLabel, textX, textY);
+        
+        // Draw [YOU] on second line for local player
+        if (player.isLocalPlayer) {
+            text('[YOU]', textX, textY + 25); // 25 pixels below the player name
+        }
         
         // Draw player's cards - PROPER CARD IMAGES with fallbacks
         if (player.hand && player.hand.length > 0) {
