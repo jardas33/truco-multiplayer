@@ -213,7 +213,11 @@ function setupSocketListeners() {
         // ✅ Update played cards with proper positioning
         console.log('🃏 DEBUG: Server sent playedCards:', data.playedCards);
         if (data.playedCards) {
+            console.log('🃏 Processing playedCards array:', data.playedCards.length, 'cards');
+            
             window.playedCards = data.playedCards.map(pc => {
+                console.log('🃏 Processing playedCard:', pc);
+                
                 // ✅ CRITICAL FIX: Use the player data from the server response
                 // The server sends clean player info, so we don't need to look it up
                 const playerInfo = pc.player;
@@ -223,7 +227,7 @@ function setupSocketListeners() {
                 }
                 
                 // ✅ Create a simple card object that can be rendered
-                return {
+                const processedCard = {
                     card: {
                         name: pc.card.name,
                         value: pc.card.value,
@@ -237,13 +241,19 @@ function setupSocketListeners() {
                     },
                     playerIndex: pc.playerIndex
                 };
+                
+                console.log('🃏 Processed card:', processedCard);
+                return processedCard;
             }).filter(Boolean); // Remove null entries
             
             // ✅ CRITICAL FIX: Ensure window.playedCards is properly set
             console.log('🔄 Window playedCards updated:', window.playedCards.length);
+            console.log('🔄 Final playedCards array:', window.playedCards);
             
             console.log('🔄 Updated played cards:', window.playedCards.length);
             console.log('🔄 Played cards structure:', window.playedCards);
+        } else {
+            console.warn('⚠️ No playedCards data received from server');
         }
         
         // ✅ Force game redraw to show synchronized state
@@ -348,10 +358,10 @@ function setupSocketListeners() {
                             // ✅ CRITICAL FIX: Mark bot as having played this turn
                             bot.hasPlayedThisTurn = true;
                             
-                            // Bot plays a random card
-                            const randomCardIndex = Math.floor(Math.random() * bot.hand.length);
-                            const selectedCard = bot.hand[randomCardIndex];
-                            console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} at index ${randomCardIndex}`);
+                            // ✅ CRITICAL FIX: Always play the first card (index 0) to avoid index issues
+                            const cardIndex = 0;
+                            const selectedCard = bot.hand[cardIndex];
+                            console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} at index ${cardIndex}`);
                             
                             // ✅ CRITICAL FIX: Create clean card object to prevent serialization issues
                             const cleanCard = {
@@ -361,10 +371,24 @@ function setupSocketListeners() {
                                 // DO NOT include: image, position, or any DOM/p5.js references
                             };
                             
+                            // ✅ CRITICAL FIX: Add additional validation before sending
+                            if (!selectedCard || !selectedCard.name) {
+                                console.error(`❌ Bot ${bot.name} selected invalid card:`, selectedCard);
+                                bot.hasPlayedThisTurn = false; // Reset flag
+                                return;
+                            }
+                            
+                            console.log(`🤖 Bot ${bot.name} sending playCard with:`, {
+                                roomCode: window.roomId,
+                                cardIndex: cardIndex,
+                                card: cleanCard,
+                                playerIndex: data.currentPlayer
+                            });
+                            
                             // Emit bot card play to server
                             socket.emit('playCard', {
                                 roomCode: window.roomId,
-                                cardIndex: randomCardIndex,
+                                cardIndex: cardIndex,
                                 card: cleanCard,
                                 playerIndex: data.currentPlayer
                             });
