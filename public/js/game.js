@@ -289,6 +289,28 @@ function createDeck() {
         position: { x: cardPosX, y: cardPosY }
       });
       
+      // ✅ CRITICAL FIX: In multiplayer mode, wait for server confirmation before updating local state
+      if (isMultiplayerMode && socket && window.roomId) {
+        try {
+          console.log('🔄 Emitting multiplayer card play to server - waiting for confirmation');
+          socket.emit('playCard', {
+            roomCode: window.roomId,
+            cardIndex: cardIndex,
+            card: removedCard
+          });
+          console.log('✅ Card play event emitted to server - local state will be updated via server broadcast');
+          
+          // ✅ DON'T update local state here - wait for server confirmation
+          // The server will broadcast the card played event to all clients
+          return removedCard;
+        } catch (error) {
+          console.error('❌ Failed to emit card play event:', error);
+          // Fallback: update local state if server communication fails
+          console.warn('⚠️ Server communication failed, updating local state as fallback');
+        }
+      }
+      
+      // ✅ Only update local state if NOT in multiplayer mode or if server communication failed
       console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
 
       if (playedCards.length === this.players.length) {
@@ -297,22 +319,6 @@ function createDeck() {
       } else {
         console.log(`⏭️ Moving to next player...`);
         this.nextPlayer();
-      }
-
-      // ✅ Emit to multiplayer server with improved error handling
-      if (isMultiplayerMode && socket && window.roomId) {
-        try {
-          console.log('🔄 Emitting multiplayer card play to server');
-          socket.emit('playCard', {
-            roomCode: window.roomId,
-            cardIndex: cardIndex,
-            card: removedCard
-          });
-          console.log('✅ Card play event emitted successfully');
-        } catch (error) {
-          console.error('❌ Failed to emit card play event:', error);
-          // Continue with local game state even if server communication fails
-        }
       }
 
       return removedCard;

@@ -293,6 +293,52 @@ function setupSocketListeners() {
         
         console.log('✅ Turn changed to player:', data.currentPlayer);
     });
+    
+    // ✅ Handle round completion events
+    socket.on('roundComplete', (data) => {
+        console.log('🏁 Round complete event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for round complete event');
+            return;
+        }
+        
+        // ✅ Update current player for next round
+        if (data.currentPlayer !== undefined) {
+            window.game.currentPlayerIndex = data.currentPlayer;
+            console.log(`🔄 New round - current player: ${data.currentPlayer} (${window.game.players[data.currentPlayer]?.name})`);
+        }
+        
+        // ✅ Update all player hands for new round
+        if (data.allHands) {
+            data.allHands.forEach((hand, index) => {
+                if (window.game.players[index]) {
+                    const clientHand = hand.map(card => {
+                        const cardImage = getCardImageWithFallback(card.name);
+                        return {
+                            ...card,
+                            isClickable: false,
+                            image: cardImage
+                        };
+                    });
+                    
+                    window.game.players[index].hand = clientHand;
+                    console.log(`🔄 New round - updated ${window.game.players[index].name} hand:`, clientHand.map(c => c.name));
+                }
+            });
+        }
+        
+        // ✅ Clear played cards for new round
+        window.playedCards = [];
+        console.log('🔄 New round - cleared played cards');
+        
+        // ✅ Force game redraw to show new round state
+        if (typeof redraw === 'function') {
+            redraw();
+        }
+        
+        console.log('✅ Round completion synchronized successfully');
+    });
 }
 
 function setupButtonListeners() {
