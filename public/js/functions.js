@@ -736,14 +736,34 @@ function redrawGame() {
 function drawScoringInfo() {
     if (!window.game) return;
     
-    // Get current game status
-    const currentRound = window.game.round || 1;
-    const teamAlfaRounds = window.game.getTeam1Rounds ? window.game.getTeam1Rounds() : 0;
-    const teamBetaRounds = window.game.getTeam2Rounds ? window.game.getTeam2Rounds() : 0;
-    const teamAlfaGames = window.game.games ? window.game.games.team1 : 0;
-    const teamBetaGames = window.game.games ? window.game.games.team2 : 0;
-    const teamAlfaSets = window.game.sets ? window.game.sets.team1 : 0;
-    const teamBetaSets = window.game.sets ? window.game.sets.team2 : 0;
+    // ✅ CRITICAL FIX: Use server scores for multiplayer mode
+    let teamAlfaRounds = 0;
+    let teamBetaRounds = 0;
+    let teamAlfaGames = 0;
+    let teamBetaGames = 0;
+    let teamAlfaSets = 0;
+    let teamBetaSets = 0;
+    
+    if (window.isMultiplayerMode && window.game.scores) {
+        // Use server scores from multiplayer game
+        teamAlfaRounds = window.game.scores.team1 || 0;
+        teamBetaRounds = window.game.scores.team2 || 0;
+        teamAlfaGames = 0; // Games not implemented yet
+        teamBetaGames = 0; // Games not implemented yet
+        teamAlfaSets = 0;  // Sets not implemented yet
+        teamBetaSets = 0;  // Sets not implemented yet
+    } else {
+        // Fallback to old single-player scoring (if it exists)
+        teamAlfaRounds = window.game.getTeam1Rounds ? window.game.getTeam1Rounds() : 0;
+        teamBetaRounds = window.game.getTeam2Rounds ? window.game.getTeam2Rounds() : 0;
+        teamAlfaGames = window.game.games ? window.game.games.team1 : 0;
+        teamBetaGames = window.game.games ? window.game.games.team2 : 0;
+        teamAlfaSets = window.game.sets ? window.game.sets.team1 : 0;
+        teamBetaSets = window.game.sets ? window.game.sets.team2 : 0;
+    }
+    
+    // Get current round number
+    const currentRound = Math.max(teamAlfaRounds, teamBetaRounds) + 1;
     
     // Draw scoring panel at the top with better contrast and more height
     push();

@@ -655,7 +655,14 @@ function showGameWinnerMessage(winningTeam) {
 
 // ✅ CRITICAL FIX: Function to update game scores display
 function updateGameScores(scores) {
-    // Update team scores in the UI
+    // ✅ CRITICAL FIX: Store scores in window.game.scores for scoring display
+    if (window.game && window.game.scores) {
+        window.game.scores.team1 = scores.team1;
+        window.game.scores.team2 = scores.team2;
+        console.log(`📊 Scores stored in window.game.scores:`, window.game.scores);
+    }
+    
+    // Update team scores in the UI (if elements exist)
     const team1ScoreElement = document.querySelector('[data-team="team1"] .score');
     const team2ScoreElement = document.querySelector('[data-team="team2"] .score');
     
@@ -1389,6 +1396,10 @@ function startMultiplayerGame(data) {
         // ✅ CRITICAL FIX: Initialize playedCards array to prevent undefined errors
         window.playedCards = [];
         console.log('🎯 Initialized window.playedCards as empty array');
+        
+        // ✅ CRITICAL FIX: Initialize server scores for multiplayer game
+        window.game.scores = { team1: 0, team2: 0 };
+        console.log('🎯 Initialized window.game.scores:', window.game.scores);
         
         // Initialize game variables
         // ✅ REMOVED: Local playedCards variable that was shadowing window.playedCards
