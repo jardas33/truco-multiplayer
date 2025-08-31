@@ -370,10 +370,24 @@ io.on('connection', (socket) => {
         room.game.playedCards.push({
             player: player,
             card: playedCard,
-            playerIndex: playerIndex
+            playerIndex: clientPlayerIndex // ✅ Use client's playerIndex for consistency
         });
 
         console.log(`✅ ${player.name} played ${playedCard.name} in room ${socket.roomCode}`);
+
+        // ✅ CRITICAL FIX: Create clean, serializable played cards array
+        const cleanPlayedCards = room.game.playedCards.map(playedCard => ({
+            player: {
+                name: playedCard.player.name,
+                isBot: playedCard.player.isBot || false
+            },
+            card: {
+                name: playedCard.card.name,
+                value: playedCard.card.value,
+                suit: playedCard.card.suit || null
+            },
+            playerIndex: playedCard.playerIndex
+        }));
 
         // ✅ Emit card played event to all players in the room with synchronized data
         io.to(socket.roomCode).emit('cardPlayed', {
@@ -381,9 +395,9 @@ io.on('connection', (socket) => {
             playerName: player.name,
             cardIndex: cardIndex,
             card: playedCard,
-            playerIndex: playerIndex,
+            playerIndex: clientPlayerIndex, // ✅ Use client's playerIndex for consistency
             allHands: room.game.hands, // Send updated hands to all players
-            playedCards: room.game.playedCards // Send all played cards
+            playedCards: cleanPlayedCards // Send clean, serializable played cards
         });
 
         // ✅ Check if round is complete

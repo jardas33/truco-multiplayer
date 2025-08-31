@@ -211,6 +211,7 @@ function setupSocketListeners() {
         }
         
         // ✅ Update played cards with proper positioning
+        console.log('🃏 DEBUG: Server sent playedCards:', data.playedCards);
         if (data.playedCards) {
             window.playedCards = data.playedCards.map(pc => {
                 const player = window.game.players[pc.playerIndex];
