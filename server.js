@@ -749,28 +749,45 @@ function createDeck() {
         console.log(`🔍 Suits:`, suits);
         console.log(`🔍 Values:`, values);
         
-        // ✅ CRITICAL FIX: Card values mapping for Brazilian Truco
-        const cardValueMap = {
-            'ace': 10,
-            '2': 9,
-            '3': 8,
-            '4': 17,
-            '5': 16,
-            '6': 15,
-            '7': 14,
-            'jack': 13,
-            'queen': 12,
-            'king': 11
-        };
+        // ✅ CRITICAL FIX: Card values mapping for Brazilian Truco - EXACT match with client
+        // This function will determine the correct value based on both suit and value
+        function getCardValue(value, suit) {
+            // Top 7 most powerful cards (special Truco cards)
+            if (value === 'queen' && suit === 'diamonds') return 1;      // Queen of diamonds
+            if (value === 'jack' && suit === 'clubs') return 2;          // Jack of clubs
+            if (value === '5' && suit === 'clubs') return 3;             // 5 of clubs
+            if (value === '4' && suit === 'clubs') return 4;             // 4 of clubs
+            if (value === '7' && suit === 'hearts') return 5;            // 7 of hearts
+            if (value === 'ace' && suit === 'spades') return 6;          // Ace of spades
+            if (value === '7' && suit === 'diamonds') return 7;          // 7 of diamonds
+            
+            // All three's - Eighth most powerful
+            if (value === '3') return 8;
+            
+            // All two's - Ninth most powerful
+            if (value === '2') return 9;
+            
+            // Standard card power (remaining cards)
+            if (value === 'ace') return 10;    // Other aces
+            if (value === 'king') return 11;   // All kings
+            if (value === 'queen') return 12;  // Other queens
+            if (value === 'jack') return 13;   // Other jacks
+            if (value === '7') return 14;      // Other 7s
+            if (value === '6') return 15;      // All 6s
+            if (value === '5') return 16;      // Other 5s
+            if (value === '4') return 17;      // Other 4s
+            
+            return 20; // Default fallback
+        }
         
-        console.log(`🔍 Card value map:`, cardValueMap);
+        console.log(`🔍 Card value function created`);
         
         for (const suit of suits) {
             for (const value of values) {
                 console.log(`🔍 Processing card: ${value} of ${suit}`);
                 // ✅ Create cards with the exact format the client expects
                 const cardName = `${value.charAt(0).toUpperCase() + value.slice(1)} of ${suit}`;
-                const cardValue = cardValueMap[value] || 20;
+                const cardValue = getCardValue(value, suit);
                 
                 console.log(`🔍 Card name: ${cardName}, value: ${cardValue}`);
                 
@@ -803,15 +820,35 @@ function createDeck() {
 }
 
 function dealCards(deck) {
-    const hands = [[], [], [], []];
-    
-    // Deal 3 cards to each player
-    for (let i = 0; i < 12; i++) {
-        const playerIndex = i % 4;
-        hands[playerIndex].push(deck[i]);
+    try {
+        console.log(`🔍 dealCards function started with deck of ${deck.length} cards`);
+        
+        if (!deck || !Array.isArray(deck) || deck.length < 12) {
+            throw new Error(`Invalid deck: expected at least 12 cards, got ${deck?.length || 0}`);
+        }
+        
+        const hands = [[], [], [], []];
+        
+        // Deal 3 cards to each player
+        for (let i = 0; i < 12; i++) {
+            const playerIndex = i % 4;
+            const card = deck[i];
+            
+            if (!card) {
+                throw new Error(`Missing card at index ${i}`);
+            }
+            
+            hands[playerIndex].push(card);
+            console.log(`🔍 Dealt ${card.name} to player ${playerIndex}`);
+        }
+        
+        console.log(`🔍 Cards dealt successfully:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
+        return hands;
+    } catch (error) {
+        console.error(`❌ ERROR in dealCards:`, error);
+        console.error(`❌ Error stack:`, error.stack);
+        throw error;
     }
-    
-    return hands;
 }
 
 // Server startup
