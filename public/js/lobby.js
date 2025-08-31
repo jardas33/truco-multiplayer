@@ -639,6 +639,17 @@ function setupSocketListeners() {
             console.log('🔍 Current window.game.scores:', window.game?.scores);
             console.log('🔍 Current window.game.games:', window.game?.games);
             console.log('🔍 Current player hands:', window.game?.players?.map(p => ({ name: p.name, handLength: p.hand?.length || 0 })));
+            
+            // ✅ CRITICAL FIX: If no cards in hands, manually request new game
+            const hasCards = window.game?.players?.some(p => p.hand && p.hand.length > 0);
+            if (!hasCards) {
+                console.log('🚨 CRITICAL: No cards in hands detected, manually requesting new game from server');
+                if (socket && socket.connected) {
+                    socket.emit('requestNewGame', { roomCode: window.roomId });
+                } else {
+                    console.log('❌ Socket not connected, cannot request new game');
+                }
+            }
         }, 10000);
     });
     

@@ -518,6 +518,10 @@ io.on('connection', (socket) => {
             if (gameWinner) {
                 console.log(`🎮 Game won by ${gameWinner}, handling game completion...`);
                 
+                // ✅ CRITICAL FIX: Store last round winner for next game
+                room.lastRoundWinner = roundWinner;
+                console.log(`🎯 Stored last round winner for next game: ${roundWinner.name}`);
+                
                 // ✅ CRITICAL FIX: Increment games score for winning team
                 if (!room.game.games) {
                     room.game.games = { team1: 0, team2: 0 };
@@ -542,7 +546,9 @@ io.on('connection', (socket) => {
                 });
                 
                 // Start new game after 5 seconds
+                console.log(`SERVER: Scheduling new game start in 5 seconds for room ${room.id}. Game winner: ${gameWinner}`);
                 setTimeout(() => {
+                    console.log(`SERVER: Executing startNewGame for room ${room.id}`);
                     startNewGame(room, gameWinner);
                 }, 5000);
                 
@@ -678,6 +684,25 @@ io.on('connection', (socket) => {
         console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });
 
+    // ✅ Handle manual new game request (fallback mechanism)
+    socket.on('requestNewGame', (data) => {
+        console.log(`🎮 Manual new game request received for room: ${data.roomCode}`);
+        
+        if (!data.roomCode) {
+            console.log(`❌ No room code provided for manual new game request`);
+            return;
+        }
+        
+        const room = rooms.get(data.roomCode);
+        if (!room) {
+            console.log(`❌ Room ${data.roomCode} not found for manual new game request`);
+            return;
+        }
+        
+        console.log(`🎮 Executing manual startNewGame for room ${data.roomCode}`);
+        startNewGame(room, 'manual');
+    });
+    
     // ✅ Handle Truco responses with improved validation
     socket.on('respondTruco', (data) => {
         console.log(`🎯 Truco response in room: ${socket.roomCode}`);
@@ -1005,7 +1030,25 @@ function startNewGame(room, winningTeam) {
         
         // Update game state
         room.game.hands = hands;
-        room.game.currentPlayer = 0; // Start with first player
+        
+        // ✅ CRITICAL FIX: Winner of last round starts next game
+        // Find the player who won the last round and set them as current player
+        let startingPlayerIndex = 0; // Default to first player
+        
+        // Look for the last round winner in the room's game state
+        if (room.lastRoundWinner) {
+            const winnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
+            if (winnerPlayerIndex !== -1) {
+                startingPlayerIndex = winnerPlayerIndex;
+                console.log(`🎯 Winner of last round (${room.lastRoundWinner.name}) will start next game at index ${startingPlayerIndex}`);
+            } else {
+                console.log(`⚠️ Could not find last round winner in players list, defaulting to index 0`);
+            }
+        } else {
+            console.log(`ℹ️ No last round winner found, defaulting to index 0`);
+        }
+        
+        room.game.currentPlayer = startingPlayerIndex;
         room.game.playedCards = [];
         
         // Update player hands
