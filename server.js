@@ -326,17 +326,161 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ Validate it's the player's turn
-        const playerIndex = room.players.indexOf(player);
-        console.log(`🃏 Turn validation: Current player: ${room.game.currentPlayer}, Player index: ${playerIndex}, Player: ${player.name}`);
-        console.log(`🃏 Client sent playerIndex: ${data.playerIndex}, Server calculated: ${playerIndex}`);
+        // ✅ CRITICAL FIX: Handle bot card playing on server side
+        const currentPlayerIndex = room.game.currentPlayer;
+        const currentPlayer = room.players[currentPlayerIndex];
         
-        // ✅ CRITICAL FIX: Use the client's playerIndex for turn validation
-        // The client sends the correct player index based on the game state
+        console.log(`🃏 Turn validation: Current player: ${currentPlayerIndex} (${currentPlayer?.name}), Client sent playerIndex: ${data.playerIndex}`);
+        
+        // Check if it's actually the current player's turn
         if (room.game.currentPlayer !== data.playerIndex) {
             console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Client sent: ${data.playerIndex}`);
             socket.emit('error', 'Not your turn');
             return;
+        }
+        
+        // If it's a bot's turn, handle the bot play on the server
+        if (currentPlayer && currentPlayer.isBot) {
+            console.log(`🤖 Bot ${currentPlayer.name}'s turn - handling bot play on server`);
+            
+            // Bot plays a random card
+            if (room.game.hands && room.game.hands[currentPlayerIndex] && room.game.hands[currentPlayerIndex].length > 0) {
+                const botHand = room.game.hands[currentPlayerIndex];
+                const randomCardIndex = Math.floor(Math.random() * botHand.length);
+                const selectedCard = botHand[randomCardIndex];
+                
+                console.log(`🤖 Bot ${currentPlayer.name} playing card: ${selectedCard.name} at index ${randomCardIndex}`);
+                
+                // Remove card from bot's hand
+                botHand.splice(randomCardIndex, 1);
+                
+                // Add to played cards
+                if (!room.game.playedCards) room.game.playedCards = [];
+                room.game.playedCards.push({
+                    player: currentPlayer,
+                    card: selectedCard,
+                    playerIndex: currentPlayerIndex
+                });
+                
+                console.log(`✅ Bot ${currentPlayer.name} played ${selectedCard.name} in room ${socket.roomCode}`);
+                
+                // Move to next player
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+                
+                // Emit bot card played event
+                const cleanPlayedCards = room.game.playedCards.map(pc => ({
+                    player: {
+                        name: pc.player.name,
+                        isBot: pc.player.isBot || false
+                    },
+                    card: {
+                        name: pc.card.name,
+                        value: pc.card.value,
+                        suit: pc.card.suit || null
+                    },
+                    playerIndex: pc.playerIndex
+                }));
+                
+                io.to(socket.roomCode).emit('cardPlayed', {
+                    playerId: currentPlayer.id,
+                    playerName: currentPlayer.name,
+                    cardIndex: randomCardIndex,
+                    card: selectedCard,
+                    playerIndex: currentPlayerIndex,
+                    allHands: room.game.hands,
+                    playedCards: cleanPlayedCards
+                });
+                
+                // Check if round is complete or emit turn change
+                if (room.game.playedCards.length === 4) {
+                    console.log(`🏁 Round complete in room ${socket.roomCode}`);
+                    room.game.playedCards = [];
+                    io.to(socket.roomCode).emit('roundComplete', {
+                        currentPlayer: room.game.currentPlayer,
+                        allHands: room.game.hands
+                    });
+                } else {
+                    io.to(socket.roomCode).emit('turnChanged', {
+                        currentPlayer: room.game.currentPlayer,
+                        allHands: room.game.hands
+                    });
+                    
+                    // ✅ Auto-trigger bot play if next player is a bot
+                    const nextPlayer = room.players[room.game.currentPlayer];
+                    if (nextPlayer && nextPlayer.isBot) {
+                        console.log(`🤖 Auto-triggering bot ${nextPlayer.name} play in 1.5 seconds`);
+                        setTimeout(() => {
+                            // Check if it's still this bot's turn and game is active
+                            if (room.game && room.game.currentPlayer === room.players.indexOf(nextPlayer)) {
+                                console.log(`🤖 Auto-playing bot ${nextPlayer.name} card`);
+                                
+                                // Simulate bot play
+                                const botHand = room.game.hands[room.game.currentPlayer];
+                                if (botHand && botHand.length > 0) {
+                                    const randomCardIndex = Math.floor(Math.random() * botHand.length);
+                                    const selectedCard = botHand[randomCardIndex];
+                                    
+                                    console.log(`🤖 Auto-bot ${nextPlayer.name} playing: ${selectedCard.name}`);
+                                    
+                                    // Remove card from bot's hand
+                                    botHand.splice(randomCardIndex, 1);
+                                    
+                                    // Add to played cards
+                                    room.game.playedCards.push({
+                                        player: nextPlayer,
+                                        card: selectedCard,
+                                        playerIndex: room.game.currentPlayer
+                                    });
+                                    
+                                    // Move to next player
+                                    room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+                                    
+                                    // Emit bot card played event
+                                    const cleanPlayedCards = room.game.playedCards.map(pc => ({
+                                        player: {
+                                            name: pc.player.name,
+                                            isBot: pc.player.isBot || false
+                                        },
+                                        card: {
+                                            name: pc.card.name,
+                                            value: pc.card.value,
+                                            suit: pc.card.suit || null
+                                        },
+                                        playerIndex: pc.playerIndex
+                                    }));
+                                    
+                                    io.to(socket.roomCode).emit('cardPlayed', {
+                                        playerId: nextPlayer.id,
+                                        playerName: nextPlayer.name,
+                                        cardIndex: randomCardIndex,
+                                        card: selectedCard,
+                                        playerIndex: room.players.indexOf(nextPlayer),
+                                        allHands: room.game.hands,
+                                        playedCards: cleanPlayedCards
+                                    });
+                                    
+                                    // Check if round is complete or emit turn change
+                                    if (room.game.playedCards.length === 4) {
+                                        console.log(`🏁 Round complete in room ${socket.roomCode}`);
+                                        room.game.playedCards = [];
+                                        io.to(socket.roomCode).emit('roundComplete', {
+                                            currentPlayer: room.game.currentPlayer,
+                                            allHands: room.game.hands
+                                        });
+                                    } else {
+                                        io.to(socket.roomCode).emit('turnChanged', {
+                                            currentPlayer: room.game.currentPlayer,
+                                            allHands: room.game.hands
+                                        });
+                                    }
+                                }
+                            }
+                        }, 1500);
+                    }
+                }
+                
+                return; // Exit early - bot play handled
+            }
         }
 
         // ✅ Get the card from the player's hand
