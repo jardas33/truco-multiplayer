@@ -780,8 +780,8 @@ function drawScoringInfo() {
     noStroke();
     textAlign(LEFT, TOP);
     
-    // Team Alfa (Left side) - STABLE TEXT RENDERING
-    fill(255, 255, 255); // Bright white for maximum contrast
+    // Team Alfa (Left side) - BLUE COLOR for Team Alfa
+    fill(100, 150, 255); // Blue color for Team Alfa
     textSize(24);
     text("TEAM ALFA", 25, 25);
     
@@ -790,8 +790,8 @@ function drawScoringInfo() {
     text(`Games: ${teamAlfaGames}/12`, 25, 85);
     text(`Sets: ${teamAlfaSets}`, 25, 115);
     
-    // Team Beta (Right side) - STABLE TEXT RENDERING
-    fill(255, 255, 255); // Bright white for maximum contrast
+    // Team Beta (Right side) - RED COLOR for Team Beta
+    fill(255, 100, 100); // Red color for Team Beta
     textSize(24);
     text("TEAM BETA", width - 180, 25);
     
@@ -813,11 +813,21 @@ function drawScoringInfo() {
     textSize(22);
     text(`Game ${teamAlfaGames + teamBetaGames + 1} of Set`, width/2, 65);
     
-    // Team assignments - Center, at bottom of scoring panel
-    fill(255, 255, 255); // Bright white
-    textSize(20);
-    text("Player 1 + Bot 2 = Team Alfa", width/2, 105);
-    text("Bot 1 + Bot 3 = Team Beta", width/2, 135);
+    // Team assignments - Colored circles instead of text
+    // Team Alfa circle (Blue)
+    fill(100, 150, 255); // Blue color for Team Alfa
+    noStroke();
+    ellipse(width/2 - 80, 120, 20, 20); // Left circle
+    
+    // Team Beta circle (Red)
+    fill(255, 100, 100); // Red color for Team Beta
+    ellipse(width/2 + 80, 120, 20, 20); // Right circle
+    
+    // Team labels below circles
+    fill(255, 255, 255); // White text for labels
+    textSize(18);
+    text("Team Alfa", width/2 - 80, 145);
+    text("Team Beta", width/2 + 80, 145);
     
     pop();
 }
