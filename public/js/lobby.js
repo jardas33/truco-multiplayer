@@ -272,6 +272,12 @@ function setupSocketListeners() {
         // ✅ Update current player
         window.game.currentPlayerIndex = data.currentPlayer;
         
+        // ✅ CRITICAL FIX: Update player active states for turn indicator
+        window.game.players.forEach((player, index) => {
+            player.isActive = (index === data.currentPlayer);
+            console.log(`🔄 Player ${player.name} (${index}) isActive: ${player.isActive}`);
+        });
+        
         // ✅ Update all player hands with proper formatting and fallback
         if (data.allHands) {
             data.allHands.forEach((hand, index) => {
@@ -371,6 +377,12 @@ function setupSocketListeners() {
         if (data.currentPlayer !== undefined) {
             window.game.currentPlayerIndex = data.currentPlayer;
             console.log(`🔄 New round - current player: ${data.currentPlayer} (${window.game.players[data.currentPlayer]?.name})`);
+            
+            // ✅ CRITICAL FIX: Update player active states for turn indicator in new round
+            window.game.players.forEach((player, index) => {
+                player.isActive = (index === data.currentPlayer);
+                console.log(`🔄 New round - Player ${player.name} (${index}) isActive: ${player.isActive}`);
+            });
         }
         
         // ✅ Update all player hands for new round
@@ -962,9 +974,19 @@ function startMultiplayerGame(data) {
         window.currentPlayer = data.currentPlayer || 0;
         console.log(`🎯 Current player index: ${window.currentPlayer}`);
         
+        // ✅ CRITICAL FIX: Set initial player active states for turn indicator
+        window.players.forEach((player, index) => {
+            player.isActive = (index === window.currentPlayer);
+            console.log(`🎯 Initial player ${player.name} (${index}) isActive: ${player.isActive}`);
+        });
+        
         // Initialize game
         window.game = new Game(window.players);
         console.log('✅ Game instance created');
+        
+        // ✅ CRITICAL FIX: Set the game's current player index
+        window.game.currentPlayerIndex = window.currentPlayer;
+        console.log(`🎯 Game currentPlayerIndex set to: ${window.game.currentPlayerIndex}`);
         
         // Initialize game variables
         playedCards = [];

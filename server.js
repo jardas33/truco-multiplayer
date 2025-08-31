@@ -329,9 +329,12 @@ io.on('connection', (socket) => {
         // ✅ Validate it's the player's turn
         const playerIndex = room.players.indexOf(player);
         console.log(`🃏 Turn validation: Current player: ${room.game.currentPlayer}, Player index: ${playerIndex}, Player: ${player.name}`);
+        console.log(`🃏 Client sent playerIndex: ${data.playerIndex}, Server calculated: ${playerIndex}`);
         
-        if (room.game.currentPlayer !== playerIndex) {
-            console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Player: ${playerIndex}`);
+        // ✅ CRITICAL FIX: Use the client's playerIndex for turn validation
+        // The client sends the correct player index based on the game state
+        if (room.game.currentPlayer !== data.playerIndex) {
+            console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Client sent: ${data.playerIndex}`);
             socket.emit('error', 'Not your turn');
             return;
         }
