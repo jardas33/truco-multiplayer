@@ -577,9 +577,9 @@ function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
     messageDiv.id = 'roundWinnerMessage';
     messageDiv.style.cssText = `
         position: fixed;
-        top: 50%;
+        top: 25%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translateX(-50%);
         background: linear-gradient(135deg, #FFD700, #FFA500);
         color: #000;
         padding: 20px 30px;
@@ -590,9 +590,29 @@ function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         z-index: 1000;
         border: 3px solid #FF8C00;
+        min-width: 280px;
     `;
     
     messageDiv.innerHTML = `
+        <button id="closeRoundWinnerBtn" style="
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        ">✕</button>
         <div style="margin-bottom: 10px;">🏆 ROUND WINNER! 🏆</div>
         <div style="font-size: 16px; margin-bottom: 8px;">${winnerName}</div>
         <div style="font-size: 14px; margin-bottom: 8px;">played ${winnerCard}</div>
@@ -600,6 +620,16 @@ function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
     `;
     
     document.body.appendChild(messageDiv);
+    
+    // Add close button functionality
+    const closeBtn = document.getElementById('closeRoundWinnerBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        });
+    }
     
     // Auto-remove message after 4 seconds
     setTimeout(() => {
@@ -622,9 +652,9 @@ function showGameWinnerMessage(winningTeam) {
     messageDiv.id = 'gameWinnerMessage';
     messageDiv.style.cssText = `
         position: fixed;
-        top: 50%;
+        top: 20%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translateX(-50%);
         background: linear-gradient(135deg, #FFD700, #FF4500);
         color: #000;
         padding: 25px 35px;
@@ -635,15 +665,45 @@ function showGameWinnerMessage(winningTeam) {
         box-shadow: 0 15px 40px rgba(0,0,0,0.6);
         z-index: 1001;
         border: 4px solid #FF8C00;
+        min-width: 300px;
     `;
     
     messageDiv.innerHTML = `
+        <button id="closeGameWinnerBtn" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        ">✕</button>
         <div style="margin-bottom: 15px;">🎮 GAME WINNER! 🎮</div>
         <div style="font-size: 20px; color: #8B0000;">${winningTeam}</div>
         <div style="font-size: 16px; margin-top: 10px;">Congratulations!</div>
     `;
     
     document.body.appendChild(messageDiv);
+    
+    // Add close button functionality
+    const closeBtn = document.getElementById('closeGameWinnerBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        });
+    }
     
     // Auto-remove message after 6 seconds
     setTimeout(() => {
