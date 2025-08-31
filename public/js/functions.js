@@ -683,7 +683,7 @@ function drawGameState() {
                 image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
             } else if (playedCard.card.name && window.getCardImage) {
                 // Try to get card image using the helper function
-                const cardImage = window.getCardImage(playedCard.card.name);
+                const cardImage = window.getCardImageWithFallback(playedCard.card.name);
                 if (cardImage) {
                     image(cardImage, centerX, centerY, cardWidth, cardHeight);
                 } else {

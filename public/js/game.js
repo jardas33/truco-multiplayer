@@ -1,6 +1,7 @@
+// ✅ CRITICAL FIX: Remove local isMultiplayerMode variable - use global one from lobby.js
+// let isMultiplayerMode = false; // REMOVED - this was causing the bug!
 let roomId;
 let playerId;
-let isMultiplayerMode = false;
 window.players = [];
   
 function createDeck() {
@@ -115,7 +116,7 @@ function createDeck() {
         console.log("Starting game...");
         
         // ✅ In multiplayer mode, validate server data before proceeding
-        if (isMultiplayerMode) {
+        if (window.isMultiplayerMode) { // Use global isMultiplayerMode
             if (!window.players || window.players.length !== 4) {
                 console.error('❌ Invalid multiplayer state - missing or incorrect player count');
                 console.error('Players:', window.players);
@@ -169,7 +170,7 @@ function createDeck() {
         isInTrucoPhase = false;
         
         // ✅ Use server-synchronized current player or default to 0
-        if (isMultiplayerMode && window.currentPlayer !== undefined) {
+        if (window.isMultiplayerMode && window.currentPlayer !== undefined) { // Use global isMultiplayerMode
             this.currentPlayerIndex = window.currentPlayer;
         } else {
             this.currentPlayerIndex = 0;
@@ -203,12 +204,12 @@ function createDeck() {
         console.log("Game started successfully");
         console.log("Player indices:", this.players.map(p => `${p.name}: ${p.playerIndex}`));
         console.log("Current player:", this.currentPlayerIndex);
-        console.log("Game mode:", isMultiplayerMode ? "Multiplayer" : "Single Player");
+        console.log("Game mode:", window.isMultiplayerMode ? "Multiplayer" : "Single Player");
       }
   
     nextPlayer() {
       // ✅ CRITICAL FIX: Prevent nextPlayer from running in multiplayer mode
-      if (isMultiplayerMode) {
+      if (window.isMultiplayerMode) { // Use global isMultiplayerMode
         console.log(`🌐 Multiplayer mode - nextPlayer blocked, waiting for server turn change`);
         return;
       }
@@ -296,7 +297,7 @@ function createDeck() {
       });
       
       // ✅ CRITICAL FIX: In multiplayer mode, wait for server confirmation before updating local state
-      if (isMultiplayerMode && socket && window.roomId) {
+      if (window.isMultiplayerMode && socket && window.roomId) { // Use global isMultiplayerMode
         try {
           console.log('🔄 Emitting multiplayer card play to server - waiting for confirmation');
           socket.emit('playCard', {
@@ -318,7 +319,7 @@ function createDeck() {
       }
       
       // ✅ ONLY update local state if NOT in multiplayer mode or if server communication failed
-      if (!isMultiplayerMode) {
+      if (!window.isMultiplayerMode) { // Use global isMultiplayerMode
         console.log(`📊 Single player mode - updating local state`);
         console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
 
@@ -338,7 +339,7 @@ function createDeck() {
   
     endRound() {
       // ✅ CRITICAL FIX: Prevent endRound from running in multiplayer mode
-      if (isMultiplayerMode) {
+      if (window.isMultiplayerMode) { // Use global isMultiplayerMode
         console.log(`🌐 Multiplayer mode - endRound blocked, waiting for server round completion`);
         return;
       }
@@ -627,7 +628,7 @@ function createDeck() {
         buttonRaiseTruco.show();
       }
   
-      if (isMultiplayerMode && socket && window.roomId) {
+      if (window.isMultiplayerMode && socket && window.roomId) { // Use global isMultiplayerMode
         console.log('Emitting multiplayer Truco request');
         socket.emit('requestTruco', {
           roomCode: window.roomId,
@@ -819,7 +820,7 @@ function createDeck() {
        }
    
        // Emit to multiplayer if needed
-       if (isMultiplayerMode && socket && window.roomId) {
+       if (window.isMultiplayerMode && socket && window.roomId) { // Use global isMultiplayerMode
          console.log('Emitting multiplayer Truco response');
          socket.emit('respondTruco', {
            roomCode: window.roomId,
@@ -915,7 +916,7 @@ function createDeck() {
     console.log("Starting Truco game...");
     if (window.roomId) {
         // Multiplayer mode
-        isMultiplayerMode = true;
+        window.isMultiplayerMode = true; // Set global isMultiplayerMode
         gameState = gameStateEnum.Playing;
         
         console.log("Multiplayer mode enabled, room ID:", window.roomId);
@@ -942,7 +943,7 @@ function windowResized() {
   
   function startSinglePlayerGame() {
     console.log("Starting single player game...");
-    isMultiplayerMode = false;
+    window.isMultiplayerMode = false; // Set global isMultiplayerMode
     gameState = gameStateEnum.Playing;
     window.players = [];
     
