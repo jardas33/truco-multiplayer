@@ -505,12 +505,7 @@ function setupSocketListeners() {
             console.log(`📊 Updated scores - Team 1: ${data.scores.team1}, Team 2: ${data.scores.team2}`);
         }
         
-        // ✅ CRITICAL FIX: Handle game winner if game is complete
-        if (data.gameWinner) {
-            const winningTeam = data.gameWinner === 'team1' ? 'Team Alfa' : 'Team Beta';
-            showGameWinnerMessage(winningTeam);
-            console.log(`🎮 Game winner: ${winningTeam}`);
-        }
+        // ✅ CRITICAL FIX: Game winner is now handled separately in gameComplete event
         
         // ✅ Update current player for next round
         if (data.currentPlayer !== undefined) {
@@ -563,6 +558,70 @@ function setupSocketListeners() {
         console.log('✅ Round completion synchronized successfully');
     });
     
+    // ✅ Handle game complete event (when a team wins the game)
+    socket.on('gameComplete', (data) => {
+        console.log('🎮 Game complete event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for game complete event');
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Display round winner message for the final round
+        if (data.roundWinner) {
+            const winnerName = data.roundWinner.name;
+            const winnerCard = data.roundWinner.card;
+            const winnerTeam = data.roundWinner.team === 'team1' ? 'Team Alfa' : 'Team Beta';
+            
+            // Create and display round winner message
+            showRoundWinnerMessage(winnerName, winnerCard, winnerTeam);
+            console.log(`🏆 Final round winner: ${winnerName} (${winnerTeam}) with ${winnerCard}`);
+            
+            // ✅ CRITICAL FIX: Add final round to history
+            if (window.playedCards && window.playedCards.length === 4) {
+                const roundData = {
+                    winner: data.roundWinner,
+                    cards: window.playedCards.map(pc => ({
+                        player: { name: pc.player.name },
+                        card: { name: pc.card.name }
+                    }))
+                };
+                addRoundToHistory(roundData);
+                console.log(`📋 Final round added to history with ${roundData.cards.length} cards`);
+            }
+        }
+        
+        // ✅ CRITICAL FIX: Display final scores and games
+        if (data.scores) {
+            updateGameScores(data.scores);
+            console.log(`📊 Final scores - Team 1: ${data.scores.team1}, Team 2: ${data.scores.team2}`);
+        }
+        
+        // ✅ CRITICAL FIX: Update games score
+        if (data.games) {
+            updateGameScores(data.games, true); // true indicates this is games score
+            console.log(`🎮 Games score - Team 1: ${data.games.team1}, Team 2: ${data.games.team2}`);
+        }
+        
+        // ✅ CRITICAL FIX: Handle game winner
+        if (data.gameWinner) {
+            const winningTeam = data.gameWinner === 'team1' ? 'Team Alfa' : 'Team Beta';
+            showGameWinnerMessage(winningTeam);
+            console.log(`🎮 Game winner: ${winningTeam}`);
+        }
+        
+        // ✅ CRITICAL FIX: Clear played cards immediately for game completion
+        window.playedCards = [];
+        console.log('🎮 Game complete - cleared played cards immediately');
+        
+        // ✅ Force game redraw to show game completion state
+        if (typeof redraw === 'function') {
+            redraw();
+        }
+        
+        console.log('✅ Game completion handled successfully - waiting for new game to start');
+    });
+    
     // ✅ Handle new game started event
     socket.on('newGameStarted', (data) => {
         console.log('🎮 New game started event received:', data);
@@ -611,6 +670,12 @@ function setupSocketListeners() {
         if (data.scores) {
             updateGameScores(data.scores);
             console.log('🔄 New game - scores reset:', data.scores);
+        }
+        
+        // Update games score
+        if (data.games) {
+            updateGameScores(data.games, true);
+            console.log('🔄 New game - games score preserved:', data.games);
         }
         
         // Reset bot flags for new game
@@ -857,27 +922,29 @@ function showNewGameMessage() {
 }
 
 // ✅ CRITICAL FIX: Function to update game scores display
-function updateGameScores(scores) {
-    // ✅ CRITICAL FIX: Store scores in window.game.scores for scoring display
-    if (window.game && window.game.scores) {
-        window.game.scores.team1 = scores.team1;
-        window.game.scores.team2 = scores.team2;
-        console.log(`📊 Scores stored in window.game.scores:`, window.game.scores);
+function updateGameScores(scores, isGamesScore = false) {
+    if (isGamesScore) {
+        // ✅ CRITICAL FIX: Store games score in window.game.games for scoring display
+        if (window.game && !window.game.games) {
+            window.game.games = { team1: 0, team2: 0 };
+        }
+        if (window.game && window.game.games) {
+            window.game.games.team1 = scores.team1;
+            window.game.games.team2 = scores.team2;
+            console.log(`🎮 Games score stored in window.game.games:`, window.game.games);
+        }
+        
+        console.log(`🎮 Games score updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
+    } else {
+        // ✅ CRITICAL FIX: Store round scores in window.game.scores for scoring display
+        if (window.game && window.game.scores) {
+            window.game.scores.team1 = scores.team1;
+            window.game.scores.team2 = scores.team2;
+            console.log(`📊 Round scores stored in window.game.scores:`, window.game.scores);
+        }
+        
+        console.log(`📊 Round scores updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
     }
-    
-    // Update team scores in the UI (if elements exist)
-    const team1ScoreElement = document.querySelector('[data-team="team1"] .score');
-    const team2ScoreElement = document.querySelector('[data-team="team2"] .score');
-    
-    if (team1ScoreElement) {
-        team1ScoreElement.textContent = scores.team1;
-    }
-    
-    if (team2ScoreElement) {
-        team2ScoreElement.textContent = scores.team2;
-    }
-    
-    console.log(`📊 Scores updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
 }
 
 // ✅ CRITICAL FIX: Round History functionality

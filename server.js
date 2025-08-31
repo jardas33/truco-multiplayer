@@ -514,25 +514,36 @@ io.on('connection', (socket) => {
                 console.log(`🎮 Team 2 wins the game!`);
             }
             
-            // ✅ CRITICAL FIX: If game is won, start a new game after delay
+            // ✅ CRITICAL FIX: If game is won, handle game completion separately
             if (gameWinner) {
-                console.log(`🎮 Game won by ${gameWinner}, starting new game in 5 seconds...`);
+                console.log(`🎮 Game won by ${gameWinner}, handling game completion...`);
+                
+                // ✅ CRITICAL FIX: Increment games score for winning team
+                if (!room.game.games) {
+                    room.game.games = { team1: 0, team2: 0 };
+                }
+                if (gameWinner === 'team1') {
+                    room.game.games.team1 += 1;
+                    console.log(`🎮 Team 1 games increased to: ${room.game.games.team1}`);
+                } else if (gameWinner === 'team2') {
+                    room.game.games.team2 += 1;
+                    console.log(`🎮 Team 2 games increased to: ${room.game.games.team2}`);
+                }
                 
                 // Clear played cards immediately for game winner
                 room.game.playedCards = [];
                 
-                // Emit round complete event with scoring information
-                io.to(socket.roomCode).emit('roundComplete', {
-                    currentPlayer: room.game.currentPlayer,
-                    allHands: room.game.hands,
+                // Emit game complete event instead of round complete
+                io.to(socket.roomCode).emit('gameComplete', {
                     roundWinner: roundWinner,
                     scores: room.game.scores,
+                    games: room.game.games,
                     gameWinner: gameWinner
                 });
                 
                 // Start new game after 5 seconds
                 setTimeout(() => {
-                    startNewGame(room);
+                    startNewGame(room, gameWinner);
                 }, 5000);
                 
                 return; // Don't continue with normal round logic
@@ -964,13 +975,17 @@ function determineRoundWinner(playedCards) {
 }
 
 // ✅ CRITICAL FIX: Function to start a new game after a team wins
-function startNewGame(room) {
-    console.log(`🎮 Starting new game in room: ${room.id}`);
+function startNewGame(room, winningTeam) {
+    console.log(`🎮 Starting new game in room: ${room.id} after ${winningTeam} won`);
     
     try {
-        // Reset game scores for new game
+        // ✅ CRITICAL FIX: Preserve games score, only reset round scores
+        if (!room.game.games) {
+            room.game.games = { team1: 0, team2: 0 };
+        }
+        // Keep games score, only reset round scores for new game
         room.game.scores = { team1: 0, team2: 0 };
-        console.log(`🔄 Reset scores for new game`);
+        console.log(`🔄 Reset round scores for new game, games score preserved: Team 1: ${room.game.games.team1}, Team 2: ${room.game.games.team2}`);
         
         // Clear played cards
         room.game.playedCards = [];
@@ -1000,11 +1015,12 @@ function startNewGame(room) {
         
         console.log(`🔄 New game started with fresh deck and hands`);
         
-        // Emit new game started event
+        // Emit new game started event with both scores and games
         io.to(room.id).emit('newGameStarted', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands,
-            scores: room.game.scores
+            scores: room.game.scores,
+            games: room.game.games
         });
         
     } catch (error) {

@@ -752,8 +752,8 @@ function drawScoringInfo() {
         // Use server scores from multiplayer game
         teamAlfaRounds = window.game.scores.team1 || 0;
         teamBetaRounds = window.game.scores.team2 || 0;
-        teamAlfaGames = 0; // Games not implemented yet
-        teamBetaGames = 0; // Games not implemented yet
+        teamAlfaGames = window.game.games ? window.game.games.team1 : 0; // Use games score
+        teamBetaGames = window.game.games ? window.game.games.team2 : 0; // Use games score
         teamAlfaSets = 0;  // Sets not implemented yet
         teamBetaSets = 0;  // Sets not implemented yet
     } else {
