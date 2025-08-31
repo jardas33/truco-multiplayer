@@ -430,10 +430,12 @@ io.on('connection', (socket) => {
                 allHands: room.game.hands
             });
         } else {
-            // Move to next player
-            room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            // ✅ CRITICAL FIX: Don't move to next player immediately for bot plays
+            // The client-side bot logic needs to complete first
+            // Only move to next player after the bot has finished playing
+            console.log(`🔄 Current player ${room.game.currentPlayer} played card, waiting for turn completion`);
             
-            // Emit turn change event
+            // Emit turn change event with current player (not next player)
             io.to(socket.roomCode).emit('turnChanged', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands
@@ -441,6 +443,32 @@ io.on('connection', (socket) => {
         }
 
         console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
+    });
+
+    // ✅ CRITICAL FIX: Handle bot turn completion to move to next player
+    socket.on('botTurnComplete', (data) => {
+        console.log(`🤖 Bot turn complete in room: ${socket.roomCode}`);
+        
+        if (!socket.roomCode) {
+            console.log(`❌ User ${socket.id} not in a room`);
+            return;
+        }
+        
+        const room = rooms.get(socket.roomCode);
+        if (!room || !room.game) {
+            console.log(`❌ Room or game not found for bot turn completion`);
+            return;
+        }
+        
+        // ✅ Move to next player after bot turn is complete
+        room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+        console.log(`🔄 Moved to next player: ${room.game.currentPlayer}`);
+        
+        // Emit turn change event with the new current player
+        io.to(socket.roomCode).emit('turnChanged', {
+            currentPlayer: room.game.currentPlayer,
+            allHands: room.game.hands
+        });
     });
 
     // ✅ Handle Truco requests with improved validation

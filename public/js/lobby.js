@@ -348,17 +348,26 @@ function setupSocketListeners() {
                             // DO NOT include: image, position, or any DOM/p5.js references
                         };
                         
-                        // Emit bot card play to server
-                        socket.emit('playCard', {
-                            roomCode: window.roomId,
-                            cardIndex: randomCardIndex,
-                            card: cleanCard,
-                            playerIndex: data.currentPlayer
-                        });
-                    } else {
-                        console.log(`🤖 Bot turn validation failed - skipping bot play`);
-                    }
-                }, 1500); // Increased delay to prevent rapid bot actions
+                                                    // Emit bot card play to server
+                            socket.emit('playCard', {
+                                roomCode: window.roomId,
+                                cardIndex: randomCardIndex,
+                                card: cleanCard,
+                                playerIndex: data.currentPlayer
+                            });
+                            
+                            // ✅ CRITICAL FIX: Emit bot turn complete after playing card
+                            // This tells the server to move to the next player
+                            setTimeout(() => {
+                                socket.emit('botTurnComplete', {
+                                    roomCode: window.roomId
+                                });
+                                console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                            }, 500); // Small delay to ensure card play is processed first
+                        } else {
+                            console.log(`🤖 Bot turn validation failed - skipping bot play`);
+                        }
+                    }, 1500); // Increased delay to prevent rapid bot actions
             }
         }
         

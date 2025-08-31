@@ -622,6 +622,8 @@ function drawGameState() {
     // ✅ DEBUGGING: Log played cards structure to diagnose rendering issues
     if (window.playedCards && window.playedCards.length > 0) {
         console.log('🎨 Rendering played cards:', window.playedCards.length, 'cards');
+        console.log('🎨 Played cards data:', window.playedCards);
+        
         window.playedCards.forEach((playedCard, index) => {
             // CRITICAL FIX: Add null check to prevent ReferenceError
             if (!playedCard || !playedCard.card) {
@@ -632,16 +634,21 @@ function drawGameState() {
             const centerX = width / 2 - (window.playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
             
+            console.log(`🎨 Rendering card ${index}: ${playedCard.card.name} at (${centerX}, ${centerY})`);
+            
             // Draw played card as proper card image if available, otherwise fallback
             if (playedCard.card.image) {
+                console.log(`🎨 Drawing card image for ${playedCard.card.name}`);
                 image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
-            } else if (playedCard.card.name && window.getCardImage) {
+            } else if (playedCard.card.name && window.getCardImageWithFallback) {
                 // Try to get card image using the helper function
                 const cardImage = window.getCardImageWithFallback(playedCard.card.name);
                 if (cardImage) {
+                    console.log(`🎨 Drawing fallback image for ${playedCard.card.name}`);
                     image(cardImage, centerX, centerY, cardWidth, cardHeight);
                 } else {
                     // Fallback to colored rectangle
+                    console.log(`🎨 Drawing fallback rectangle for ${playedCard.card.name}`);
                     fill(200, 200, 200); // Light gray
                     stroke(0, 0, 0);
                     strokeWeight(2);
@@ -657,6 +664,7 @@ function drawGameState() {
                 }
             } else {
                 // Fallback to colored rectangle
+                console.log(`🎨 Drawing basic rectangle for ${playedCard.card.name}`);
                 fill(200, 200, 200); // Light gray
                 stroke(0, 0, 0);
                 strokeWeight(2);
@@ -671,17 +679,19 @@ function drawGameState() {
                 }
             }
             
-                         // Draw player indicator - MUCH MORE VISIBLE
-             fill(255, 255, 255); // Bright white text
-             textSize(16); // Larger font size
-             textAlign(CENTER, CENTER);
-             stroke(0, 0, 0); // Black outline for contrast
-             strokeWeight(2); // Thick outline
-             if (playedCard.player && playedCard.player.name) {
-                 text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
-             }
-             noStroke(); // Reset stroke for other elements
+            // Draw player indicator - MUCH MORE VISIBLE
+            fill(255, 255, 255); // Bright white text
+            textSize(16); // Larger font size
+            textAlign(CENTER, CENTER);
+            stroke(0, 0, 0); // Black outline for contrast
+            strokeWeight(2); // Thick outline
+            if (playedCard.player && playedCard.player.name) {
+                text(playedCard.player.name, centerX + cardWidth/2, centerY + cardHeight + 25);
+            }
+            noStroke(); // Reset stroke for other elements
         });
+    } else {
+        console.log('🎨 No played cards to render');
     }
     
     // Draw current player info - SIMPLE TEXT (removed redundant info)
