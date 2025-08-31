@@ -237,26 +237,28 @@ io.on('connection', (socket) => {
 
     // Handle game start
     socket.on('startGame', (roomCode) => {
-        console.log(`🎮 STARTGAME EVENT RECEIVED! Room: ${roomCode}`);
-        console.log(`🔍 Socket ID: ${socket.id}`);
-        console.log(`🔍 Socket room code: ${socket.roomCode}`);
-        console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
-        console.log(`🔍 Event handler executing...`);
-        
-        const room = rooms.get(roomCode);
-        if (!room) {
-            console.log(`❌ Room ${roomCode} not found for game start`);
-            console.log(`🔍 Room not found - checking if socket is in any room`);
-            return;
-        }
-        
-        console.log(`🔍 Room found with ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
-        
-        if (room.players.length < 4) {
-            console.log(`❌ Room ${roomCode} needs 4 players, has ${room.players.length}`);
-            socket.emit('error', 'Need 4 players to start the game');
-            return;
-        }
+        try {
+            console.log(`🎮 STARTGAME EVENT RECEIVED! Room: ${roomCode}`);
+            console.log(`🔍 Socket ID: ${socket.id}`);
+            console.log(`🔍 Socket room code: ${socket.roomCode}`);
+            console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
+            console.log(`🔍 Event handler executing...`);
+            
+            const room = rooms.get(roomCode);
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for game start`);
+                console.log(`🔍 Room not found - checking if socket is in any room`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            console.log(`🔍 Room found with ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
+            
+            if (room.players.length < 4) {
+                console.log(`❌ Room ${roomCode} needs 4 players, has ${room.players.length}`);
+                socket.emit('error', 'Need 4 players to start the game');
+                return;
+            }
 
         // ✅ Auto-assign teams to players who haven't chosen yet
         let team1Count = 0;
@@ -321,6 +323,11 @@ io.on('connection', (socket) => {
         
         console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
         console.log(`🔍 gameStart event emitted to ${room.players.length} players`);
+        } catch (error) {
+            console.error(`❌ CRITICAL ERROR in startGame handler:`, error);
+            console.error(`❌ Error stack:`, error.stack);
+            socket.emit('error', 'Failed to start game due to server error');
+        }
     });
 
     // Handle disconnection
@@ -732,13 +739,27 @@ function createDeck() {
     const values = ['ace', '2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king'];
     const deck = [];
     
+    // ✅ CRITICAL FIX: Card values mapping for Brazilian Truco
+    const cardValueMap = {
+        'ace': 10,
+        '2': 9,
+        '3': 8,
+        '4': 17,
+        '5': 16,
+        '6': 15,
+        '7': 14,
+        'jack': 13,
+        'queen': 12,
+        'king': 11
+    };
+    
     for (const suit of suits) {
         for (const value of values) {
             // ✅ Create cards with the exact format the client expects
             const cardName = `${value.charAt(0).toUpperCase() + value.slice(1)} of ${suit}`;
             deck.push({ 
                 suit: suit, 
-                value: value,
+                value: cardValueMap[value] || 20, // ✅ Use proper card power values
                 name: cardName,  // ✅ Use proper capitalized format: "Ace of diamonds"
                 isClickable: false  // ✅ Add isClickable property
             });
@@ -752,7 +773,7 @@ function createDeck() {
     }
     
     console.log(`🎴 Server created deck with ${deck.length} cards`);
-    console.log(`🎯 Sample cards:`, deck.slice(0, 3).map(c => c.name));
+    console.log(`🎯 Sample cards:`, deck.slice(0, 3).map(c => ({ name: c.name, value: c.value })));
     
     return deck;
 }
