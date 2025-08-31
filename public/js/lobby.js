@@ -668,14 +668,16 @@ function setupSocketListeners() {
         
         // Update game scores
         if (data.scores) {
+            console.log('🔄 New game - received scores from server:', data.scores);
             updateGameScores(data.scores);
-            console.log('🔄 New game - scores reset:', data.scores);
+            console.log('🔄 New game - scores updated, window.game.scores now:', window.game.scores);
         }
         
         // Update games score
         if (data.games) {
+            console.log('🔄 New game - received games from server:', data.games);
             updateGameScores(data.games, true);
-            console.log('🔄 New game - games score preserved:', data.games);
+            console.log('🔄 New game - games score updated, window.game.games now:', window.game.games);
         }
         
         // Reset bot flags for new game
@@ -923,10 +925,15 @@ function showNewGameMessage() {
 
 // ✅ CRITICAL FIX: Function to update game scores display
 function updateGameScores(scores, isGamesScore = false) {
+    console.log(`🔍 updateGameScores called with:`, scores, 'isGamesScore:', isGamesScore);
+    console.log(`🔍 Current window.game.scores:`, window.game?.scores);
+    console.log(`🔍 Current window.game.games:`, window.game?.games);
+    
     if (isGamesScore) {
         // ✅ CRITICAL FIX: Store games score in window.game.games for scoring display
         if (window.game && !window.game.games) {
             window.game.games = { team1: 0, team2: 0 };
+            console.log(`🔍 Created new window.game.games:`, window.game.games);
         }
         if (window.game && window.game.games) {
             window.game.games.team1 = scores.team1;
@@ -941,10 +948,15 @@ function updateGameScores(scores, isGamesScore = false) {
             window.game.scores.team1 = scores.team1;
             window.game.scores.team2 = scores.team2;
             console.log(`📊 Round scores stored in window.game.scores:`, window.game.scores);
+        } else {
+            console.log(`⚠️ Warning: window.game.scores not available for round scores update`);
         }
         
         console.log(`📊 Round scores updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
     }
+    
+    console.log(`🔍 After update - window.game.scores:`, window.game?.scores);
+    console.log(`🔍 After update - window.game.games:`, window.game?.games);
 }
 
 // ✅ CRITICAL FIX: Round History functionality

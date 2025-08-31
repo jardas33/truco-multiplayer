@@ -1016,6 +1016,7 @@ function startNewGame(room, winningTeam) {
         console.log(`🔄 New game started with fresh deck and hands`);
         
         // Emit new game started event with both scores and games
+        console.log(`SERVER: Emitting 'newGameStarted' for room ${room.id} with scores:`, room.game.scores, 'and games:', room.game.games);
         io.to(room.id).emit('newGameStarted', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands,
