@@ -359,12 +359,24 @@ function setupSocketListeners() {
                             const bot = window.game.players[data.currentPlayer];
                             console.log(`🤖 Bot ${bot.name} confirmed turn - playing card`);
                             
-                            // ✅ CRITICAL FIX: Mark bot as having played this turn
+                            // ✅ CRITICAL FIX: Mark bot as having played this turn IMMEDIATELY
                             bot.hasPlayedThisTurn = true;
                             
                             // ✅ CRITICAL FIX: Always play the first card (index 0) to avoid index issues
                             const cardIndex = 0;
                             const selectedCard = bot.hand[cardIndex];
+                            
+                            // ✅ CRITICAL FIX: Additional validation before proceeding
+                            if (!selectedCard || !selectedCard.name || !bot.hand || bot.hand.length === 0) {
+                                console.error(`❌ Bot ${bot.name} cannot play - invalid card or empty hand:`, {
+                                    selectedCard,
+                                    handLength: bot.hand?.length,
+                                    hasPlayedThisTurn: bot.hasPlayedThisTurn
+                                });
+                                bot.hasPlayedThisTurn = false; // Reset flag
+                                return;
+                            }
+                            
                             console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} at index ${cardIndex}`);
                             
                             // ✅ CRITICAL FIX: Create clean card object to prevent serialization issues
@@ -374,13 +386,6 @@ function setupSocketListeners() {
                                 suit: selectedCard.suit || null,
                                 // DO NOT include: image, position, or any DOM/p5.js references
                             };
-                            
-                            // ✅ CRITICAL FIX: Add additional validation before sending
-                            if (!selectedCard || !selectedCard.name) {
-                                console.error(`❌ Bot ${bot.name} selected invalid card:`, selectedCard);
-                                bot.hasPlayedThisTurn = false; // Reset flag
-                                return;
-                            }
                             
                             console.log(`🤖 Bot ${bot.name} sending playCard with:`, {
                                 roomCode: window.roomId,
@@ -403,10 +408,15 @@ function setupSocketListeners() {
                                 // This tells the server to move to the next player
                                 setTimeout(() => {
                                     try {
-                                        socket.emit('botTurnComplete', {
-                                            roomCode: window.roomId
-                                        });
-                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                                        // ✅ CRITICAL FIX: Double-check bot hasn't already completed turn
+                                        if (bot.hasPlayedThisTurn) {
+                                            socket.emit('botTurnComplete', {
+                                                roomCode: window.roomId
+                                            });
+                                            console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                                        } else {
+                                            console.log(`🤖 Bot ${bot.name} turn already completed - skipping`);
+                                        }
                                     } catch (turnCompleteError) {
                                         console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
                                         bot.hasPlayedThisTurn = false; // Reset flag for retry
@@ -479,9 +489,9 @@ function setupSocketListeners() {
             });
         }
         
-        // ✅ Clear played cards for new round
-        window.playedCards = [];
-        console.log('🔄 New round - cleared played cards');
+        // ✅ CRITICAL FIX: Don't clear played cards immediately on roundComplete
+        // Keep them visible until the next round actually starts with new cards
+        console.log('🔄 Round complete - keeping played cards visible for now');
         
         // ✅ Force game redraw to show new round state
         if (typeof redraw === 'function') {

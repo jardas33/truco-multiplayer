@@ -303,7 +303,7 @@ io.on('connection', (socket) => {
                 deck: deck,
                 hands: hands,
                 currentPlayer: 0,
-                playedCards: [],
+                playedCards: [], // ✅ Clear played cards when starting new game
                 scores: { team1: 0, team2: 0 }
             };
             
@@ -474,8 +474,11 @@ io.on('connection', (socket) => {
         // ✅ Check if round is complete
         if (room.game.playedCards.length === 4) {
             console.log(`🏁 Round complete in room ${socket.roomCode}`);
-            // Reset for next round
-            room.game.playedCards = [];
+            
+            // ✅ CRITICAL FIX: Don't reset playedCards immediately
+            // Keep them visible until the next round starts
+            console.log(`🏁 Round complete - keeping ${room.game.playedCards.length} played cards visible`);
+            
             // Move to next player
             room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
             
@@ -484,6 +487,14 @@ io.on('connection', (socket) => {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands
             });
+            
+            // ✅ CRITICAL FIX: Clear played cards after a delay to allow them to be visible
+            setTimeout(() => {
+                if (room.game && room.game.playedCards) {
+                    console.log(`🏁 Clearing played cards after round completion delay`);
+                    room.game.playedCards = [];
+                }
+            }, 3000); // 3 second delay to show the round results
         } else {
             // ✅ CRITICAL FIX: Handle turn progression based on player type
             if (currentPlayer.isBot) {
