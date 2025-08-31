@@ -614,6 +614,13 @@ function setupSocketListeners() {
         window.playedCards = [];
         console.log('🎮 Game complete - cleared played cards immediately');
         
+        // ✅ CRITICAL FIX: Reset round scores to 0 for new game
+        if (window.game && window.game.scores) {
+            window.game.scores.team1 = 0;
+            window.game.scores.team2 = 0;
+            console.log('🎮 Game complete - reset round scores to 0:', window.game.scores);
+        }
+        
         // ✅ Force game redraw to show game completion state
         if (typeof redraw === 'function') {
             redraw();
@@ -671,6 +678,13 @@ function setupSocketListeners() {
             console.log('🔄 New game - received scores from server:', data.scores);
             updateGameScores(data.scores);
             console.log('🔄 New game - scores updated, window.game.scores now:', window.game.scores);
+        } else {
+            // ✅ CRITICAL FIX: If no scores received, force reset to 0
+            if (window.game && window.game.scores) {
+                window.game.scores.team1 = 0;
+                window.game.scores.team2 = 0;
+                console.log('🔄 New game - forced reset of round scores to 0:', window.game.scores);
+            }
         }
         
         // Update games score
@@ -944,6 +958,10 @@ function updateGameScores(scores, isGamesScore = false) {
         console.log(`🎮 Games score updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
     } else {
         // ✅ CRITICAL FIX: Store round scores in window.game.scores for scoring display
+        if (window.game && !window.game.scores) {
+            window.game.scores = { team1: 0, team2: 0 };
+            console.log(`🔍 Created new window.game.scores:`, window.game.scores);
+        }
         if (window.game && window.game.scores) {
             window.game.scores.team1 = scores.team1;
             window.game.scores.team2 = scores.team2;
