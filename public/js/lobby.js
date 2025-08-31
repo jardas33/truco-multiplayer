@@ -559,17 +559,36 @@ function startGameWithCurrentPlayers() {
 
 function updateLobbyUI(inRoom) {
     console.log('Updating lobby UI, inRoom:', inRoom);
+    
+    // Room creation/joining controls - only show in main menu
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const startSinglePlayerBtn = document.getElementById('startSinglePlayerBtn');
+    
+    // Room management controls - only show when in a room
     const addBotBtn = document.getElementById('addBotBtn');
     const removeBotBtn = document.getElementById('removeBotBtn');
     const startGameBtn = document.getElementById('startGameBtn');
     const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
     
     if (inRoom) {
+        // Hide room creation/joining options
+        if (createRoomBtn) createRoomBtn.style.display = 'none';
+        if (joinRoomBtn) joinRoomBtn.style.display = 'none';
+        if (startSinglePlayerBtn) startSinglePlayerBtn.style.display = 'none';
+        
+        // Show room management options
         if (addBotBtn) addBotBtn.style.display = 'inline-block';
         if (removeBotBtn) removeBotBtn.style.display = 'inline-block';
         if (startGameBtn) startGameBtn.style.display = 'inline-block';
         if (backToMainMenuBtn) backToMainMenuBtn.style.display = 'inline-block';
     } else {
+        // Show room creation/joining options
+        if (createRoomBtn) createRoomBtn.style.display = 'inline-block';
+        if (joinRoomBtn) joinRoomBtn.style.display = 'inline-block';
+        if (startSinglePlayerBtn) startSinglePlayerBtn.style.display = 'inline-block';
+        
+        // Hide room management options
         if (addBotBtn) addBotBtn.style.display = 'none';
         if (removeBotBtn) removeBotBtn.style.display = 'none';
         if (startGameBtn) startGameBtn.style.display = 'none';

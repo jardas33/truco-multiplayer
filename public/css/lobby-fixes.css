@@ -205,6 +205,22 @@ button:hover {
 }
 
 /* ✅ New button styles */
+#addBotBtn {
+    background-color: #4CAF50 !important; /* Green for add */
+}
+
+#addBotBtn:hover {
+    background-color: #45a049 !important;
+}
+
+#startGameBtn {
+    background-color: #FF9800 !important; /* Orange for start */
+}
+
+#startGameBtn:hover {
+    background-color: #F57C00 !important;
+}
+
 #removeBotBtn {
     background-color: #f44336 !important; /* Red for remove */
 }
