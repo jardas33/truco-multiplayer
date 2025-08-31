@@ -390,60 +390,13 @@ function setupSocketHandlers() {
     updatePlayerList(data.players);
   });
 
-  socket.on('gameStart', function(players) {
-    console.log('Game starting with players:', players);
-    gameState = gameStateEnum.Playing;
-    
-    // ✅ Store players globally for multiplayer
-    window.players = players;
-    
-    // Initialize multiplayer game
-    if (window.game && window.game.startGame) {
-      window.game.startGame();
-    }
-    
-    // Hide menu and show game
-    if (menuDiv) menuDiv.style('display', 'none');
-    if (gameDiv) gameDiv.style('display', 'block');
-  });
-
-  socket.on('cardPlayed', function(data) {
-    console.log('Card played:', data);
-    if (data.playerId !== socket.id && window.game) {
-      // ✅ Handle multiplayer card playing
-      let playerIndex = data.playerId;
-      let cardIndex = data.cardIndex || 0;
-      
-      if (window.game.players[playerIndex]) {
-        window.game.playCard(window.game.players[playerIndex], cardIndex);
-      }
-    }
-  });
-
-  socket.on('trucoCalled', function(data) {
-    console.log('Truco called:', data);
-    if (window.game && data.caller !== window.game.currentPlayerIndex) {
-      truco();
-    }
-  });
-
-  socket.on('playerLeft', function(data) {
-    console.log('Player left:', data);
-    // Update player list
-    updatePlayerList(data.players);
-  });
-
-  // ✅ Add error handling
-  socket.on('error', function(message) {
-    console.error('Server error:', message);
-    alert('Server error: ' + message);
-  });
-
-  // ✅ Add room full notification
-  socket.on('roomFull', function() {
-    console.log('Room is full');
-    alert('Room is full!');
-  });
+  // ❌ REMOVED: Duplicate gameStart handler that conflicts with lobby.js
+  // This was causing the room ID to be undefined and multiplayer to fail
+  
+  // ❌ REMOVED: All duplicate event handlers that conflict with lobby.js
+  // These were causing conflicts and preventing proper multiplayer functionality
+  
+  // The correct event handlers are now only in lobby.js
 }
 
 function updatePlayerList(playerData) {

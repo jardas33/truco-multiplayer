@@ -84,16 +84,18 @@ function setupSocketListeners() {
     });
 
     socket.on('roomCreated', (id) => {
-        console.log('Room created:', id);
+        console.log('✅ Room created:', id);
         window.roomId = id;
+        console.log('✅ Room ID set to window.roomId:', window.roomId);
         document.getElementById('roomInput').value = id;
         updateLobbyUI(true);
         showPlayerCustomization(); // ✅ Show customization panel when creating room
     });
 
     socket.on('roomJoined', (id) => {
-        console.log('Joined room:', id);
+        console.log('✅ Joined room:', id);
         window.roomId = id;
+        console.log('✅ Room ID set to window.roomId:', window.roomId);
         updateLobbyUI(true);
         showPlayerCustomization(); // ✅ Show customization panel when joining room
     });
@@ -745,6 +747,15 @@ function startMultiplayerGame(data) {
     console.log('🎮 Starting multiplayer game with server data:', data);
     
     try {
+        // ✅ CRITICAL: Ensure room ID is preserved
+        if (!window.roomId) {
+            console.error('❌ CRITICAL ERROR: Room ID is undefined when starting multiplayer game!');
+            console.error('❌ This will prevent all server communication from working!');
+            throw new Error('Room ID is undefined - cannot start multiplayer game');
+        }
+        
+        console.log('✅ Room ID confirmed:', window.roomId);
+        
         // Set game state to Playing
         window.gameState = gameStateEnum.Playing;
         gameState = gameStateEnum.Playing;

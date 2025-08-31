@@ -300,10 +300,20 @@ function createDeck() {
       if (window.isMultiplayerMode && socket && window.roomId) { // Use global isMultiplayerMode
         try {
           console.log('🔄 Emitting multiplayer card play to server - waiting for confirmation');
+          
+          // ✅ CRITICAL FIX: Create a clean, serializable card object to prevent circular references
+          const cleanCard = {
+            name: removedCard.name,
+            value: removedCard.value,
+            suit: removedCard.suit || null,
+            // DO NOT include: image, position, or any DOM/p5.js references
+          };
+          
           socket.emit('playCard', {
             roomCode: window.roomId,
             cardIndex: cardIndex,
-            card: removedCard
+            card: cleanCard,
+            playerIndex: this.currentPlayerIndex
           });
           console.log('✅ Card play event emitted to server - local state will be updated via server broadcast');
           
