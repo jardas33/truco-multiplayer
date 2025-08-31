@@ -207,6 +207,12 @@ function createDeck() {
       }
   
     nextPlayer() {
+      // ✅ CRITICAL FIX: Prevent nextPlayer from running in multiplayer mode
+      if (isMultiplayerMode) {
+        console.log(`🌐 Multiplayer mode - nextPlayer blocked, waiting for server turn change`);
+        return;
+      }
+      
       if (this.trucoState === true) {
         console.log(`⏸️ Game paused during truco decision`);
         return; // Game is paused during truco decision
@@ -300,8 +306,9 @@ function createDeck() {
           });
           console.log('✅ Card play event emitted to server - local state will be updated via server broadcast');
           
-          // ✅ DON'T update local state here - wait for server confirmation
+          // ✅ CRITICAL: In multiplayer mode, NEVER update local state here
           // The server will broadcast the card played event to all clients
+          // This prevents desynchronization between players
           return removedCard;
         } catch (error) {
           console.error('❌ Failed to emit card play event:', error);
@@ -310,21 +317,32 @@ function createDeck() {
         }
       }
       
-      // ✅ Only update local state if NOT in multiplayer mode or if server communication failed
-      console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
+      // ✅ ONLY update local state if NOT in multiplayer mode or if server communication failed
+      if (!isMultiplayerMode) {
+        console.log(`📊 Single player mode - updating local state`);
+        console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
 
-      if (playedCards.length === this.players.length) {
-        console.log(`🏁 Round complete, ending round...`);
-        this.endRound();
+        if (playedCards.length === this.players.length) {
+          console.log(`🏁 Round complete, ending round...`);
+          this.endRound();
+        } else {
+          console.log(`⏭️ Moving to next player...`);
+          this.nextPlayer();
+        }
       } else {
-        console.log(`⏭️ Moving to next player...`);
-        this.nextPlayer();
+        console.log(`🌐 Multiplayer mode - local state update blocked, waiting for server`);
       }
 
       return removedCard;
     }
   
     endRound() {
+      // ✅ CRITICAL FIX: Prevent endRound from running in multiplayer mode
+      if (isMultiplayerMode) {
+        console.log(`🌐 Multiplayer mode - endRound blocked, waiting for server round completion`);
+        return;
+      }
+      
       console.log(`🏁 endRound called with ${playedCards.length} played cards`);
       
       // Find the winning card and check for draws
