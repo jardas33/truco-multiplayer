@@ -257,8 +257,12 @@ function setupSocketListeners() {
         }
         
         // ✅ Force game redraw to show synchronized state
-        if (typeof redraw === 'function') {
+        if (typeof redrawGame === 'function') {
+            redrawGame();
+        } else if (typeof redraw === 'function') {
             redraw();
+        } else {
+            console.warn('⚠️ No redraw function available for card played event');
         }
         
         console.log('✅ Card played event synchronized successfully');
@@ -1162,9 +1166,14 @@ function startMultiplayerGame(data) {
         }
         
         // Force a redraw to trigger the UI transition
-        if (typeof redraw === 'function') {
+        if (typeof redrawGame === 'function') {
+            redrawGame();
+            console.log('✅ Forced p5.js redraw to trigger UI transition');
+        } else if (typeof redraw === 'function') {
             redraw();
             console.log('✅ Forced p5.js redraw to trigger UI transition');
+        } else {
+            console.warn('⚠️ No redraw function available');
         }
         
         console.log('🎉 Multiplayer game started successfully');

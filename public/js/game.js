@@ -183,7 +183,13 @@ function createDeck() {
         }
         
         this.players[this.currentPlayerIndex].isActive = true;
-        playedCards = [];
+        
+        // ✅ CRITICAL FIX: Use window.playedCards for multiplayer consistency
+        if (window.isMultiplayerMode) {
+            if (!window.playedCards) window.playedCards = [];
+        } else {
+            if (!playedCards) playedCards = [];
+        }
         
         // Make cards clickable for current player
         this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
@@ -333,7 +339,9 @@ function createDeck() {
         console.log(`📊 Single player mode - updating local state`);
         console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
 
-        if (playedCards.length === this.players.length) {
+        // ✅ CRITICAL FIX: Use correct playedCards reference for multiplayer
+        const currentPlayedCards = window.isMultiplayerMode ? window.playedCards : playedCards;
+        if (currentPlayedCards.length === this.players.length) {
           console.log(`🏁 Round complete, ending round...`);
           this.endRound();
         } else {
@@ -354,23 +362,26 @@ function createDeck() {
         return;
       }
       
-      console.log(`🏁 endRound called with ${playedCards.length} played cards`);
+      // ✅ CRITICAL FIX: Use correct playedCards reference for multiplayer
+      const currentPlayedCards = window.isMultiplayerMode ? window.playedCards : playedCards;
+      
+      console.log(`🏁 endRound called with ${currentPlayedCards.length} played cards`);
       
       // Find the winning card and check for draws
-      let winningCard = playedCards[0];
+      let winningCard = currentPlayedCards[0];
       let isDraw = false;
-      let drawCards = [playedCards[0]];
+      let drawCards = [currentPlayedCards[0]];
       
-      for (let i = 1; i < playedCards.length; i++) {
-        if (playedCards[i].card.value < winningCard.card.value) {
+      for (let i = 1; i < currentPlayedCards.length; i++) {
+        if (currentPlayedCards[i].card.value < winningCard.card.value) {
           // New winner found
-          winningCard = playedCards[i];
+          winningCard = currentPlayedCards[i];
           isDraw = false;
-          drawCards = [playedCards[i]];
-        } else if (playedCards[i].card.value === winningCard.card.value) {
+          drawCards = [currentPlayedCards[i]];
+        } else if (currentPlayedCards[i].card.value === winningCard.card.value) {
           // Draw detected
           isDraw = true;
-          drawCards.push(playedCards[i]);
+          drawCards.push(currentPlayedCards[i]);
         }
       }
       
@@ -427,7 +438,7 @@ function createDeck() {
       // Store round result
       this.roundResults.push({
         winner: roundWinner,
-        cards: playedCards.map(pc => pc.card),
+        cards: currentPlayedCards.map(pc => pc.card),
         isDraw: isDraw
       });
   
@@ -468,7 +479,12 @@ function createDeck() {
       } else {
         // Prepare for next round
         setTimeout(() => {
-          playedCards = [];
+                    // ✅ CRITICAL FIX: Use correct playedCards reference for multiplayer
+          if (window.isMultiplayerMode) {
+            window.playedCards = [];
+          } else {
+            playedCards = [];
+          }
           
           // Determine who starts next round
           if (roundWinner) {
@@ -871,7 +887,12 @@ function createDeck() {
        this.round = 0;
        this.currentTrucoValue = 1;
        this.trucoCallerTeam = null;
-       playedCards = [];
+       // ✅ CRITICAL FIX: Use correct playedCards reference for multiplayer
+       if (window.isMultiplayerMode) {
+         window.playedCards = [];
+       } else {
+         playedCards = [];
+       }
       
       // Reset player states
       this.players.forEach(player => {
@@ -913,7 +934,9 @@ function createDeck() {
           position: { x: cardPosX, y: cardPosY }
         });
 
-        if (playedCards.length === this.players.length) {
+        // ✅ CRITICAL FIX: Use correct playedCards reference for multiplayer
+        const currentPlayedCards = window.isMultiplayerMode ? window.playedCards : playedCards;
+        if (currentPlayedCards.length === this.players.length) {
           this.endRound();
         } else {
           this.nextPlayer();
