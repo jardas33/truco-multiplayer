@@ -216,6 +216,12 @@ function backToMainMenu() {
   if (valuesDiv) valuesDiv.removeClass('active');
   if (gameDiv) gameDiv.removeClass('active');
   
+  // ✅ CRITICAL FIX: Hide round history button when returning to menu
+  if (typeof hideRoundHistoryButton === 'function') {
+    hideRoundHistoryButton();
+    console.log('📋 Round history button hidden');
+  }
+  
   // If in online mode, leave the room
   if (socket && window.roomId) {
     console.log('Leaving room:', window.roomId);

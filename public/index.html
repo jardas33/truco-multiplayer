@@ -68,7 +68,25 @@
       </div>
       <div id="Instructions"></div>
       <div id="Values"></div>
-      <div id="Game"></div>
+      <div id="Game">
+        <!-- ✅ Round History Button -->
+        <button id="roundHistoryBtn" style="display: none; position: absolute; top: 200px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+          📋 Round History
+        </button>
+        
+        <!-- ✅ Round History Modal -->
+        <div id="roundHistoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="margin: 0; color: #FFD700;">🏆 Round History</h2>
+              <button id="closeRoundHistoryBtn" style="position: absolute; top: 10px; right: 15px; background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px;">✕</button>
+            </div>
+            <div id="roundHistoryContent" style="text-align: left;">
+              <!-- Round history content will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
     <script src="js/variables.js"></script>
     <script src="js/players.js"></script>

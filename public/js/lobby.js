@@ -484,6 +484,19 @@ function setupSocketListeners() {
             // Create and display round winner message
             showRoundWinnerMessage(winnerName, winnerCard, winnerTeam);
             console.log(`🏆 Round winner: ${winnerName} (${winnerTeam}) with ${winnerCard}`);
+            
+            // ✅ CRITICAL FIX: Add round to history
+            if (window.playedCards && window.playedCards.length === 4) {
+                const roundData = {
+                    winner: data.roundWinner,
+                    cards: window.playedCards.map(pc => ({
+                        player: { name: pc.player.name },
+                        card: { name: pc.card.name }
+                    }))
+                };
+                addRoundToHistory(roundData);
+                console.log(`📋 Round added to history with ${roundData.cards.length} cards`);
+            }
         }
         
         // ✅ CRITICAL FIX: Display updated scores
@@ -657,6 +670,93 @@ function updateGameScores(scores) {
     console.log(`📊 Scores updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
 }
 
+// ✅ CRITICAL FIX: Round History functionality
+let roundHistory = []; // Store round history data
+
+// Function to add round to history
+function addRoundToHistory(roundData) {
+    roundHistory.push(roundData);
+    console.log(`📋 Round added to history:`, roundData);
+}
+
+// Function to show round history modal
+function showRoundHistory() {
+    const modal = document.getElementById('roundHistoryModal');
+    const content = document.getElementById('roundHistoryContent');
+    
+    if (!modal || !content) {
+        console.error('❌ Round history modal elements not found');
+        return;
+    }
+    
+    // Generate round history content
+    let historyHTML = '';
+    
+    if (roundHistory.length === 0) {
+        historyHTML = '<p style="text-align: center; color: #bdc3c7; font-style: italic;">No rounds completed yet.</p>';
+    } else {
+        roundHistory.forEach((round, index) => {
+            const roundNumber = index + 1;
+            const winnerName = round.winner.name;
+            const winnerCard = round.winner.card;
+            const winnerTeam = round.winner.team === 'team1' ? 'Team Alfa' : 'Team Beta';
+            
+            historyHTML += `
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; border-left: 4px solid #FFD700;">
+                    <h3 style="margin: 0 0 10px 0; color: #FFD700;">Round ${roundNumber}</h3>
+                    <div style="margin-bottom: 8px;">
+                        <strong>Winner:</strong> ${winnerName} (${winnerTeam})
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <strong>Winning Card:</strong> ${winnerCard}
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <strong>Cards Played:</strong>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-left: 20px;">
+                        ${round.cards.map(card => `
+                            <div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: 14px;">
+                                <strong>${card.player.name}:</strong> ${card.card.name}
+                        </div>
+                    `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    content.innerHTML = historyHTML;
+    modal.style.display = 'block';
+    console.log(`📋 Round history modal displayed with ${roundHistory.length} rounds`);
+}
+
+// Function to hide round history modal
+function hideRoundHistory() {
+    const modal = document.getElementById('roundHistoryModal');
+    if (modal) {
+        modal.style.display = 'none';
+        console.log('📋 Round history modal hidden');
+    }
+}
+
+// Function to show round history button
+function showRoundHistoryButton() {
+    const button = document.getElementById('roundHistoryBtn');
+    if (button) {
+        button.style.display = 'block';
+        console.log('📋 Round history button shown');
+    }
+}
+
+// Function to hide round history button
+function hideRoundHistoryButton() {
+    const button = document.getElementById('roundHistoryBtn');
+    if (button) {
+        button.style.display = 'none';
+        console.log('📋 Round history button hidden');
+    }
+}
+
 function setupButtonListeners() {
     console.log('Setting up button listeners...');
     
@@ -702,6 +802,24 @@ function setupButtonListeners() {
         startGameBtn.onclick = () => {
             console.log('Start Game clicked');
             startGameWithCurrentPlayers();
+        };
+    }
+    
+    // ✅ Round History button
+    const roundHistoryBtn = document.getElementById('roundHistoryBtn');
+    if (roundHistoryBtn) {
+        roundHistoryBtn.onclick = () => {
+            console.log('📋 Round History button clicked');
+            showRoundHistory();
+        };
+    }
+    
+    // ✅ Close Round History button
+    const closeRoundHistoryBtn = document.getElementById('closeRoundHistoryBtn');
+    if (closeRoundHistoryBtn) {
+        closeRoundHistoryBtn.onclick = () => {
+            console.log('📋 Close Round History button clicked');
+            hideRoundHistory();
         };
     }
     
@@ -1332,6 +1450,10 @@ function startMultiplayerGame(data) {
         } else {
             console.error('❌ No gameCanvas found!');
         }
+        
+        // ✅ CRITICAL FIX: Show round history button
+        showRoundHistoryButton();
+        console.log('✅ Round history button shown');
         
         // Show back button if available
         if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
