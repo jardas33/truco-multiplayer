@@ -297,6 +297,7 @@ io.on('connection', (socket) => {
     // Handle game events
     socket.on('playCard', (data) => {
         console.log(`🃏 Card played in room: ${socket.roomCode}`);
+        console.log(`🃏 Play data:`, data);
         
         if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
@@ -327,6 +328,8 @@ io.on('connection', (socket) => {
 
         // ✅ Validate it's the player's turn
         const playerIndex = room.players.indexOf(player);
+        console.log(`🃏 Turn validation: Current player: ${room.game.currentPlayer}, Player index: ${playerIndex}, Player: ${player.name}`);
+        
         if (room.game.currentPlayer !== playerIndex) {
             console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Player: ${playerIndex}`);
             socket.emit('error', 'Not your turn');
