@@ -214,31 +214,29 @@ function setupSocketListeners() {
         console.log('🃏 DEBUG: Server sent playedCards:', data.playedCards);
         if (data.playedCards) {
             window.playedCards = data.playedCards.map(pc => {
-                const player = window.game.players[pc.playerIndex];
-                if (!player) {
-                    console.warn(`⚠️ Player not found for index ${pc.playerIndex}`);
+                // ✅ CRITICAL FIX: Use the player data from the server response
+                // The server sends clean player info, so we don't need to look it up
+                const playerInfo = pc.player;
+                if (!playerInfo) {
+                    console.warn(`⚠️ No player info in playedCard:`, pc);
                     return null;
                 }
                 
-                // ✅ Calculate proper card position based on player position
-                const playerPos = playerPositions[pc.playerIndex];
-                if (playerPos) {
-                    const cardPosX = lerp(playerPos.x, width/2, 0.5);
-                    const cardPosY = lerp(playerPos.y, height/2, 0.5);
-                    
-                    return {
-                        card: pc.card,
-                        player: player,
-                        position: { x: cardPosX, y: cardPosY }
-                    };
-                } else {
-                    // Fallback to center
-                    return {
-                        card: pc.card,
-                        player: player,
-                        position: { x: width/2, y: height/2 }
-                    };
-                }
+                // ✅ Create a simple card object that can be rendered
+                return {
+                    card: {
+                        name: pc.card.name,
+                        value: pc.card.value,
+                        suit: pc.card.suit,
+                        // ✅ CRITICAL FIX: Get card image for rendering
+                        image: getCardImageWithFallback(pc.card.name)
+                    },
+                    player: {
+                        name: playerInfo.name,
+                        isBot: playerInfo.isBot
+                    },
+                    playerIndex: pc.playerIndex
+                };
             }).filter(Boolean); // Remove null entries
             
             // ✅ CRITICAL FIX: Synchronize local playedCards variable
@@ -248,6 +246,7 @@ function setupSocketListeners() {
             }
             
             console.log('🔄 Updated played cards:', window.playedCards.length);
+            console.log('🔄 Played cards structure:', window.playedCards);
         }
         
         // ✅ Force game redraw to show synchronized state

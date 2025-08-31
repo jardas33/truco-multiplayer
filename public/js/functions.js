@@ -619,11 +619,13 @@ function drawGameState() {
     });
     
     // Draw played cards in the center - PROPER CARD IMAGES with fallbacks
-    // ✅ REDUCED LOGGING: Only log when count changes, not every frame
+    // ✅ DEBUGGING: Log played cards structure to diagnose rendering issues
     if (window.playedCards && window.playedCards.length > 0) {
+        console.log('🎨 Rendering played cards:', window.playedCards.length, 'cards');
         window.playedCards.forEach((playedCard, index) => {
             // CRITICAL FIX: Add null check to prevent ReferenceError
             if (!playedCard || !playedCard.card) {
+                console.warn('⚠️ Invalid playedCard at index', index, ':', playedCard);
                 return; // Skip this iteration
             }
             
