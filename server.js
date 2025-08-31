@@ -91,6 +91,10 @@ io.on('connection', (socket) => {
 
         console.log(`✅ User ${socket.id} joined room ${roomCode}. Total players: ${room.players.length}`);
 
+        // ✅ CRITICAL FIX: Emit roomJoined event to the joining player
+        socket.emit('roomJoined', roomCode);
+
+        // ✅ Emit playerJoined event to all players in the room
         io.to(roomCode).emit('playerJoined', {
             players: room.players,
             count: room.players.length

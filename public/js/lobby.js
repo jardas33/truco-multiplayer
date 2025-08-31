@@ -96,6 +96,15 @@ function setupSocketListeners() {
         console.log('✅ Joined room:', id);
         window.roomId = id;
         console.log('✅ Room ID set to window.roomId:', window.roomId);
+        
+        // ✅ ADDITIONAL DEBUGGING: Verify room ID is properly set
+        setTimeout(() => {
+            console.log('🔍 Room ID verification after 1 second:', window.roomId);
+            if (!window.roomId) {
+                console.error('❌ CRITICAL: Room ID was lost after setting!');
+            }
+        }, 1000);
+        
         updateLobbyUI(true);
         showPlayerCustomization(); // ✅ Show customization panel when joining room
     });
@@ -778,12 +787,17 @@ function getCardImageWithFallback(cardName) {
 // ✅ Add multiplayer game initialization function
 function startMultiplayerGame(data) {
     console.log('🎮 Starting multiplayer game with server data:', data);
+    console.log('🔍 DEBUG: Current room ID state:', window.roomId);
+    console.log('🔍 DEBUG: Socket state:', socket ? 'Connected' : 'Not connected');
+    console.log('🔍 DEBUG: Socket room code:', socket ? socket.roomCode : 'No socket');
     
     try {
         // ✅ CRITICAL: Ensure room ID is preserved
         if (!window.roomId) {
             console.error('❌ CRITICAL ERROR: Room ID is undefined when starting multiplayer game!');
             console.error('❌ This will prevent all server communication from working!');
+            console.error('❌ Socket room code:', socket ? socket.roomCode : 'No socket');
+            console.error('❌ Data received:', data);
             throw new Error('Room ID is undefined - cannot start multiplayer game');
         }
         
