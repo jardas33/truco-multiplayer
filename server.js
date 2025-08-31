@@ -260,33 +260,31 @@ io.on('connection', (socket) => {
                 return;
             }
 
-        // ✅ Auto-assign teams to players who haven't chosen yet
-        let team1Count = 0;
-        let team2Count = 0;
-        
-        room.players.forEach(player => {
-            if (player.team === null) {
-                // Auto-assign team based on current distribution
-                if (team1Count < 2) {
-                    player.team = 'team1';
-                    team1Count++;
-                } else if (team2Count < 2) {
-                    player.team = 'team2';
-                    team2Count++;
+            // ✅ Auto-assign teams to players who haven't chosen yet
+            let team1Count = 0;
+            let team2Count = 0;
+            
+            room.players.forEach(player => {
+                if (player.team === null) {
+                    // Auto-assign team based on current distribution
+                    if (team1Count < 2) {
+                        player.team = 'team1';
+                        team1Count++;
+                    } else if (team2Count < 2) {
+                        player.team = 'team2';
+                        team2Count++;
+                    }
+                } else {
+                    // Count existing team assignments
+                    if (player.team === 'team1') team1Count++;
+                    else if (player.team === 'team2') team2Count++;
                 }
-            } else {
-                // Count existing team assignments
-                if (player.team === 'team1') team1Count++;
-                else if (player.team === 'team2') team2Count++;
-            }
-        });
+            });
 
-        console.log(`✅ Team distribution: Team 1 (${team1Count}), Team 2 (${team2Count})`);
+            console.log(`✅ Team distribution: Team 1 (${team1Count}), Team 2 (${team2Count})`);
+            console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
-        console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
-
-        // ✅ Create shared deck and distribute cards to all players
-        try {
+            // ✅ Create shared deck and distribute cards to all players
             console.log(`🔍 Creating deck...`);
             const deck = createDeck();
             console.log(`🔍 Deck created successfully with ${deck.length} cards`);
@@ -310,24 +308,19 @@ io.on('connection', (socket) => {
             };
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
-        } catch (error) {
-            console.error(`❌ Failed to initialize game for room ${roomCode}:`, error);
-            socket.emit('error', 'Failed to start game. Please try again.');
-            return;
-        }
 
-        // ✅ Emit gameStart event with hands to all players in the room
-        console.log(`🔍 Emitting gameStart event to room: ${roomCode}`);
-        console.log(`🔍 Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
-        
-        io.to(roomCode).emit('gameStart', {
-            players: room.players,
-            hands: hands,
-            currentPlayer: 0
-        });
-        
-        console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
-        console.log(`🔍 gameStart event emitted to ${room.players.length} players`);
+            // ✅ Emit gameStart event with hands to all players in the room
+            console.log(`🔍 Emitting gameStart event to room: ${roomCode}`);
+            console.log(`🔍 Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
+            
+            io.to(roomCode).emit('gameStart', {
+                players: room.players,
+                hands: hands,
+                currentPlayer: 0
+            });
+            
+            console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
+            console.log(`🔍 gameStart event emitted to ${room.players.length} players`);
         } catch (error) {
             console.error(`❌ CRITICAL ERROR in startGame handler:`, error);
             console.error(`❌ Error stack:`, error.stack);
