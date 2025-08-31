@@ -621,14 +621,16 @@ function drawGameState() {
     });
     
     // Draw played cards in the center - PROPER CARD IMAGES with fallbacks
-    if (playedCards && playedCards.length > 0) {
-        playedCards.forEach((playedCard, index) => {
+    console.log('🎨 DEBUG: Rendering played cards. Count:', window.playedCards ? window.playedCards.length : 'undefined');
+    if (window.playedCards && window.playedCards.length > 0) {
+        console.log('🎨 DEBUG: Played cards data:', window.playedCards);
+        window.playedCards.forEach((playedCard, index) => {
             // CRITICAL FIX: Add null check to prevent ReferenceError
             if (!playedCard || !playedCard.card) {
                 return; // Skip this iteration
             }
             
-            const centerX = width / 2 - (playedCards.length * cardWidth) / 2 + index * cardWidth;
+            const centerX = width / 2 - (window.playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
             
             // Draw played card as proper card image if available, otherwise fallback

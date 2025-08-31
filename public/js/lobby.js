@@ -240,6 +240,12 @@ function setupSocketListeners() {
                 }
             }).filter(Boolean); // Remove null entries
             
+            // ✅ CRITICAL FIX: Synchronize local playedCards variable
+            if (typeof playedCards !== 'undefined') {
+                playedCards = [...window.playedCards];
+                console.log('🔄 Synchronized local playedCards variable:', playedCards.length);
+            }
+            
             console.log('🔄 Updated played cards:', window.playedCards.length);
         }
         
@@ -297,9 +303,29 @@ function setupSocketListeners() {
             } else {
                 // Bot player - trigger bot play
                 console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
+                
+                // ✅ CRITICAL FIX: Synchronize local playedCards variable
+                if (typeof playedCards !== 'undefined' && window.playedCards) {
+                    playedCards = [...window.playedCards];
+                    console.log('🔄 Synchronized local playedCards variable in turnChanged:', playedCards.length);
+                }
+                
                 setTimeout(() => {
-                    if (currentPlayer.botPlay) {
-                        currentPlayer.botPlay();
+                    if (window.game && window.game.players[data.currentPlayer]) {
+                        const bot = window.game.players[data.currentPlayer];
+                        if (bot.isBot && bot.hand && bot.hand.length > 0) {
+                            // Bot plays a random card
+                            const randomCardIndex = Math.floor(Math.random() * bot.hand.length);
+                            console.log(`🤖 Bot ${bot.name} playing card at index ${randomCardIndex}`);
+                            
+                            // Emit bot card play to server
+                            socket.emit('playCard', {
+                                roomCode: window.roomId,
+                                cardIndex: randomCardIndex,
+                                card: bot.hand[randomCardIndex],
+                                playerIndex: data.currentPlayer
+                            });
+                        }
                     }
                 }, 1000);
             }
@@ -349,6 +375,11 @@ function setupSocketListeners() {
         
         // ✅ Clear played cards for new round
         window.playedCards = [];
+        // ✅ CRITICAL FIX: Also clear local playedCards variable
+        if (typeof playedCards !== 'undefined') {
+            playedCards = [];
+            console.log('🔄 New round - cleared local playedCards variable');
+        }
         console.log('🔄 New round - cleared played cards');
         
         // ✅ Force game redraw to show new round state
