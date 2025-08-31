@@ -287,8 +287,13 @@ io.on('connection', (socket) => {
 
         // ✅ Create shared deck and distribute cards to all players
         try {
+            console.log(`🔍 Creating deck...`);
             const deck = createDeck();
+            console.log(`🔍 Deck created successfully with ${deck.length} cards`);
+            
+            console.log(`🔍 Dealing cards...`);
             const hands = dealCards(deck);
+            console.log(`🔍 Cards dealt successfully, hands:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
             
             // ✅ VALIDATION: Ensure hands are properly created
             if (!hands || hands.length !== 4 || hands.some(hand => !Array.isArray(hand) || hand.length !== 3)) {
@@ -735,47 +740,66 @@ io.on('connection', (socket) => {
 
 // Helper functions
 function createDeck() {
-    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const values = ['ace', '2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king'];
-    const deck = [];
-    
-    // ✅ CRITICAL FIX: Card values mapping for Brazilian Truco
-    const cardValueMap = {
-        'ace': 10,
-        '2': 9,
-        '3': 8,
-        '4': 17,
-        '5': 16,
-        '6': 15,
-        '7': 14,
-        'jack': 13,
-        'queen': 12,
-        'king': 11
-    };
-    
-    for (const suit of suits) {
-        for (const value of values) {
-            // ✅ Create cards with the exact format the client expects
-            const cardName = `${value.charAt(0).toUpperCase() + value.slice(1)} of ${suit}`;
-            deck.push({ 
-                suit: suit, 
-                value: cardValueMap[value] || 20, // ✅ Use proper card power values
-                name: cardName,  // ✅ Use proper capitalized format: "Ace of diamonds"
-                isClickable: false  // ✅ Add isClickable property
-            });
+    try {
+        console.log(`🔍 createDeck function started`);
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const values = ['ace', '2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king'];
+        const deck = [];
+        
+        console.log(`🔍 Suits:`, suits);
+        console.log(`🔍 Values:`, values);
+        
+        // ✅ CRITICAL FIX: Card values mapping for Brazilian Truco
+        const cardValueMap = {
+            'ace': 10,
+            '2': 9,
+            '3': 8,
+            '4': 17,
+            '5': 16,
+            '6': 15,
+            '7': 14,
+            'jack': 13,
+            'queen': 12,
+            'king': 11
+        };
+        
+        console.log(`🔍 Card value map:`, cardValueMap);
+        
+        for (const suit of suits) {
+            for (const value of values) {
+                console.log(`🔍 Processing card: ${value} of ${suit}`);
+                // ✅ Create cards with the exact format the client expects
+                const cardName = `${value.charAt(0).toUpperCase() + value.slice(1)} of ${suit}`;
+                const cardValue = cardValueMap[value] || 20;
+                
+                console.log(`🔍 Card name: ${cardName}, value: ${cardValue}`);
+                
+                deck.push({ 
+                    suit: suit, 
+                    value: cardValue, // ✅ Use proper card power values
+                    name: cardName,  // ✅ Use proper capitalized format: "Ace of diamonds"
+                    isClickable: false  // ✅ Add isClickable property
+                });
+            }
         }
+        
+        console.log(`🔍 Deck created with ${deck.length} cards`);
+        
+        // Shuffle the deck
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        
+        console.log(`🎴 Server created deck with ${deck.length} cards`);
+        console.log(`🎯 Sample cards:`, deck.slice(0, 3).map(c => ({ name: c.name, value: c.value })));
+        
+        return deck;
+    } catch (error) {
+        console.error(`❌ ERROR in createDeck:`, error);
+        console.error(`❌ Error stack:`, error.stack);
+        throw error;
     }
-    
-    // Shuffle the deck
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    
-    console.log(`🎴 Server created deck with ${deck.length} cards`);
-    console.log(`🎯 Sample cards:`, deck.slice(0, 3).map(c => ({ name: c.name, value: c.value })));
-    
-    return deck;
 }
 
 function dealCards(deck) {
