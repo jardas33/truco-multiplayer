@@ -87,6 +87,11 @@ function setupSocketListeners() {
         console.log('✅ Room created:', id);
         window.roomId = id;
         console.log('✅ Room ID set to window.roomId:', window.roomId);
+        
+        // ✅ CRITICAL FIX: Mark this client as room creator
+        window.isRoomCreator = true;
+        console.log('✅ This client marked as room creator - will handle bot plays');
+        
         // ✅ REMOVED: Don't populate roomInput to avoid duplicate room code display
         updateLobbyUI(true);
         showPlayerCustomization(); // ✅ Show customization panel when creating room
@@ -96,6 +101,10 @@ function setupSocketListeners() {
         console.log('✅ Joined room:', id);
         window.roomId = id;
         console.log('✅ Room ID set to window.roomId:', window.roomId);
+        
+        // ✅ CRITICAL FIX: Mark this client as NOT room creator (joined room)
+        window.isRoomCreator = false;
+        console.log('✅ This client marked as room joiner - will NOT handle bot plays');
         
         // ✅ ADDITIONAL DEBUGGING: Verify room ID is properly set
         setTimeout(() => {
@@ -349,13 +358,15 @@ function setupSocketListeners() {
                     setTimeout(() => {
                                         // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
                 // Only allow bots to play when it's actually their turn
+                // AND only the room creator should handle bot plays to prevent duplicate plays
                 if (window.game && 
                     window.game.players[data.currentPlayer] &&
                     window.game.players[data.currentPlayer].isBot &&
                     window.game.players[data.currentPlayer].hand && 
                     window.game.players[data.currentPlayer].hand.length > 0 &&
                     !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                    data.currentPlayer === window.game.currentPlayerIndex) { // ✅ CRITICAL: Must be current player
+                    data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
+                    window.isRoomCreator) { // ✅ CRITICAL: Only room creator handles bot plays
                     
                     const bot = window.game.players[data.currentPlayer];
                     console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
@@ -438,7 +449,9 @@ function setupSocketListeners() {
                         hasPlayedThisTurn: window.game?.players[data.currentPlayer]?.hasPlayedThisTurn,
                         currentPlayer: window.game?.currentPlayerIndex,
                         turnPlayer: data.currentPlayer,
-                        isCurrentPlayer: data.currentPlayer === window.game?.currentPlayerIndex
+                        isCurrentPlayer: data.currentPlayer === window.game?.currentPlayerIndex,
+                        isRoomCreator: window.isRoomCreator,
+                        willHandleBotPlays: window.isRoomCreator
                     });
                 }
                     }, 1000); // Reduced delay for more responsive bot play
