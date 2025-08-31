@@ -141,6 +141,14 @@ function setupSocketListeners() {
     // ✅ Handle nickname change success
     socket.on('nicknameChanged', (data) => {
         console.log('✅ Nickname changed successfully:', data);
+        
+        // ✅ Reset button state and show success feedback
+        const changeBtn = document.getElementById('changeNicknameBtn');
+        if (changeBtn) {
+            changeBtn.textContent = 'Change';
+            changeBtn.disabled = false;
+        }
+        
         // The playerJoined event will update the player list
     });
 
@@ -666,6 +674,13 @@ function changeNickname() {
     
     console.log(`🔄 Changing nickname to: ${newNickname}`);
     
+    // ✅ Visual feedback: Show loading state
+    const changeBtn = document.getElementById('changeNicknameBtn');
+    if (changeBtn) {
+        changeBtn.textContent = 'Changing...';
+        changeBtn.disabled = true;
+    }
+    
     // Emit nickname change to server
     socket.emit('changeNickname', {
         roomCode: window.roomId,
@@ -683,6 +698,24 @@ function selectTeam(team) {
     }
     
     console.log(`🏆 Selecting team: ${team}`);
+    
+    // ✅ Visual feedback: Update button styles to show selected team
+    const team1Btn = document.getElementById('team1Btn');
+    const team2Btn = document.getElementById('team2Btn');
+    
+    if (team1Btn && team2Btn) {
+        if (team === 'team1') {
+            team1Btn.style.backgroundColor = '#4CAF50'; // Green for selected
+            team1Btn.style.color = 'white';
+            team2Btn.style.backgroundColor = '#9C27B0'; // Purple for unselected
+            team2Btn.style.color = 'white';
+        } else if (team === 'team2') {
+            team1Btn.style.backgroundColor = '#FF9800'; // Orange for unselected
+            team1Btn.style.color = 'white';
+            team2Btn.style.backgroundColor = '#4CAF50'; // Green for selected
+            team2Btn.style.color = 'white';
+        }
+    }
     
     // Emit team selection to server
     socket.emit('selectTeam', {
