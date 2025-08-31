@@ -700,6 +700,12 @@ function updateLobbyUI(inRoom) {
                 roomCodeText.textContent = window.roomId;
             }
         }
+        
+        // ✅ Hide room input to prevent duplicate room code display
+        const roomInput = document.getElementById('roomInput');
+        if (roomInput) {
+            roomInput.classList.add('room-active');
+        }
     } else {
         // Show room creation/joining options
         if (createRoomBtn) createRoomBtn.style.display = 'inline-block';
@@ -1299,6 +1305,7 @@ function leaveRoomAndReturnToMenu() {
     const roomInput = document.getElementById('roomInput');
     if (roomInput) {
         roomInput.value = '';
+        roomInput.classList.remove('room-active'); // ✅ Show room input again
     }
     
     // Clear player list

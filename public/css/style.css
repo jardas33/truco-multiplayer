@@ -73,6 +73,11 @@ button:disabled {
     font-size: 16px;
 }
 
+/* ✅ Hide room input when room is active to prevent duplicate room code display */
+#roomInput.room-active {
+    display: none;
+}
+
 #playerList {
     margin-top: 20px;
     color: white;
