@@ -29,8 +29,12 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`👤 User connected: ${socket.id}`);
     
+    // ✅ DEBUG: Log all incoming events to see if startGame is received
+    console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
+    
     // Handle room creation
     socket.on('createRoom', (roomCode) => {
+        console.log(`🔍 CREATEROOM EVENT RECEIVED! Room: ${roomCode}`);
         // ✅ INPUT VALIDATION: Ensure room code is valid
         if (roomCode && typeof roomCode === 'string') {
             roomCode = roomCode.trim().toUpperCase();
@@ -81,6 +85,7 @@ io.on('connection', (socket) => {
 
     // Handle room joining
     socket.on('joinRoom', (roomCode) => {
+        console.log(`🔍 JOINROOM EVENT RECEIVED! Room: ${roomCode}`);
         const room = rooms.get(roomCode);
         
         console.log(`🚪 User ${socket.id} attempting to join room: ${roomCode}`);
@@ -232,10 +237,11 @@ io.on('connection', (socket) => {
 
     // Handle game start
     socket.on('startGame', (roomCode) => {
-        console.log(`🎮 Starting game in room: ${roomCode}`);
+        console.log(`🎮 STARTGAME EVENT RECEIVED! Room: ${roomCode}`);
         console.log(`🔍 Socket ID: ${socket.id}`);
         console.log(`🔍 Socket room code: ${socket.roomCode}`);
         console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
+        console.log(`🔍 Event handler executing...`);
         
         const room = rooms.get(roomCode);
         if (!room) {
