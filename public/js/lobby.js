@@ -87,7 +87,7 @@ function setupSocketListeners() {
         console.log('✅ Room created:', id);
         window.roomId = id;
         console.log('✅ Room ID set to window.roomId:', window.roomId);
-        document.getElementById('roomInput').value = id;
+        // ✅ REMOVED: Don't populate roomInput to avoid duplicate room code display
         updateLobbyUI(true);
         showPlayerCustomization(); // ✅ Show customization panel when creating room
     });
