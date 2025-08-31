@@ -333,9 +333,9 @@ function setupSocketListeners() {
                     
                     // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
                     setTimeout(() => {
-                        // Double-check that it's still this bot's turn and they have cards
+                        // ✅ CRITICAL FIX: More robust bot turn validation
+                        // Check if the bot still exists and has cards, but don't be too strict about currentPlayer
                         if (window.game && 
-                            window.game.currentPlayerIndex === data.currentPlayer && 
                             window.game.players[data.currentPlayer] &&
                             window.game.players[data.currentPlayer].isBot &&
                             window.game.players[data.currentPlayer].hand && 
@@ -379,8 +379,16 @@ function setupSocketListeners() {
                             }, 500); // Small delay to ensure card play is processed first
                         } else {
                             console.log(`🤖 Bot turn validation failed - skipping bot play`);
+                            console.log(`🤖 Validation details:`, {
+                                hasGame: !!window.game,
+                                hasPlayer: !!window.game?.players[data.currentPlayer],
+                                isBot: window.game?.players[data.currentPlayer]?.isBot,
+                                hasHand: !!window.game?.players[data.currentPlayer]?.hand,
+                                handLength: window.game?.players[data.currentPlayer]?.hand?.length,
+                                hasPlayedThisTurn: window.game?.players[data.currentPlayer]?.hasPlayedThisTurn
+                            });
                         }
-                    }, 1500); // Increased delay to prevent rapid bot actions
+                    }, 1000); // Reduced delay for more responsive bot play
                 }
         }
         
@@ -434,11 +442,6 @@ function setupSocketListeners() {
         
         // ✅ Clear played cards for new round
         window.playedCards = [];
-        // ✅ CRITICAL FIX: Also clear local playedCards variable
-        if (typeof playedCards !== 'undefined') {
-            playedCards = [];
-            console.log('🔄 New round - cleared local playedCards variable');
-        }
         console.log('🔄 New round - cleared played cards');
         
         // ✅ Force game redraw to show new round state
@@ -749,7 +752,7 @@ function startSinglePlayerGame() {
     window.game = new Game(players);
     
     // Initialize game variables
-    playedCards = [];
+    // ✅ REMOVED: Local playedCards variable that was shadowing window.playedCards
     teamAlfaRounds = 0;
     teamBetaRounds = 0;
     teamAlfaGames = 0;
@@ -1047,7 +1050,7 @@ function startMultiplayerGame(data) {
         console.log('🎯 Initialized window.playedCards as empty array');
         
         // Initialize game variables
-        playedCards = [];
+        // ✅ REMOVED: Local playedCards variable that was shadowing window.playedCards
         teamAlfaRounds = 0;
         teamBetaRounds = 0;
         teamAlfaGames = 0;

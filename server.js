@@ -436,11 +436,8 @@ io.on('connection', (socket) => {
                 // The client-side bot logic needs to complete first
                 console.log(`🔄 Bot ${currentPlayer.name} played card, waiting for turn completion`);
                 
-                // Emit turn change event with current player (not next player)
-                io.to(socket.roomCode).emit('turnChanged', {
-                    currentPlayer: room.game.currentPlayer,
-                    allHands: room.game.hands
-                });
+                // ✅ CRITICAL FIX: Don't emit turnChanged here - wait for botTurnComplete
+                // This prevents multiple turnChanged events that confuse the bot logic
             } else {
                 // Human player - move to next player immediately
                 console.log(`🔄 Human player ${currentPlayer.name} played card, moving to next player`);
