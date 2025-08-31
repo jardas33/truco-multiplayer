@@ -490,6 +490,30 @@ io.on('connection', (socket) => {
         if (room.game.playedCards.length === 4) {
             console.log(`🏁 Round complete in room ${socket.roomCode}`);
             
+            // ✅ CRITICAL FIX: Implement proper scoring logic
+            const roundWinner = determineRoundWinner(room.game.playedCards);
+            console.log(`🏆 Round winner: ${roundWinner.name} (${roundWinner.team})`);
+            
+            // ✅ Update team scores based on round winner
+            if (roundWinner.team === 'team1') {
+                room.game.scores.team1 += 1;
+                console.log(`🏆 Team 1 score increased to: ${room.game.scores.team1}`);
+            } else if (roundWinner.team === 'team2') {
+                room.game.scores.team2 += 1;
+                console.log(`🏆 Team 2 score increased to: ${room.game.scores.team2}`);
+            }
+            
+            // ✅ Check if a team has won enough rounds to win the game
+            const roundsToWin = 2; // Best of 3 rounds
+            let gameWinner = null;
+            if (room.game.scores.team1 >= roundsToWin) {
+                gameWinner = 'team1';
+                console.log(`🎮 Team 1 wins the game!`);
+            } else if (room.game.scores.team2 >= roundsToWin) {
+                gameWinner = 'team2';
+                console.log(`🎮 Team 2 wins the game!`);
+            }
+            
             // ✅ CRITICAL FIX: Don't reset playedCards immediately
             // Keep them visible until the next round starts
             console.log(`🏁 Round complete - keeping ${room.game.playedCards.length} played cards visible`);
@@ -504,10 +528,13 @@ io.on('connection', (socket) => {
             // Move to next player
             room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
             
-            // Emit round complete event
+            // ✅ Emit round complete event with scoring information
             io.to(socket.roomCode).emit('roundComplete', {
                 currentPlayer: room.game.currentPlayer,
-                allHands: room.game.hands
+                allHands: room.game.hands,
+                roundWinner: roundWinner,
+                scores: room.game.scores,
+                gameWinner: gameWinner
             });
             
             // ✅ CRITICAL FIX: Clear played cards after a delay to allow them to be visible
@@ -875,6 +902,41 @@ function dealCards(deck) {
         console.error(`❌ Error stack:`, error.stack);
         throw error;
     }
+}
+
+// ✅ CRITICAL FIX: Function to determine round winner based on Brazilian Truco rules
+function determineRoundWinner(playedCards) {
+    console.log(`🏆 Determining round winner from ${playedCards.length} played cards`);
+    
+    if (!playedCards || playedCards.length !== 4) {
+        console.error(`❌ Invalid playedCards for round winner determination:`, playedCards);
+        return null;
+    }
+    
+    // Find the highest value card (lowest number = highest power in Brazilian Truco)
+    let highestCard = null;
+    let highestValue = Infinity;
+    
+    playedCards.forEach((playedCard, index) => {
+        const card = playedCard.card;
+        const player = playedCard.player;
+        
+        console.log(`🏆 Card ${index}: ${card.name} (value: ${card.value}) played by ${player.name}`);
+        
+        if (card.value < highestValue) {
+            highestValue = card.value;
+            highestCard = {
+                name: player.name,
+                team: player.team,
+                card: card.name,
+                value: card.value
+            };
+            console.log(`🏆 New highest card: ${card.name} (${card.value}) by ${player.name}`);
+        }
+    });
+    
+    console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
+    return highestCard;
 }
 
 // Server startup

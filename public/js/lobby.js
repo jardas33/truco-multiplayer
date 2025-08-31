@@ -475,6 +475,30 @@ function setupSocketListeners() {
             return;
         }
         
+        // ✅ CRITICAL FIX: Display round winner message
+        if (data.roundWinner) {
+            const winnerName = data.roundWinner.name;
+            const winnerCard = data.roundWinner.card;
+            const winnerTeam = data.roundWinner.team === 'team1' ? 'Team Alfa' : 'Team Beta';
+            
+            // Create and display round winner message
+            showRoundWinnerMessage(winnerName, winnerCard, winnerTeam);
+            console.log(`🏆 Round winner: ${winnerName} (${winnerTeam}) with ${winnerCard}`);
+        }
+        
+        // ✅ CRITICAL FIX: Display updated scores
+        if (data.scores) {
+            updateGameScores(data.scores);
+            console.log(`📊 Updated scores - Team 1: ${data.scores.team1}, Team 2: ${data.scores.team2}`);
+        }
+        
+        // ✅ CRITICAL FIX: Handle game winner if game is complete
+        if (data.gameWinner) {
+            const winningTeam = data.gameWinner === 'team1' ? 'Team Alfa' : 'Team Beta';
+            showGameWinnerMessage(winningTeam);
+            console.log(`🎮 Game winner: ${winningTeam}`);
+        }
+        
         // ✅ Update current player for next round
         if (data.currentPlayer !== undefined) {
             window.game.currentPlayerIndex = data.currentPlayer;
@@ -525,6 +549,112 @@ function setupSocketListeners() {
         
         console.log('✅ Round completion synchronized successfully');
     });
+}
+
+// ✅ CRITICAL FIX: Function to display round winner message
+function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
+    // Remove any existing round winner message
+    const existingMessage = document.getElementById('roundWinnerMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create round winner message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'roundWinnerMessage';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 1000;
+        border: 3px solid #FF8C00;
+    `;
+    
+    messageDiv.innerHTML = `
+        <div style="margin-bottom: 10px;">🏆 ROUND WINNER! 🏆</div>
+        <div style="font-size: 16px; margin-bottom: 8px;">${winnerName}</div>
+        <div style="font-size: 14px; margin-bottom: 8px;">played ${winnerCard}</div>
+        <div style="font-size: 16px; color: #8B0000;">${winnerTeam}</div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove message after 4 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 4000);
+}
+
+// ✅ CRITICAL FIX: Function to display game winner message
+function showGameWinnerMessage(winningTeam) {
+    // Remove any existing game winner message
+    const existingMessage = document.getElementById('gameWinnerMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create game winner message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'gameWinnerMessage';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #FFD700, #FF4500);
+        color: #000;
+        padding: 25px 35px;
+        border-radius: 20px;
+        font-size: 22px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        z-index: 1001;
+        border: 4px solid #FF8C00;
+    `;
+    
+    messageDiv.innerHTML = `
+        <div style="margin-bottom: 15px;">🎮 GAME WINNER! 🎮</div>
+        <div style="font-size: 20px; color: #8B0000;">${winningTeam}</div>
+        <div style="font-size: 16px; margin-top: 10px;">Congratulations!</div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove message after 6 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 6000);
+}
+
+// ✅ CRITICAL FIX: Function to update game scores display
+function updateGameScores(scores) {
+    // Update team scores in the UI
+    const team1ScoreElement = document.querySelector('[data-team="team1"] .score');
+    const team2ScoreElement = document.querySelector('[data-team="team2"] .score');
+    
+    if (team1ScoreElement) {
+        team1ScoreElement.textContent = scores.team1;
+    }
+    
+    if (team2ScoreElement) {
+        team2ScoreElement.textContent = scores.team2;
+    }
+    
+    console.log(`📊 Scores updated - Team 1: ${scores.team1}, Team 2: ${scores.team2}`);
 }
 
 function setupButtonListeners() {
