@@ -659,6 +659,19 @@ function startGameWithCurrentPlayers() {
         return;
     }
     
+    // ✅ DEBUG: Check socket connection status
+    console.log('🔍 Socket connection status:', socket.connected);
+    console.log('🔍 Socket ID:', socket.id);
+    console.log('🔍 Room ID:', window.roomId);
+    console.log('🔍 Socket room code:', socket.roomCode);
+    
+    // ✅ CRITICAL FIX: Ensure socket is connected before emitting
+    if (!socket.connected) {
+        console.error('❌ Socket not connected - cannot start game');
+        alert('Connection lost. Please refresh the page and try again.');
+        return;
+    }
+    
     // ✅ Emit startGame event to server to start multiplayer game
     console.log('Emitting startGame event to server for room:', window.roomId);
     socket.emit('startGame', window.roomId);

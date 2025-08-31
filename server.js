@@ -67,6 +67,9 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         socket.roomCode = roomCode;
 
+        console.log(`🔍 Socket joined room: ${roomCode}`);
+        console.log(`🔍 Socket room code set to: ${socket.roomCode}`);
+
         socket.emit('roomCreated', roomCode);
         io.to(roomCode).emit('playerJoined', {
             players: rooms.get(roomCode).players,
@@ -106,6 +109,8 @@ io.on('connection', (socket) => {
         socket.roomCode = roomCode;
 
         console.log(`✅ User ${socket.id} joined room ${roomCode}. Total players: ${room.players.length}`);
+        console.log(`🔍 Socket joined room: ${roomCode}`);
+        console.log(`🔍 Socket room code set to: ${socket.roomCode}`);
 
         // ✅ CRITICAL FIX: Emit roomJoined event to the joining player
         socket.emit('roomJoined', roomCode);
@@ -228,12 +233,18 @@ io.on('connection', (socket) => {
     // Handle game start
     socket.on('startGame', (roomCode) => {
         console.log(`🎮 Starting game in room: ${roomCode}`);
+        console.log(`🔍 Socket ID: ${socket.id}`);
+        console.log(`🔍 Socket room code: ${socket.roomCode}`);
+        console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
         
         const room = rooms.get(roomCode);
         if (!room) {
             console.log(`❌ Room ${roomCode} not found for game start`);
+            console.log(`🔍 Room not found - checking if socket is in any room`);
             return;
         }
+        
+        console.log(`🔍 Room found with ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
         
         if (room.players.length < 4) {
             console.log(`❌ Room ${roomCode} needs 4 players, has ${room.players.length}`);
@@ -293,6 +304,9 @@ io.on('connection', (socket) => {
         }
 
         // ✅ Emit gameStart event with hands to all players in the room
+        console.log(`🔍 Emitting gameStart event to room: ${roomCode}`);
+        console.log(`🔍 Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
+        
         io.to(roomCode).emit('gameStart', {
             players: room.players,
             hands: hands,
@@ -300,6 +314,7 @@ io.on('connection', (socket) => {
         });
         
         console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
+        console.log(`🔍 gameStart event emitted to ${room.players.length} players`);
     });
 
     // Handle disconnection
