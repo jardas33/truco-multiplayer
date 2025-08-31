@@ -719,6 +719,13 @@ function startMultiplayerGame(data) {
         window.players = data.players.map((player, index) => {
             console.log(`🎯 Initializing player ${index}:`, player);
             
+            // ✅ CRITICAL FIX: Identify the local player (room creator or joiner)
+            const isLocalPlayer = player.id === socket.id;
+            if (isLocalPlayer) {
+                window.localPlayerIndex = index;
+                console.log(`🎯 Local player identified: ${player.name} at index ${index}`);
+            }
+            
             // Convert server player data to client Player objects
             const clientPlayer = new Player(
                 player.nickname || player.name, 
@@ -726,6 +733,10 @@ function startMultiplayerGame(data) {
                 player.isBot || false,
                 index
             );
+            
+            // ✅ CRITICAL FIX: Store the original server player data for reference
+            clientPlayer.serverId = player.id;
+            clientPlayer.isLocalPlayer = isLocalPlayer;
             
             // Set the hand from server data
             if (data.hands && data.hands[index]) {
@@ -748,6 +759,7 @@ function startMultiplayerGame(data) {
         });
         
         console.log('✅ Players initialized for multiplayer:', window.players);
+        console.log(`🎯 Local player index: ${window.localPlayerIndex}`);
         
         // Store current player from server
         window.currentPlayer = data.currentPlayer || 0;
@@ -836,6 +848,9 @@ function startMultiplayerGame(data) {
         
         console.log('🎉 Multiplayer game started successfully');
         
+        // ✅ DEBUG: Log complete game state for troubleshooting
+        logMultiplayerGameState();
+        
     } catch (error) {
         console.error('❌ Error starting multiplayer game:', error);
         alert('Failed to start multiplayer game. Please try again.');
@@ -890,4 +905,28 @@ function setupPlayerPositions() {
     ];
     
     console.log('✅ Player positions initialized for multiplayer:', playerPositions);
+}
+
+// ✅ DEBUG: Function to log complete multiplayer game state
+function logMultiplayerGameState() {
+    console.log('🔍 MULTIPLAYER GAME STATE DEBUG:');
+    console.log('📍 Local player index:', window.localPlayerIndex);
+    console.log('🎮 Current player index:', window.currentPlayer);
+    console.log('🌐 Multiplayer mode:', window.isMultiplayerMode);
+    console.log('🎯 Game instance:', window.game ? 'Created' : 'Missing');
+    
+    if (window.game) {
+        console.log('🎴 Game current player:', window.game.currentPlayerIndex);
+        console.log('👥 Players:', window.players.map((p, i) => ({
+            index: i,
+            name: p.name,
+            isBot: p.isBot,
+            isLocalPlayer: p.isLocalPlayer,
+            handSize: p.hand?.length || 0,
+            isCurrentTurn: i === window.game.currentPlayerIndex
+        })));
+    }
+    
+    console.log('🏠 Room ID:', window.roomId);
+    console.log('🔌 Socket connected:', socket ? socket.connected : 'No socket');
 }

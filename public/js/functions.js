@@ -519,20 +519,31 @@ function drawGameState() {
             return;
         }
         
-        // Draw player label - STABLE TEXT RENDERING with better visibility
+        // Draw player name - STABLE TEXT RENDERING with better visibility
         noStroke();
         textSize(18);
         textAlign(CENTER, CENTER);
         
-        // Use consistent white color for all player names for maximum readability
-        fill(255, 255, 255); // Bright white for all players
+        // ✅ CRITICAL FIX: Show turn indicator and player identification
+        let playerLabel = player.name + (player.isBot ? ' (Bot)' : '');
+        
+        // Add turn indicator
+        if (window.game && window.game.currentPlayerIndex === index) {
+            playerLabel += ' [TURN]';
+            fill(255, 255, 0); // Yellow for current turn
+        } else if (player.isLocalPlayer) {
+            playerLabel += ' [YOU]';
+            fill(0, 255, 0); // Green for local player
+        } else {
+            fill(255, 255, 255); // White for other players
+        }
         
         // Ensure stable text positioning
         const textX = position.x;
         const textY = position.y + position.labelOffset;
         
         // Draw player name with stable positioning
-        text(player.name + (player.isBot ? ' (Bot)' : ''), textX, textY);
+        text(playerLabel, textX, textY);
         
         // Draw player's cards - PROPER CARD IMAGES with fallbacks
         if (player.hand && player.hand.length > 0) {
@@ -568,15 +579,18 @@ function drawGameState() {
                     currentCard.position.y = cardY;
                 }
                 
-                // ✅ CRITICAL FIX: Ensure cards are clickable for current player
-                if (window.game && window.game.currentPlayerIndex === index && !player.isBot) {
+                // ✅ CRITICAL FIX: Ensure cards are clickable for local player only when it's their turn
+                if (window.game && window.game.currentPlayerIndex === index && player.isLocalPlayer && !player.isBot) {
                     currentCard.isClickable = true;
                 } else {
                     currentCard.isClickable = false;
                 }
                 
-                if (player.isBot || !showAllCards) {
-                    // Bot cards - dark blue with card back
+                // ✅ CRITICAL FIX: Multiplayer card visibility - players only see their own cards
+                const isLocalPlayer = window.isMultiplayerMode && player.isLocalPlayer;
+                
+                if (player.isBot || !isLocalPlayer) {
+                    // Bot cards OR other players' cards - show card backs
                     fill(0, 0, 150);
                     stroke(255, 255, 255);
                     strokeWeight(2);
@@ -589,10 +603,14 @@ function drawGameState() {
                         // Fallback text
                         fill(255, 255, 255); // White text on dark cards
                         textSize(12);
-                        text('BOT', cardX + cardWidth/2, cardY + cardHeight/2);
+                        if (player.isBot) {
+                            text('BOT', cardX + cardWidth/2, cardY + cardHeight/2);
+                        } else {
+                            text('CARD', cardX + cardWidth/2, cardY + cardHeight/2);
+                        }
                     }
                 } else {
-                    // Human player cards - show actual card images if available
+                    // Local player's own cards - show actual card images
                     if (currentCard && currentCard.image) {
                         // Draw the actual card image
                         image(currentCard.image, cardX, cardY, cardWidth, cardHeight);
