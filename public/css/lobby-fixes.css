@@ -11,10 +11,25 @@
     background-color: rgba(0, 0, 0, 0.8) !important; /* Darker background */
 }
 
-/* Button styling - Improve text visibility */
+/* Button styling - Improve text visibility and make compact */
 button {
     background-color: rgba(0, 0, 0, 0.8) !important; /* Darker background */
     color: white !important; /* White text for better contrast */
+    margin: 3px !important; /* Reduce button margins */
+    padding: 6px 12px !important; /* Reduce button padding */
+    font-size: 13px !important; /* Slightly smaller font */
+}
+
+/* Make room controls more compact */
+.room-controls {
+    background-color: rgba(0, 0, 0, 0.9) !important; /* Darker background for better contrast */
+    color: white !important; /* Ensure all text is white by default */
+    padding: 15px !important; /* Reduce overall padding */
+}
+
+/* Reduce spacing between elements */
+.room-controls > * {
+    margin: 5px 0 !important; /* Reduce margins between elements */
 }
 
 button:hover {

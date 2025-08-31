@@ -747,7 +747,7 @@ function updatePlayerList(players) {
     if (playerList) {
         console.log('📋 Updating player list with:', players);
         
-        let playerListHTML = '<h3>Players in Room:</h3>';
+        let playerListHTML = '<h3 style="margin: 8px 0 6px 0; font-size: 16px;">Players in Room:</h3>';
         players.forEach((player, index) => {
             const playerType = player.isBot ? '🤖 Bot' : '👤 Player';
             const nickname = player.nickname || player.name;
@@ -760,7 +760,7 @@ function updatePlayerList(players) {
                 teamDisplay = 'Team Beta 🟣';
             }
             
-            playerListHTML += `<div style="margin: 5px 0; padding: 8px; border: 1px solid #4CAF50; border-radius: 4px; background-color: rgba(0, 100, 0, 0.8); color: white;">
+            playerListHTML += `<div style="margin: 3px 0; padding: 6px; border: 1px solid #4CAF50; border-radius: 3px; background-color: rgba(0, 100, 0, 0.8); color: white; font-size: 13px;">
                 <strong style="color: #FFD700;">${playerType}:</strong> ${nickname}<br>
                 <small style="color: #E0E0E0;">${teamDisplay}</small>
             </div>`;
