@@ -957,6 +957,10 @@ function startMultiplayerGame(data) {
         window.game.currentPlayerIndex = window.currentPlayer;
         console.log(`🎯 Game currentPlayerIndex set to: ${window.game.currentPlayerIndex}`);
         
+        // ✅ CRITICAL FIX: Initialize playedCards array to prevent undefined errors
+        window.playedCards = [];
+        console.log('🎯 Initialized window.playedCards as empty array');
+        
         // Initialize game variables
         playedCards = [];
         teamAlfaRounds = 0;

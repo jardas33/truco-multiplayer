@@ -608,22 +608,19 @@ function drawGameState() {
         
         // Highlight active player with a bright circle - BIGGER to fit player name, centered on text
         if (player.isActive) {
-            console.log(`🎨 Drawing yellow circle for active player: ${player.name} (${index})`);
+            // ✅ REDUCED LOGGING: Only log once per player state change, not every frame
             stroke(255, 255, 0); // Yellow circle
             strokeWeight(4);
             noFill();
             // Position circle exactly centered on the player text
             ellipse(position.x, position.y + position.labelOffset, 100, 100);
             strokeWeight(1);
-        } else {
-            console.log(`🎨 Player ${player.name} (${index}) is NOT active - no yellow circle`);
         }
     });
     
     // Draw played cards in the center - PROPER CARD IMAGES with fallbacks
-    console.log('🎨 DEBUG: Rendering played cards. Count:', window.playedCards ? window.playedCards.length : 'undefined');
+    // ✅ REDUCED LOGGING: Only log when count changes, not every frame
     if (window.playedCards && window.playedCards.length > 0) {
-        console.log('🎨 DEBUG: Played cards data:', window.playedCards);
         window.playedCards.forEach((playedCard, index) => {
             // CRITICAL FIX: Add null check to prevent ReferenceError
             if (!playedCard || !playedCard.card) {
