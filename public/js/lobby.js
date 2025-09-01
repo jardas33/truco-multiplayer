@@ -356,17 +356,30 @@ function setupSocketListeners() {
                     
                     // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
                     setTimeout(() => {
-                                        // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
-                // Only allow bots to play when it's actually their turn
-                // AND only the room creator should handle bot plays to prevent duplicate plays
-                if (window.game && 
-                    window.game.players[data.currentPlayer] &&
-                    window.game.players[data.currentPlayer].isBot &&
-                    window.game.players[data.currentPlayer].hand && 
-                    window.game.players[data.currentPlayer].hand.length > 0 &&
-                    !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                    data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
-                    window.isRoomCreator) { // ✅ CRITICAL: Only room creator handles bot plays
+                        // ✅ DEBUG: Log all bot play conditions
+                        console.log(`🔍 DEBUG: Bot play validation for player ${data.currentPlayer}:`, {
+                            hasGame: !!window.game,
+                            hasPlayer: !!window.game?.players[data.currentPlayer],
+                            isBot: window.game?.players[data.currentPlayer]?.isBot,
+                            hasHand: !!window.game?.players[data.currentPlayer]?.hand,
+                            handLength: window.game?.players[data.currentPlayer]?.hand?.length,
+                            hasNotPlayed: !window.game?.players[data.currentPlayer]?.hasPlayedThisTurn,
+                            isCurrentPlayer: data.currentPlayer === window.game?.currentPlayerIndex,
+                            isRoomCreator: window.isRoomCreator,
+                            currentPlayerIndex: window.game?.currentPlayerIndex
+                        });
+                        
+                        // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
+                        // Only allow bots to play when it's actually their turn
+                        // AND only the room creator should handle bot plays to prevent duplicate plays
+                        if (window.game && 
+                            window.game.players[data.currentPlayer] &&
+                            window.game.players[data.currentPlayer].isBot &&
+                            window.game.players[data.currentPlayer].hand && 
+                            window.game.players[data.currentPlayer].hand.length > 0 &&
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
+                            data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
+                            window.isRoomCreator) { // ✅ CRITICAL: Only room creator handles bot plays
                     
                     const bot = window.game.players[data.currentPlayer];
                     console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
