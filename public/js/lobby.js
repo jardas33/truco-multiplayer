@@ -485,6 +485,10 @@ function setupSocketListeners() {
                             console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
                             console.log(`🔍 DEBUG: Socket ID:`, socket.id);
                             
+                            // ✅ CRITICAL TEST: Send a simple test event first
+                            socket.emit('testEvent', { message: 'Bot turn complete test' });
+                            console.log(`🔍 DEBUG: Test event sent`);
+                            
                             socket.emit('botTurnComplete', {
                                 roomCode: window.roomId
                             });

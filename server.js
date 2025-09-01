@@ -643,6 +643,11 @@ io.on('connection', (socket) => {
         console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
     });
 
+    // ✅ TEST: Handle test events to verify socket connection
+    socket.on('testEvent', (data) => {
+        console.log(`🧪 TEST EVENT received from socket ${socket.id}:`, data);
+    });
+
     // ✅ CRITICAL FIX: Handle bot turn completion to move to next player
     socket.on('botTurnComplete', (data) => {
         console.log(`🤖 Bot turn complete in room: ${socket.roomCode}`);
