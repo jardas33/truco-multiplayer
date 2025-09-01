@@ -2453,5 +2453,5 @@ function showCopySuccess() {
         }, 3000);
     }
     
-    console.log('✅ Room code copied to clipboard:', window.roomId);
+    console.log('✅ Copy success message shown');
 }
