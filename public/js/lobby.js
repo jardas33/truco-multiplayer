@@ -78,6 +78,12 @@ function initSocket() {
                 return;
             }
             
+            // ✅ CRITICAL FIX: Prevent duplicate turnChanged processing for the same player
+            if (window.game.currentPlayerIndex === data.currentPlayer) {
+                console.log(`⚠️ Duplicate turnChanged event for player ${data.currentPlayer} - ignoring to prevent loop`);
+                return;
+            }
+            
             // ✅ CRITICAL FIX: Update current player FIRST to prevent race conditions
             window.game.currentPlayerIndex = data.currentPlayer;
             console.log(`🔄 Updated currentPlayerIndex to: ${data.currentPlayer}`);

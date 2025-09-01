@@ -849,9 +849,29 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // ✅ CRITICAL FIX: Rate limiting to prevent duplicate botTurnComplete events
+        const now = Date.now();
+        const lastBotTurnComplete = room.game.lastBotTurnComplete || 0;
+        const timeSinceLastTurn = now - lastBotTurnComplete;
+        
+        if (timeSinceLastTurn < 500) { // 500ms rate limit
+            console.log(`⚠️ botTurnComplete rate limited - too soon (${timeSinceLastTurn}ms since last)`);
+            return;
+        }
+        
+        room.game.lastBotTurnComplete = now;
+        
         // ✅ Move to next player after bot turn is complete
         const previousPlayer = room.game.currentPlayer;
-        room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+        const newPlayer = (room.game.currentPlayer + 1) % 4;
+        
+        // ✅ CRITICAL FIX: Prevent duplicate turnChanged events for the same player
+        if (room.game.currentPlayer === newPlayer) {
+            console.log(`⚠️ Duplicate botTurnComplete for same player ${newPlayer} - ignoring to prevent loop`);
+            return;
+        }
+        
+        room.game.currentPlayer = newPlayer;
         console.log(`🔄 Bot turn complete - moved from player ${previousPlayer} (${room.players[previousPlayer]?.name}) to player ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         
         // ✅ CRITICAL FIX: Reset bot played flags for new turn
