@@ -204,8 +204,14 @@ function initSocket() {
                             window.game.players[data.currentPlayer].hand && 
                             window.game.players[data.currentPlayer].hand.length > 0 &&
                             !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                            data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
                             canHandleBotPlays) {
+                            
+                            // ✅ CRITICAL FIX: Double-check current player index to prevent race conditions
+                            if (data.currentPlayer !== window.game.currentPlayerIndex) {
+                                console.log(`🚨 CRITICAL: Bot turn mismatch! Client thinks: ${data.currentPlayer}, Server says: ${window.game.currentPlayerIndex}`);
+                                console.log(`🚨 CRITICAL: Waiting for turn synchronization...`);
+                                return; // Wait for proper turn synchronization
+                            }
                     
                     const bot = window.game.players[data.currentPlayer];
                     console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
