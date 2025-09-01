@@ -575,8 +575,16 @@ io.on('connection', (socket) => {
                 }
             });
             
-            // Move to next player
-            room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            // ✅ CRITICAL FIX: Round winner should start the next round
+            // Find the player who won the round and set them as current player
+            const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
+            if (roundWinnerPlayerIndex !== -1) {
+                room.game.currentPlayer = roundWinnerPlayerIndex;
+                console.log(`🎯 Round winner ${roundWinner.name} will start next round at index ${roundWinnerPlayerIndex}`);
+            } else {
+                console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            }
             
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             io.to(socket.roomCode).emit('roundComplete', {
