@@ -704,6 +704,29 @@ function setupSocketListeners() {
                 player.isActive = (index === data.currentPlayer);
                 console.log(`🔄 New round - Player ${player.name} (${index}) isActive: ${player.isActive}`);
             });
+            
+            // ✅ CRITICAL FIX: If the new round starter is a bot, trigger bot play immediately
+            const nextRoundStarter = window.game.players[data.currentPlayer];
+            if (nextRoundStarter && nextRoundStarter.isBot) {
+                console.log(`🤖 Bot ${nextRoundStarter.name} starts new round - triggering bot play immediately`);
+                
+                // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
+                nextRoundStarter.hasPlayedThisTurn = false;
+                
+                // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
+                setTimeout(() => {
+                    if (window.game && 
+                        window.game.players[data.currentPlayer] &&
+                        window.game.players[data.currentPlayer].isBot &&
+                        window.game.players[data.currentPlayer].hand && 
+                        window.game.players[data.currentPlayer].hand.length > 0 &&
+                        !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
+                        
+                        console.log(`🤖 Triggering bot play for ${nextRoundStarter.name} in new round`);
+                        triggerBotPlay(data.currentPlayer);
+                    }
+                }, 500); // Small delay to ensure state is fully synchronized
+            }
         }
         
         // ✅ CRITICAL FIX: Ensure this is NOT a game completion (should be handled by gameComplete)
@@ -2253,4 +2276,82 @@ function showCopySuccess() {
     }
     
     console.log('✅ Copy success message shown');
+}
+
+// ✅ CRITICAL FIX: Function to trigger bot play logic
+function triggerBotPlay(botPlayerIndex) {
+    console.log(`🤖 Triggering bot play for player index: ${botPlayerIndex}`);
+    
+    if (!window.game || !window.game.players[botPlayerIndex]) {
+        console.error(`❌ Invalid game state or player index: ${botPlayerIndex}`);
+        return;
+    }
+    
+    const botPlayer = window.game.players[botPlayerIndex];
+    if (!botPlayer.isBot) {
+        console.error(`❌ Player ${botPlayer.name} is not a bot`);
+        return;
+    }
+    
+    if (botPlayer.hasPlayedThisTurn) {
+        console.log(`🤖 Bot ${botPlayer.name} already played this turn`);
+        return;
+    }
+    
+    if (!botPlayer.hand || botPlayer.hand.length === 0) {
+        console.error(`❌ Bot ${botPlayer.name} has no cards to play`);
+        return;
+    }
+    
+    console.log(`🤖 Bot ${botPlayer.name} will play a card in 1.5 seconds`);
+    
+    // ✅ CRITICAL FIX: Add delay for natural bot play timing
+    setTimeout(() => {
+        try {
+            // ✅ CRITICAL FIX: Validate bot can still play
+            if (window.game && 
+                window.game.players[botPlayerIndex] &&
+                window.game.players[botPlayerIndex].isBot &&
+                !window.game.players[botPlayerIndex].hasPlayedThisTurn &&
+                window.game.players[botPlayerIndex].hand &&
+                window.game.players[botPlayerIndex].hand.length > 0) {
+                
+                // ✅ CRITICAL FIX: Select a random card from the bot's hand
+                const randomCardIndex = Math.floor(Math.random() * botPlayer.hand.length);
+                const selectedCard = botPlayer.hand[randomCardIndex];
+                
+                console.log(`🤖 Bot ${botPlayer.name} playing card: ${selectedCard.name} (index: ${randomCardIndex})`);
+                
+                // ✅ CRITICAL FIX: Emit playCard event for the bot
+                socket.emit('playCard', {
+                    roomCode: window.roomId,
+                    playerIndex: botPlayerIndex,
+                    cardIndex: randomCardIndex
+                });
+                
+                console.log(`🤖 Bot ${botPlayer.name} playCard event emitted successfully`);
+                
+                // ✅ CRITICAL FIX: Mark bot as having played this turn
+                botPlayer.hasPlayedThisTurn = true;
+                
+                // ✅ CRITICAL FIX: Emit botTurnComplete after a delay to ensure server processes the card play
+                setTimeout(() => {
+                    try {
+                        console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} after card play`);
+                        socket.emit('botTurnComplete', {
+                            roomCode: window.roomId
+                        });
+                        console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
+                    } catch (botCompleteError) {
+                        console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
+                    }
+                }, 2000); // 2 second delay to ensure server processes card play first
+                
+            } else {
+                console.log(`🤖 Bot ${botPlayer.name} can no longer play - state changed`);
+            }
+        } catch (botPlayError) {
+            console.error(`❌ Bot play failed for ${botPlayer.name}:`, botPlayError);
+        }
+    }, 1500); // 1.5 second delay for natural bot play timing
 }

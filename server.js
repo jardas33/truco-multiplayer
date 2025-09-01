@@ -672,6 +672,24 @@ io.on('connection', (socket) => {
                 // ✅ CRITICAL FIX: gameWinner is NOT sent with roundComplete
             });
             
+            // ✅ CRITICAL FIX: Only emit turnChanged immediately if the round winner is NOT a bot
+            // If the round winner is a bot, wait for them to play their card first
+            const nextRoundStarter = room.players[room.game.currentPlayer];
+            if (nextRoundStarter && !nextRoundStarter.isBot) {
+                // Human player starts next round - emit turnChanged immediately
+                console.log(`🔄 Human player ${nextRoundStarter.name} starts next round - emitting turnChanged immediately`);
+                io.to(socket.roomCode).emit('turnChanged', {
+                    currentPlayer: room.game.currentPlayer,
+                    allHands: room.game.hands
+                });
+            } else if (nextRoundStarter && nextRoundStarter.isBot) {
+                // Bot starts next round - DON'T emit turnChanged yet, wait for bot to play
+                console.log(`🤖 Bot ${nextRoundStarter.name} starts next round - NOT emitting turnChanged yet, waiting for bot to play`);
+                // The turnChanged will be emitted after the bot plays their card via botTurnComplete
+            } else {
+                console.log(`⚠️ WARNING: Could not determine next round starter`);
+            }
+            
             // ✅ CRITICAL FIX: Clear played cards after a delay to allow them to be visible
             setTimeout(() => {
                 if (room.game && room.game.playedCards) {
