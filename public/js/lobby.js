@@ -147,80 +147,77 @@ function initSocket() {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
                     
-                    // ✅ CRITICAL FIX: Show bot thinking message with visual delay
+                    // ✅ CRITICAL FIX: Show bot thinking message (visual only, no delay)
                     showTurnMessage(`${currentPlayer.name} is thinking...`, 'bot');
                     
-                    // ✅ CRITICAL FIX: Add visual delay before bot execution (for pacing)
-                    setTimeout(() => {
-                        // ✅ CRITICAL FIX: Prevent bot from playing multiple times
-                        if (currentPlayer.hasPlayedThisTurn) {
-                            console.log(`🤖 Bot ${currentPlayer.name} already played this turn - skipping`);
-                            return;
-                        }
+                    // ✅ CRITICAL FIX: Prevent bot from playing multiple times
+                    if (currentPlayer.hasPlayedThisTurn) {
+                        console.log(`🤖 Bot ${currentPlayer.name} already played this turn - skipping`);
+                        return;
+                    }
+                    
+                    // ✅ CRITICAL FIX: Ensure window.playedCards is available
+                    if (window.playedCards) {
+                        console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
+                    }
+                    
+                    // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play IMMEDIATELY (no delays)
+                    if (currentPlayer.isBot) {
+                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play IMMEDIATELY`);
                         
-                        // ✅ CRITICAL FIX: Ensure window.playedCards is available
-                        if (window.playedCards) {
-                            console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
-                        }
-                        
-                        // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play IMMEDIATELY (no delays)
-                        if (currentPlayer.isBot) {
-                            console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play IMMEDIATELY`);
+                        // ✅ CRITICAL FIX: Use immediate validation and execution to prevent race conditions
+                        if (window.game && 
+                            window.game.players[data.currentPlayer] &&
+                            window.game.players[data.currentPlayer].isBot &&
+                            window.game.players[data.currentPlayer].hand && 
+                            window.game.players[data.currentPlayer].hand.length > 0 &&
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
                             
-                            // ✅ CRITICAL FIX: Use immediate validation and execution to prevent race conditions
-                            if (window.game && 
-                                window.game.players[data.currentPlayer] &&
-                                window.game.players[data.currentPlayer].isBot &&
-                                window.game.players[data.currentPlayer].hand && 
-                                window.game.players[data.currentPlayer].hand.length > 0 &&
-                                !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
+                            console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing IMMEDIATELY`);
+                            
+                            // ✅ CRITICAL FIX: Execute bot play IMMEDIATELY to prevent race conditions
+                            const bot = window.game.players[data.currentPlayer];
+                            const cardIndex = 0;
+                            const selectedCard = bot.hand[cardIndex];
+                            
+                            if (selectedCard && selectedCard.name) {
+                                console.log(`🤖 Bot ${bot.name} playing card IMMEDIATELY: ${selectedCard.name}`);
                                 
-                                console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing IMMEDIATELY`);
+                                // Mark bot as played BEFORE sending event to prevent duplicates
+                                bot.hasPlayedThisTurn = true;
                                 
-                                // ✅ CRITICAL FIX: Execute bot play IMMEDIATELY to prevent race conditions
-                                const bot = window.game.players[data.currentPlayer];
-                                const cardIndex = 0;
-                                const selectedCard = bot.hand[cardIndex];
+                                // Emit playCard event IMMEDIATELY
+                                socket.emit('playCard', {
+                                    roomCode: window.roomId,
+                                    cardIndex: cardIndex,
+                                    playerIndex: data.currentPlayer
+                                });
                                 
-                                if (selectedCard && selectedCard.name) {
-                                    console.log(`🤖 Bot ${bot.name} playing card IMMEDIATELY: ${selectedCard.name}`);
-                                    
-                                    // Mark bot as played BEFORE sending event to prevent duplicates
-                                    bot.hasPlayedThisTurn = true;
-                                    
-                                    // Emit playCard event IMMEDIATELY
-                                    socket.emit('playCard', {
-                                        roomCode: window.roomId,
-                                        cardIndex: cardIndex,
-                                        playerIndex: data.currentPlayer
-                                    });
-                                    
-                                    console.log(`🤖 Bot ${bot.name} card play event sent IMMEDIATELY`);
-                                    
-                                    // ✅ CRITICAL FIX: Emit botTurnComplete after bot plays to move to next player
-                                    setTimeout(() => {
-                                        try {
-                                            console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                            socket.emit('botTurnComplete', {
-                                                roomCode: window.roomId
-                                            });
-                                            console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
-                                        } catch (turnCompleteError) {
-                                            console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                                        }
-                                    }, 1000); // 1 second delay to ensure server processes card play first
-                                    
-                                } else {
-                                    console.error(`❌ Bot ${bot.name} has no valid card to play`);
-                                }
+                                console.log(`🤖 Bot ${bot.name} card play event sent IMMEDIATELY`);
+                                
+                                // ✅ CRITICAL FIX: Emit botTurnComplete after bot plays to move to next player
+                                setTimeout(() => {
+                                    try {
+                                        console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                        socket.emit('botTurnComplete', {
+                                            roomCode: window.roomId
+                                        });
+                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
+                                    } catch (turnCompleteError) {
+                                        console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                    }
+                                }, 1000); // 1 second delay to ensure server processes card play first
+                                
                             } else {
-                                console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
+                                console.error(`❌ Bot ${bot.name} has no valid card to play`);
                             }
+                        } else {
+                            console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
                         }
-                        
-                        // ✅ CRITICAL FIX: Removed duplicate fallback bot play logic to prevent race conditions
-                        // Now using single bot play mechanism with proper timing
-                    }, 2000); // 2 second visual delay for pacing
+                    }
+                    
+                    // ✅ CRITICAL FIX: Removed duplicate fallback bot play logic to prevent race conditions
+                    // Now using single bot play mechanism with immediate execution
                 }
             }
             
@@ -2236,7 +2233,7 @@ function showTurnMessage(message, playerType) {
     document.body.appendChild(messageDiv);
     
     // Auto-remove message after appropriate time
-    const displayTime = isBot ? 4000 : 5000; // Bots: 4s, Humans: 5s (longer for better visibility)
+    const displayTime = isBot ? 2000 : 5000; // Bots: 2s, Humans: 5s (shorter for immediate execution)
     setTimeout(() => {
         if (messageDiv.parentNode) {
             messageDiv.style.animation = 'fadeOut 0.5s ease-out';
