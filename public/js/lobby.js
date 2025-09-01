@@ -542,6 +542,29 @@ function setupSocketListeners() {
             console.log(`📊 Updated scores - Team 1: ${data.scores.team1}, Team 2: ${data.scores.team2}`);
         }
         
+        // ✅ CRITICAL FIX: Update current player to round winner
+        if (typeof data.currentPlayer !== 'undefined') {
+            console.log(`🔄 roundComplete: Updating currentPlayer from ${window.game.currentPlayerIndex} to ${data.currentPlayer}`);
+            window.game.currentPlayerIndex = data.currentPlayer;
+            
+            // ✅ Update player active states
+            window.game.players.forEach((player, index) => {
+                const wasActive = player.isActive;
+                player.isActive = (index === data.currentPlayer);
+                
+                // Reset flags for new round
+                if (index === data.currentPlayer) {
+                    player.hasPlayedThisTurn = false;
+                    player.isPlaying = false;
+                    console.log(`🔄 Reset flags for round winner ${player.name} (new round)`);
+                }
+                
+                console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
+            });
+            
+            console.log(`✅ Round winner ${data.roundWinner?.name} is now the current player (${data.currentPlayer})`);
+        }
+        
         // ✅ CRITICAL FIX: Game winner is now handled separately in gameComplete event
         // RoundComplete events no longer include gameWinner data
         

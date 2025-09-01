@@ -744,7 +744,12 @@ io.on('connection', (socket) => {
                 console.log(`🤖 Bot ${nextRoundStarter.name} will start next round - NOT emitting turnChanged, waiting for botTurnComplete`);
             }
             
+            // ✅ CRITICAL FIX: Clear played cards BEFORE emitting roundComplete
+            console.log(`🔄 Clearing played cards before round complete emission`);
+            room.game.playedCards = [];
+            
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
+            console.log(`🔍 DEBUG: Emitting roundComplete with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             io.to(socket.roomCode).emit('roundComplete', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands,
@@ -752,6 +757,7 @@ io.on('connection', (socket) => {
                 scores: room.game.scores
                 // ✅ CRITICAL FIX: gameWinner is NOT sent with roundComplete
             });
+            console.log(`✅ roundComplete event emitted with round winner: ${roundWinner.name} and currentPlayer: ${room.game.currentPlayer}`);
             
             // ✅ CRITICAL FIX: Only emit turnChanged immediately if the round winner is NOT a bot
             // If the round winner is a bot, wait for them to play their card first
@@ -781,13 +787,8 @@ io.on('connection', (socket) => {
                 console.log(`⚠️ WARNING: Could not determine next round starter`);
             }
             
-            // ✅ CRITICAL FIX: Clear played cards after a delay to allow them to be visible
-            setTimeout(() => {
-                if (room.game && room.game.playedCards) {
-                    console.log(`🏁 Clearing played cards after round completion delay`);
-                    room.game.playedCards = [];
-                }
-            }, 3000); // 3 second delay to show the round results
+            // ✅ CRITICAL FIX: Played cards already cleared before roundComplete emission
+            // No need for delayed clearing as it's already done above
         } else {
                     // ✅ CRITICAL DEBUG: Log EXACTLY what type of player this is
         console.log(`🔍 CRITICAL DEBUG: Player type check for ${targetPlayer.name} (index ${clientPlayerIndex})`);
