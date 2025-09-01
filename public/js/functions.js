@@ -486,11 +486,13 @@ function drawGameState() {
         // ✅ CRITICAL FIX: Show player identification (turn indicated by yellow circle only)
         let playerLabel = player.name + (player.isBot ? ' (Bot)' : '');
         
-        // Set text color based on player type (no turn text in multiplayer)
-        if (player.isLocalPlayer) {
-            fill(0, 255, 0); // Green for local player
+        // Set text color based on team assignment
+        if (player.team === 'team1') {
+            fill(100, 150, 255); // Blue for Team Alfa
+        } else if (player.team === 'team2') {
+            fill(255, 100, 100); // Red for Team Beta
         } else {
-            fill(255, 255, 255); // White for other players
+            fill(255, 255, 255); // White for unassigned players
         }
         
         // Ensure stable text positioning
@@ -500,8 +502,16 @@ function drawGameState() {
         // Draw player name on first line
         text(playerLabel, textX, textY);
         
-        // Draw [YOU] on second line for local player
+        // Draw [YOU] on second line for local player with team color
         if (player.isLocalPlayer) {
+            // Use the same team color for [YOU] text
+            if (player.team === 'team1') {
+                fill(100, 150, 255); // Blue for Team Alfa
+            } else if (player.team === 'team2') {
+                fill(255, 100, 100); // Red for Team Beta
+            } else {
+                fill(255, 255, 255); // White for unassigned players
+            }
             text('[YOU]', textX, textY + 25); // 25 pixels below the player name
         }
         
@@ -685,8 +695,15 @@ function drawGameState() {
                 }
             }
             
-            // Draw player indicator - MUCH MORE VISIBLE
-            fill(255, 255, 255); // Bright white text
+            // Draw player indicator with team color
+            // Set color based on team assignment
+            if (playedCard.player && playedCard.player.team === 'team1') {
+                fill(100, 150, 255); // Blue for Team Alfa
+            } else if (playedCard.player && playedCard.player.team === 'team2') {
+                fill(255, 100, 100); // Red for Team Beta
+            } else {
+                fill(255, 255, 255); // White for unassigned players
+            }
             textSize(16); // Larger font size
             textAlign(CENTER, CENTER);
             stroke(0, 0, 0); // Black outline for contrast

@@ -1494,16 +1494,19 @@ function updatePlayerList(players) {
             const playerType = player.isBot ? '🤖 Bot' : '👤 Player';
             const nickname = player.nickname || player.name;
             
-            // Show team assignment if available, otherwise show "No Team"
+            // Set team color for player name
+            let teamColor = '#FFFFFF'; // Default white
             let teamDisplay = 'No Team';
             if (player.team === 'team1') {
+                teamColor = '#6496FF'; // Blue for Team Alfa
                 teamDisplay = 'Team Alfa 🟠';
             } else if (player.team === 'team2') {
+                teamColor = '#FF6464'; // Red for Team Beta
                 teamDisplay = 'Team Beta 🟣';
             }
             
             playerListHTML += `<div style="margin: 3px 0; padding: 6px; border: 1px solid #4CAF50; border-radius: 3px; background-color: rgba(0, 100, 0, 0.8); color: white; font-size: 13px;">
-                <strong style="color: #FFD700;">${playerType}:</strong> ${nickname}<br>
+                <strong style="color: #FFD700;">${playerType}:</strong> <span style="color: ${teamColor};">${nickname}</span><br>
                 <small style="color: #E0E0E0;">${teamDisplay}</small>
             </div>`;
         });
