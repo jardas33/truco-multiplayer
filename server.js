@@ -642,6 +642,18 @@ io.on('connection', (socket) => {
                 // Ensure the bot's hasPlayedThisTurn flag is reset
                 nextRoundStarter.hasPlayedThisTurn = false;
                 console.log(`🔄 Reset hasPlayedThisTurn for bot ${nextRoundStarter.name}`);
+                
+                // ✅ CRITICAL FIX: Add a small delay before emitting turnChanged to ensure client state is ready
+                console.log(`🤖 Bot ${nextRoundStarter.name} will start next round - adding delay for client sync`);
+                setTimeout(() => {
+                    if (room.game && room.game.currentPlayer === room.players.indexOf(nextRoundStarter)) {
+                        console.log(`🤖 Emitting delayed turnChanged for bot ${nextRoundStarter.name} starting next round`);
+                        io.to(socket.roomCode).emit('turnChanged', {
+                            currentPlayer: room.game.currentPlayer,
+                            allHands: room.game.hands
+                        });
+                    }
+                }, 100); // 100ms delay for client synchronization
             }
             
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)

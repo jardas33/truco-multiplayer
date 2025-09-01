@@ -84,8 +84,9 @@ function initSocket() {
                 return;
             }
             
-            // ✅ Update current player
+            // ✅ CRITICAL FIX: Update current player FIRST to prevent race conditions
             window.game.currentPlayerIndex = data.currentPlayer;
+            console.log(`🔄 Updated currentPlayerIndex to: ${data.currentPlayer}`);
             
             // ✅ CRITICAL FIX: Update player active states for turn indicator
             console.log(`🔄 Updating player active states. Server currentPlayer: ${data.currentPlayer}`);
@@ -125,9 +126,17 @@ function initSocket() {
                 });
             }
             
-            // ✅ Make current player's cards clickable
+            // ✅ CRITICAL FIX: Make current player's cards clickable
             if (window.game.players[data.currentPlayer]) {
                 const currentPlayer = window.game.players[data.currentPlayer];
+                
+                // ✅ CRITICAL FIX: Ensure currentPlayerIndex is synchronized
+                if (window.game.currentPlayerIndex !== data.currentPlayer) {
+                    console.log(`🚨 CRITICAL: currentPlayerIndex mismatch! Client: ${window.game.currentPlayerIndex}, Server: ${data.currentPlayer}`);
+                    window.game.currentPlayerIndex = data.currentPlayer;
+                    console.log(`🚨 CRITICAL: Fixed currentPlayerIndex to: ${data.currentPlayer}`);
+                }
+                
                 if (!currentPlayer.isBot) {
                     // Human player - make cards clickable
                     currentPlayer.hand.forEach(card => {
