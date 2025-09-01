@@ -847,15 +847,20 @@ io.on('connection', (socket) => {
         const timestamp = new Date().toISOString();
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event timestamp`);
         
-        // Emit turn change event with the new current player IMMEDIATELY for UI updates
-        console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-        console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
-        io.to(socket.roomCode).emit('turnChanged', {
-            currentPlayer: room.game.currentPlayer,
-            allHands: room.game.hands
-        });
-        console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
-        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
+        // ✅ PACING FIX: Add delay for visual pacing while maintaining game flow
+        console.log(`🎯 Adding 2-second delay for visual pacing`);
+        
+        setTimeout(() => {
+            // Emit turn change event with the new current player
+            console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
+            io.to(socket.roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.game.hands
+            });
+            console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
+        }, 2000); // 2-second delay for visual pacing
     });
 
     // ✅ Handle Truco requests with improved validation

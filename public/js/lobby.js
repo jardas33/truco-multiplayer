@@ -172,11 +172,11 @@ function initSocket() {
                         console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
                     }
                     
-                    // ✅ DEFINITIVE FIX: Check if current player is a bot and trigger bot play IMMEDIATELY - NO DELAYS EVER
+                    // ✅ PACING FIX: Check if current player is a bot and trigger bot play with visual delay
                     if (currentPlayer.isBot) {
-                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play IMMEDIATELY - NO DELAYS`);
+                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play with visual delay`);
                         
-                        // ✅ DEFINITIVE FIX: Use immediate validation and execution - NO DELAYS TO PREVENT RACE CONDITIONS
+                        // ✅ PACING FIX: Use immediate validation but delayed execution for visual pacing
                         if (window.game && 
                             window.game.players[data.currentPlayer] &&
                             window.game.players[data.currentPlayer].isBot &&
@@ -184,38 +184,43 @@ function initSocket() {
                             window.game.players[data.currentPlayer].hand.length > 0 &&
                             !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
                             
-                            console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing IMMEDIATELY - NO DELAYS`);
+                            console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
-                            // ✅ DEFINITIVE FIX: Execute bot play IMMEDIATELY - NO DELAYS
-                            const bot = window.game.players[data.currentPlayer];
-                            const cardIndex = 0;
-                            const selectedCard = bot.hand[cardIndex];
-                            
-                            if (selectedCard && selectedCard.name) {
-                                console.log(`🤖 Bot ${bot.name} playing card IMMEDIATELY - NO DELAYS: ${selectedCard.name}`);
+                            // ✅ PACING FIX: Execute bot play with visual delay for better UX
+                            setTimeout(() => {
+                                const bot = window.game.players[data.currentPlayer];
+                                const cardIndex = 0;
+                                const selectedCard = bot.hand[cardIndex];
                                 
-                                // Mark bot as played BEFORE sending event to prevent duplicates
-                                bot.hasPlayedThisTurn = true;
-                                
-                                // Emit playCard event IMMEDIATELY - NO DELAYS
-                                socket.emit('playCard', {
-                                    roomCode: window.roomId,
-                                    cardIndex: cardIndex,
-                                    playerIndex: data.currentPlayer
-                                });
-                                
-                                console.log(`🤖 Bot ${bot.name} card play event sent IMMEDIATELY - NO DELAYS`);
-                                
-                                // ✅ DEFINITIVE FIX: Emit botTurnComplete IMMEDIATELY - NO DELAYS
-                                try {
-                                    console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer}) IMMEDIATELY`);
-                                    socket.emit('botTurnComplete', {
-                                        roomCode: window.roomId
+                                if (selectedCard && selectedCard.name) {
+                                    console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
+                                    
+                                    // Mark bot as played BEFORE sending event to prevent duplicates
+                                    bot.hasPlayedThisTurn = true;
+                                    
+                                    // Emit playCard event
+                                    socket.emit('playCard', {
+                                        roomCode: window.roomId,
+                                        cardIndex: cardIndex,
+                                        playerIndex: data.currentPlayer
                                     });
-                                    console.log(`🤖 Bot ${bot.name} turn complete - notified server IMMEDIATELY - NO DELAYS`);
-                                } catch (turnCompleteError) {
-                                    console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                    
+                                    console.log(`🤖 Bot ${bot.name} card play event sent`);
+                                    
+                                    // ✅ PACING FIX: Emit botTurnComplete with additional delay for pacing
+                                    setTimeout(() => {
+                                        try {
+                                            console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                            socket.emit('botTurnComplete', {
+                                                roomCode: window.roomId
+                                            });
+                                            console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                                        } catch (turnCompleteError) {
+                                            console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                        }
+                                    }, 1000); // 1 second delay for pacing
                                 }
+                            }, 1500); // 1.5 second visual delay for pacing
                                 
                             } else {
                                 console.error(`❌ Bot ${bot.name} has no valid card to play`);
