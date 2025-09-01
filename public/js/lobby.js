@@ -221,10 +221,6 @@ function initSocket() {
                                     }, 1000); // 1 second delay for pacing
                                 }
                             }, 1500); // 1.5 second visual delay for pacing
-                                
-                            } else {
-                                console.error(`❌ Bot ${bot.name} has no valid card to play`);
-                            }
                         } else {
                             console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
                         }
