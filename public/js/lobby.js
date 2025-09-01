@@ -317,7 +317,7 @@ function initSocket() {
                         } catch (turnCompleteError) {
                             console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
                         }
-                    }, 500); // Small delay to ensure card play is processed first
+                    }, 2000); // ✅ CRITICAL FIX: Increased delay to 2 seconds to ensure server processes card play first
                     
                     } else {
                         console.log(`❌ Bot play validation failed for player ${data.currentPlayer}`);
@@ -359,7 +359,7 @@ function initSocket() {
                                                     roomCode: window.roomId
                                                 });
                                                 console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} turn complete`);
-                                            }, 500);
+                                            }, 2000); // ✅ CRITICAL FIX: Increased delay to 2 seconds to ensure server processes card play first
                                         }
                                     }, 1500); // 1.5 second delay for natural fallback bot gameplay
                                 }
@@ -625,6 +625,26 @@ function setupSocketListeners() {
         }
         
         console.log('✅ Card played event synchronized successfully');
+        
+        // ✅ CRITICAL FIX: If the card was played by a bot, automatically trigger bot turn completion
+        // This ensures the server moves to the next player after bot plays
+        if (data.playerIndex !== undefined && window.game?.players[data.playerIndex]?.isBot) {
+            const botPlayer = window.game.players[data.playerIndex];
+            console.log(`🤖 Bot ${botPlayer.name} played card - automatically triggering bot turn completion`);
+            
+            // Add a small delay to ensure server state is fully updated
+            setTimeout(() => {
+                try {
+                    console.log(`🔍 DEBUG: Auto-triggering botTurnComplete for bot ${botPlayer.name} (${data.playerIndex})`);
+                    socket.emit('botTurnComplete', {
+                        roomCode: window.roomId
+                    });
+                    console.log(`🤖 Auto-triggered bot turn complete for ${botPlayer.name} - server should move to next player`);
+                } catch (autoCompleteError) {
+                    console.error(`❌ Auto bot turn complete failed for ${botPlayer.name}:`, autoCompleteError);
+                }
+            }, 1000); // 1 second delay to ensure server state is ready
+        }
     });
 
         // ✅ Restore missing wrapper for turnChanged inside setupSocketListeners
