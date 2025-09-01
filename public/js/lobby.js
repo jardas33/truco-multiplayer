@@ -512,7 +512,7 @@ function setupSocketListeners() {
             return;
         }
         
-        // ✅ CRITICAL FIX: Display round winner message
+        // ✅ CRITICAL FIX: Display round winner message or draw message
         if (data.roundWinner) {
             const winnerName = data.roundWinner.name;
             const winnerCard = data.roundWinner.card;
@@ -533,6 +533,24 @@ function setupSocketListeners() {
                 };
                 addRoundToHistory(roundData);
                 console.log(`📋 Round added to history with ${roundData.cards.length} cards`);
+            }
+        } else if (data.isDraw) {
+            // Handle draw case
+            console.log(`🤝 Round ended in a draw`);
+            showDrawMessage();
+            
+            // ✅ CRITICAL FIX: Add draw round to history
+            if (window.playedCards && window.playedCards.length === 4) {
+                const roundData = {
+                    winner: null,
+                    isDraw: true,
+                    cards: window.playedCards.map(pc => ({
+                        player: { name: pc.player.name },
+                        card: { name: pc.card.name }
+                    }))
+                };
+                addRoundToHistory(roundData);
+                console.log(`📋 Draw round added to history with ${roundData.cards.length} cards`);
             }
         }
         
@@ -919,6 +937,75 @@ function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
             if (messageDiv.parentNode) {
                 messageDiv.remove();
             }
+        });
+    }
+    
+    // Auto-remove message after 4 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 4000);
+}
+
+// ✅ CRITICAL FIX: Function to display draw message
+function showDrawMessage() {
+    // Remove any existing draw message
+    const existingMessage = document.getElementById('drawMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create draw message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'drawMessage';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #87CEEB, #4682B4);
+        color: #fff;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 1000;
+        border: 3px solid #4169E1;
+        min-width: 280px;
+    `;
+    
+    messageDiv.innerHTML = `
+        <button id="closeDrawBtn" style="
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        ">×</button>
+        <div style="margin-top: 10px;">
+            🤝 ROUND DRAW!<br>
+            <div style="font-size: 14px; margin-top: 8px; opacity: 0.9;">
+                Game continues to next round
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Add close button functionality
+    const closeBtn = document.getElementById('closeDrawBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            messageDiv.remove();
         });
     }
     

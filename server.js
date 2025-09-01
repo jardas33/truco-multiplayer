@@ -609,29 +609,56 @@ io.on('connection', (socket) => {
         if (room.game.playedCards.length === 4) {
             console.log(`🏁 Round complete in room ${socket.roomCode}`);
             
-            // ✅ CRITICAL FIX: Implement proper scoring logic
-            const roundWinner = determineRoundWinner(room.game.playedCards);
-            console.log(`🏆 Round winner: ${roundWinner.name} (${roundWinner.team})`);
+            // ✅ CRITICAL FIX: Implement proper scoring logic with draw handling
+            const roundWinner = determineRoundWinner(room.game.playedCards, room);
+            console.log(`🏆 Round winner: ${roundWinner ? roundWinner.name : 'Draw - no winner yet'} (${roundWinner ? roundWinner.team : 'N/A'})`);
             
-            // ✅ Update team scores based on round winner
-            if (roundWinner.team === 'team1') {
+            // ✅ Update team scores based on round winner (only if there's a clear winner)
+            if (roundWinner && roundWinner.team === 'team1') {
                 room.game.scores.team1 += 1;
                 console.log(`🏆 Team 1 score increased to: ${room.game.scores.team1}`);
-            } else if (roundWinner.team === 'team2') {
+            } else if (roundWinner && roundWinner.team === 'team2') {
                 room.game.scores.team2 += 1;
                 console.log(`🏆 Team 2 score increased to: ${room.game.scores.team2}`);
+            } else if (!roundWinner) {
+                console.log(`🤝 Draw - no score change. Scores remain: Team 1: ${room.game.scores.team1}, Team 2: ${room.game.scores.team2}`);
             }
+            
+            // ✅ Store round result for draw resolution
+            if (!room.game.roundResults) {
+                room.game.roundResults = [];
+            }
+            
+            const currentRound = room.game.roundResults.length + 1;
+            room.game.roundResults.push({
+                round: currentRound,
+                winner: roundWinner ? roundWinner.team : null,
+                winnerName: roundWinner ? roundWinner.name : null,
+                isDraw: !roundWinner,
+                cards: room.game.playedCards.map(pc => ({
+                    name: pc.card.name,
+                    value: pc.card.value,
+                    player: pc.player.name,
+                    team: pc.player.team
+                }))
+            });
+            
+            console.log(`📊 Round ${currentRound} result stored:`, room.game.roundResults[room.game.roundResults.length - 1]);
             
             // ✅ Check if a team has won enough rounds to win the game
             const roundsToWin = 2; // Best of 3 rounds
             let gameWinner = null;
-            // ✅ Check for game winner
-            if (room.game.scores.team1 >= roundsToWin) {
-                gameWinner = 'team1';
-                console.log(`🎮 Team 1 wins the game!`);
-            } else if (room.game.scores.team2 >= roundsToWin) {
-                gameWinner = 'team2';
-                console.log(`🎮 Team 2 wins the game!`);
+            // ✅ Check for game winner (only if there's a clear round winner)
+            if (roundWinner) {
+                if (room.game.scores.team1 >= roundsToWin) {
+                    gameWinner = 'team1';
+                    console.log(`🎮 Team 1 wins the game!`);
+                } else if (room.game.scores.team2 >= roundsToWin) {
+                    gameWinner = 'team2';
+                    console.log(`🎮 Team 2 wins the game!`);
+                }
+            } else {
+                console.log(`🤝 Draw in round ${currentRound} - game continues to next round`);
             }
             
             // ✅ CRITICAL FIX: If game is won, handle game completion separately
@@ -698,34 +725,44 @@ io.on('connection', (socket) => {
                 console.log(`🔄 Reset bot played flags for new round`);
             }
             
-            // ✅ CRITICAL FIX: Store round winner for ALL rounds (not just game completions)
-            room.lastRoundWinner = roundWinner;
-            console.log(`🎯 Stored round winner for next round: ${roundWinner.name}`);
-            
-            // ✅ CRITICAL DEBUG: Log all players and their indices for debugging
-            console.log(`🔍 DEBUG: All players in room:`, room.players.map((p, i) => `${i}: ${p.name} (${p.isBot ? 'Bot' : 'Human'})`));
-            console.log(`🔍 DEBUG: Round winner name: "${roundWinner.name}"`);
-            console.log(`🔍 DEBUG: Round winner team: "${roundWinner.team}"`);
-            
-            // ✅ CRITICAL FIX: Round winner should start the next round
-            // Find the player who won the round and set them as current player
-            const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
-            console.log(`🔍 DEBUG: Round winner player index search result: ${roundWinnerPlayerIndex}`);
-            
-            if (roundWinnerPlayerIndex !== -1) {
-                room.game.currentPlayer = roundWinnerPlayerIndex;
-                console.log(`🎯 Round winner ${roundWinner.name} will start next round at index ${roundWinnerPlayerIndex}`);
-                console.log(`🔍 DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            // ✅ CRITICAL FIX: Handle round completion (with or without winner)
+            if (roundWinner) {
+                // There's a clear winner - store for next round
+                room.lastRoundWinner = roundWinner;
+                console.log(`🎯 Stored round winner for next round: ${roundWinner.name}`);
                 
-                // ✅ CRITICAL FIX: Ensure the round winner is properly set for the next round
-                console.log(`🔍 DEBUG: Round winner logic completed successfully`);
-                console.log(`🔍 DEBUG: Next round will start with: ${room.players[room.game.currentPlayer]?.name} (index ${room.game.currentPlayer})`);
+                // ✅ CRITICAL DEBUG: Log all players and their indices for debugging
+                console.log(`🔍 DEBUG: All players in room:`, room.players.map((p, i) => `${i}: ${p.name} (${p.isBot ? 'Bot' : 'Human'})`));
+                console.log(`🔍 DEBUG: Round winner name: "${roundWinner.name}"`);
+                console.log(`🔍 DEBUG: Round winner team: "${roundWinner.team}"`);
+                
+                // ✅ CRITICAL FIX: Round winner should start the next round
+                // Find the player who won the round and set them as current player
+                const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
+                console.log(`🔍 DEBUG: Round winner player index search result: ${roundWinnerPlayerIndex}`);
+                
+                if (roundWinnerPlayerIndex !== -1) {
+                    room.game.currentPlayer = roundWinnerPlayerIndex;
+                    console.log(`🎯 Round winner ${roundWinner.name} will start next round at index ${roundWinnerPlayerIndex}`);
+                    console.log(`🔍 DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                    
+                    // ✅ CRITICAL FIX: Ensure the round winner is properly set for the next round
+                    console.log(`🔍 DEBUG: Round winner logic completed successfully`);
+                    console.log(`🔍 DEBUG: Next round will start with: ${room.players[room.game.currentPlayer]?.name} (index ${room.game.currentPlayer})`);
+                } else {
+                    console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
+                    console.log(`⚠️ DEBUG: Available player names: [${room.players.map(p => `"${p.name}"`).join(', ')}]`);
+                    console.log(`⚠️ DEBUG: Round winner name: "${roundWinner.name}"`);
+                    console.log(`⚠️ DEBUG: This suggests a name mismatch between round winner and player list!`);
+                    room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+                }
             } else {
-                console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
-                console.log(`⚠️ DEBUG: Available player names: [${room.players.map(p => `"${p.name}"`).join(', ')}]`);
-                console.log(`⚠️ DEBUG: Round winner name: "${roundWinner.name}"`);
-                console.log(`⚠️ DEBUG: This suggests a name mismatch between round winner and player list!`);
-                room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+                // Draw - no winner yet, continue with current turn order
+                console.log(`🤝 Draw - no round winner, continuing with current turn order`);
+                console.log(`🔍 DEBUG: Current player remains: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                
+                // For draws, we don't change the current player - the next player in turn order continues
+                // This will be handled by the normal turn progression logic
             }
             
             // ✅ CRITICAL FIX: Ensure only one current player is set
@@ -759,10 +796,11 @@ io.on('connection', (socket) => {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands,
                 roundWinner: roundWinner,
-                scores: room.game.scores
+                scores: room.game.scores,
+                isDraw: !roundWinner
                 // ✅ CRITICAL FIX: gameWinner is NOT sent with roundComplete
             });
-            console.log(`✅ roundComplete event emitted with round winner: ${roundWinner.name} and currentPlayer: ${room.game.currentPlayer}`);
+            console.log(`✅ roundComplete event emitted with round winner: ${roundWinner ? roundWinner.name : 'Draw - no winner'} and currentPlayer: ${room.game.currentPlayer}`);
             
             // ✅ CRITICAL FIX: Only emit turnChanged immediately if the round winner is NOT a bot
             // If the round winner is a bot, wait for them to play their card first
@@ -1290,7 +1328,7 @@ function dealCards(deck) {
 }
 
 // ✅ CRITICAL FIX: Function to determine round winner based on Brazilian Truco rules
-function determineRoundWinner(playedCards) {
+function determineRoundWinner(playedCards, room) {
     console.log(`🏆 Determining round winner from ${playedCards.length} played cards`);
 
     if (!playedCards || playedCards.length !== 4) {
@@ -1301,6 +1339,7 @@ function determineRoundWinner(playedCards) {
     // Find the highest value card (lowest number = highest power in Brazilian Truco)
     let highestCard = null;
     let highestValue = Infinity;
+    let drawCards = [];
 
     playedCards.forEach((playedCard, index) => {
         const card = playedCard.card;
@@ -1316,12 +1355,61 @@ function determineRoundWinner(playedCards) {
                 card: card.name,
                 value: card.value
             };
+            drawCards = [playedCard]; // Reset draw cards
             console.log(`🏆 New highest card: ${card.name} (${card.value}) by ${player.name}`);
+        } else if (card.value === highestValue) {
+            // Draw detected
+            drawCards.push(playedCard);
+            console.log(`🤝 Draw detected: ${card.name} (${card.value}) by ${player.name} ties with ${highestCard.card}`);
         }
     });
 
-    console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
-    return highestCard;
+    // Check if there's a draw
+    if (drawCards.length > 1) {
+        console.log(`🤝 DRAW DETECTED: ${drawCards.length} cards with value ${highestValue}`);
+        
+        // Apply Truco draw rules
+        const currentRound = (room.game.roundResults ? room.game.roundResults.length : 0) + 1;
+        console.log(`🔍 Current round: ${currentRound}`);
+        
+        let drawWinner = null;
+        
+        if (currentRound === 1) {
+            // First round draw: winner will be determined by next round
+            console.log(`🤝 First round draw - winner will be determined by next round`);
+            drawWinner = null; // No winner yet
+        } else {
+            // Second or third round draw: winner is the team that won round 1
+            if (room.game.roundResults && room.game.roundResults.length > 0) {
+                const firstRoundWinner = room.game.roundResults[0].winner;
+                if (firstRoundWinner) {
+                    // Find a player from the winning team
+                    const winningTeamPlayer = room.players.find(p => p.team === firstRoundWinner);
+                    if (winningTeamPlayer) {
+                        drawWinner = {
+                            name: winningTeamPlayer.name,
+                            team: firstRoundWinner,
+                            card: 'Draw Resolution',
+                            value: highestValue,
+                            isDrawResolution: true
+                        };
+                        console.log(`🤝 Draw resolved: ${firstRoundWinner} wins due to first round victory`);
+                    }
+                }
+            }
+            
+            if (!drawWinner) {
+                console.log(`⚠️ Could not resolve draw - no first round winner found`);
+                drawWinner = null;
+            }
+        }
+        
+        return drawWinner;
+    } else {
+        // No draw - clear winner
+        console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
+        return highestCard;
+    }
 }
 
 // ✅ CRITICAL FIX: Function to start a new game after a team wins
