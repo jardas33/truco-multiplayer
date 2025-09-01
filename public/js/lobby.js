@@ -131,15 +131,25 @@ function initSocket() {
                     console.log(`🚨 CRITICAL: Fixed currentPlayerIndex to: ${data.currentPlayer}`);
                 }
                 
+                // ✅ CRITICAL FIX: Show clear turn indicator
+                console.log(`🎯 TURN CHANGE: It's now ${currentPlayer.name}'s turn (${currentPlayer.isBot ? 'Bot' : 'Human'})`);
+                
                 if (!currentPlayer.isBot) {
                     // Human player - make cards clickable
                     currentPlayer.hand.forEach(card => {
                         card.isClickable = true;
                     });
                     console.log(`✅ Made ${currentPlayer.name}'s cards clickable`);
+                    
+                    // ✅ CRITICAL FIX: Show human player turn message
+                    showTurnMessage(`${currentPlayer.name}'s turn - Choose a card!`, 'human');
                 } else {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
+                    
+                    // ✅ CRITICAL FIX: Show bot thinking message
+                    showTurnMessage(`${currentPlayer.name} is thinking...`, 'bot');
+                    
                     // ✅ Bot turn triggered
                     
                     // ✅ CRITICAL FIX: Prevent bot from playing multiple times
@@ -153,11 +163,11 @@ function initSocket() {
                         console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
                     }
                     
-                    // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play immediately
+                    // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play with proper timing
                     if (currentPlayer.isBot) {
-                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play immediately`);
+                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play with delay`);
                         
-                        // ✅ CRITICAL FIX: Use immediate bot play to prevent race conditions
+                        // ✅ CRITICAL FIX: Use single bot play mechanism with proper timing to prevent race conditions
                         if (window.game && 
                             window.game.players[data.currentPlayer] &&
                             window.game.players[data.currentPlayer].isBot &&
@@ -165,51 +175,60 @@ function initSocket() {
                             window.game.players[data.currentPlayer].hand.length > 0 &&
                             !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
                             
-                            console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing immediately`);
+                            console.log(`🤖 Bot ${currentPlayer.name} validated for play`);
                             
-                            // ✅ CRITICAL FIX: Execute bot play immediately without delays
-                            const bot = window.game.players[data.currentPlayer];
-                            const cardIndex = 0;
-                            const selectedCard = bot.hand[cardIndex];
-                            
-                            if (selectedCard && selectedCard.name) {
-                                console.log(`🤖 Bot ${bot.name} playing card immediately: ${selectedCard.name}`);
-                                
-                                // Mark bot as played BEFORE sending event to prevent duplicates
-                                bot.hasPlayedThisTurn = true;
-                                
-                                // Emit playCard event immediately
-                                socket.emit('playCard', {
-                                    roomCode: window.roomId,
-                                    cardIndex: cardIndex,
-                                    playerIndex: data.currentPlayer
-                                });
-                                
-                                console.log(`🤖 Bot ${bot.name} card play event sent immediately`);
-                                
-                                // ✅ CRITICAL FIX: Emit botTurnComplete immediately after bot plays
-                                setTimeout(() => {
-                                    try {
-                                        console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                        socket.emit('botTurnComplete', {
-                                            roomCode: window.roomId
+                            // ✅ CRITICAL FIX: Use single delayed bot play to prevent race conditions
+                            setTimeout(() => {
+                                // Double-check that bot hasn't played yet and it's still their turn
+                                if (window.game && 
+                                    window.game.players[data.currentPlayer] &&
+                                    window.game.players[data.currentPlayer].isBot &&
+                                    !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
+                                    window.game.currentPlayerIndex === data.currentPlayer) {
+                                    
+                                    const bot = window.game.players[data.currentPlayer];
+                                    const cardIndex = 0;
+                                    const selectedCard = bot.hand[cardIndex];
+                                    
+                                    if (selectedCard && selectedCard.name) {
+                                        console.log(`🤖 Bot ${bot.name} playing card after delay: ${selectedCard.name}`);
+                                        
+                                        // Mark bot as played BEFORE sending event to prevent duplicates
+                                        bot.hasPlayedThisTurn = true;
+                                        
+                                        // Emit playCard event
+                                        socket.emit('playCard', {
+                                            roomCode: window.roomId,
+                                            cardIndex: cardIndex,
+                                            playerIndex: data.currentPlayer
                                         });
-                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
-                                    } catch (turnCompleteError) {
-                                        console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                        
+                                        console.log(`🤖 Bot ${bot.name} card play event sent after delay`);
+                                        
+                                        // ✅ CRITICAL FIX: Emit botTurnComplete after bot plays to move to next player
+                                        setTimeout(() => {
+                                            try {
+                                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                                socket.emit('botTurnComplete', {
+                                                    roomCode: window.roomId
+                                                });
+                                                console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
+                                            } catch (turnCompleteError) {
+                                                console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                            }
+                                        }, 2000); // 2 second delay to ensure server processes card play first
                                     }
-                                }, 1000); // Reduced delay to 1 second
-                                
-                            } else {
-                                console.error(`❌ Bot ${bot.name} has no valid card to play`);
-                            }
+                                } else {
+                                    console.log(`🤖 Bot ${currentPlayer.name} validation failed in delayed play - may have already played or turn changed`);
+                                }
+                            }, 1500); // 1.5 second delay for natural pacing
                         } else {
                             console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
                         }
                     }
                     
                     // ✅ CRITICAL FIX: Removed duplicate fallback bot play logic to prevent race conditions
-                    // Now using single bot play mechanism with immediate execution
+                    // Now using single bot play mechanism with proper timing
                 }
             }
             
@@ -2179,3 +2198,85 @@ function triggerBotPlay(botPlayerIndex) {
         }
     }, 1500); // 1.5 second delay for natural bot play timing
 }
+
+// ✅ CRITICAL FIX: Function to show turn messages for better game pacing
+function showTurnMessage(message, playerType) {
+    // Remove any existing turn message
+    const existingMessage = document.getElementById('turnMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create turn message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'turnMessage';
+    
+    // Style based on player type
+    const isBot = playerType === 'bot';
+    const bgColor = isBot ? 'rgba(255, 193, 7, 0.9)' : 'rgba(76, 175, 80, 0.9)';
+    const textColor = isBot ? '#000' : '#fff';
+    const icon = isBot ? '🤖' : '👤';
+    
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 1000;
+        border: 3px solid ${isBot ? '#FF8F00' : '#2E7D32'};
+        min-width: 300px;
+        animation: fadeInOut 0.5s ease-in;
+    `;
+    
+    messageDiv.innerHTML = `
+        <div style="font-size: 24px; margin-bottom: 10px;">${icon}</div>
+        <div>${message}</div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove message after appropriate time
+    const displayTime = isBot ? 3000 : 5000; // Bots: 3s, Humans: 5s
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.style.animation = 'fadeOut 0.5s ease-out';
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 500);
+        }
+    }, displayTime);
+    
+    console.log(`🎯 Turn message displayed: ${message} (${playerType})`);
+}
+
+// ✅ CRITICAL FIX: Add CSS animations for turn messages
+function addTurnMessageStyles() {
+    if (!document.getElementById('turnMessageStyles')) {
+        const style = document.createElement('style');
+        style.id = 'turnMessageStyles';
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes fadeOut {
+                0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// ✅ CRITICAL FIX: Initialize turn message styles
+addTurnMessageStyles();
