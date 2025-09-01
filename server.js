@@ -659,8 +659,9 @@ io.on('connection', (socket) => {
         }
         
         // ✅ Move to next player after bot turn is complete
+        const previousPlayer = room.game.currentPlayer;
         room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
-        console.log(`🔄 Moved to next player: ${room.game.currentPlayer}`);
+        console.log(`🔄 Bot turn complete - moved from player ${previousPlayer} (${room.players[previousPlayer]?.name}) to player ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         
         // ✅ CRITICAL FIX: Reset bot played flags for new turn
         if (room.game.botPlayedThisTurn) {
@@ -669,10 +670,12 @@ io.on('connection', (socket) => {
         }
         
         // Emit turn change event with the new current player
+        console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         io.to(socket.roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands
         });
+        console.log(`✅ turnChanged event emitted successfully`);
     });
 
     // ✅ Handle Truco requests with improved validation
