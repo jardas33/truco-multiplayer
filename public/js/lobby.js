@@ -229,14 +229,18 @@ function initSocket() {
                     
                     console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} (index ${cardIndex})`);
                     
-                    // ✅ CRITICAL FIX: Emit playCard event to server
-                    socket.emit('playCard', {
-                        roomCode: window.roomId,
-                        cardIndex: cardIndex,
-                        playerIndex: data.currentPlayer
-                    });
+                    // ✅ CRITICAL FIX: Add delay to make bot play more naturally
+                    console.log(`🤖 Bot ${bot.name} thinking... (adding 1.5 second delay for natural gameplay)`);
                     
-                    console.log(`🤖 Bot ${bot.name} card play event sent to server`);
+                    // ✅ CRITICAL FIX: Emit playCard event to server after delay
+                    setTimeout(() => {
+                        socket.emit('playCard', {
+                            roomCode: window.roomId,
+                            cardIndex: cardIndex,
+                            playerIndex: data.currentPlayer
+                        });
+                        console.log(`🤖 Bot ${bot.name} card play event sent to server after delay`);
+                    }, 1500); // 1.5 second delay for more natural bot gameplay
                     
                     // ✅ CRITICAL FIX: Emit bot turn complete after playing card
                     // This tells the server to move to the next player
@@ -286,25 +290,30 @@ function initSocket() {
                                 if (fallbackBot && !fallbackBot.hasPlayedThisTurn) {
                                     console.log(`🚨 FALLBACK: Forcing bot ${fallbackBot.name} to play`);
                                     
-                                    // Play the first card
-                                    const fallbackCard = fallbackBot.hand[0];
-                                    if (fallbackCard) {
-                                        socket.emit('playCard', {
-                                            roomCode: window.roomId,
-                                            cardIndex: 0,
-                                            playerIndex: data.currentPlayer
-                                        });
-                                        
-                                        // Notify server that bot turn is complete
-                                        setTimeout(() => {
-                                            console.log(`🔍 DEBUG: FALLBACK - Sending botTurnComplete event for bot ${fallbackBot.name} (${data.currentPlayer})`);
-                                            console.log(`🔍 DEBUG: FALLBACK - botTurnComplete data:`, { roomCode: window.roomId });
-                                            socket.emit('botTurnComplete', {
-                                                roomCode: window.roomId
+                                    // ✅ CRITICAL FIX: Add delay to fallback bot play for natural gameplay
+                                    console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} thinking... (adding 1.5 second delay)`);
+                                    
+                                    setTimeout(() => {
+                                        // Play the first card
+                                        const fallbackCard = fallbackBot.hand[0];
+                                        if (fallbackCard) {
+                                            socket.emit('playCard', {
+                                                roomCode: window.roomId,
+                                                cardIndex: 0,
+                                                playerIndex: data.currentPlayer
                                             });
-                                            console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} turn complete`);
-                                        }, 500);
-                                    }
+                                            
+                                            // Notify server that bot turn is complete
+                                            setTimeout(() => {
+                                                console.log(`🔍 DEBUG: FALLBACK - Sending botTurnComplete event for bot ${fallbackBot.name} (${data.currentPlayer})`);
+                                                console.log(`🔍 DEBUG: FALLBACK - botTurnComplete data:`, { roomCode: window.roomId });
+                                                socket.emit('botTurnComplete', {
+                                                    roomCode: window.roomId
+                                                });
+                                                console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} turn complete`);
+                                            }, 500);
+                                        }
+                                    }, 1500); // 1.5 second delay for natural fallback bot gameplay
                                 }
                             } catch (fallbackError) {
                                 console.error(`❌ FALLBACK: Bot play failed:`, fallbackError);
