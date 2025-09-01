@@ -377,8 +377,6 @@ function setupSocketListeners() {
                         // Allow bots to play when it's actually their turn
                         // Primary: Room creator handles bot plays to prevent duplicate plays
                         // Fallback: Any client can handle bot plays if room creator is not available
-                        const canHandleBotPlays = window.isRoomCreator || 
-                            (typeof window.isRoomCreator === 'undefined' || !window.isRoomCreator);
                         
                         if (window.game && 
                             window.game.players[data.currentPlayer] &&
