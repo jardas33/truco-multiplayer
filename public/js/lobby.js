@@ -478,6 +478,8 @@ function setupSocketListeners() {
                             try {
                                 // ✅ CRITICAL FIX: Always send bot turn complete after bot plays
                                 // This ensures the server moves to the next player
+                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                console.log(`🔍 DEBUG: botTurnComplete data:`, { roomCode: window.roomId });
                                 socket.emit('botTurnComplete', {
                                     roomCode: window.roomId
                                 });
@@ -552,6 +554,8 @@ function setupSocketListeners() {
                                         
                                         // Notify server that bot turn is complete
                                         setTimeout(() => {
+                                            console.log(`🔍 DEBUG: FALLBACK - Sending botTurnComplete event for bot ${fallbackBot.name} (${data.currentPlayer})`);
+                                            console.log(`🔍 DEBUG: FALLBACK - botTurnComplete data:`, { roomCode: window.roomId });
                                             socket.emit('botTurnComplete', {
                                                 roomCode: window.roomId
                                             });

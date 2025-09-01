@@ -646,6 +646,8 @@ io.on('connection', (socket) => {
     // ✅ CRITICAL FIX: Handle bot turn completion to move to next player
     socket.on('botTurnComplete', (data) => {
         console.log(`🤖 Bot turn complete in room: ${socket.roomCode}`);
+        console.log(`🔍 DEBUG: botTurnComplete event received from socket ${socket.id}`);
+        console.log(`🔍 DEBUG: botTurnComplete data:`, data);
         
         if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
@@ -671,11 +673,12 @@ io.on('connection', (socket) => {
         
         // Emit turn change event with the new current player
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+        console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
         io.to(socket.roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands
         });
-        console.log(`✅ turnChanged event emitted successfully`);
+        console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
     });
 
     // ✅ Handle Truco requests with improved validation
