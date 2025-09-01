@@ -262,20 +262,22 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // ✅ Auto-assign teams to players who haven't chosen yet
+            // ✅ CRITICAL FIX: Auto-assign teams with alternating order for balanced gameplay
+            // Player 1 → team1, Player 2 → team2, Player 3 → team1, Player 4 → team2
             let team1Count = 0;
             let team2Count = 0;
             
-            room.players.forEach(player => {
+            room.players.forEach((player, index) => {
                 if (player.team === null) {
-                    // Auto-assign team based on current distribution
-                    if (team1Count < 2) {
-                        player.team = 'team1';
+                    // ✅ CRITICAL FIX: Alternate team assignment for balanced turn order
+                    if (index % 2 === 0) {
+                        player.team = 'team1'; // Player 1 (index 0), Player 3 (index 2)
                         team1Count++;
-                    } else if (team2Count < 2) {
-                        player.team = 'team2';
+                    } else {
+                        player.team = 'team2'; // Player 2 (index 1), Player 4 (index 3)
                         team2Count++;
                     }
+                    console.log(`🎯 Player ${index + 1} (${player.name}) assigned to ${player.team === 'team1' ? 'Team Alfa' : 'Team Beta'}`);
                 } else {
                     // Count existing team assignments
                     if (player.team === 'team1') team1Count++;
@@ -284,6 +286,7 @@ io.on('connection', (socket) => {
             });
 
             console.log(`✅ Team distribution: Team 1 (${team1Count}), Team 2 (${team2Count})`);
+            console.log(`✅ Team assignment:`, room.players.map((p, i) => `${i}: ${p.name} → ${p.team === 'team1' ? 'Team Alfa' : 'Team Beta'}`));
             console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
             // ✅ Create shared deck and distribute cards to all players
@@ -808,7 +811,11 @@ io.on('connection', (socket) => {
             // Human player - move to next player immediately
             console.log(`🔄 Human player ${targetPlayer.name} played card, moving to next player`);
             console.log(`🔍 CRITICAL DEBUG: This should NOT happen for bots! If ${targetPlayer.name} is a bot, this is a BUG!`);
-            room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            
+            // ✅ CRITICAL FIX: Use team-based alternating turn order for human players too
+            const previousPlayer = room.game.currentPlayer;
+            room.game.currentPlayer = getNextPlayerFromOppositeTeam(room.players, room.game.currentPlayer);
+            console.log(`🎯 Human turn order: ${room.players[previousPlayer]?.team} → ${room.players[room.game.currentPlayer]?.team}`);
             
             // ✅ UI FIX: Emit turnChanged immediately for human player progression
             console.log(`🎯 Emitting turnChanged immediately for human player progression`);
@@ -869,7 +876,9 @@ io.on('connection', (socket) => {
         
         // ✅ Move to next player after bot turn is complete
         const previousPlayer = room.game.currentPlayer;
-        const newPlayer = (room.game.currentPlayer + 1) % 4;
+        
+        // ✅ CRITICAL FIX: Use team-based alternating turn order
+        const newPlayer = getNextPlayerFromOppositeTeam(room.players, room.game.currentPlayer);
         
         // ✅ CRITICAL FIX: Prevent duplicate turnChanged events for the same player
         if (room.game.currentPlayer === newPlayer) {
@@ -879,6 +888,7 @@ io.on('connection', (socket) => {
         
         room.game.currentPlayer = newPlayer;
         console.log(`🔄 Bot turn complete - moved from player ${previousPlayer} (${room.players[previousPlayer]?.name}) to player ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+        console.log(`🎯 Turn order: ${room.players[previousPlayer]?.team} → ${room.players[room.game.currentPlayer]?.team}`);
         
         // ✅ CRITICAL FIX: Reset bot played flags for new turn
         if (room.game.botPlayedThisTurn) {
@@ -1138,6 +1148,30 @@ io.on('connection', (socket) => {
 });
 
 // Helper functions
+
+// ✅ CRITICAL FIX: Function to get next player from opposite team for balanced turn order
+function getNextPlayerFromOppositeTeam(players, currentPlayerIndex) {
+    const currentPlayer = players[currentPlayerIndex];
+    const currentTeam = currentPlayer.team;
+    
+    console.log(`🔄 Finding next player from opposite team. Current: ${currentPlayer.name} (${currentTeam})`);
+    
+    // Find the next player from the opposite team
+    for (let i = 1; i < 4; i++) {
+        const nextIndex = (currentPlayerIndex + i) % 4;
+        const nextPlayer = players[nextIndex];
+        
+        if (nextPlayer.team !== currentTeam) {
+            console.log(`🎯 Next player from opposite team: ${nextPlayer.name} (${nextPlayer.team}) at index ${nextIndex}`);
+            return nextIndex;
+        }
+    }
+    
+    // Fallback: if no opposite team player found, move to next player
+    console.log(`⚠️ No opposite team player found, moving to next player`);
+    return (currentPlayerIndex + 1) % 4;
+}
+
 function createDeck() {
     try {
         console.log(`🔍 createDeck function started`);
