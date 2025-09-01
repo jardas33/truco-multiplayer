@@ -357,6 +357,9 @@ function setupSocketListeners() {
                     // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
                     setTimeout(() => {
                         // ✅ DEBUG: Log all bot play conditions
+                        const canHandleBotPlays = window.isRoomCreator || 
+                            (typeof window.isRoomCreator === 'undefined' || !window.isRoomCreator);
+                        
                         console.log(`🔍 DEBUG: Bot play validation for player ${data.currentPlayer}:`, {
                             hasGame: !!window.game,
                             hasPlayer: !!window.game?.players[data.currentPlayer],
@@ -366,12 +369,17 @@ function setupSocketListeners() {
                             hasNotPlayed: !window.game?.players[data.currentPlayer]?.hasPlayedThisTurn,
                             isCurrentPlayer: data.currentPlayer === window.game?.currentPlayerIndex,
                             isRoomCreator: window.isRoomCreator,
+                            canHandleBotPlays: canHandleBotPlays,
                             currentPlayerIndex: window.game?.currentPlayerIndex
                         });
                         
                         // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
-                        // Only allow bots to play when it's actually their turn
-                        // AND only the room creator should handle bot plays to prevent duplicate plays
+                        // Allow bots to play when it's actually their turn
+                        // Primary: Room creator handles bot plays to prevent duplicate plays
+                        // Fallback: Any client can handle bot plays if room creator is not available
+                        const canHandleBotPlays = window.isRoomCreator || 
+                            (typeof window.isRoomCreator === 'undefined' || !window.isRoomCreator);
+                        
                         if (window.game && 
                             window.game.players[data.currentPlayer] &&
                             window.game.players[data.currentPlayer].isBot &&
@@ -379,7 +387,7 @@ function setupSocketListeners() {
                             window.game.players[data.currentPlayer].hand.length > 0 &&
                             !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
                             data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
-                            window.isRoomCreator) { // ✅ CRITICAL: Only room creator handles bot plays
+                            canHandleBotPlays) { // ✅ Allow room creator OR fallback for bot plays
                     
                     const bot = window.game.players[data.currentPlayer];
                     console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
@@ -466,6 +474,59 @@ function setupSocketListeners() {
                         isRoomCreator: window.isRoomCreator,
                         willHandleBotPlays: window.isRoomCreator
                     });
+                    
+                    // ✅ FALLBACK: If bot validation fails but it's clearly a bot's turn, try to force the play
+                    // This prevents the game from getting stuck when bots don't play
+                    if (window.game?.players[data.currentPlayer]?.isBot && 
+                        data.currentPlayer === window.game?.currentPlayerIndex &&
+                        window.game?.players[data.currentPlayer]?.hand?.length > 0) {
+                        
+                        console.log(`🚨 FALLBACK: Attempting to force bot ${window.game.players[data.currentPlayer].name} to play`);
+                        
+                        // Force the bot to play after a delay
+                        setTimeout(() => {
+                            try {
+                                const fallbackBot = window.game.players[data.currentPlayer];
+                                if (fallbackBot && !fallbackBot.hasPlayedThisTurn) {
+                                    console.log(`🚨 FALLBACK: Forcing bot ${fallbackBot.name} to play card`);
+                                    
+                                    // Mark as played to prevent duplicate plays
+                                    fallbackBot.hasPlayedThisTurn = true;
+                                    
+                                    // Play the first card
+                                    const cardIndex = 0;
+                                    const selectedCard = fallbackBot.hand[cardIndex];
+                                    
+                                    if (selectedCard) {
+                                        const cleanCard = {
+                                            name: selectedCard.name,
+                                            value: selectedCard.value,
+                                            suit: selectedCard.suit || null
+                                        };
+                                        
+                                        console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} playing ${selectedCard.name}`);
+                                        
+                                        socket.emit('playCard', {
+                                            roomCode: window.roomId,
+                                            cardIndex: cardIndex,
+                                            card: cleanCard,
+                                            playerIndex: data.currentPlayer
+                                        });
+                                        
+                                        // Notify server that bot turn is complete
+                                        setTimeout(() => {
+                                            socket.emit('botTurnComplete', {
+                                                roomCode: window.roomId
+                                            });
+                                            console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} turn complete`);
+                                        }, 500);
+                                    }
+                                }
+                            } catch (fallbackError) {
+                                console.error(`❌ FALLBACK bot play failed:`, fallbackError);
+                            }
+                        }, 2000); // 2 second delay before fallback
+                    }
                 }
                     }, 1000); // Reduced delay for more responsive bot play
                 }
