@@ -398,18 +398,31 @@ io.on('connection', (socket) => {
         // ✅ CRITICAL FIX: Validate that the client's playerIndex matches the current player
         // This ensures the correct player (including bots) is playing on their turn
         if (room.game.currentPlayer !== clientPlayerIndex) {
-            console.log(`❌ Player ${player.name} tried to play out of turn. Current: ${room.game.currentPlayer}, Client sent: ${clientPlayerIndex}`);
+            console.log(`❌ Play attempt out of turn. Current: ${room.game.currentPlayer}, Client sent: ${clientPlayerIndex}`);
+            console.log(`🔍 DEBUG: Current player should be: ${room.players[room.game.currentPlayer]?.name}, Attempted player: ${room.players[clientPlayerIndex]?.name}`);
             socket.emit('error', 'Not your turn');
             return;
         }
         
-        // ✅ CRITICAL FIX: Validate that the player making the request is the correct player
-        // For bots, the client (human player) is acting on behalf of the bot
+        // ✅ CRITICAL FIX: Validate that the player making the request is authorized
+        // For bots, the room creator can play on their behalf
         const currentPlayer = room.players[clientPlayerIndex];
         if (!currentPlayer) {
             console.log(`❌ Invalid player index: ${clientPlayerIndex}`);
             socket.emit('error', 'Invalid player');
             return;
+        }
+        
+        // ✅ CRITICAL FIX: For bot plays, validate that the requesting player can act on behalf of the bot
+        if (currentPlayer.isBot) {
+            // Only the room creator can play for bots
+            const roomCreator = room.players.find(p => p.isRoomCreator);
+            if (!roomCreator || player.id !== roomCreator.id) {
+                console.log(`❌ Only room creator can play for bots. Requester: ${player.name}, Room creator: ${roomCreator?.name}`);
+                socket.emit('error', 'Not authorized to play for bot');
+                return;
+            }
+            console.log(`✅ Room creator ${player.name} playing for bot ${currentPlayer.name}`);
         }
         
         // ✅ CRITICAL FIX: Prevent bots from playing multiple cards in one turn
@@ -420,12 +433,20 @@ io.on('connection', (socket) => {
                 pc.playerIndex === clientPlayerIndex
             );
             
+            console.log(`🤖 Bot ${currentPlayer.name} (index ${clientPlayerIndex}) play validation:`);
+            console.log(`🤖 Current played cards: ${room.game.playedCards.length}`);
+            console.log(`🤖 Already played this turn: ${botPlayedThisTurn}`);
+            console.log(`🤖 Played cards player indices: [${room.game.playedCards.map(pc => pc.playerIndex).join(', ')}]`);
+            
             if (botPlayedThisTurn) {
                 console.log(`❌ Bot ${currentPlayer.name} already played a card this turn - ignoring duplicate play`);
                 // Don't emit error for bots - just log and continue
                 console.log(`🤖 Bot ${currentPlayer.name} duplicate play ignored, continuing...`);
                 return;
             }
+            
+            console.log(`✅ Bot ${currentPlayer.name} play validated - proceeding with card play`);
+        }
             
             // ✅ CRITICAL FIX: Mark bot as having played this turn to prevent future duplicate plays
             if (!room.game.botPlayedThisTurn) {
