@@ -508,6 +508,8 @@ io.on('connection', (socket) => {
             console.log(`❌ CRITICAL ERROR: Duplicate card detected for player ${targetPlayer.name} (${clientPlayerIndex})`);
             console.log(`❌ Existing card: ${existingCard.card.name}, New card: ${playedCard.name}`);
             console.log(`❌ This will cause incorrect round completion!`);
+            console.log(`❌ CRITICAL ERROR: STOPPING CARD ADDITION TO PREVENT BUG!`);
+            return; // Don't add duplicate card
         }
         
         room.game.playedCards.push({
@@ -558,6 +560,13 @@ io.on('connection', (socket) => {
             console.log(`🔍 DEBUG: Bot ${targetPlayer.name} played 3rd card - this should NOT trigger round completion yet`);
             console.log(`🔍 DEBUG: Waiting for Bot 4 to play the 4th card`);
         }
+        
+        // ✅ CRITICAL DEBUG: Log EXACTLY when round completion check happens
+        console.log(`🔍 CRITICAL DEBUG: Round completion check triggered!`);
+        console.log(`🔍 CRITICAL DEBUG: playedCards.length = ${room.game.playedCards.length}`);
+        console.log(`🔍 CRITICAL DEBUG: This should ONLY happen when 4 cards are played!`);
+        console.log(`🔍 CRITICAL DEBUG: Current player: ${targetPlayer.name} (${clientPlayerIndex})`);
+        console.log(`🔍 CRITICAL DEBUG: If this is NOT the 4th card, this is a BUG!`);
         
         // ✅ Check if round is complete
         if (room.game.playedCards.length === 4) {
@@ -792,6 +801,12 @@ io.on('connection', (socket) => {
             currentPlayer: room.game.currentPlayer
         });
 
+        // ✅ CRITICAL DEBUG: Log EXACTLY when botTurnComplete emits turnChanged
+        console.log(`🔍 CRITICAL DEBUG: botTurnComplete emitting turnChanged event!`);
+        console.log(`🔍 CRITICAL DEBUG: This should be the ONLY source of turnChanged for bot turns!`);
+        console.log(`🔍 CRITICAL DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+        console.log(`🔍 CRITICAL DEBUG: If you see another turnChanged after this, it's a BUG!`);
+        
         // Emit turn change event with the new current player
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
