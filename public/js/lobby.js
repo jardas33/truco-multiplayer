@@ -280,8 +280,17 @@ function setupSocketListeners() {
     // ✅ Handle turn changes with improved validation
     socket.on('turnChanged', (data) => {
         console.log('🔄 Turn changed event received:', data);
+        console.log('🔍 DEBUG: turnChanged event received at timestamp:', new Date().toISOString());
+        console.log('🔍 DEBUG: Current window.game state:', {
+            exists: !!window.game,
+            currentPlayerIndex: window.game?.currentPlayerIndex,
+            players: window.game?.players?.map(p => ({ name: p.name, isBot: p.isBot, isActive: p.isActive }))
+        });
         
-        if (!window.game) return;
+        if (!window.game) {
+            console.log('❌ No game instance found for turnChanged event');
+            return;
+        }
         
         // ✅ Validate new current player index
         if (data.currentPlayer < 0 || data.currentPlayer >= 4) {
@@ -342,6 +351,7 @@ function setupSocketListeners() {
                             } else {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
+                    console.log(`🔍 DEBUG: Bot turn triggered for ${currentPlayer.name} at index ${data.currentPlayer}`);
                     
                     // ✅ CRITICAL FIX: Prevent bot from playing multiple times
                     if (currentPlayer.hasPlayedThisTurn) {
@@ -355,7 +365,9 @@ function setupSocketListeners() {
                     }
                     
                     // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
+                    console.log(`🔍 DEBUG: Setting timeout for bot play logic`);
                     setTimeout(() => {
+                        console.log(`🔍 DEBUG: Bot play timeout executed for ${currentPlayer.name}`);
                         // ✅ DEBUG: Log all bot play conditions
                         const canHandleBotPlays = window.isRoomCreator || 
                             (typeof window.isRoomCreator === 'undefined' || !window.isRoomCreator);
