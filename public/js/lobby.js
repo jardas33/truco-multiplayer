@@ -546,19 +546,9 @@ function setupSocketListeners() {
                 // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
                 nextRoundStarter.hasPlayedThisTurn = false;
                 
-                // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
-                setTimeout(() => {
-                    if (window.game && 
-                        window.game.players[data.currentPlayer] &&
-                        window.game.players[data.currentPlayer].isBot &&
-                        window.game.players[data.currentPlayer].hand && 
-                        window.game.players[data.currentPlayer].hand.length > 0 &&
-                        !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
-                        
-                        console.log(`🤖 Triggering bot play for ${nextRoundStarter.name} in new round`);
-                        triggerBotPlay(data.currentPlayer);
-                    }
-                }, 500); // Small delay to ensure state is fully synchronized
+                // ✅ CRITICAL FIX: Bot play will be triggered by the turnChanged event
+                // Don't manually trigger it here to prevent race conditions
+                console.log(`🤖 Bot ${nextRoundStarter.name} will start new round - bot play will be triggered by turnChanged event`);
             }
         }
         
