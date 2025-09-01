@@ -727,25 +727,32 @@ io.on('connection', (socket) => {
                 }
             }, 3000); // 3 second delay to show the round results
         } else {
-            // ✅ CRITICAL FIX: Handle turn progression based on player type
-            if (targetPlayer.isBot) {
-                // Bot player - don't move to next player immediately
-                // The client-side bot logic needs to complete first
-                console.log(`🔄 Bot ${targetPlayer.name} played card, waiting for turn completion`);
-                
-                // ✅ CRITICAL FIX: Don't emit turnChanged here - wait for botTurnComplete
-                // This prevents multiple turnChanged events that confuse the bot logic
-            } else {
-                // Human player - move to next player immediately
-                console.log(`🔄 Human player ${targetPlayer.name} played card, moving to next player`);
-                room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
-                
-                // Emit turn change event with the new current player
-                io.to(socket.roomCode).emit('turnChanged', {
-                    currentPlayer: room.game.currentPlayer,
-                    allHands: room.game.hands
-                });
-            }
+                    // ✅ CRITICAL DEBUG: Log EXACTLY what type of player this is
+        console.log(`🔍 CRITICAL DEBUG: Player type check for ${targetPlayer.name} (index ${clientPlayerIndex})`);
+        console.log(`🔍 CRITICAL DEBUG: targetPlayer.isBot = ${targetPlayer.isBot}`);
+        console.log(`🔍 CRITICAL DEBUG: targetPlayer object:`, JSON.stringify(targetPlayer, null, 2));
+        console.log(`🔍 CRITICAL DEBUG: Room players array:`, room.players.map(p => ({ name: p.name, isBot: p.isBot, id: p.id })));
+        
+        // ✅ CRITICAL FIX: Handle turn progression based on player type
+        if (targetPlayer.isBot) {
+            // Bot player - don't move to next player immediately
+            // The client-side bot logic needs to complete first
+            console.log(`🔄 Bot ${targetPlayer.name} played card, waiting for turn completion`);
+            
+            // ✅ CRITICAL FIX: Don't emit turnChanged here - wait for botTurnComplete
+            // This prevents multiple turnChanged events that confuse the bot logic
+        } else {
+            // Human player - move to next player immediately
+            console.log(`🔄 Human player ${targetPlayer.name} played card, moving to next player`);
+            console.log(`🔍 CRITICAL DEBUG: This should NOT happen for bots! If ${targetPlayer.name} is a bot, this is a BUG!`);
+            room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+            
+            // Emit turn change event with the new current player
+            io.to(socket.roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.game.hands
+            });
+        }
         }
 
         console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
