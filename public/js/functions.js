@@ -834,8 +834,8 @@ function drawScoringInfo() {
     // Team labels below circles
     fill(255, 255, 255); // White text for labels
     textSize(18);
-    text("Team Alfa", width/2 - 80, 145);
-    text("Team Beta", width/2 + 80, 145);
+    text("Team Alfa", width/2 - 80, 140); // Moved up 5px to avoid touching white line
+    text("Team Beta", width/2 + 80, 140); // Moved up 5px to avoid touching white line
     
     pop();
 }
