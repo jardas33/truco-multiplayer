@@ -472,6 +472,9 @@ io.on('connection', (socket) => {
             // ✅ CRITICAL FIX: Also mark the bot player object to prevent client-side duplicate plays
             targetPlayer.hasPlayedThisTurn = true;
             console.log(`✅ Bot ${targetPlayer.name} marked as played this turn`);
+            
+            // ✅ CRITICAL FIX: Don't reset this flag until the turn actually changes
+            // This prevents race conditions where the flag gets reset too early
         }
         
         console.log(`✅ Turn validation passed: ${targetPlayer.name} (${clientPlayerIndex}) is playing on their turn`);

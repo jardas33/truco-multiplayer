@@ -153,11 +153,11 @@ function initSocket() {
                         console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
                     }
                     
-                    // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play with proper timing
+                    // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play immediately
                     if (currentPlayer.isBot) {
-                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play with delay`);
+                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play immediately`);
                         
-                        // ✅ CRITICAL FIX: Use single bot play mechanism with proper timing to prevent race conditions
+                        // ✅ CRITICAL FIX: Use immediate bot play to prevent race conditions
                         if (window.game && 
                             window.game.players[data.currentPlayer] &&
                             window.game.players[data.currentPlayer].isBot &&
@@ -165,60 +165,51 @@ function initSocket() {
                             window.game.players[data.currentPlayer].hand.length > 0 &&
                             !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
                             
-                            console.log(`🤖 Bot ${currentPlayer.name} validated for play`);
+                            console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing immediately`);
                             
-                            // ✅ CRITICAL FIX: Use single delayed bot play to prevent race conditions
-                            setTimeout(() => {
-                                // Double-check that bot hasn't played yet and it's still their turn
-                                if (window.game && 
-                                    window.game.players[data.currentPlayer] &&
-                                    window.game.players[data.currentPlayer].isBot &&
-                                    !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                                    window.game.currentPlayerIndex === data.currentPlayer) {
-                                    
-                                    const bot = window.game.players[data.currentPlayer];
-                                    const cardIndex = 0;
-                                    const selectedCard = bot.hand[cardIndex];
-                                    
-                                    if (selectedCard && selectedCard.name) {
-                                        console.log(`🤖 Bot ${bot.name} playing card after delay: ${selectedCard.name}`);
-                                        
-                                        // Mark bot as played BEFORE sending event to prevent duplicates
-                                        bot.hasPlayedThisTurn = true;
-                                        
-                                        // Emit playCard event
-                                        socket.emit('playCard', {
-                                            roomCode: window.roomId,
-                                            cardIndex: cardIndex,
-                                            playerIndex: data.currentPlayer
+                            // ✅ CRITICAL FIX: Execute bot play immediately without delays
+                            const bot = window.game.players[data.currentPlayer];
+                            const cardIndex = 0;
+                            const selectedCard = bot.hand[cardIndex];
+                            
+                            if (selectedCard && selectedCard.name) {
+                                console.log(`🤖 Bot ${bot.name} playing card immediately: ${selectedCard.name}`);
+                                
+                                // Mark bot as played BEFORE sending event to prevent duplicates
+                                bot.hasPlayedThisTurn = true;
+                                
+                                // Emit playCard event immediately
+                                socket.emit('playCard', {
+                                    roomCode: window.roomId,
+                                    cardIndex: cardIndex,
+                                    playerIndex: data.currentPlayer
+                                });
+                                
+                                console.log(`🤖 Bot ${bot.name} card play event sent immediately`);
+                                
+                                // ✅ CRITICAL FIX: Emit botTurnComplete immediately after bot plays
+                                setTimeout(() => {
+                                    try {
+                                        console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                        socket.emit('botTurnComplete', {
+                                            roomCode: window.roomId
                                         });
-                                        
-                                        console.log(`🤖 Bot ${bot.name} card play event sent after delay`);
-                                        
-                                        // ✅ CRITICAL FIX: Emit botTurnComplete after bot plays to move to next player
-                                        setTimeout(() => {
-                                            try {
-                                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                                socket.emit('botTurnComplete', {
-                                                    roomCode: window.roomId
-                                                });
-                                                console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
-                                            } catch (turnCompleteError) {
-                                                console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                                            }
-                                        }, 2000); // 2 second delay to ensure server processes card play first
+                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
+                                    } catch (turnCompleteError) {
+                                        console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
                                     }
-                                } else {
-                                    console.log(`🤖 Bot ${currentPlayer.name} validation failed in delayed play - may have already played or turn changed`);
-                                }
-                            }, 1500); // 1.5 second delay for natural pacing
+                                }, 1000); // Reduced delay to 1 second
+                                
+                            } else {
+                                console.error(`❌ Bot ${bot.name} has no valid card to play`);
+                            }
                         } else {
                             console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
                         }
                     }
                     
                     // ✅ CRITICAL FIX: Removed duplicate fallback bot play logic to prevent race conditions
-                    // Now using single bot play mechanism with proper timing
+                    // Now using single bot play mechanism with immediate execution
                 }
             }
             
@@ -546,9 +537,19 @@ function setupSocketListeners() {
                 // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
                 nextRoundStarter.hasPlayedThisTurn = false;
                 
-                // ✅ CRITICAL FIX: Bot play will be triggered by the turnChanged event
-                // Don't manually trigger it here to prevent race conditions
-                console.log(`🤖 Bot ${nextRoundStarter.name} will start new round - bot play will be triggered by turnChanged event`);
+                // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
+                setTimeout(() => {
+                    if (window.game && 
+                        window.game.players[data.currentPlayer] &&
+                        window.game.players[data.currentPlayer].isBot &&
+                        window.game.players[data.currentPlayer].hand && 
+                        window.game.players[data.currentPlayer].hand.length > 0 &&
+                        !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
+                        
+                        console.log(`🤖 Triggering bot play for ${nextRoundStarter.name} in new round`);
+                        triggerBotPlay(data.currentPlayer);
+                    }
+                }, 500); // Small delay to ensure state is fully synchronized
             }
         }
         
