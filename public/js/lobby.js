@@ -385,19 +385,45 @@ function setupSocketListeners() {
                             currentPlayerIndex: window.game?.currentPlayerIndex
                         });
                         
+                        // ✅ CRITICAL DEBUG: Log the exact bot that should be playing
+                        console.log(`🔍 DEBUG: Bot ${data.currentPlayer} (${currentPlayer.name}) should be playing now`);
+                        console.log(`🔍 DEBUG: Bot ${data.currentPlayer} hand:`, window.game?.players[data.currentPlayer]?.hand?.map(c => c.name));
+                        console.log(`🔍 DEBUG: Bot ${data.currentPlayer} hasPlayedThisTurn:`, window.game?.players[data.currentPlayer]?.hasPlayedThisTurn);
+                        
                         // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
                         // Allow bots to play when it's actually their turn
                         // Primary: Room creator handles bot plays to prevent duplicate plays
                         // Fallback: Any client can handle bot plays if room creator is not available
                         
-                        if (window.game && 
-                            window.game.players[data.currentPlayer] &&
-                            window.game.players[data.currentPlayer].isBot &&
-                            window.game.players[data.currentPlayer].hand && 
-                            window.game.players[data.currentPlayer].hand.length > 0 &&
-                            !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                            data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
-                            canHandleBotPlays) { // ✅ Allow room creator OR fallback for bot plays
+                        // ✅ CRITICAL DEBUG: Check each condition individually
+                        const botPlayer = window.game?.players[data.currentPlayer];
+                        const hasGame = !!window.game;
+                        const hasPlayer = !!botPlayer;
+                        const isBot = botPlayer?.isBot;
+                        const hasHand = !!botPlayer?.hand;
+                        const handLength = botPlayer?.hand?.length;
+                        const hasNotPlayed = !botPlayer?.hasPlayedThisTurn;
+                        const isCurrentPlayer = data.currentPlayer === window.game?.currentPlayerIndex;
+                        
+                        console.log(`🔍 DEBUG: Individual bot play conditions:`, {
+                            hasGame,
+                            hasPlayer,
+                            isBot,
+                            hasHand,
+                            handLength,
+                            hasNotPlayed,
+                            isCurrentPlayer,
+                            canHandleBotPlays
+                        });
+                        
+                        if (hasGame && 
+                            hasPlayer &&
+                            isBot &&
+                            hasHand && 
+                            handLength > 0 &&
+                            hasNotPlayed &&
+                            isCurrentPlayer &&
+                            canHandleBotPlays) {
                     
                     const bot = window.game.players[data.currentPlayer];
                     console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
@@ -487,6 +513,12 @@ function setupSocketListeners() {
                         window.game?.players[data.currentPlayer]?.hand?.length > 0) {
                         
                         console.log(`🚨 FALLBACK: Attempting to force bot ${window.game.players[data.currentPlayer].name} to play`);
+                        console.log(`🚨 FALLBACK: Bot ${data.currentPlayer} conditions:`, {
+                            isBot: window.game.players[data.currentPlayer].isBot,
+                            isCurrentPlayer: data.currentPlayer === window.game.currentPlayerIndex,
+                            hasHand: window.game.players[data.currentPlayer].hand?.length > 0,
+                            hasNotPlayed: !window.game.players[data.currentPlayer].hasPlayedThisTurn
+                        });
                         
                         // Force the bot to play after a delay
                         setTimeout(() => {
@@ -530,7 +562,7 @@ function setupSocketListeners() {
                             } catch (fallbackError) {
                                 console.error(`❌ FALLBACK bot play failed:`, fallbackError);
                             }
-                        }, 2000); // 2 second delay before fallback
+                        }, 1000); // Reduced delay for faster fallback
                     }
                 }
                     }, 1000); // Reduced delay for more responsive bot play
