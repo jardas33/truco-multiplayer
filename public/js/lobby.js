@@ -665,6 +665,7 @@ function setupSocketListeners() {
     socket.on('newGameStarted', (data) => {
         console.log('🎮 New game started event received:', data);
         console.log('🔍 DEBUG: newGameStarted event received with data:', data);
+        console.log('🔍 DEBUG: Event received at timestamp:', new Date().toISOString());
         
         if (!window.game) {
             console.log('❌ No game instance found for new game event');
@@ -689,6 +690,7 @@ function setupSocketListeners() {
         
         // Update hands
         if (data.allHands) {
+            console.log('🔍 DEBUG: Processing allHands data:', data.allHands.length, 'hands');
             data.allHands.forEach((hand, index) => {
                 if (window.game.players[index]) {
                     const clientHand = hand.map(card => {
@@ -704,6 +706,8 @@ function setupSocketListeners() {
                     console.log(`🔄 New game - updated ${window.game.players[index].name} hand:`, clientHand.map(c => c.name));
                 }
             });
+        } else {
+            console.log('⚠️ WARNING: No allHands data received in newGameStarted event');
         }
         
         // Update game scores
@@ -744,6 +748,7 @@ function setupSocketListeners() {
         }
         
         console.log('✅ New game started successfully');
+        console.log('🔍 DEBUG: New game initialization completed, game should now be playable');
     });
 }
 

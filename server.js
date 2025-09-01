@@ -506,6 +506,7 @@ io.on('connection', (socket) => {
             // ✅ Check if a team has won enough rounds to win the game
             const roundsToWin = 2; // Best of 3 rounds
             let gameWinner = null;
+            console.log(`🔍 DEBUG: Checking for game winner. Current scores: Team1=${room.game.scores.team1}, Team2=${room.game.scores.team2}, Rounds to win=${roundsToWin}`);
             if (room.game.scores.team1 >= roundsToWin) {
                 gameWinner = 'team1';
                 console.log(`🎮 Team 1 wins the game!`);
@@ -513,10 +514,12 @@ io.on('connection', (socket) => {
                 gameWinner = 'team2';
                 console.log(`🎮 Team 2 wins the game!`);
             }
+            console.log(`🔍 DEBUG: Game winner determined: ${gameWinner}`);
             
             // ✅ CRITICAL FIX: If game is won, handle game completion separately
             if (gameWinner) {
                 console.log(`🎮 Game won by ${gameWinner}, handling game completion...`);
+                console.log(`🔍 DEBUG: Entering game completion block for ${gameWinner}`);
                 
                 // ✅ CRITICAL FIX: Store last round winner for next game
                 room.lastRoundWinner = roundWinner;
@@ -538,18 +541,23 @@ io.on('connection', (socket) => {
                 room.game.playedCards = [];
                 
                 // Emit game complete event instead of round complete
+                console.log(`🔍 DEBUG: Emitting gameComplete event to room ${socket.roomCode}`);
+                console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, gameWinner });
                 io.to(socket.roomCode).emit('gameComplete', {
                     roundWinner: roundWinner,
                     scores: room.game.scores,
                     games: room.game.games,
                     gameWinner: gameWinner
                 });
+                console.log(`🔍 DEBUG: gameComplete event emitted successfully`);
                 
                 // Start new game after 5 seconds
-                console.log(`SERVER: Scheduling new game start in 5 seconds for room ${room.id}. Game winner: ${gameWinner}`);
+                console.log(`SERVER: Scheduling new game start in 5 seconds for room ${socket.roomCode}. Game winner: ${gameWinner}`);
+                console.log(`🔍 DEBUG: setTimeout scheduled for startNewGame`);
                 setTimeout(() => {
-                    console.log(`SERVER: Executing startNewGame for room ${room.id}`);
-                    startNewGame(room, gameWinner);
+                    console.log(`SERVER: Executing startNewGame for room ${socket.roomCode}`);
+                    console.log(`🔍 DEBUG: setTimeout callback executed, calling startNewGame`);
+                    startNewGame(room, gameWinner, socket.roomCode);
                 }, 5000);
                 
                 return; // Don't continue with normal round logic
@@ -700,7 +708,7 @@ io.on('connection', (socket) => {
         }
         
         console.log(`🎮 Executing manual startNewGame for room ${data.roomCode}`);
-        startNewGame(room, 'manual');
+        startNewGame(room, 'manual', data.roomCode);
     });
     
     // ✅ Handle Truco responses with improved validation
@@ -1000,8 +1008,8 @@ function determineRoundWinner(playedCards) {
 }
 
 // ✅ CRITICAL FIX: Function to start a new game after a team wins
-function startNewGame(room, winningTeam) {
-    console.log(`🎮 Starting new game in room: ${room.id} after ${winningTeam} won`);
+function startNewGame(room, winningTeam, roomId) {
+    console.log(`🎮 Starting new game in room: ${roomId} after ${winningTeam} won`);
     
     try {
         // ✅ CRITICAL FIX: Preserve games score, only reset round scores
@@ -1026,7 +1034,7 @@ function startNewGame(room, winningTeam) {
         
         // Create new deck and deal cards
         const deck = createDeck();
-        const hands = dealCards(deck, room.players.length);
+        const hands = dealCards(deck);
         
         // Update game state
         room.game.hands = hands;
@@ -1059,8 +1067,8 @@ function startNewGame(room, winningTeam) {
         console.log(`🔄 New game started with fresh deck and hands`);
         
         // Emit new game started event with both scores and games
-        console.log(`SERVER: Emitting 'newGameStarted' for room ${room.id} with scores:`, room.game.scores, 'and games:', room.game.games);
-        io.to(room.id).emit('newGameStarted', {
+        console.log(`SERVER: Emitting 'newGameStarted' for room ${roomId} with scores:`, room.game.scores, 'and games:', room.game.games);
+        io.to(roomId).emit('newGameStarted', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands,
             scores: room.game.scores,
