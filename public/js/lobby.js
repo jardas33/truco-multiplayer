@@ -277,6 +277,11 @@ function setupSocketListeners() {
         console.log('✅ Card played event synchronized successfully');
     });
 
+    // ✅ CRITICAL TEST: Add a simple test event listener
+    socket.on('testTurnChanged', (data) => {
+        console.log('🧪 TEST: testTurnChanged event received:', data);
+    });
+
     // ✅ Handle turn changes with improved validation
     socket.on('turnChanged', (data) => {
         console.log('🔄 Turn changed event received:', data);
@@ -287,6 +292,9 @@ function setupSocketListeners() {
             currentPlayerIndex: window.game?.currentPlayerIndex,
             players: window.game?.players?.map(p => ({ name: p.name, isBot: p.isBot, isActive: p.isActive }))
         });
+        
+        // ✅ CRITICAL TEST: Log that we're in the turnChanged handler
+        console.log('🚨 CRITICAL: We are inside the turnChanged event handler!');
         
         if (!window.game) {
             console.log('❌ No game instance found for turnChanged event');

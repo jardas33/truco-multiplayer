@@ -676,6 +676,13 @@ io.on('connection', (socket) => {
             console.log(`🔄 Reset bot played flags for new turn`);
         }
         
+        // ✅ CRITICAL TEST: Send a test event first
+        console.log(`🧪 TEST: Sending testTurnChanged event to room ${socket.roomCode}`);
+        io.to(socket.roomCode).emit('testTurnChanged', {
+            message: 'Test event from server',
+            currentPlayer: room.game.currentPlayer
+        });
+
         // Emit turn change event with the new current player
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
