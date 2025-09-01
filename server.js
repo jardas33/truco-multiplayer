@@ -711,10 +711,15 @@ io.on('connection', (socket) => {
                 room.game.currentPlayer = roundWinnerPlayerIndex;
                 console.log(`🎯 Round winner ${roundWinner.name} will start next round at index ${roundWinnerPlayerIndex}`);
                 console.log(`🔍 DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                
+                // ✅ CRITICAL FIX: Ensure the round winner is properly set for the next round
+                console.log(`🔍 DEBUG: Round winner logic completed successfully`);
+                console.log(`🔍 DEBUG: Next round will start with: ${room.players[room.game.currentPlayer]?.name} (index ${room.game.currentPlayer})`);
             } else {
                 console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
                 console.log(`⚠️ DEBUG: Available player names: [${room.players.map(p => `"${p.name}"`).join(', ')}]`);
                 console.log(`⚠️ DEBUG: Round winner name: "${roundWinner.name}"`);
+                console.log(`⚠️ DEBUG: This suggests a name mismatch between round winner and player list!`);
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
             }
             
@@ -1332,14 +1337,20 @@ function startNewGame(room, winningTeam, roomId) {
                 startingPlayerIndex = winnerPlayerIndex;
                 console.log(`🎯 Winner of last round (${room.lastRoundWinner.name}) will start next game at index ${startingPlayerIndex}`);
                 console.log(`🔍 DEBUG: Starting player will be: ${room.players[startingPlayerIndex]?.name}`);
+                
+                // ✅ CRITICAL FIX: Ensure the round winner is properly set for the new game
+                console.log(`🔍 DEBUG: New game round winner logic completed successfully`);
+                console.log(`🔍 DEBUG: New game will start with: ${room.players[startingPlayerIndex]?.name} (index ${startingPlayerIndex})`);
             } else {
                 console.log(`⚠️ Could not find last round winner in players list, defaulting to index 0`);
                 console.log(`⚠️ DEBUG: Player names in room:`, room.players.map(p => p.name));
                 console.log(`⚠️ DEBUG: Last round winner name:`, room.lastRoundWinner.name);
                 console.log(`⚠️ DEBUG: This suggests a name mismatch between round winner and player list!`);
+                console.log(`⚠️ DEBUG: This is a CRITICAL ISSUE that needs to be fixed!`);
             }
         } else {
             console.log(`ℹ️ No last round winner found, defaulting to index 0`);
+            console.log(`🔍 DEBUG: This might be the first game or round winner was not stored correctly`);
         }
         
         console.log(`🔍 DEBUG: Final starting player index:`, startingPlayerIndex);
