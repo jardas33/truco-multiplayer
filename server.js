@@ -63,7 +63,8 @@ io.on('connection', (socket) => {
                 name: `Player 1`,
                 nickname: `Player 1`,
                 team: null, // No team assigned yet
-                isBot: false
+                isBot: false,
+                isRoomCreator: true // ✅ CRITICAL FIX: Mark the room creator
             }],
             game: null
         });
@@ -417,6 +418,13 @@ io.on('connection', (socket) => {
         if (currentPlayer.isBot) {
             // Only the room creator can play for bots
             const roomCreator = room.players.find(p => p.isRoomCreator);
+            console.log(`🔍 DEBUG: Bot play authorization check:`);
+            console.log(`🔍 DEBUG: Current player (bot): ${currentPlayer.name} (${clientPlayerIndex})`);
+            console.log(`🔍 DEBUG: Requester: ${player.name} (${player.id})`);
+            console.log(`🔍 DEBUG: Room creator: ${roomCreator?.name} (${roomCreator?.id})`);
+            console.log(`🔍 DEBUG: Room creator found: ${!!roomCreator}`);
+            console.log(`🔍 DEBUG: IDs match: ${roomCreator ? player.id === roomCreator.id : 'N/A'}`);
+            
             if (!roomCreator || player.id !== roomCreator.id) {
                 console.log(`❌ Only room creator can play for bots. Requester: ${player.name}, Room creator: ${roomCreator?.name}`);
                 socket.emit('error', 'Not authorized to play for bot');
