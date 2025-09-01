@@ -674,7 +674,6 @@ io.on('connection', (socket) => {
             
             // ✅ CRITICAL FIX: Only emit turnChanged immediately if the round winner is NOT a bot
             // If the round winner is a bot, wait for them to play their card first
-            const nextRoundStarter = room.players[room.game.currentPlayer];
             if (nextRoundStarter && !nextRoundStarter.isBot) {
                 // Human player starts next round - emit turnChanged immediately
                 console.log(`🔄 Human player ${nextRoundStarter.name} starts next round - emitting turnChanged immediately`);
@@ -1198,16 +1197,16 @@ function startNewGame(room, winningTeam, roomId) {
         console.log(`🔍 DEBUG: Final starting player index:`, startingPlayerIndex);
         console.log(`🔍 DEBUG: Starting player will be:`, room.players[startingPlayerIndex]?.name || 'Unknown');
         
-                    // ✅ CRITICAL FIX: Ensure starting player index is valid
-            if (startingPlayerIndex < 0 || startingPlayerIndex >= room.players.length) {
-                console.log(`⚠️ Invalid starting player index: ${startingPlayerIndex}, defaulting to 0`);
-                startingPlayerIndex = 0;
-            }
-            
-            room.game.currentPlayer = startingPlayerIndex;
-            room.game.playedCards = [];
-            
-            console.log(`🔍 DEBUG: Final starting player index validated: ${startingPlayerIndex} (${room.players[startingPlayerIndex]?.name})`);
+        // ✅ CRITICAL FIX: Ensure starting player index is valid
+        if (startingPlayerIndex < 0 || startingPlayerIndex >= room.players.length) {
+            console.log(`⚠️ Invalid starting player index: ${startingPlayerIndex}, defaulting to 0`);
+            startingPlayerIndex = 0;
+        }
+        
+        room.game.currentPlayer = startingPlayerIndex;
+        room.game.playedCards = [];
+        
+        console.log(`🔍 DEBUG: Final starting player index validated: ${startingPlayerIndex} (${room.players[startingPlayerIndex]?.name})`);
         
         // Update player hands
         room.players.forEach((player, index) => {
