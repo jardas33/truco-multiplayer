@@ -66,7 +66,8 @@ io.on('connection', (socket) => {
                 isBot: false,
                 isRoomCreator: true // ✅ CRITICAL FIX: Mark the room creator
             }],
-            game: null
+            game: null,
+            isFirstGame: true // ✅ CRITICAL FIX: Mark this as the first game
         });
 
         socket.join(roomCode);
@@ -303,12 +304,34 @@ io.on('connection', (socket) => {
             room.game = {
                 deck: deck,
                 hands: hands,
-                currentPlayer: 0, // ✅ FIRST GAME always starts with Player 1 (index 0)
+                currentPlayer: 0, // Will be set correctly below
                 playedCards: [], // ✅ Clear played cards when starting new game
                 scores: { team1: 0, team2: 0 }
             };
             
-            console.log(`🎯 First game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            // ✅ CRITICAL FIX: Only the very first game starts with Player 1
+            // All subsequent games start with the round winner from the previous game
+            if (!room.isFirstGame) {
+                // This is a subsequent game - start with round winner
+                if (room.lastRoundWinner) {
+                    const winnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
+                    if (winnerPlayerIndex !== -1) {
+                        room.game.currentPlayer = winnerPlayerIndex;
+                        console.log(`🎯 Subsequent game starting with round winner: ${room.lastRoundWinner.name} (index ${winnerPlayerIndex})`);
+                    } else {
+                        room.game.currentPlayer = 0;
+                        console.log(`⚠️ Could not find round winner, defaulting to Player 1`);
+                    }
+                } else {
+                    room.game.currentPlayer = 0;
+                    console.log(`⚠️ No round winner found, defaulting to Player 1`);
+                }
+            } else {
+                // This is the very first game - start with Player 1
+                room.game.currentPlayer = 0;
+                console.log(`🎯 Very first game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                room.isFirstGame = false; // Mark that we've had our first game
+            }
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
             console.log(`🔍 DEBUG: Sending currentPlayer ${room.game.currentPlayer} to all clients`);
