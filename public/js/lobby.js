@@ -438,18 +438,14 @@ function setupSocketListeners() {
                         // This tells the server to move to the next player
                         setTimeout(() => {
                             try {
-                                // ✅ CRITICAL FIX: Double-check bot hasn't already completed turn
-                                if (bot.hasPlayedThisTurn) {
-                                    socket.emit('botTurnComplete', {
-                                        roomCode: window.roomId
-                                    });
-                                    console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
-                                } else {
-                                    console.log(`🤖 Bot ${bot.name} turn already completed - skipping`);
-                                }
+                                // ✅ CRITICAL FIX: Always send bot turn complete after bot plays
+                                // This ensures the server moves to the next player
+                                socket.emit('botTurnComplete', {
+                                    roomCode: window.roomId
+                                });
+                                console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
                             } catch (turnCompleteError) {
                                 console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                                bot.hasPlayedThisTurn = false; // Reset flag for retry
                             }
                         }, 500); // Small delay to ensure card play is processed first
                     } catch (playCardError) {
