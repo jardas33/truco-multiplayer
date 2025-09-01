@@ -308,6 +308,7 @@ io.on('connection', (socket) => {
             };
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
+            console.log(`🔍 DEBUG: Initial game starting with Player 1 (index 0):`, room.players[0]?.name || 'Unknown');
 
             // ✅ Emit gameStart event with hands to all players in the room
             console.log(`🔍 Emitting gameStart event to room: ${roomCode}`);
@@ -1043,18 +1044,30 @@ function startNewGame(room, winningTeam, roomId) {
         // Find the player who won the last round and set them as current player
         let startingPlayerIndex = 0; // Default to first player
         
+        console.log(`🔍 DEBUG: Checking for last round winner in startNewGame`);
+        console.log(`🔍 DEBUG: room.lastRoundWinner:`, room.lastRoundWinner);
+        console.log(`🔍 DEBUG: room.players:`, room.players.map(p => ({ name: p.name, id: p.id })));
+        
         // Look for the last round winner in the room's game state
         if (room.lastRoundWinner) {
+            console.log(`🔍 DEBUG: Found lastRoundWinner:`, room.lastRoundWinner);
             const winnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
+            console.log(`🔍 DEBUG: Winner player index found:`, winnerPlayerIndex);
+            
             if (winnerPlayerIndex !== -1) {
                 startingPlayerIndex = winnerPlayerIndex;
                 console.log(`🎯 Winner of last round (${room.lastRoundWinner.name}) will start next game at index ${startingPlayerIndex}`);
             } else {
                 console.log(`⚠️ Could not find last round winner in players list, defaulting to index 0`);
+                console.log(`⚠️ DEBUG: Player names in room:`, room.players.map(p => p.name));
+                console.log(`⚠️ DEBUG: Last round winner name:`, room.lastRoundWinner.name);
             }
         } else {
             console.log(`ℹ️ No last round winner found, defaulting to index 0`);
         }
+        
+        console.log(`🔍 DEBUG: Final starting player index:`, startingPlayerIndex);
+        console.log(`🔍 DEBUG: Starting player will be:`, room.players[startingPlayerIndex]?.name || 'Unknown');
         
         room.game.currentPlayer = startingPlayerIndex;
         room.game.playedCards = [];
