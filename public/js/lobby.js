@@ -1497,11 +1497,16 @@ function setupButtonListeners() {
     
     // Create Room button
     const createRoomBtn = document.getElementById('createRoomBtn');
+    console.log('Create Room button found:', !!createRoomBtn);
     if (createRoomBtn) {
-        createRoomBtn.onclick = () => {
-            console.log('Create Room clicked');
+        createRoomBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Create Room clicked - preventing default behavior');
             createRoom();
         };
+    } else {
+        console.error('❌ Create Room button not found!');
     }
 
     // Join Room button
@@ -1616,14 +1621,18 @@ function createRoom() {
     console.log('🔍 DEBUG: Socket exists:', !!socket);
     console.log('🔍 DEBUG: Socket connected:', socket?.connected);
     console.log('🔍 DEBUG: Socket ID:', socket?.id);
+    console.log('🔍 DEBUG: Game state:', gameState);
+    console.log('🔍 DEBUG: Game initialized:', gameInitialized);
     
     if (!socket) {
         console.error('❌ Socket not initialized in createRoom');
+        alert('Socket not initialized. Please refresh the page.');
         return;
     }
     
     if (!socket.connected) {
         console.error('❌ Socket not connected in createRoom');
+        alert('Not connected to server. Please check your connection.');
         return;
     }
     
