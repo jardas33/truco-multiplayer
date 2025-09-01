@@ -172,6 +172,18 @@ function initSocket() {
                             currentPlayerIndex: window.game?.currentPlayerIndex
                         });
                         
+                        // ✅ CRITICAL FIX: Additional logging for round winner bot starts
+                        if (window.game?.players[data.currentPlayer]?.isBot) {
+                            console.log(`🔍 DEBUG: Bot ${window.game.players[data.currentPlayer].name} is current player for new round`);
+                            console.log(`🔍 DEBUG: Bot hand:`, window.game.players[data.currentPlayer].hand);
+                            console.log(`🔍 DEBUG: Bot hasPlayedThisTurn:`, window.game.players[data.currentPlayer].hasPlayedThisTurn);
+                            console.log(`🔍 DEBUG: Game state:`, {
+                                currentPlayerIndex: window.game.currentPlayerIndex,
+                                playedCards: window.playedCards?.length || 0,
+                                roundInProgress: window.game.roundInProgress
+                            });
+                        }
+                        
                         // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
                         // Allow bots to play when it's actually their turn
                         // Primary: Room creator handles bot plays to prevent duplicate plays

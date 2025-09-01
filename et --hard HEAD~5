@@ -1,0 +1,10 @@
+[33m4d240a2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m CRITICAL FIX: Fix JavaScript syntax error - missing closing bracket for copyRoomCode function
+[33m74a0f04[m CRITICAL FIX: Fix JavaScript syntax error in lobby.js - removed extra closing brackets that were preventing room creation
+[33m20930e7[m CRITICAL FIX: Move all socket event listeners inside socket initialization - this should fix Bot 4 being skipped
+[33m74dca27[m CRITICAL: Add JavaScript execution testing to verify if lobby.js is running at all
+[33m395a2b4[m CRITICAL: Add comprehensive socket connection testing - verify client-server communication is working
+[33mcc3683e[m CRITICAL: Add comprehensive event system debugging - test events to verify client-server communication
+[33me9fa3c7[m Add socket connection testing: Added test event to verify socket communication between client and server
+[33me9e6e66[m Enhanced bot debugging: Added socket connection checks and turnChanged event data logging
+[33m9a72ba0[m Add team colors to player/bot names: Blue for Team Alfa, Red for Team Beta
+[33m1cfb655[m Enhanced botTurnComplete debugging: Added detailed logging for bot turn completion events on both client and server

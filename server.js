@@ -630,6 +630,20 @@ io.on('connection', (socket) => {
             // ✅ CRITICAL FIX: Ensure only one current player is set
             console.log(`🔍 DEBUG: Final current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             
+            // ✅ CRITICAL FIX: If the round winner is a bot, ensure they can start the next round
+            const nextRoundStarter = room.players[room.game.currentPlayer];
+            if (nextRoundStarter && nextRoundStarter.isBot) {
+                console.log(`🤖 Bot ${nextRoundStarter.name} will start next round - ensuring proper turn handling`);
+                // Reset any bot flags that might prevent the bot from playing
+                if (room.game.botPlayedThisTurn) {
+                    room.game.botPlayedThisTurn.clear();
+                    console.log(`🔄 Reset bot played flags for bot round starter`);
+                }
+                // Ensure the bot's hasPlayedThisTurn flag is reset
+                nextRoundStarter.hasPlayedThisTurn = false;
+                console.log(`🔄 Reset hasPlayedThisTurn for bot ${nextRoundStarter.name}`);
+            }
+            
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             io.to(socket.roomCode).emit('roundComplete', {
                 currentPlayer: room.game.currentPlayer,
