@@ -446,7 +446,6 @@ io.on('connection', (socket) => {
             }
             
             console.log(`✅ Bot ${currentPlayer.name} play validated - proceeding with card play`);
-        }
             
             // ✅ CRITICAL FIX: Mark bot as having played this turn to prevent future duplicate plays
             if (!room.game.botPlayedThisTurn) {
