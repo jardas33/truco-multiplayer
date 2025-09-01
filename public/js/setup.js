@@ -98,18 +98,21 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 - 75, height - 100); // Position in bottom center
+    trucoButton.position(width/2 - 100, height - 120); // Position in bottom center, adjusted for bigger size
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
     trucoButton.style('position', 'absolute'); // Force absolute positioning
-    trucoButton.style('font-size', '18px'); // Bigger text
-    trucoButton.style('padding', '15px 30px'); // Bigger button
-    trucoButton.style('background-color', '#ff4444'); // Red background
+    trucoButton.style('font-size', '24px'); // Much bigger text
+    trucoButton.style('padding', '20px 40px'); // Much bigger button
+    trucoButton.style('background-color', '#dc3545'); // Darker red background for better visibility
     trucoButton.style('color', 'white'); // White text
-    trucoButton.style('border', 'none'); // No border
-    trucoButton.style('border-radius', '8px'); // Rounded corners
+    trucoButton.style('border', '3px solid #fff'); // White border for contrast
+    trucoButton.style('border-radius', '12px'); // More rounded corners
     trucoButton.style('font-weight', 'bold'); // Bold text
+    trucoButton.style('box-shadow', '0 6px 12px rgba(0,0,0,0.4)'); // Add shadow for depth
+    trucoButton.style('cursor', 'pointer'); // Pointer cursor
+    trucoButton.style('transition', 'all 0.2s ease'); // Smooth transitions
     trucoButton.hide();
 
     // Create truco response buttons with proper styling and positioning
