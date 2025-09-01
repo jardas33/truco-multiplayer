@@ -36,6 +36,274 @@ function initSocket() {
 
         socket.on('connect', () => {
             console.log('Connected to server');
+            console.log('🔌 SOCKET CONNECTED:', socket.id);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('🔌 SOCKET DISCONNECTED');
+        });
+
+        // ✅ CRITICAL TEST: Add a simple test event listener
+        socket.on('testTurnChanged', (data) => {
+            console.log('🧪 TEST: testTurnChanged event received:', data);
+        });
+
+        // ✅ CRITICAL TEST: Add a simple test event listener for server responses
+        socket.on('testResponse', (data) => {
+            console.log('🧪 TEST: Received test response from server:', data);
+        });
+
+        // ✅ CRITICAL TEST: Send a test event immediately to verify socket is working
+        setTimeout(() => {
+            console.log('🧪 TEST: Sending test event to server');
+            socket.emit('testEvent', { message: 'Client test event' });
+        }, 1000);
+
+        // ✅ Handle turn changes with improved validation
+        socket.on('turnChanged', (data) => {
+            console.log('🔄 Turn changed event received:', data);
+            console.log('🔍 DEBUG: turnChanged event received at timestamp:', new Date().toISOString());
+            console.log('🔍 DEBUG: turnChanged event data:', JSON.stringify(data));
+            console.log('🔍 DEBUG: Current window.game state:', {
+                exists: !!window.game,
+                currentPlayerIndex: window.game?.currentPlayerIndex,
+                players: window.game?.players?.map(p => ({ name: p.name, isBot: p.isBot, isActive: p.isActive }))
+            });
+            
+            // ✅ CRITICAL TEST: Log that we're in the turnChanged handler
+            console.log('🚨 CRITICAL: We are inside the turnChanged event handler!');
+            
+            if (!window.game) {
+                console.log('❌ No game instance found for turnChanged event');
+                return;
+            }
+            
+            // ✅ Validate new current player index
+            if (data.currentPlayer < 0 || data.currentPlayer >= 4) {
+                console.error('❌ Invalid current player index:', data.currentPlayer);
+                return;
+            }
+            
+            // ✅ Update current player
+            window.game.currentPlayerIndex = data.currentPlayer;
+            
+            // ✅ CRITICAL FIX: Update player active states for turn indicator
+            console.log(`🔄 Updating player active states. Server currentPlayer: ${data.currentPlayer}`);
+            window.game.players.forEach((player, index) => {
+                const wasActive = player.isActive;
+                player.isActive = (index === data.currentPlayer);
+                
+                // ✅ CRITICAL FIX: Reset hasPlayedThisTurn flag for new turn
+                if (index === data.currentPlayer) {
+                    player.hasPlayedThisTurn = false;
+                    console.log(`🔄 Reset hasPlayedThisTurn for ${player.name} (new turn)`);
+                }
+                
+                console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
+            });
+            
+            // ✅ DEBUG: Verify the active player
+            const activePlayer = window.game.players.find(p => p.isActive);
+            console.log(`🔄 Active player after update: ${activePlayer ? activePlayer.name : 'None'} (${activePlayer ? window.game.players.indexOf(activePlayer) : 'N/A'})`);
+            
+            // ✅ Update all player hands with proper formatting and fallback
+            if (data.allHands) {
+                data.allHands.forEach((hand, index) => {
+                    if (window.game.players[index]) {
+                        // ✅ Convert server card format to client format with fallback
+                        const clientHand = hand.map(card => {
+                            const cardImage = getCardImageWithFallback(card.name);
+                            return {
+                                ...card, // Keep all server properties
+                                isClickable: false, // Will be set by game logic
+                                image: cardImage // Use fallback function
+                            };
+                        });
+                        
+                        window.game.players[index].hand = clientHand;
+                    }
+                });
+            }
+            
+            // ✅ Make current player's cards clickable
+            if (window.game.players[data.currentPlayer]) {
+                const currentPlayer = window.game.players[data.currentPlayer];
+                if (!currentPlayer.isBot) {
+                    // Human player - make cards clickable
+                    currentPlayer.hand.forEach(card => {
+                        card.isClickable = true;
+                    });
+                    console.log(`✅ Made ${currentPlayer.name}'s cards clickable`);
+                } else {
+                    // Bot player - trigger bot play
+                    console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
+                    console.log(`🔍 DEBUG: Bot turn triggered for ${currentPlayer.name} at index ${data.currentPlayer}`);
+                    console.log(`🔍 DEBUG: Bot play logic starting for player ${data.currentPlayer}`);
+                    
+                    // ✅ CRITICAL FIX: Prevent bot from playing multiple times
+                    if (currentPlayer.hasPlayedThisTurn) {
+                        console.log(`🤖 Bot ${currentPlayer.name} already played this turn - skipping`);
+                        return;
+                    }
+                    
+                    // ✅ CRITICAL FIX: Ensure window.playedCards is available
+                    if (window.playedCards) {
+                        console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
+                    }
+                    
+                    // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
+                    console.log(`🔍 DEBUG: Setting timeout for bot play logic`);
+                    setTimeout(() => {
+                        console.log(`🔍 DEBUG: Bot play timeout executed for ${currentPlayer.name}`);
+                        // ✅ DEBUG: Log all bot play conditions
+                        const canHandleBotPlays = window.isRoomCreator || 
+                            (typeof window.isRoomCreator === 'undefined' || !window.isRoomCreator);
+                        
+                        console.log(`🔍 DEBUG: Bot play validation for player ${data.currentPlayer}:`, {
+                            hasGame: !!window.game,
+                            hasPlayer: !!window.game?.players[data.currentPlayer],
+                            isBot: window.game?.players[data.currentPlayer]?.isBot,
+                            hasHand: !!window.game?.players[data.currentPlayer]?.hand,
+                            handLength: window.game?.players[data.currentPlayer]?.hand?.length,
+                            hasNotPlayed: !window.game?.players[data.currentPlayer]?.hasPlayedThisTurn,
+                            isCurrentPlayer: data.currentPlayer === window.game?.currentPlayerIndex,
+                            isRoomCreator: window.isRoomCreator,
+                            canHandleBotPlays: canHandleBotPlays,
+                            currentPlayerIndex: window.game?.currentPlayerIndex
+                        });
+                        
+                        // ✅ CRITICAL FIX: COMPLETELY REWRITTEN bot turn validation
+                        // Allow bots to play when it's actually their turn
+                        // Primary: Room creator handles bot plays to prevent duplicate plays
+                        // Fallback: Any client can handle bot plays if room creator is not available
+                        
+                        if (window.game && 
+                            window.game.players[data.currentPlayer] &&
+                            window.game.players[data.currentPlayer].isBot &&
+                            window.game.players[data.currentPlayer].hand && 
+                            window.game.players[data.currentPlayer].hand.length > 0 &&
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
+                            data.currentPlayer === window.game.currentPlayerIndex && // ✅ CRITICAL: Must be current player
+                            canHandleBotPlays) {
+                    
+                    const bot = window.game.players[data.currentPlayer];
+                    console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
+                    
+                    // ✅ CRITICAL FIX: Don't mark bot as played until AFTER successful server response
+                    // This prevents the "already played" error if the server rejects the play
+                    
+                    // ✅ CRITICAL FIX: Always play the first card (index 0) to avoid index issues
+                    const cardIndex = 0;
+                    const selectedCard = bot.hand[cardIndex];
+                    
+                    // ✅ CRITICAL FIX: Additional validation before proceeding
+                    if (!selectedCard || !selectedCard.name || !bot.hand || bot.hand.length === 0) {
+                        console.error(`❌ Bot ${bot.name} cannot play - invalid card or empty hand:`, {
+                            selectedCard,
+                            handLength: bot.hand?.length,
+                            hasPlayedThisTurn: bot.hasPlayedThisTurn
+                        });
+                        return;
+                    }
+                    
+                    console.log(`🤖 Bot ${bot.name} playing card: ${selectedCard.name} (index ${cardIndex})`);
+                    
+                    // ✅ CRITICAL FIX: Emit playCard event to server
+                    socket.emit('playCard', {
+                        roomCode: window.roomId,
+                        cardIndex: cardIndex,
+                        playerIndex: data.currentPlayer
+                    });
+                    
+                    console.log(`🤖 Bot ${bot.name} card play event sent to server`);
+                    
+                    // ✅ CRITICAL FIX: Emit bot turn complete after playing card
+                    // This tells the server to move to the next player
+                    setTimeout(() => {
+                        try {
+                            // ✅ CRITICAL FIX: Always send bot turn complete after bot plays
+                            // This ensures the server moves to the next player
+                            console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                            console.log(`🔍 DEBUG: botTurnComplete data:`, { roomCode: window.roomId });
+                            console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
+                            console.log(`🔍 DEBUG: Socket ID:`, socket.id);
+                            
+                            // ✅ CRITICAL TEST: Send a simple test event first
+                            socket.emit('testEvent', { message: 'Bot turn complete test' });
+                            console.log(`🔍 DEBUG: Test event sent`);
+                            
+                            socket.emit('botTurnComplete', {
+                                roomCode: window.roomId
+                            });
+                            console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
+                            
+                            // ✅ ADDITIONAL DEBUG: Check if socket is still connected after emit
+                            setTimeout(() => {
+                                console.log(`🔍 DEBUG: Socket still connected after botTurnComplete:`, socket.connected);
+                            }, 100);
+                        } catch (turnCompleteError) {
+                            console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                        }
+                    }, 500); // Small delay to ensure card play is processed first
+                    
+                    } else {
+                        console.log(`❌ Bot play validation failed for player ${data.currentPlayer}`);
+                    }
+                    
+                    // ✅ FALLBACK: If bot validation fails but it's clearly a bot's turn, try to force the play
+                    // This prevents the game from getting stuck when bots don't play
+                    if (window.game?.players[data.currentPlayer]?.isBot && 
+                        data.currentPlayer === window.game?.currentPlayerIndex &&
+                        window.game?.players[data.currentPlayer]?.hand?.length > 0) {
+                        
+                        console.log(`🚨 FALLBACK: Attempting to force bot ${window.game.players[data.currentPlayer].name} to play`);
+                        
+                        // Force the bot to play after a delay
+                        setTimeout(() => {
+                            try {
+                                const fallbackBot = window.game.players[data.currentPlayer];
+                                if (fallbackBot && !fallbackBot.hasPlayedThisTurn) {
+                                    console.log(`🚨 FALLBACK: Forcing bot ${fallbackBot.name} to play`);
+                                    
+                                    // Play the first card
+                                    const fallbackCard = fallbackBot.hand[0];
+                                    if (fallbackCard) {
+                                        socket.emit('playCard', {
+                                            roomCode: window.roomId,
+                                            cardIndex: 0,
+                                            playerIndex: data.currentPlayer
+                                        });
+                                        
+                                        // Notify server that bot turn is complete
+                                        setTimeout(() => {
+                                            console.log(`🔍 DEBUG: FALLBACK - Sending botTurnComplete event for bot ${fallbackBot.name} (${data.currentPlayer})`);
+                                            console.log(`🔍 DEBUG: FALLBACK - botTurnComplete data:`, { roomCode: window.roomId });
+                                            socket.emit('botTurnComplete', {
+                                                roomCode: window.roomId
+                                            });
+                                            console.log(`🚨 FALLBACK: Bot ${fallbackBot.name} turn complete`);
+                                        }, 500);
+                                    }
+                                }
+                            } catch (fallbackError) {
+                                console.error(`❌ FALLBACK: Bot play failed:`, fallbackError);
+                            }
+                        }, 1000); // 1 second delay for fallback
+                    }
+                    }, 100); // Small delay to ensure all validations are complete
+                }
+            }
+            
+            // ✅ Force game redraw to show updated turn indicator
+            if (typeof redrawGame === 'function') {
+                redrawGame();
+            } else if (typeof redraw === 'function') {
+                redraw();
+            } else {
+                console.warn('⚠️ No redraw function available for turn changed event');
+            }
+            
+            console.log('✅ Turn changed event processed successfully');
         });
 
         socket.on('connect_error', (error) => {
@@ -281,44 +549,9 @@ function setupSocketListeners() {
         console.log('✅ Card played event synchronized successfully');
     });
 
-    // ✅ CRITICAL TEST: Add a simple test event listener
-    socket.on('testTurnChanged', (data) => {
-        console.log('🧪 TEST: testTurnChanged event received:', data);
-    });
 
-    // ✅ CRITICAL TEST: Add a basic socket event listener to verify socket is working
-    socket.on('connect', () => {
-        console.log('🔌 SOCKET CONNECTED:', socket.id);
-    });
 
-    socket.on('disconnect', () => {
-        console.log('🔌 SOCKET DISCONNECTED');
-    });
 
-    // ✅ CRITICAL TEST: Send a test event immediately to verify socket is working
-    setTimeout(() => {
-        console.log('🧪 TEST: Sending test event to server');
-        socket.emit('testEvent', { message: 'Client test event' });
-    }, 1000);
-
-    // ✅ CRITICAL TEST: Add a simple test event listener for server responses
-    socket.on('testResponse', (data) => {
-        console.log('🧪 TEST: Received test response from server:', data);
-    });
-
-    // ✅ Handle turn changes with improved validation
-    socket.on('turnChanged', (data) => {
-        console.log('🔄 Turn changed event received:', data);
-        console.log('🔍 DEBUG: turnChanged event received at timestamp:', new Date().toISOString());
-        console.log('🔍 DEBUG: turnChanged event data:', JSON.stringify(data));
-        console.log('🔍 DEBUG: Current window.game state:', {
-            exists: !!window.game,
-            currentPlayerIndex: window.game?.currentPlayerIndex,
-            players: window.game?.players?.map(p => ({ name: p.name, isBot: p.isBot, isActive: p.isActive }))
-        });
-        
-        // ✅ CRITICAL TEST: Log that we're in the turnChanged handler
-        console.log('🚨 CRITICAL: We are inside the turnChanged event handler!');
         
         if (!window.game) {
             console.log('❌ No game instance found for turnChanged event');
