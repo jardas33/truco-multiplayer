@@ -390,8 +390,8 @@ function setupSocketListeners() {
                     const bot = window.game.players[data.currentPlayer];
                     console.log(`🤖 Bot ${bot.name} (${data.currentPlayer}) confirmed turn - playing card`);
                     
-                    // ✅ CRITICAL FIX: Mark bot as having played this turn IMMEDIATELY
-                    bot.hasPlayedThisTurn = true;
+                    // ✅ CRITICAL FIX: Don't mark bot as played until AFTER successful server response
+                    // This prevents the "already played" error if the server rejects the play
                     
                     // ✅ CRITICAL FIX: Always play the first card (index 0) to avoid index issues
                     const cardIndex = 0;
@@ -404,7 +404,6 @@ function setupSocketListeners() {
                             handLength: bot.hand?.length,
                             hasPlayedThisTurn: bot.hasPlayedThisTurn
                         });
-                        bot.hasPlayedThisTurn = false; // Reset flag
                         return;
                     }
                     

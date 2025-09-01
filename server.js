@@ -415,9 +415,9 @@ io.on('connection', (socket) => {
         // ✅ CRITICAL FIX: Prevent bots from playing multiple cards in one turn
         if (currentPlayer.isBot) {
             // Check if this bot has already played a card this turn
+            // Use a more robust check that looks at the current turn state
             const botPlayedThisTurn = room.game.playedCards.some(pc => 
-                pc.playerIndex === clientPlayerIndex && 
-                pc.player.id === currentPlayer.id
+                pc.playerIndex === clientPlayerIndex
             );
             
             if (botPlayedThisTurn) {
@@ -425,6 +425,12 @@ io.on('connection', (socket) => {
                 socket.emit('error', 'Bot already played this turn');
                 return;
             }
+            
+            // ✅ CRITICAL FIX: Mark bot as having played this turn to prevent future duplicate plays
+            if (!room.game.botPlayedThisTurn) {
+                room.game.botPlayedThisTurn = new Set();
+            }
+            room.game.botPlayedThisTurn.add(clientPlayerIndex);
         }
         
         console.log(`✅ Turn validation passed: ${currentPlayer.name} (${clientPlayerIndex}) is playing on their turn`);
@@ -575,6 +581,12 @@ io.on('connection', (socket) => {
                 }
             });
             
+            // ✅ CRITICAL FIX: Reset bot played flags for new round
+            if (room.game.botPlayedThisTurn) {
+                room.game.botPlayedThisTurn.clear();
+                console.log(`🔄 Reset bot played flags for new round`);
+            }
+            
             // ✅ CRITICAL FIX: Round winner should start the next round
             // Find the player who won the round and set them as current player
             const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
@@ -645,6 +657,12 @@ io.on('connection', (socket) => {
         // ✅ Move to next player after bot turn is complete
         room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
         console.log(`🔄 Moved to next player: ${room.game.currentPlayer}`);
+        
+        // ✅ CRITICAL FIX: Reset bot played flags for new turn
+        if (room.game.botPlayedThisTurn) {
+            room.game.botPlayedThisTurn.clear();
+            console.log(`🔄 Reset bot played flags for new turn`);
+        }
         
         // Emit turn change event with the new current player
         io.to(socket.roomCode).emit('turnChanged', {
