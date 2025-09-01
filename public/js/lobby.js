@@ -148,8 +148,7 @@ function initSocket() {
                     });
                     console.log(`✅ Made ${currentPlayer.name}'s cards clickable`);
                     
-                    // ✅ CRITICAL FIX: Show human player turn message
-                    showTurnMessage(`${currentPlayer.name}'s turn - Choose a card!`, 'human');
+                    // ✅ Turn message removed per user request
                 } else {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
@@ -2232,84 +2231,6 @@ function triggerBotPlay(botPlayerIndex) {
     }, 100); // Minimal delay to prevent race conditions
 }
 
-// ✅ CRITICAL FIX: Function to show turn messages for better game pacing (NO DELAYS)
-function showTurnMessage(message, playerType) {
-    // Remove any existing turn message
-    const existingMessage = document.getElementById('turnMessage');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
-    
-    // Create turn message element
-    const messageDiv = document.createElement('div');
-    messageDiv.id = 'turnMessage';
-    
-    // Style based on player type
-    const isBot = playerType === 'bot';
-    const bgColor = isBot ? 'rgba(255, 193, 7, 0.9)' : 'rgba(76, 175, 80, 0.9)';
-    const textColor = isBot ? '#000' : '#fff';
-    const icon = isBot ? '🤖' : '👤';
-    
-    messageDiv.style.cssText = `
-        position: fixed;
-        top: 15%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${bgColor};
-        color: ${textColor};
-        padding: 20px 30px;
-        border-radius: 15px;
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        z-index: 1000;
-        border: 3px solid ${isBot ? '#FF8F00' : '#2E7D32'};
-        min-width: 300px;
-        animation: fadeInOut 0.5s ease-in;
-    `;
-    
-    messageDiv.innerHTML = `
-        <div style="font-size: 24px; margin-bottom: 10px;">${icon}</div>
-        <div>${message}</div>
-    `;
-    
-    document.body.appendChild(messageDiv);
-    
-    // Auto-remove message after appropriate time
-    const displayTime = isBot ? 2000 : 5000; // Bots: 2s, Humans: 5s (shorter for immediate execution)
-    setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.style.animation = 'fadeOut 0.5s ease-out';
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.remove();
-                }
-            }, 500);
-        }
-    }, displayTime);
-    
-    console.log(`🎯 Turn message displayed: ${message} (${playerType})`);
-}
+// ✅ Turn message function removed per user request
 
-// ✅ CRITICAL FIX: Add CSS animations for turn messages
-function addTurnMessageStyles() {
-    if (!document.getElementById('turnMessageStyles')) {
-        const style = document.createElement('style');
-        style.id = 'turnMessageStyles';
-        style.textContent = `
-            @keyframes fadeInOut {
-                0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-                100% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            }
-            @keyframes fadeOut {
-                0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-                100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-}
-
-// ✅ CRITICAL FIX: Initialize turn message styles
-addTurnMessageStyles();
+// ✅ Turn message CSS and initialization removed per user request
