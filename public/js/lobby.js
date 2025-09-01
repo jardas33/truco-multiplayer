@@ -195,8 +195,18 @@ function initSocket() {
                                         
                                         console.log(`🤖 Bot ${bot.name} card play event sent after delay`);
                                         
-                                        // ✅ CRITICAL FIX: botTurnComplete is now handled by triggerBotPlay function
-                                        // This prevents duplicate botTurnComplete emissions that cause race conditions
+                                        // ✅ CRITICAL FIX: Emit botTurnComplete after bot plays to move to next player
+                                        setTimeout(() => {
+                                            try {
+                                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                                socket.emit('botTurnComplete', {
+                                                    roomCode: window.roomId
+                                                });
+                                                console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
+                                            } catch (turnCompleteError) {
+                                                console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                            }
+                                        }, 2000); // 2 second delay to ensure server processes card play first
                                     }
                                 } else {
                                     console.log(`🤖 Bot ${currentPlayer.name} validation failed in delayed play - may have already played or turn changed`);
