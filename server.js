@@ -395,6 +395,15 @@ io.on('connection', (socket) => {
         console.log(`🃏 Turn validation: Current player: ${room.game.currentPlayer}, Player index: ${playerIndex}, Player: ${player.name}`);
         console.log(`🃏 Client sent playerIndex: ${clientPlayerIndex}, Server calculated: ${playerIndex}`);
         
+        // ✅ CRITICAL FIX: Validate that the player making the request is authorized
+        // For bots, the room creator can play on their behalf
+        const targetPlayer = room.players[clientPlayerIndex];
+        if (!targetPlayer) {
+            console.log(`❌ Invalid player index: ${clientPlayerIndex}`);
+            socket.emit('error', 'Invalid player');
+            return;
+        }
+        
         // ✅ CRITICAL FIX: Validate that the client's playerIndex matches the current player
         // This ensures the correct player (including bots) is playing on their turn
         if (room.game.currentPlayer !== clientPlayerIndex) {
@@ -410,15 +419,6 @@ io.on('connection', (socket) => {
                 socket.emit('error', 'Not your turn');
                 return;
             }
-        }
-        
-        // ✅ CRITICAL FIX: Validate that the player making the request is authorized
-        // For bots, the room creator can play on their behalf
-        const targetPlayer = room.players[clientPlayerIndex];
-        if (!targetPlayer) {
-            console.log(`❌ Invalid player index: ${clientPlayerIndex}`);
-            socket.emit('error', 'Invalid player');
-            return;
         }
         
         // ✅ CRITICAL FIX: For bot plays, validate that the requesting player can act on behalf of the bot
