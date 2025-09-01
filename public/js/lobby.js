@@ -952,7 +952,6 @@ function showNewGameMessage() {
         ">✕</button>
         <div style="margin-bottom: 15px;">🃏 NEW GAME STARTED! 🃏</div>
         <div style="font-size: 18px; margin-bottom: 10px;">Fresh cards dealt!</div>
-        <div style="font-size: 16px; margin-top: 10px;">Scores reset to 0-0</div>
     `;
     
     document.body.appendChild(messageDiv);
