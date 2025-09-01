@@ -147,8 +147,7 @@ function initSocket() {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
                     
-                    // ✅ CRITICAL FIX: Show bot thinking message immediately
-                    showTurnMessage(`${currentPlayer.name} is thinking...`, 'bot');
+                    // ✅ REMOVED: Bot thinking message popup
                     
                     // ✅ CRITICAL FIX: Add CSS animation for visual stability (NO execution delay)
                     const turnIndicator = document.querySelector('.turn-indicator');
@@ -789,6 +788,26 @@ function setupSocketListeners() {
                 console.log(`🔄 New game - reset hasPlayedThisTurn for ${player.name}`);
             }
         });
+        
+        // ✅ CRITICAL FIX: If current player is a bot, trigger bot play for new game
+        const currentPlayer = window.game.players[window.game.currentPlayerIndex];
+        if (currentPlayer && currentPlayer.isBot) {
+            console.log(`🤖 Bot ${currentPlayer.name} starts new game - triggering bot play`);
+            
+            // ✅ CRITICAL FIX: Trigger bot play for new game starter
+            setTimeout(() => {
+                if (window.game && 
+                    window.game.players[window.game.currentPlayerIndex] &&
+                    window.game.players[window.game.currentPlayerIndex].isBot &&
+                    window.game.players[window.game.currentPlayerIndex].hand && 
+                    window.game.players[window.game.currentPlayerIndex].hand.length > 0 &&
+                    !window.game.players[window.game.currentPlayerIndex].hasPlayedThisTurn) {
+                    
+                    console.log(`🤖 Triggering bot play for ${currentPlayer.name} in new game`);
+                    triggerBotPlay(window.game.currentPlayerIndex);
+                }
+            }, 1000); // 1-second delay for new game initialization
+        }
         
         // Show new game message
         showNewGameMessage();
