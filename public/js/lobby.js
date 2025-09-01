@@ -1,9 +1,13 @@
+// ✅ CRITICAL TEST: Log that JavaScript is executing
+console.log('🚨 CRITICAL: lobby.js is executing at:', new Date().toISOString());
+
 // Global variables
 // socket is already declared in variables.js
 // gameInitialized is already declared in variables.js
 
 // Initialize socket and lobby when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚨 CRITICAL: DOMContentLoaded event fired, initializing lobby');
     console.log('DOM loaded, initializing game...');
     // Wait for p5.js to be ready
     setTimeout(initGame, 100);
