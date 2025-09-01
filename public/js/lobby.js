@@ -281,6 +281,7 @@ function setupSocketListeners() {
     socket.on('turnChanged', (data) => {
         console.log('🔄 Turn changed event received:', data);
         console.log('🔍 DEBUG: turnChanged event received at timestamp:', new Date().toISOString());
+        console.log('🔍 DEBUG: turnChanged event data:', JSON.stringify(data));
         console.log('🔍 DEBUG: Current window.game state:', {
             exists: !!window.game,
             currentPlayerIndex: window.game?.currentPlayerIndex,
@@ -352,6 +353,7 @@ function setupSocketListeners() {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
                     console.log(`🔍 DEBUG: Bot turn triggered for ${currentPlayer.name} at index ${data.currentPlayer}`);
+                    console.log(`🔍 DEBUG: Bot play logic starting for player ${data.currentPlayer}`);
                     
                     // ✅ CRITICAL FIX: Prevent bot from playing multiple times
                     if (currentPlayer.hasPlayedThisTurn) {
@@ -472,22 +474,30 @@ function setupSocketListeners() {
                             playerIndex: data.currentPlayer
                         });
                         
-                        // ✅ CRITICAL FIX: Emit bot turn complete after playing card
-                        // This tells the server to move to the next player
-                        setTimeout(() => {
-                            try {
-                                // ✅ CRITICAL FIX: Always send bot turn complete after bot plays
-                                // This ensures the server moves to the next player
-                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                console.log(`🔍 DEBUG: botTurnComplete data:`, { roomCode: window.roomId });
-                                socket.emit('botTurnComplete', {
-                                    roomCode: window.roomId
-                                });
-                                console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
-                            } catch (turnCompleteError) {
-                                console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                            }
-                        }, 500); // Small delay to ensure card play is processed first
+                                            // ✅ CRITICAL FIX: Emit bot turn complete after playing card
+                    // This tells the server to move to the next player
+                    setTimeout(() => {
+                        try {
+                            // ✅ CRITICAL FIX: Always send bot turn complete after bot plays
+                            // This ensures the server moves to the next player
+                            console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                            console.log(`🔍 DEBUG: botTurnComplete data:`, { roomCode: window.roomId });
+                            console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
+                            console.log(`🔍 DEBUG: Socket ID:`, socket.id);
+                            
+                            socket.emit('botTurnComplete', {
+                                roomCode: window.roomId
+                            });
+                            console.log(`🤖 Bot ${bot.name} turn complete - notified server to move to next player`);
+                            
+                            // ✅ ADDITIONAL DEBUG: Check if socket is still connected after emit
+                            setTimeout(() => {
+                                console.log(`🔍 DEBUG: Socket still connected after botTurnComplete:`, socket.connected);
+                            }, 100);
+                        } catch (turnCompleteError) {
+                            console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                        }
+                    }, 500); // Small delay to ensure card play is processed first
                     } catch (playCardError) {
                         console.error(`❌ Bot ${bot.name} playCard failed:`, playCardError);
                         bot.hasPlayedThisTurn = false; // Reset flag for retry
