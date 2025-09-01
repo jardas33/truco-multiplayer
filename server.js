@@ -646,6 +646,8 @@ io.on('connection', (socket) => {
     // ✅ TEST: Handle test events to verify socket connection
     socket.on('testEvent', (data) => {
         console.log(`🧪 TEST EVENT received from socket ${socket.id}:`, data);
+        // Send a response back to the client
+        socket.emit('testResponse', { message: 'Server received your test event', timestamp: new Date().toISOString() });
     });
 
     // ✅ CRITICAL FIX: Handle bot turn completion to move to next player

@@ -282,6 +282,26 @@ function setupSocketListeners() {
         console.log('🧪 TEST: testTurnChanged event received:', data);
     });
 
+    // ✅ CRITICAL TEST: Add a basic socket event listener to verify socket is working
+    socket.on('connect', () => {
+        console.log('🔌 SOCKET CONNECTED:', socket.id);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('🔌 SOCKET DISCONNECTED');
+    });
+
+    // ✅ CRITICAL TEST: Send a test event immediately to verify socket is working
+    setTimeout(() => {
+        console.log('🧪 TEST: Sending test event to server');
+        socket.emit('testEvent', { message: 'Client test event' });
+    }, 1000);
+
+    // ✅ CRITICAL TEST: Add a simple test event listener for server responses
+    socket.on('testResponse', (data) => {
+        console.log('🧪 TEST: Received test response from server:', data);
+    });
+
     // ✅ Handle turn changes with improved validation
     socket.on('turnChanged', (data) => {
         console.log('🔄 Turn changed event received:', data);
