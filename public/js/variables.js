@@ -66,11 +66,6 @@ let gameState = gameStateEnum.Menu;
 let width = window.innerWidth || 800;  // Default width
 let height = window.innerHeight || 600; // Default height
 
-// ✅ Add utility functions
-function lerp(start, end, amt) {
-    return start + (end - start) * amt;
-}
-
 // ✅ Add window resize handler to update dimensions
 function updateDimensions() {
     width = window.innerWidth || 800;
