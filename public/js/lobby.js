@@ -88,10 +88,11 @@ function initSocket() {
                 const wasActive = player.isActive;
                 player.isActive = (index === data.currentPlayer);
                 
-                // ✅ CRITICAL FIX: Reset hasPlayedThisTurn flag for new turn
+                // ✅ CRITICAL FIX: Reset hasPlayedThisTurn and isPlaying flags for new turn
                 if (index === data.currentPlayer) {
                     player.hasPlayedThisTurn = false;
-                    console.log(`🔄 Reset hasPlayedThisTurn for ${player.name} (new turn)`);
+                    player.isPlaying = false;
+                    console.log(`🔄 Reset hasPlayedThisTurn and isPlaying for ${player.name} (new turn)`);
                 }
                 
                 console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
@@ -182,7 +183,8 @@ function initSocket() {
                             window.game.players[data.currentPlayer].isBot &&
                             window.game.players[data.currentPlayer].hand && 
                             window.game.players[data.currentPlayer].hand.length > 0 &&
-                            !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
+                            !window.game.players[data.currentPlayer].isPlaying) {
                             
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
@@ -195,7 +197,8 @@ function initSocket() {
                                 if (selectedCard && selectedCard.name) {
                                     console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
                                     
-                                    // Mark bot as played BEFORE sending event to prevent duplicates
+                                    // Mark bot as playing and played BEFORE sending event to prevent duplicates
+                                    bot.isPlaying = true;
                                     bot.hasPlayedThisTurn = true;
                                     
                                     // Emit playCard event
