@@ -210,7 +210,7 @@ function createDeck() {
         console.log("Game started successfully");
         console.log("Player indices:", this.players.map(p => `${p.name}: ${p.playerIndex}`));
         console.log("Current player:", this.currentPlayerIndex);
-        console.log("Game mode:", window.isMultiplayerMode ? "Multiplayer" : "Single Player");
+        console.log("Game mode: Multiplayer");
       }
   
     nextPlayer() {
@@ -336,7 +336,7 @@ function createDeck() {
       
       // ✅ ONLY update local state if NOT in multiplayer mode or if server communication failed
       if (!window.isMultiplayerMode) { // Use global isMultiplayerMode
-        console.log(`📊 Single player mode - updating local state`);
+        console.log(`📊 Local mode - updating local state`);
         console.log(`📊 Cards played this round: ${playedCards.length}/${this.players.length}`);
 
         // ✅ CRITICAL FIX: Use correct playedCards reference for multiplayer
@@ -974,26 +974,7 @@ function windowResized() {
     }
 }
   
-  function startSinglePlayerGame() {
-    console.log("Starting single player game...");
-    window.isMultiplayerMode = false; // Set global isMultiplayerMode
-    gameState = gameStateEnum.Playing;
-    window.players = [];
-    
-    // Create human player (Player 1 - Team Alfa)
-    window.players.push(new Player("Player 1", "team1", false, 0));
-    
-    // Create bot players with correct team assignments
-    window.players.push(new Player("Bot 1", "team2", true, 1));  // Team Beta
-    window.players.push(new Player("Bot 2", "team1", true, 2));  // Team Alfa  
-    window.players.push(new Player("Bot 3", "team2", true, 3));  // Team Beta
 
-    createDeck();
-    shuffleDeck(deck);
-    distributeCards(window.players, deck);
-    window.game = new window.Game(window.players);
-    window.game.startGame();
-  }
   
   function drawPlayerHand() {
     if (!playerHand || !playerHand.length) return;

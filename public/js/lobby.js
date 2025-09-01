@@ -1223,14 +1223,7 @@ function setupButtonListeners() {
         };
     }
     
-    // Start Single Player Game button
-    const startSinglePlayerBtn = document.getElementById('startSinglePlayerBtn');
-    if (startSinglePlayerBtn) {
-        startSinglePlayerBtn.onclick = () => {
-            console.log('Start Single Player Game clicked');
-            startSinglePlayerGame();
-        };
-    }
+
 
     // ✅ Back to Main Menu button
     const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
@@ -1380,7 +1373,6 @@ function updateLobbyUI(inRoom) {
     // Room creation/joining controls - only show in main menu
     const createRoomBtn = document.getElementById('createRoomBtn');
     const joinRoomBtn = document.getElementById('joinRoomBtn');
-    const startSinglePlayerBtn = document.getElementById('startSinglePlayerBtn');
     
     // Room management controls - only show when in a room
     const addBotBtn = document.getElementById('addBotBtn');
@@ -1395,7 +1387,6 @@ function updateLobbyUI(inRoom) {
         // Hide room creation/joining options
         if (createRoomBtn) createRoomBtn.style.display = 'none';
         if (joinRoomBtn) joinRoomBtn.style.display = 'none';
-        if (startSinglePlayerBtn) startSinglePlayerBtn.style.display = 'none';
         
         // Show room management options
         if (addBotBtn) addBotBtn.style.display = 'inline-block';
@@ -1421,7 +1412,6 @@ function updateLobbyUI(inRoom) {
         // Show room creation/joining options
         if (createRoomBtn) createRoomBtn.style.display = 'inline-block';
         if (joinRoomBtn) joinRoomBtn.style.display = 'inline-block';
-        if (startSinglePlayerBtn) startSinglePlayerBtn.style.display = 'inline-block';
         
         // Hide room management options
         if (addBotBtn) addBotBtn.style.display = 'none';
@@ -1484,100 +1474,7 @@ function hideRoomControls() {
     }
 }
 
-function startSinglePlayerGame() {
-    console.log('Starting single player game...');
-    
-    // CRITICAL: Set game state to Playing FIRST and ensure it's global
-    window.gameState = gameStateEnum.Playing;
-    gameState = gameStateEnum.Playing;
-    console.log('Game state set to:', gameState);
-    console.log('Global game state set to:', window.gameState);
-    
-    // Create players array with one human player and three bots
-    let players = [
-        new Player("Player 1", "team1", false),
-        new Player("Bot 1", "team2", true),
-        new Player("Bot 2", "team1", true),
-        new Player("Bot 3", "team2", true)
-    ];
-    
-    console.log("Players created:", players);
-    
-    // Initialize game with players
-    window.game = new Game(players);
-    
-    // Initialize game variables
-    // ✅ REMOVED: Local playedCards variable that was shadowing window.playedCards
-    teamAlfaRounds = 0;
-    teamBetaRounds = 0;
-    teamAlfaGames = 0;
-    teamBetaGames = 0;
-    teamAlfaSets = 0;
-    teamBetaSets = 0;
-    
-    // Start the game
-    window.game.startGame();
-    
-    // CRITICAL: Ensure proper UI transition and canvas parenting
-    console.log('Transitioning UI to game view...');
-    
-    // Force the Game div to be visible
-    const gameElement = document.getElementById('Game');
-    if (gameElement) {
-        gameElement.style.display = 'block';
-        gameElement.style.zIndex = '1';
-        console.log('Game div made visible');
-    }
-    
-    // Hide the Menu div
-    const menuElement = document.getElementById('Menu');
-    if (menuElement) {
-        menuElement.style.display = 'none';
-        console.log('Menu div hidden');
-    }
-    
-    // Hide other elements
-    const instructionsElement = document.getElementById('Instructions');
-    if (instructionsElement) {
-        instructionsElement.style.display = 'none';
-    }
-    
-    const valuesElement = document.getElementById('Values');
-    if (valuesElement) {
-        valuesElement.style.display = 'none';
-    }
-    
-    // CRITICAL: Move canvas to Game div manually
-    if (window.gameCanvas) {
-        try {
-            console.log('Moving canvas to Game div...');
-            window.gameCanvas.parent('Game');
-            console.log('Canvas moved to Game div successfully');
-        } catch (error) {
-            console.error('Error moving canvas to Game div:', error);
-        }
-    } else {
-        console.error('No gameCanvas found!');
-    }
-    
-    // Try to show back button if available
-    if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
-        try {
-            backToMainMenuButton.show();
-            console.log('Back button shown');
-        } catch (e) {
-            console.log('Back button not available yet');
-        }
-    }
-    
-    // Force a redraw to trigger the UI transition
-    if (typeof redraw === 'function') {
-        redraw();
-        console.log('Forced p5.js redraw to trigger UI transition');
-    }
-    
-    console.log('Single player game started successfully');
-}
+
 
 // ✅ Player Customization Functions
 function changeNickname() {
