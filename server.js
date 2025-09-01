@@ -311,7 +311,7 @@ io.on('connection', (socket) => {
             console.log(`🎲 Random starting player: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
-            // ✅ Game starting with Player 1 (index 0)
+            console.log(`🔍 DEBUG: Sending currentPlayer ${room.game.currentPlayer} to all clients`);
 
             // ✅ Emit gameStart event with hands to all players in the room
             // ✅ Emitting gameStart event to room
@@ -319,7 +319,7 @@ io.on('connection', (socket) => {
             io.to(roomCode).emit('gameStart', {
                 players: room.players,
                 hands: hands,
-                currentPlayer: 0
+                currentPlayer: room.game.currentPlayer  // ✅ FIX: Use the actual random starting player
             });
             
             console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
