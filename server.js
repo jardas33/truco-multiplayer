@@ -422,7 +422,8 @@ io.on('connection', (socket) => {
             
             if (botPlayedThisTurn) {
                 console.log(`❌ Bot ${currentPlayer.name} already played a card this turn - ignoring duplicate play`);
-                socket.emit('error', 'Bot already played this turn');
+                // Don't emit error for bots - just log and continue
+                console.log(`🤖 Bot ${currentPlayer.name} duplicate play ignored, continuing...`);
                 return;
             }
             
@@ -597,6 +598,9 @@ io.on('connection', (socket) => {
                 console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
             }
+            
+            // ✅ CRITICAL FIX: Ensure only one current player is set
+            console.log(`🔍 DEBUG: Final current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             io.to(socket.roomCode).emit('roundComplete', {
@@ -1095,8 +1099,16 @@ function startNewGame(room, winningTeam, roomId) {
         console.log(`🔍 DEBUG: Final starting player index:`, startingPlayerIndex);
         console.log(`🔍 DEBUG: Starting player will be:`, room.players[startingPlayerIndex]?.name || 'Unknown');
         
-        room.game.currentPlayer = startingPlayerIndex;
-        room.game.playedCards = [];
+                    // ✅ CRITICAL FIX: Ensure starting player index is valid
+            if (startingPlayerIndex < 0 || startingPlayerIndex >= room.players.length) {
+                console.log(`⚠️ Invalid starting player index: ${startingPlayerIndex}, defaulting to 0`);
+                startingPlayerIndex = 0;
+            }
+            
+            room.game.currentPlayer = startingPlayerIndex;
+            room.game.playedCards = [];
+            
+            console.log(`🔍 DEBUG: Final starting player index validated: ${startingPlayerIndex} (${room.players[startingPlayerIndex]?.name})`);
         
         // Update player hands
         room.players.forEach((player, index) => {
