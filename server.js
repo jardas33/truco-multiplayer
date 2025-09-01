@@ -333,6 +333,8 @@ io.on('connection', (socket) => {
                 // This is the very first game - start with Player 1
                 room.game.currentPlayer = 0;
                 console.log(`🎯 Very first game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                console.log(`🔍 DEBUG: First game currentPlayer set to: ${room.game.currentPlayer}`);
+                console.log(`🔍 DEBUG: Player at index 0: ${room.players[0]?.name} (${room.players[0]?.team})`);
                 room.isFirstGame = false; // Mark that we've had our first game
             }
             
@@ -1154,12 +1156,15 @@ function getNextPlayerFromOppositeTeam(players, currentPlayerIndex) {
     const currentPlayer = players[currentPlayerIndex];
     const currentTeam = currentPlayer.team;
     
-    console.log(`🔄 Finding next player from opposite team. Current: ${currentPlayer.name} (${currentTeam})`);
+    console.log(`🔄 Finding next player from opposite team. Current: ${currentPlayer.name} (${currentTeam}) at index ${currentPlayerIndex}`);
+    console.log(`🔍 DEBUG: All players:`, players.map((p, i) => `${i}: ${p.name} (${p.team})`));
     
     // Find the next player from the opposite team
     for (let i = 1; i < 4; i++) {
         const nextIndex = (currentPlayerIndex + i) % 4;
         const nextPlayer = players[nextIndex];
+        
+        console.log(`🔍 DEBUG: Checking index ${nextIndex}: ${nextPlayer.name} (${nextPlayer.team})`);
         
         if (nextPlayer.team !== currentTeam) {
             console.log(`🎯 Next player from opposite team: ${nextPlayer.name} (${nextPlayer.team}) at index ${nextIndex}`);
