@@ -309,11 +309,10 @@ io.on('connection', (socket) => {
             };
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
-            console.log(`🔍 DEBUG: Initial game starting with Player 1 (index 0):`, room.players[0]?.name || 'Unknown');
+            // ✅ Game starting with Player 1 (index 0)
 
             // ✅ Emit gameStart event with hands to all players in the room
-            console.log(`🔍 Emitting gameStart event to room: ${roomCode}`);
-            console.log(`🔍 Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
+            // ✅ Emitting gameStart event to room
             
             io.to(roomCode).emit('gameStart', {
                 players: room.players,
@@ -551,7 +550,7 @@ io.on('connection', (socket) => {
             // ✅ Check if a team has won enough rounds to win the game
             const roundsToWin = 2; // Best of 3 rounds
             let gameWinner = null;
-            console.log(`🔍 DEBUG: Checking for game winner. Current scores: Team1=${room.game.scores.team1}, Team2=${room.game.scores.team2}, Rounds to win=${roundsToWin}`);
+            // ✅ Check for game winner
             if (room.game.scores.team1 >= roundsToWin) {
                 gameWinner = 'team1';
                 console.log(`🎮 Team 1 wins the game!`);
@@ -559,7 +558,6 @@ io.on('connection', (socket) => {
                 gameWinner = 'team2';
                 console.log(`🎮 Team 2 wins the game!`);
             }
-            console.log(`🔍 DEBUG: Game winner determined: ${gameWinner}`);
             
             // ✅ CRITICAL FIX: If game is won, handle game completion separately
             if (gameWinner) {

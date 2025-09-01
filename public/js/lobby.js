@@ -62,13 +62,7 @@ function initSocket() {
         // ✅ Handle turn changes with improved validation
         socket.on('turnChanged', (data) => {
             console.log('🔄 Turn changed event received:', data);
-            console.log('🔍 DEBUG: turnChanged event received at timestamp:', new Date().toISOString());
-            console.log('🔍 DEBUG: turnChanged event data:', JSON.stringify(data));
-            console.log('🔍 DEBUG: Current window.game state:', {
-                exists: !!window.game,
-                currentPlayerIndex: window.game?.currentPlayerIndex,
-                players: window.game?.players?.map(p => ({ name: p.name, isBot: p.isBot, isActive: p.isActive }))
-            });
+            // ✅ turnChanged event received and processed
             
             // ✅ CRITICAL TEST: Log that we're in the turnChanged handler
             console.log('🚨 CRITICAL: We are inside the turnChanged event handler!');
@@ -146,8 +140,7 @@ function initSocket() {
                 } else {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
-                    console.log(`🔍 DEBUG: Bot turn triggered for ${currentPlayer.name} at index ${data.currentPlayer}`);
-                    console.log(`🔍 DEBUG: Bot play logic starting for player ${data.currentPlayer}`);
+                    // ✅ Bot turn triggered
                     
                     // ✅ CRITICAL FIX: Prevent bot from playing multiple times
                     if (currentPlayer.hasPlayedThisTurn) {
@@ -1399,12 +1392,7 @@ function setupButtonListeners() {
 }
 
 function createRoom() {
-    console.log('🔍 DEBUG: createRoom function called');
-    console.log('🔍 DEBUG: Socket exists:', !!socket);
-    console.log('🔍 DEBUG: Socket connected:', socket?.connected);
-    console.log('🔍 DEBUG: Socket ID:', socket?.id);
-    console.log('🔍 DEBUG: Game state:', gameState);
-    console.log('🔍 DEBUG: Game initialized:', gameInitialized);
+            // ✅ createRoom function called
     
     if (!socket) {
         console.error('❌ Socket not initialized in createRoom');

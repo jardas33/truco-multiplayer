@@ -765,10 +765,7 @@ function drawScoringInfo() {
     let teamAlfaSets = 0;
     let teamBetaSets = 0;
     
-    // 🔍 DEBUG: Log what we're reading for scoring
-    console.log(`🔍 drawScoringInfo - window.isMultiplayerMode:`, window.isMultiplayerMode);
-    console.log(`🔍 drawScoringInfo - window.game.scores:`, window.game.scores);
-    console.log(`🔍 drawScoringInfo - window.game.games:`, window.game.games);
+    // ✅ Scoring data processing (no debug logging to keep console clean)
     
     if (window.isMultiplayerMode && window.game.scores) {
         // Use server scores from multiplayer game
@@ -779,8 +776,7 @@ function drawScoringInfo() {
         teamAlfaSets = 0;  // Sets not implemented yet
         teamBetaSets = 0;  // Sets not implemented yet
         
-        console.log(`🔍 drawScoringInfo - Multiplayer mode - Rounds: Team1=${teamAlfaRounds}, Team2=${teamBetaRounds}`);
-        console.log(`🔍 drawScoringInfo - Multiplayer mode - Games: Team1=${teamAlfaGames}, Team2=${teamBetaGames}`);
+        // ✅ Multiplayer scoring data processed (no debug logging)
     } else {
         // Fallback to old single-player scoring (if it exists)
         teamAlfaRounds = window.game.getTeam1Rounds ? window.game.getTeam1Rounds() : 0;
