@@ -502,6 +502,14 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: Adding card to playedCards array. Current count: ${room.game.playedCards.length}`);
         console.log(`🔍 DEBUG: Adding card: ${playedCard.name} by ${targetPlayer.name} (index ${clientPlayerIndex})`);
         
+        // ✅ CRITICAL DEBUG: Check for duplicate cards before adding
+        const existingCard = room.game.playedCards.find(pc => pc.playerIndex === clientPlayerIndex);
+        if (existingCard) {
+            console.log(`❌ CRITICAL ERROR: Duplicate card detected for player ${targetPlayer.name} (${clientPlayerIndex})`);
+            console.log(`❌ Existing card: ${existingCard.card.name}, New card: ${playedCard.name}`);
+            console.log(`❌ This will cause incorrect round completion!`);
+        }
+        
         room.game.playedCards.push({
             player: targetPlayer, // ✅ Use targetPlayer for consistency
             card: playedCard,
@@ -544,6 +552,12 @@ io.on('connection', (socket) => {
             card: pc.card.name,
             playerIndex: pc.playerIndex
         })));
+        
+        // ✅ CRITICAL DEBUG: Check if this is a bot play that should NOT trigger round completion
+        if (targetPlayer.isBot && room.game.playedCards.length === 3) {
+            console.log(`🔍 DEBUG: Bot ${targetPlayer.name} played 3rd card - this should NOT trigger round completion yet`);
+            console.log(`🔍 DEBUG: Waiting for Bot 4 to play the 4th card`);
+        }
         
         // ✅ Check if round is complete
         if (room.game.playedCards.length === 4) {
