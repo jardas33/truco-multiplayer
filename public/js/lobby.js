@@ -160,13 +160,53 @@ function initSocket() {
                         console.log('🔄 Window playedCards available in turnChanged:', window.playedCards.length);
                     }
                     
-                    // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam
-                    console.log(`🔍 DEBUG: Setting timeout for bot play logic`);
+                    // ✅ CRITICAL FIX: Check if current player is a bot and trigger bot play immediately
+                    if (currentPlayer.isBot) {
+                        console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play immediately`);
+                        
+                        // ✅ CRITICAL FIX: Trigger bot play logic immediately for bots
+                        const canHandleBotPlays = true; // Always allow bot plays
+                        
+                        if (window.game && 
+                            window.game.players[data.currentPlayer] &&
+                            window.game.players[data.currentPlayer].isBot &&
+                            window.game.players[data.currentPlayer].hand && 
+                            window.game.players[data.currentPlayer].hand.length > 0 &&
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
+                            canHandleBotPlays) {
+                            
+                            console.log(`🤖 Bot ${currentPlayer.name} validated for immediate play`);
+                            
+                            // ✅ CRITICAL FIX: Play card immediately for bots
+                            const bot = window.game.players[data.currentPlayer];
+                            const cardIndex = 0;
+                            const selectedCard = bot.hand[cardIndex];
+                            
+                            if (selectedCard && selectedCard.name) {
+                                console.log(`🤖 Bot ${bot.name} playing card immediately: ${selectedCard.name}`);
+                                
+                                // Emit playCard event immediately
+                                socket.emit('playCard', {
+                                    roomCode: window.roomId,
+                                    cardIndex: cardIndex,
+                                    playerIndex: data.currentPlayer
+                                });
+                                
+                                // Mark bot as played to prevent duplicate plays
+                                bot.hasPlayedThisTurn = true;
+                                
+                                console.log(`🤖 Bot ${bot.name} card play event sent immediately`);
+                            }
+                        }
+                    }
+                    
+                    // ✅ CRITICAL FIX: Add delay and validation to prevent bot spam (fallback)
+                    console.log(`🔍 DEBUG: Setting timeout for bot play logic (fallback)`);
                     setTimeout(() => {
                         console.log(`🔍 DEBUG: Bot play timeout executed for ${currentPlayer.name}`);
                         // ✅ DEBUG: Log all bot play conditions
-                        const canHandleBotPlays = window.isRoomCreator || 
-                            (typeof window.isRoomCreator === 'undefined' || !window.isRoomCreator);
+                        // ✅ CRITICAL FIX: Allow ANY client to handle bot plays to prevent game from getting stuck
+                        const canHandleBotPlays = true; // Always allow bot plays to prevent game getting stuck
                         
                         console.log(`🔍 DEBUG: Bot play validation for player ${data.currentPlayer}:`, {
                             hasGame: !!window.game,
@@ -197,6 +237,15 @@ function initSocket() {
                         // Allow bots to play when it's actually their turn
                         // Primary: Room creator handles bot plays to prevent duplicate plays
                         // Fallback: Any client can handle bot plays if room creator is not available
+                        
+                        console.log(`🔍 DEBUG: Bot play validation check for player ${data.currentPlayer}:`);
+                        console.log(`🔍 DEBUG: - Has game: ${!!window.game}`);
+                        console.log(`🔍 DEBUG: - Has player: ${!!window.game?.players[data.currentPlayer]}`);
+                        console.log(`🔍 DEBUG: - Is bot: ${window.game?.players[data.currentPlayer]?.isBot}`);
+                        console.log(`🔍 DEBUG: - Has hand: ${!!window.game?.players[data.currentPlayer]?.hand}`);
+                        console.log(`🔍 DEBUG: - Hand length: ${window.game?.players[data.currentPlayer]?.hand?.length}`);
+                        console.log(`🔍 DEBUG: - Has not played: ${!window.game?.players[data.currentPlayer]?.hasPlayedThisTurn}`);
+                        console.log(`🔍 DEBUG: - Can handle bot plays: ${canHandleBotPlays}`);
                         
                         if (window.game && 
                             window.game.players[data.currentPlayer] &&
