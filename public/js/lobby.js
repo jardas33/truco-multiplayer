@@ -848,9 +848,6 @@ function setupSocketListeners() {
                         }, 1000); // Reduced delay for faster fallback
                     }
                 }
-                    }, 1000); // Reduced delay for more responsive bot play
-                }
-        }
         
         // ✅ Force game redraw
         if (typeof redraw === 'function') {
@@ -1615,8 +1612,18 @@ function setupButtonListeners() {
 }
 
 function createRoom() {
+    console.log('🔍 DEBUG: createRoom function called');
+    console.log('🔍 DEBUG: Socket exists:', !!socket);
+    console.log('🔍 DEBUG: Socket connected:', socket?.connected);
+    console.log('🔍 DEBUG: Socket ID:', socket?.id);
+    
     if (!socket) {
-        console.error('Socket not initialized in createRoom');
+        console.error('❌ Socket not initialized in createRoom');
+        return;
+    }
+    
+    if (!socket.connected) {
+        console.error('❌ Socket not connected in createRoom');
         return;
     }
     
@@ -1627,8 +1634,10 @@ function createRoom() {
     }
     
     const roomCode = document.getElementById('roomInput').value || Math.random().toString(36).substring(7);
-    console.log('Creating room with code:', roomCode);
+    console.log('🔍 DEBUG: Creating room with code:', roomCode);
+    console.log('🔍 DEBUG: Emitting createRoom event to server');
     socket.emit('createRoom', roomCode);
+    console.log('🔍 DEBUG: createRoom event emitted successfully');
 }
 
 function joinRoom() {
