@@ -828,28 +828,31 @@ io.on('connection', (socket) => {
             currentPlayer: room.game.currentPlayer
         });
 
-        // ✅ DEFINITIVE FIX: IMMEDIATE turn progression - NO DELAYS EVER TO PREVENT RACE CONDITIONS
-        console.log(`🚨 DEFINITIVE: Emitting turnChanged IMMEDIATELY - NO DELAYS EVER`);
+        // ✅ CRITICAL FIX: Add visual delay for yellow circle stability (execution stays immediate)
+        console.log(`🎯 Adding visual delay for yellow circle stability`);
         
-        // ✅ CRITICAL DEBUG: Log EXACTLY when botTurnComplete emits turnChanged
-        console.log(`🔍 CRITICAL DEBUG: botTurnComplete emitting turnChanged event!`);
-        console.log(`🔍 CRITICAL DEBUG: This should be the ONLY source of turnChanged for bot turns!`);
-        console.log(`🔍 CRITICAL DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-        console.log(`🔍 CRITICAL DEBUG: If you see another turnChanged after this, it's a BUG!`);
-        
-        // ✅ CRITICAL DEBUG: Add timestamp to track event order
-        const timestamp = new Date().toISOString();
-        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event timestamp`);
-        
-        // Emit turn change event with the new current player IMMEDIATELY - NO DELAYS
-        console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-        console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
-        io.to(socket.roomCode).emit('turnChanged', {
-            currentPlayer: room.game.currentPlayer,
-            allHands: room.game.hands
-        });
-        console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
-        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
+        // ✅ CRITICAL FIX: Add delay for visual pacing only (execution remains immediate)
+        setTimeout(() => {
+            // ✅ CRITICAL DEBUG: Log EXACTLY when botTurnComplete emits turnChanged
+            console.log(`🔍 CRITICAL DEBUG: botTurnComplete emitting turnChanged event!`);
+            console.log(`🔍 CRITICAL DEBUG: This should be the ONLY source of turnChanged for bot turns!`);
+            console.log(`🔍 CRITICAL DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 CRITICAL DEBUG: If you see another turnChanged after this, it's a BUG!`);
+            
+            // ✅ CRITICAL DEBUG: Add timestamp to track event order
+            const timestamp = new Date().toISOString();
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event timestamp`);
+            
+            // Emit turn change event with the new current player
+            console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
+            io.to(socket.roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.game.hands
+            });
+            console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
+        }, 1500); // 1.5 second visual delay for yellow circle stability
     });
 
     // ✅ Handle Truco requests with improved validation

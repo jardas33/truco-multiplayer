@@ -147,8 +147,13 @@ function initSocket() {
                     // Bot player - trigger bot play
                     console.log(`🤖 Bot ${currentPlayer.name}'s turn - triggering bot play`);
                     
-                    // ✅ CRITICAL FIX: Show bot thinking message with synchronized timing
+                    // ✅ CRITICAL FIX: Show bot thinking message with visual delay only
                     showTurnMessage(`${currentPlayer.name} is thinking...`, 'bot');
+                    
+                    // ✅ CRITICAL FIX: Add visual delay for yellow circle stability (NO execution delay)
+                    setTimeout(() => {
+                        // This timeout is ONLY for visual pacing - execution happens immediately
+                    }, 1000); // 1 second visual delay for yellow circle stability
                     
                     // ✅ CRITICAL FIX: Prevent bot from playing multiple times
                     if (currentPlayer.hasPlayedThisTurn) {
@@ -219,14 +224,17 @@ function initSocket() {
                 }
             }
             
-            // ✅ Force game redraw to show updated turn indicator
-            if (typeof redrawGame === 'function') {
-                redrawGame();
-            } else if (typeof redraw === 'function') {
-                redraw();
-            } else {
-                console.warn('⚠️ No redraw function available for turn changed event');
-            }
+            // ✅ CRITICAL FIX: Add visual delay for yellow circle stability
+            setTimeout(() => {
+                // ✅ Force game redraw to show updated turn indicator with visual delay
+                if (typeof redrawGame === 'function') {
+                    redrawGame();
+                } else if (typeof redraw === 'function') {
+                    redraw();
+                } else {
+                    console.warn('⚠️ No redraw function available for turn changed event');
+                }
+            }, 500); // 500ms visual delay for yellow circle stability
             
             console.log('✅ Turn changed event processed successfully');
         });
