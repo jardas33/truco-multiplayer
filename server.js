@@ -707,10 +707,18 @@ io.on('connection', (socket) => {
             if (nextRoundStarter && !nextRoundStarter.isBot) {
                 // Human player starts next round - emit turnChanged immediately
                 console.log(`🔄 Human player ${nextRoundStarter.name} starts next round - emitting turnChanged immediately`);
+                
+                // ✅ CRITICAL DEBUG: Track roundComplete turnChanged emission
+                const timestamp = new Date().toISOString();
+                console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged emission for ${nextRoundStarter.name}`);
+                console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for round completion`);
+                
                 io.to(socket.roomCode).emit('turnChanged', {
                     currentPlayer: room.game.currentPlayer,
                     allHands: room.game.hands
                 });
+                
+                console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged event COMPLETED`);
             } else if (nextRoundStarter && nextRoundStarter.isBot) {
                 // Bot starts next round - DON'T emit turnChanged yet, wait for bot to play
                 console.log(`🤖 Bot ${nextRoundStarter.name} starts next round - NOT emitting turnChanged yet, waiting for bot to play`);
@@ -747,11 +755,18 @@ io.on('connection', (socket) => {
             console.log(`🔍 CRITICAL DEBUG: This should NOT happen for bots! If ${targetPlayer.name} is a bot, this is a BUG!`);
             room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
             
+            // ✅ CRITICAL DEBUG: Track human player turnChanged emission
+            const timestamp = new Date().toISOString();
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] HUMAN PLAYER turnChanged emission for ${targetPlayer.name}`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for human player progression`);
+            
             // Emit turn change event with the new current player
             io.to(socket.roomCode).emit('turnChanged', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands
             });
+            
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] HUMAN PLAYER turnChanged event COMPLETED`);
         }
         }
 
@@ -806,6 +821,10 @@ io.on('connection', (socket) => {
         console.log(`🔍 CRITICAL DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 CRITICAL DEBUG: If you see another turnChanged after this, it's a BUG!`);
         
+        // ✅ CRITICAL DEBUG: Add timestamp to track event order
+        const timestamp = new Date().toISOString();
+        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event timestamp`);
+        
         // Emit turn change event with the new current player
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
@@ -814,6 +833,7 @@ io.on('connection', (socket) => {
             allHands: room.game.hands
         });
         console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
+        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
     });
 
     // ✅ Handle Truco requests with improved validation
