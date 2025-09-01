@@ -303,12 +303,12 @@ io.on('connection', (socket) => {
             room.game = {
                 deck: deck,
                 hands: hands,
-                currentPlayer: Math.floor(Math.random() * 4), // ✅ RANDOM starting player
+                currentPlayer: 0, // ✅ FIRST GAME always starts with Player 1 (index 0)
                 playedCards: [], // ✅ Clear played cards when starting new game
                 scores: { team1: 0, team2: 0 }
             };
             
-            console.log(`🎲 Random starting player: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🎯 First game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
             console.log(`🔍 DEBUG: Sending currentPlayer ${room.game.currentPlayer} to all clients`);
@@ -1253,9 +1253,9 @@ function startNewGame(room, winningTeam, roomId) {
         // Update game state
         room.game.hands = hands;
         
-        // ✅ CRITICAL FIX: Winner of last round starts next game
+        // ✅ CRITICAL FIX: Winner of last round starts next game (not first game)
         // Find the player who won the last round and set them as current player
-        let startingPlayerIndex = 0; // Default to first player
+        let startingPlayerIndex = 0; // Default to first player for first game
         
         console.log(`🔍 DEBUG: Checking for last round winner in startNewGame`);
         console.log(`🔍 DEBUG: room.lastRoundWinner:`, room.lastRoundWinner);

@@ -2092,18 +2092,16 @@ function triggerBotPlay(botPlayerIndex) {
                 // ✅ CRITICAL FIX: Mark bot as having played this turn
                 botPlayer.hasPlayedThisTurn = true;
                 
-                // ✅ CRITICAL FIX: Emit botTurnComplete after a delay to ensure server processes the card play
-                setTimeout(() => {
-                    try {
-                        console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} after card play`);
-                        socket.emit('botTurnComplete', {
-                            roomCode: window.roomId
-                        });
-                        console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
-                    } catch (botCompleteError) {
-                        console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
-                    }
-                }, 2000); // 2 second delay to ensure server processes card play first
+                // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
+                try {
+                    console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} immediately`);
+                    socket.emit('botTurnComplete', {
+                        roomCode: window.roomId
+                    });
+                    console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
+                } catch (botCompleteError) {
+                    console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
+                }
                 
             } else {
                 console.log(`🤖 Bot ${botPlayer.name} can no longer play - state changed`);
