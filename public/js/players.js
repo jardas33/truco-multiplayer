@@ -49,9 +49,7 @@ class Player {
         }
       } else {
         console.log(`🤖 Bot ${this.name} is making Truco decision.`);
-        if (typeof botDecision === 'function') {
-          botDecision();
-        }
+        // ✅ OLD botDecision call removed - now handled by botRespondTruco()
       }
     }
 

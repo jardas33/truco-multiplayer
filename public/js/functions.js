@@ -224,63 +224,9 @@ function imageClick(image) {
 }
 
 
-// Define what happens when each button is pressed
-function acceptTruco() {
-  // Call the appropriate function
-  game.respondTruco(game.getCurrentPlayer(), 1);
-}
+// ✅ OLD TRUCO RESPONSE FUNCTIONS REMOVED - Now handled by server-side system
 
-function rejectTruco() {
-  // Call the appropriate function
-  game.respondTruco(game.getCurrentPlayer(), 2);
-}
-
-function raiseTruco() {
-  // Call the appropriate function
-  if (window.game) {
-    window.game.respondTruco(window.game.getCurrentPlayer(), 3);
-  }
-}
-
-function botDecision() {
-  console.log("Bot decision started");
-
-  // Delay the bot's decision by 3 seconds (3000 milliseconds)
-  setTimeout(() => {
-    if (window.game) {
-      let canRaise = (window.game.games.team1 + window.game.potentialGameValue < 12 && window.game.games.team2 + window.game.potentialGameValue < 12);
-      let decision = "";
-      let randomDecision = Math.floor(Math.random() * 100);
-      let tableOptions = [
-        { choice: "reject", rate: 100, ind: 2 },
-        { choice: "accept", rate: 99, ind: 1 }
-      ];
-
-      // If raising is an option, prepend it to tableOptions
-      if (canRaise) {
-        tableOptions.unshift({ choice: "raise", rate: 75, ind: 3 });
-      }
-      tableOptions.sort(function (a, b) {
-        return a.rate - b.rate;
-      })
-
-      for (const option of tableOptions) {
-        if (randomDecision <= option.rate) {
-          decision = option.ind;
-          break;
-        }
-      }
-
-      console.log("Bot decision:", decision);
-
-      // Now the bot should take an action based on the decision.
-      window.game.respondTruco(window.game.getCurrentPlayer(), decision);
-    }
-
-    // Open the popup to show the bot's decision.
-
-  }, timeBots); // 3000 milliseconds = 3 seconds
-}
+// ✅ OLD BOT DECISION FUNCTION REMOVED - Now handled by botRespondTruco() in players.js
 
 
 

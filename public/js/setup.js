@@ -159,22 +159,7 @@ function setup() {
     buttonRaiseTruco.style('position', 'absolute');
     buttonRaiseTruco.style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
 
-    // Set button event handlers
-    buttonAcceptTruco.mousePressed(() => {
-        if (window.game) {
-            window.game.respondTruco(window.game.getCurrentPlayer(), 1);
-        }
-    });
-    buttonRejectTruco.mousePressed(() => {
-        if (window.game) {
-            window.game.respondTruco(window.game.getCurrentPlayer(), 2);
-        }
-    });
-    buttonRaiseTruco.mousePressed(() => {
-        if (window.game) {
-            window.game.respondTruco(window.game.getCurrentPlayer(), 3);
-        }
-    });
+    // ✅ OLD TRUCO BUTTON HANDLERS REMOVED - Now handled by new UI system in lobby.js
 
     buttonAcceptTruco.parent(gameDiv);
     buttonRejectTruco.parent(gameDiv);

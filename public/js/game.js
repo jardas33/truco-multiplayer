@@ -665,7 +665,8 @@ function createDeck() {
       return true;
     }
   
-         respondTruco(player, response) {
+         // ✅ OLD respondTruco METHOD DISABLED - Now handled by server-side system
+         respondTruco_DISABLED(player, response) {
        console.log(`🎯 Truco response from ${player.name}: ${response === 1 ? 'Accept' : response === 2 ? 'Reject' : 'Raise'}`);
        
                if (response === 1) {  // Accept
