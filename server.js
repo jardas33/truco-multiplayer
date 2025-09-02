@@ -1094,14 +1094,14 @@ io.on('connection', (socket) => {
             console.log(`❌ No active Truco in room ${socket.roomCode}`);
             return;
         }
-
+        
         // ✅ Validate it's the response player's turn
         const player = room.players.find(p => p.id === socket.id);
         if (!player) {
             console.log(`❌ Player ${socket.id} not found in room`);
             return;
         }
-
+        
         const playerIndex = room.players.indexOf(player);
         
         // ✅ COMPREHENSIVE DEBUGGING
@@ -1198,6 +1198,7 @@ io.on('connection', (socket) => {
 
             // ✅ Start new game after 3 seconds
             setTimeout(() => {
+                console.log(`🔍 DEBUG: About to call startNewGame with winningTeam: ${winningTeam}`);
                 startNewGame(room, winningTeam, socket.roomCode);
             }, 3000);
 
@@ -1323,7 +1324,7 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Truco is not waiting for response');
             return;
         }
-        
+
         if (room.game.trucoState.responsePlayerIndex !== playerIndex) {
             console.log(`❌ Player ${player.name} tried to respond to Truco out of turn`);
             console.log(`❌ Expected response player index: ${room.game.trucoState.responsePlayerIndex}, got: ${playerIndex}`);
@@ -1349,8 +1350,8 @@ io.on('connection', (socket) => {
                 accepter: socket.id,
                 accepterName: player.name,
                 newValue: room.game.trucoState.currentValue,
-                roomCode: socket.roomCode
-            });
+            roomCode: socket.roomCode
+        });
 
         } else if (response === 2) {
             // ✅ Reject Truco
@@ -1870,7 +1871,11 @@ function startNewGame(room, winningTeam, roomId) {
         // ✅ CRITICAL FIX: If winningTeam is provided (from Truco rejection), find first player from that team
         if (winningTeam) {
             console.log(`🔍 DEBUG: Using winningTeam to determine starting player: ${winningTeam}`);
+            console.log(`🔍 DEBUG: All players and their teams:`, room.players.map((p, i) => `${i}: ${p.name} → ${p.team}`));
+            
             const winningTeamPlayerIndex = room.players.findIndex(p => p.team === winningTeam);
+            console.log(`🔍 DEBUG: findIndex result for team ${winningTeam}: ${winningTeamPlayerIndex}`);
+            
             if (winningTeamPlayerIndex !== -1) {
                 startingPlayerIndex = winningTeamPlayerIndex;
                 console.log(`🔍 DEBUG: Starting player set to first player from winning team: ${room.players[startingPlayerIndex].name} (index ${startingPlayerIndex})`);
