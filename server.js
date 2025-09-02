@@ -650,12 +650,12 @@ io.on('connection', (socket) => {
             let gameWinner = null;
             // ✅ Check for game winner (only if there's a clear round winner)
             if (roundWinner) {
-                if (room.game.scores.team1 >= roundsToWin) {
-                    gameWinner = 'team1';
-                    console.log(`🎮 Team 1 wins the game!`);
-                } else if (room.game.scores.team2 >= roundsToWin) {
-                    gameWinner = 'team2';
-                    console.log(`🎮 Team 2 wins the game!`);
+            if (room.game.scores.team1 >= roundsToWin) {
+                gameWinner = 'team1';
+                console.log(`🎮 Team 1 wins the game!`);
+            } else if (room.game.scores.team2 >= roundsToWin) {
+                gameWinner = 'team2';
+                console.log(`🎮 Team 2 wins the game!`);
                 }
             } else {
                 console.log(`🤝 Draw in round ${currentRound} - game continues to next round`);
@@ -735,26 +735,26 @@ io.on('connection', (socket) => {
                 console.log(`🔍 DEBUG: All players in room:`, room.players.map((p, i) => `${i}: ${p.name} (${p.isBot ? 'Bot' : 'Human'})`));
                 console.log(`🔍 DEBUG: Round winner name: "${roundWinner.name}"`);
                 console.log(`🔍 DEBUG: Round winner team: "${roundWinner.team}"`);
-                
-                // ✅ CRITICAL FIX: Round winner should start the next round
-                // Find the player who won the round and set them as current player
-                const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
+            
+            // ✅ CRITICAL FIX: Round winner should start the next round
+            // Find the player who won the round and set them as current player
+            const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
                 console.log(`🔍 DEBUG: Round winner player index search result: ${roundWinnerPlayerIndex}`);
                 
-                if (roundWinnerPlayerIndex !== -1) {
-                    room.game.currentPlayer = roundWinnerPlayerIndex;
-                    console.log(`🎯 Round winner ${roundWinner.name} will start next round at index ${roundWinnerPlayerIndex}`);
+            if (roundWinnerPlayerIndex !== -1) {
+                room.game.currentPlayer = roundWinnerPlayerIndex;
+                console.log(`🎯 Round winner ${roundWinner.name} will start next round at index ${roundWinnerPlayerIndex}`);
                     console.log(`🔍 DEBUG: Current player set to: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
                     
                     // ✅ CRITICAL FIX: Ensure the round winner is properly set for the next round
                     console.log(`🔍 DEBUG: Round winner logic completed successfully`);
                     console.log(`🔍 DEBUG: Next round will start with: ${room.players[room.game.currentPlayer]?.name} (index ${room.game.currentPlayer})`);
-                } else {
-                    console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
+            } else {
+                console.log(`⚠️ Could not find round winner in players list, defaulting to next player`);
                     console.log(`⚠️ DEBUG: Available player names: [${room.players.map(p => `"${p.name}"`).join(', ')}]`);
                     console.log(`⚠️ DEBUG: Round winner name: "${roundWinner.name}"`);
                     console.log(`⚠️ DEBUG: This suggests a name mismatch between round winner and player list!`);
-                    room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % 4;
                 }
             } else {
                 // Draw - no winner yet, continue with current turn order
@@ -945,7 +945,7 @@ io.on('connection', (socket) => {
 
         // ✅ UI FIX: Emit turnChanged immediately for UI updates, then add pacing for next turn
         console.log(`🎯 Emitting turnChanged immediately for UI updates`);
-        
+
         // ✅ CRITICAL DEBUG: Log EXACTLY when botTurnComplete emits turnChanged
         console.log(`🔍 CRITICAL DEBUG: botTurnComplete emitting turnChanged event!`);
         console.log(`🔍 CRITICAL DEBUG: This should be the ONLY source of turnChanged for bot turns!`);
@@ -960,15 +960,15 @@ io.on('connection', (socket) => {
         console.log(`🎯 Adding 1-second delay for visual pacing`);
         
         setTimeout(() => {
-            // Emit turn change event with the new current player
-            console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-            console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
-            io.to(socket.roomCode).emit('turnChanged', {
-                currentPlayer: room.game.currentPlayer,
-                allHands: room.game.hands
-            });
-            console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
-            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
+        // Emit turn change event with the new current player
+        console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+        console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
+        io.to(socket.roomCode).emit('turnChanged', {
+            currentPlayer: room.game.currentPlayer,
+            allHands: room.game.hands
+        });
+        console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
+        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
         }, 1000); // 1-second delay for visual pacing
     });
 
@@ -1086,8 +1086,17 @@ io.on('connection', (socket) => {
         }
 
         const playerIndex = room.players.indexOf(player);
+        
+        // ✅ CRITICAL FIX: Check if Truco is still waiting for response
+        if (!room.game.trucoState.waitingForResponse) {
+            console.log(`❌ Truco is not waiting for response`);
+            socket.emit('error', 'Truco is not waiting for response');
+            return;
+        }
+        
         if (room.game.trucoState.responsePlayerIndex !== playerIndex) {
             console.log(`❌ Player ${player.name} tried to respond to Truco out of turn`);
+            console.log(`❌ Expected response player index: ${room.game.trucoState.responsePlayerIndex}, got: ${playerIndex}`);
             socket.emit('error', 'Not your turn to respond');
             return;
         }
@@ -1100,6 +1109,7 @@ io.on('connection', (socket) => {
             room.game.trucoState.currentValue = room.game.trucoState.potentialValue;
             room.game.trucoState.isActive = false;
             room.game.trucoState.waitingForResponse = false;
+            room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
 
             console.log(`✅ Truco accepted! Game value increased to ${room.game.trucoState.currentValue}`);
 
@@ -1121,6 +1131,7 @@ io.on('connection', (socket) => {
             // ✅ Reset Truco state
             room.game.trucoState.isActive = false;
             room.game.trucoState.waitingForResponse = false;
+            room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
 
             // ✅ Emit Truco rejected event
             io.to(socket.roomCode).emit('trucoRejected', {
@@ -1607,8 +1618,8 @@ function determineRoundWinner(playedCards, room) {
         return drawWinner;
     } else {
         // No draw - clear winner
-        console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
-        return highestCard;
+    console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
+    return highestCard;
     }
 }
 
