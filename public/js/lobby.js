@@ -1032,12 +1032,10 @@ function setupSocketListeners() {
 
 // ✅ CRITICAL FIX: Function to display round winner message
 function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
-    // Remove any existing round winner message
-    const existingMessage = document.getElementById('roundWinnerMessage');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
-    
+    addToPopupQueue('roundWinner', { winnerName, winnerCard, winnerTeam });
+}
+
+function showRoundWinnerMessagePopup(data) {
     // Create round winner message element
     const messageDiv = document.createElement('div');
     messageDiv.id = 'roundWinnerMessage';
@@ -1080,9 +1078,9 @@ function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
             line-height: 1;
         ">✕</button>
         <div style="margin-bottom: 10px;">🏆 ROUND WINNER! 🏆</div>
-        <div style="font-size: 16px; margin-bottom: 8px;">${winnerName}</div>
-        <div style="font-size: 14px; margin-bottom: 8px;">played ${winnerCard}</div>
-        <div style="font-size: 16px; color: #8B0000;">${winnerTeam}</div>
+        <div style="font-size: 16px; margin-bottom: 8px;">${data.winnerName}</div>
+        <div style="font-size: 14px; margin-bottom: 8px;">played ${data.winnerCard}</div>
+        <div style="font-size: 16px; color: #8B0000;">${data.winnerTeam}</div>
     `;
     
     document.body.appendChild(messageDiv);
@@ -1091,27 +1089,17 @@ function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
     const closeBtn = document.getElementById('closeRoundWinnerBtn');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            if (messageDiv.parentNode) {
-                messageDiv.remove();
-            }
+            clearCurrentPopup();
         });
     }
-    
-    // Auto-remove message after 4 seconds
-    setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.remove();
-        }
-    }, 4000);
 }
 
 // ✅ CRITICAL FIX: Function to display draw message
 function showDrawMessage() {
-    // Remove any existing draw message
-    const existingMessage = document.getElementById('drawMessage');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
+    addToPopupQueue('draw', null);
+}
+
+function showDrawMessagePopup() {
     
     // Create draw message element
     const messageDiv = document.createElement('div');
@@ -1162,25 +1150,17 @@ function showDrawMessage() {
     const closeBtn = document.getElementById('closeDrawBtn');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            messageDiv.remove();
+            clearCurrentPopup();
         });
     }
-    
-    // Auto-remove message after 4 seconds
-    setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.remove();
-        }
-    }, 4000);
 }
 
 // ✅ CRITICAL FIX: Function to display game winner message
 function showGameWinnerMessage(winningTeam) {
-    // Remove any existing game winner message
-    const existingMessage = document.getElementById('gameWinnerMessage');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
+    addToPopupQueue('gameWinner', winningTeam, 5000); // Longer duration for game winner
+}
+
+function showGameWinnerMessagePopup(winningTeam) {
     
     // Create game winner message element
     const messageDiv = document.createElement('div');
@@ -1234,18 +1214,9 @@ function showGameWinnerMessage(winningTeam) {
     const closeBtn = document.getElementById('closeGameWinnerBtn');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            if (messageDiv.parentNode) {
-                messageDiv.remove();
-            }
+            clearCurrentPopup();
         });
     }
-    
-    // Auto-remove message after 6 seconds
-    setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.remove();
-        }
-    }, 6000);
 }
 
 // ✅ CRITICAL FIX: Function to display new game message
@@ -2393,14 +2364,86 @@ function triggerBotPlay(botPlayerIndex) {
 
 // ✅ Turn message CSS and initialization removed per user request
 
-// ✅ Truco UI functions
-function showTrucoMessage(message) {
-    // Remove any existing Truco message
-    const existingMessage = document.getElementById('trucoMessage');
-    if (existingMessage) {
-        existingMessage.remove();
+// ✅ POPUP QUEUE SYSTEM - Only show one popup at a time
+let popupQueue = [];
+let currentPopup = null;
+let popupTimeout = null;
+
+function addToPopupQueue(type, data, duration = 4000) {
+    popupQueue.push({ type, data, duration });
+    console.log(`📋 Added ${type} popup to queue. Queue length: ${popupQueue.length}`);
+    processPopupQueue();
+}
+
+function processPopupQueue() {
+    // If there's already a popup showing or no popups in queue, return
+    if (currentPopup || popupQueue.length === 0) {
+        return;
     }
     
+    const nextPopup = popupQueue.shift();
+    console.log(`📋 Processing ${nextPopup.type} popup from queue. Remaining: ${popupQueue.length}`);
+    
+    showPopup(nextPopup.type, nextPopup.data, nextPopup.duration);
+}
+
+function showPopup(type, data, duration) {
+    // Clear any existing popup
+    clearCurrentPopup();
+    
+    currentPopup = { type, data, duration };
+    
+    switch (type) {
+        case 'truco':
+            showTrucoMessagePopup(data);
+            break;
+        case 'roundWinner':
+            showRoundWinnerMessagePopup(data);
+            break;
+        case 'draw':
+            showDrawMessagePopup();
+            break;
+        case 'gameWinner':
+            showGameWinnerMessagePopup(data);
+            break;
+    }
+    
+    // Auto-remove after duration
+    popupTimeout = setTimeout(() => {
+        clearCurrentPopup();
+    }, duration);
+}
+
+function clearCurrentPopup() {
+    if (currentPopup) {
+        // Remove any existing popup elements
+        const existingMessages = document.querySelectorAll('[id$="Message"]');
+        existingMessages.forEach(msg => {
+            if (msg.parentNode) {
+                msg.remove();
+            }
+        });
+        
+        currentPopup = null;
+        
+        if (popupTimeout) {
+            clearTimeout(popupTimeout);
+            popupTimeout = null;
+        }
+        
+        // Process next popup in queue
+        setTimeout(() => {
+            processPopupQueue();
+        }, 100); // Small delay to ensure smooth transition
+    }
+}
+
+// ✅ Truco UI functions
+function showTrucoMessage(message) {
+    addToPopupQueue('truco', message);
+}
+
+function showTrucoMessagePopup(message) {
     // Create Truco message element
     const messageDiv = document.createElement('div');
     messageDiv.id = 'trucoMessage';
@@ -2429,18 +2472,6 @@ function showTrucoMessage(message) {
     `;
     
     document.body.appendChild(messageDiv);
-    
-    // Auto-remove message after 4 seconds
-    setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.style.animation = 'fadeOut 0.5s ease-out';
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.remove();
-                }
-            }, 500);
-        }
-    }, 4000);
 }
 
 function showTrucoResponseButtons() {
