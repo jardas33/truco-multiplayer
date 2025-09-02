@@ -905,6 +905,20 @@ function setupSocketListeners() {
         window.gameCompleted = false;
         console.log('🔓 New game started - card playing enabled');
         
+        // ✅ CRITICAL FIX: Reset Truco state for new game
+        if (window.game && window.game.trucoState) {
+            window.game.trucoState = {
+                isActive: false,
+                currentValue: 1,
+                potentialValue: 3,
+                callerTeam: null,
+                callerIndex: null,
+                waitingForResponse: false,
+                responsePlayerIndex: null
+            };
+            console.log('🔄 Client-side Truco state reset for new game - all players can call Truco again');
+        }
+        
         if (!window.game) {
             console.log('❌ No game instance found for new game event');
             return;

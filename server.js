@@ -1796,6 +1796,18 @@ function startNewGame(room, winningTeam, roomId) {
         room.game.playedCards = [];
         console.log(`🔄 Cleared played cards`);
         
+        // ✅ CRITICAL FIX: Reset Truco state for new game
+        room.game.trucoState = {
+            isActive: false,
+            currentValue: 1,
+            potentialValue: 3,
+            callerTeam: null,
+            callerIndex: null,
+            waitingForResponse: false,
+            responsePlayerIndex: null
+        };
+        console.log(`🔄 Truco state reset for new game - all players can call Truco again`);
+        
         // Reset all players' hasPlayedThisTurn flags
         room.players.forEach(player => {
             if (player.isBot) {
