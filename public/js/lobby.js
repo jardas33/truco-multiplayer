@@ -201,39 +201,39 @@ function initSocket() {
                             
                             // ✅ PACING FIX: Execute bot play with visual delay for better UX
                             setTimeout(() => {
-                                const bot = window.game.players[data.currentPlayer];
-                                const cardIndex = 0;
-                                const selectedCard = bot.hand[cardIndex];
-                                
-                                if (selectedCard && selectedCard.name) {
-                                    console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
+                                    const bot = window.game.players[data.currentPlayer];
+                                    const cardIndex = 0;
+                                    const selectedCard = bot.hand[cardIndex];
                                     
+                                    if (selectedCard && selectedCard.name) {
+                                    console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
+                                        
                                     // Mark bot as playing and played BEFORE sending event to prevent duplicates
                                     bot.isPlaying = true;
-                                    bot.hasPlayedThisTurn = true;
-                                    
-                                    // Emit playCard event
-                                    socket.emit('playCard', {
-                                        roomCode: window.roomId,
-                                        cardIndex: cardIndex,
-                                        playerIndex: data.currentPlayer
-                                    });
-                                    
+                                        bot.hasPlayedThisTurn = true;
+                                        
+                                        // Emit playCard event
+                                        socket.emit('playCard', {
+                                            roomCode: window.roomId,
+                                            cardIndex: cardIndex,
+                                            playerIndex: data.currentPlayer
+                                        });
+                                        
                                     console.log(`🤖 Bot ${bot.name} card play event sent`);
-                                    
+                                        
                                     // ✅ PACING FIX: Emit botTurnComplete with additional delay for pacing
-                                    setTimeout(() => {
-                                        try {
-                                            console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                            socket.emit('botTurnComplete', {
-                                                roomCode: window.roomId
-                                            });
+                                        setTimeout(() => {
+                                            try {
+                                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                                socket.emit('botTurnComplete', {
+                                                    roomCode: window.roomId
+                                                });
                                             console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
-                                        } catch (turnCompleteError) {
-                                            console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                                        }
+                                            } catch (turnCompleteError) {
+                                                console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                            }
                                     }, 1000); // 1 second delay for pacing
-                                }
+                                    }
                             }, 1500); // 1.5 second visual delay for pacing
                         } else {
                             console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
@@ -638,7 +638,7 @@ function setupSocketListeners() {
                 showTrucoResponseButtons();
             }
         }
-    });
+        });
 
     // ✅ Handle round completion events
     socket.on('roundComplete', (data) => {
@@ -1033,8 +1033,8 @@ function setupSocketListeners() {
 // ✅ CRITICAL FIX: Function to display round winner message
 function showRoundWinnerMessage(winnerName, winnerCard, winnerTeam) {
     addToPopupQueue('roundWinner', { winnerName, winnerCard, winnerTeam });
-}
-
+    }
+    
 function showRoundWinnerMessagePopup(data) {
     // Create round winner message element
     const messageDiv = document.createElement('div');
@@ -1158,7 +1158,7 @@ function showDrawMessagePopup() {
 // ✅ CRITICAL FIX: Function to display game winner message
 function showGameWinnerMessage(winningTeam) {
     addToPopupQueue('gameWinner', winningTeam, 5000); // Longer duration for game winner
-}
+    }
 
 function showGameWinnerMessagePopup(winningTeam) {
     
@@ -2308,9 +2308,57 @@ function triggerBotPlay(botPlayerIndex) {
         return;
     }
     
-    console.log(`🤖 Bot ${botPlayer.name} will play a card immediately`);
+    // ✅ NEW FEATURE: Bot can occasionally call Truco instead of playing a card
+    const shouldCallTruco = Math.random() < 0.15; // 15% chance to call Truco
     
-    // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
+    if (shouldCallTruco && !window.game.trucoState?.isActive) {
+        console.log(`🤖 Bot ${botPlayer.name} decided to call Truco instead of playing a card!`);
+        
+        // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
+        setTimeout(() => {
+            try {
+                // ✅ CRITICAL FIX: Validate bot can still call Truco
+                if (window.game && 
+                    window.game.players[botPlayerIndex] &&
+                    window.game.players[botPlayerIndex].isBot &&
+                    !window.game.players[botPlayerIndex].hasPlayedThisTurn &&
+                    window.game.players[botPlayerIndex].hand &&
+                    window.game.players[botPlayerIndex].hand.length > 0) {
+                    
+                    console.log(`🤖 Bot ${botPlayer.name} calling Truco!`);
+                    
+                    // ✅ CRITICAL FIX: Emit requestTruco event for the bot
+                    socket.emit('requestTruco', {
+                        roomCode: window.roomId
+                    });
+                    
+                    console.log(`🤖 Bot ${botPlayer.name} Truco request emitted successfully`);
+                    
+                    // ✅ CRITICAL FIX: Mark bot as having played this turn (Truco counts as an action)
+                    botPlayer.hasPlayedThisTurn = true;
+                    
+                    // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
+                    try {
+                        console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} after Truco call`);
+                        socket.emit('botTurnComplete', {
+                            roomCode: window.roomId
+                        });
+                        console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
+                    } catch (botCompleteError) {
+                        console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
+                    }
+                    
+                } else {
+                    console.log(`🤖 Bot ${botPlayer.name} can no longer call Truco - state changed`);
+                }
+            } catch (botTrucoError) {
+                console.error(`❌ Bot Truco call failed for ${botPlayer.name}:`, botTrucoError);
+            }
+        }, 100); // Minimal delay to prevent race conditions
+    } else {
+        console.log(`🤖 Bot ${botPlayer.name} will play a card immediately`);
+        
+        // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
     setTimeout(() => {
         try {
             // ✅ CRITICAL FIX: Validate bot can still play
@@ -2339,16 +2387,16 @@ function triggerBotPlay(botPlayerIndex) {
                 // ✅ CRITICAL FIX: Mark bot as having played this turn
                 botPlayer.hasPlayedThisTurn = true;
                 
-                // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
-                try {
-                    console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} immediately`);
-                    socket.emit('botTurnComplete', {
-                        roomCode: window.roomId
-                    });
-                    console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
-                } catch (botCompleteError) {
-                    console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
-                }
+                    // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
+                    try {
+                        console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} immediately`);
+                        socket.emit('botTurnComplete', {
+                            roomCode: window.roomId
+                        });
+                        console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
+                    } catch (botCompleteError) {
+                        console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
+                    }
                 
             } else {
                 console.log(`🤖 Bot ${botPlayer.name} can no longer play - state changed`);
@@ -2356,7 +2404,8 @@ function triggerBotPlay(botPlayerIndex) {
         } catch (botPlayError) {
             console.error(`❌ Bot play failed for ${botPlayer.name}:`, botPlayError);
         }
-    }, 100); // Minimal delay to prevent race conditions
+        }, 100); // Minimal delay to prevent race conditions
+    }
 }
 
 // ✅ Turn message function removed per user request
