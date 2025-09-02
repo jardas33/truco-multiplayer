@@ -1161,7 +1161,24 @@ io.on('connection', (socket) => {
             }
 
             // ✅ Find next player from opposite team for response
-            const nextPlayerIndex = getNextPlayerFromOppositeTeam(room.players, playerIndex);
+            // In Truco, when someone raises, the next player from the opposite team responds
+            const raiserTeam = player.team;
+            let nextPlayerIndex = -1;
+            
+            // Find the next player from the opposite team (not the raiser's team)
+            for (let i = 1; i < 4; i++) {
+                const checkIndex = (playerIndex + i) % 4;
+                if (room.players[checkIndex].team !== raiserTeam) {
+                    nextPlayerIndex = checkIndex;
+                    break;
+                }
+            }
+            
+            // Fallback: if no opposite team player found, use the original caller
+            if (nextPlayerIndex === -1) {
+                nextPlayerIndex = room.game.trucoState.callerIndex;
+            }
+            
             room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
 
             console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games`);
