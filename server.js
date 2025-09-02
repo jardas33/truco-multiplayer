@@ -1180,6 +1180,7 @@ io.on('connection', (socket) => {
             }
             
             room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
+            room.game.trucoState.waitingForResponse = true; // ✅ CRITICAL FIX: Set waiting for response after raise
 
             console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games`);
             console.log(`🎯 Next player to respond: ${room.players[nextPlayerIndex].name} (${room.players[nextPlayerIndex].team})`);
