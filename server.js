@@ -94,6 +94,8 @@ io.on('connection', (socket) => {
         
         if (!room) {
             console.log(`❌ Room ${roomCode} not found`);
+            console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+            console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
             socket.emit('error', 'Room not found');
             return;
         }
@@ -154,8 +156,18 @@ io.on('connection', (socket) => {
 
         // If room is empty, delete it
         if (room.players.length === 0) {
+            console.log(`🔍 DEBUG: Room ${roomCode} is empty, checking if game is active before deletion`);
+            console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
+            console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
+            
+            // ✅ CRITICAL FIX: Don't delete room if game is active
+            if (room.game && room.game.started) {
+                console.log(`⚠️ WARNING: Attempting to delete room ${roomCode} during active game - PREVENTING DELETION`);
+                return;
+            }
+            
             rooms.delete(roomCode);
-            console.log(`🗑️ Room ${roomCode} deleted (empty)`);
+            console.log(`🗑️ Room ${roomCode} deleted (empty and no active game)`);
         }
     });
 
@@ -377,7 +389,17 @@ io.on('connection', (socket) => {
                     });
 
                     if (room.players.length === 0) {
-                        rooms.delete(socket.roomCode);
+                        console.log(`🔍 DEBUG: Room ${socket.roomCode} is empty after disconnect, checking if game is active before deletion`);
+                        console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
+                        console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
+                        
+                        // ✅ CRITICAL FIX: Don't delete room if game is active
+                        if (room.game && room.game.started) {
+                            console.log(`⚠️ WARNING: Attempting to delete room ${socket.roomCode} during active game after disconnect - PREVENTING DELETION`);
+                        } else {
+                            rooms.delete(socket.roomCode);
+                            console.log(`🗑️ Room ${socket.roomCode} deleted (empty and no active game after disconnect)`);
+                        }
                     }
                 } else {
                     console.log(`⚠️ Player disconnected during active game - keeping them in room`);
@@ -400,6 +422,9 @@ io.on('connection', (socket) => {
         const room = rooms.get(socket.roomCode);
         if (!room) {
             console.log(`❌ Room ${socket.roomCode} not found for card play`);
+            console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+            console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+            console.log(`🔍 DEBUG: Socket ID:`, socket.id);
             socket.emit('error', 'Room not found');
             return;
         }
