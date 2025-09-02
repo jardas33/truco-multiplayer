@@ -204,6 +204,9 @@ function createDeck() {
         
         // If current player is a bot, it plays automatically
         if (this.players[this.currentPlayerIndex].isBot) {
+            console.log(`🔍 CRITICAL DEBUG: game.js start() - triggering bot play for ${this.players[this.currentPlayerIndex].name} at index ${this.currentPlayerIndex}`);
+            console.log(`🔍 CRITICAL DEBUG: game.js start() - currentPlayerIndex: ${this.currentPlayerIndex}`);
+            console.log(`🔍 CRITICAL DEBUG: game.js start() - window.game.currentPlayerIndex: ${window.game?.currentPlayerIndex}`);
             setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
         }
         
@@ -244,6 +247,9 @@ function createDeck() {
       // If it's a bot's turn, make them play
       if (this.players[this.currentPlayerIndex].isBot) {
         console.log(`🤖 Bot ${this.currentPlayerIndex + 1} is thinking...`);
+        console.log(`🔍 CRITICAL DEBUG: game.js playCard() - triggering bot play for ${this.players[this.currentPlayerIndex].name} at index ${this.currentPlayerIndex}`);
+        console.log(`🔍 CRITICAL DEBUG: game.js playCard() - currentPlayerIndex: ${this.currentPlayerIndex}`);
+        console.log(`🔍 CRITICAL DEBUG: game.js playCard() - window.game.currentPlayerIndex: ${window.game?.currentPlayerIndex}`);
         setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
       } else {
         console.log(`👤 Human player ${this.currentPlayerIndex + 1} can now play`);
