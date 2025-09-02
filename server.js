@@ -1219,52 +1219,7 @@ io.on('connection', (socket) => {
     });
     
     // ✅ Handle Truco responses with improved validation
-    socket.on('respondTruco', (data) => {
-        console.log(`🎯 Truco response in room: ${socket.roomCode}`);
-        
-        if (!socket.roomCode) {
-            console.log(`❌ User ${socket.id} not in a room`);
-            socket.emit('error', 'Not in a room');
-            return;
-        }
-        
-        const room = rooms.get(socket.roomCode);
-        if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for Truco response`);
-            socket.emit('error', 'Room not found');
-            return;
-        }
-
-        if (!room.game) {
-            console.log(`❌ No active game in room ${socket.roomCode}`);
-            socket.emit('error', 'No active game');
-            return;
-        }
-
-        // ✅ Validate response data
-        if (!data.response || ![1, 2, 3].includes(data.response)) {
-            console.log(`❌ Invalid Truco response: ${data.response}`);
-            socket.emit('error', 'Invalid response');
-            return;
-        }
-
-        const player = room.players.find(p => p.id === socket.id);
-        if (!player) {
-            console.log(`❌ Player ${socket.id} not found in room`);
-            socket.emit('error', 'Player not found in room');
-            return;
-        }
-
-        // Emit Truco response event to all players in the room
-        io.to(socket.roomCode).emit('trucoResponded', {
-            responder: socket.id,
-            responderName: player.name,
-            response: data.response,
-            roomCode: socket.roomCode
-        });
-
-        console.log(`✅ Truco response event emitted for user ${socket.id} in room ${socket.roomCode}`);
-    });
+    // ✅ DUPLICATE respondTruco HANDLER REMOVED - Was overriding the main Truco logic
 
     // ✅ Handle player nickname changes
     socket.on('changeNickname', (data) => {
