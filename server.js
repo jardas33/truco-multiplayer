@@ -814,6 +814,10 @@ io.on('connection', (socket) => {
             room.game.roundJustCompleted = true;
             console.log(`🔄 Set roundJustCompleted flag to prevent botTurnComplete from overriding round winner`);
             
+            // ✅ CRITICAL FIX: Reset rate limiting timestamp for new round
+            room.game.lastBotTurnComplete = null;
+            console.log(`🔄 Reset rate limiting timestamp for new round`);
+            
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             console.log(`🔍 DEBUG: Emitting roundComplete with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             io.to(socket.roomCode).emit('roundComplete', {
