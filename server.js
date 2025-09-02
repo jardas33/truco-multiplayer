@@ -965,7 +965,12 @@ io.on('connection', (socket) => {
             const currentPlayer = room.players[room.game.currentPlayer];
             console.log(`🔍 DEBUG: Current player ID: ${currentPlayer?.id}, Socket ID: ${socket.id}, Match: ${currentPlayer?.id === socket.id}`);
             
-            if (currentPlayer && currentPlayer.id !== socket.id) {
+            // ✅ CRITICAL FIX: Allow botTurnComplete from human player's socket when it's a bot's turn
+            // The human player's client manages all bot logic, so botTurnComplete events come from the human player's socket
+            if (currentPlayer && currentPlayer.isBot && currentPlayer.id !== socket.id) {
+                console.log(`🔍 DEBUG: botTurnComplete from human player's socket for bot ${currentPlayer.name} - this is expected behavior`);
+                // Don't return here - continue with normal processing
+            } else if (currentPlayer && !currentPlayer.isBot && currentPlayer.id !== socket.id) {
                 console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer.name} (${currentPlayer.id}), but event from ${socket.id}`);
                 console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round`);
                 return; // Don't reset the flag here - let it be reset when the correct player plays
