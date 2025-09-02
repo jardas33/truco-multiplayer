@@ -566,16 +566,16 @@ function setupSocketListeners() {
         // Update game state
         window.game.trucoState.isActive = false;
         window.game.trucoState.waitingForResponse = false;
-        window.game.gameValue = data.newValue;
+        window.game.gameValue = data.newGameValue;
 
         // Show acceptance message
-        showTrucoMessage(`${data.accepterName} accepted Truco! Game is now worth ${data.newValue} games.`);
+        showTrucoMessage(`${data.accepterName} accepted Truco! Game is now worth ${data.newGameValue} games.`);
         
         // Hide Truco response buttons
         hideTrucoResponseButtons();
         
         // Continue with normal game flow
-        console.log(`✅ Truco accepted - game continues with value ${data.newValue}`);
+        console.log(`✅ Truco accepted - game continues with value ${data.newGameValue}`);
     });
 
     socket.on('trucoRejected', (data) => {
