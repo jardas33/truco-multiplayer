@@ -1039,11 +1039,15 @@ io.on('connection', (socket) => {
         room.game.trucoState.waitingForResponse = true;
 
         // ✅ Find next player from opposite team for response
+        console.log(`🔍 TRUCO CALL DEBUG - Caller: ${player.name} (${playerIndex}) from team ${player.team}`);
+        console.log(`🔍 TRUCO CALL DEBUG - All Players:`, room.players.map((p, i) => `${i}: ${p.name} (${p.team})`));
+        
         const nextPlayerIndex = getNextPlayerFromOppositeTeam(room.players, playerIndex);
         room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
 
         console.log(`🎯 Truco called by ${player.name} (${player.team}) for 3 games`);
         console.log(`🎯 Next player to respond: ${room.players[nextPlayerIndex].name} (${room.players[nextPlayerIndex].team})`);
+        console.log(`🔍 TRUCO CALL DEBUG - Final responsePlayerIndex: ${nextPlayerIndex}`);
 
         // ✅ Emit Truco called event to all players
         io.to(socket.roomCode).emit('trucoCalled', {
@@ -1087,6 +1091,18 @@ io.on('connection', (socket) => {
 
         const playerIndex = room.players.indexOf(player);
         
+        // ✅ COMPREHENSIVE DEBUGGING
+        console.log(`🔍 TRUCO DEBUG - Player: ${player.name} (${playerIndex})`);
+        console.log(`🔍 TRUCO DEBUG - Truco State:`, {
+            waitingForResponse: room.game.trucoState.waitingForResponse,
+            responsePlayerIndex: room.game.trucoState.responsePlayerIndex,
+            currentValue: room.game.trucoState.currentValue,
+            potentialValue: room.game.trucoState.potentialValue,
+            callerIndex: room.game.trucoState.callerIndex,
+            callerTeam: room.game.trucoState.callerTeam
+        });
+        console.log(`🔍 TRUCO DEBUG - All Players:`, room.players.map((p, i) => `${i}: ${p.name} (${p.team})`));
+        
         // ✅ CRITICAL FIX: Check if Truco is still waiting for response
         if (!room.game.trucoState.waitingForResponse) {
             console.log(`❌ Truco is not waiting for response`);
@@ -1097,6 +1113,7 @@ io.on('connection', (socket) => {
         if (room.game.trucoState.responsePlayerIndex !== playerIndex) {
             console.log(`❌ Player ${player.name} tried to respond to Truco out of turn`);
             console.log(`❌ Expected response player index: ${room.game.trucoState.responsePlayerIndex}, got: ${playerIndex}`);
+            console.log(`❌ Expected response player: ${room.players[room.game.trucoState.responsePlayerIndex]?.name}`);
             socket.emit('error', 'Not your turn to respond');
             return;
         }
