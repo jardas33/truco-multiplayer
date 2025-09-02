@@ -609,7 +609,7 @@ io.on('connection', (socket) => {
             playedCards: cleanPlayedCards // Send clean, serializable played cards
         });
 
-        // ✅ CRITICAL DEBUG: Log played cards state before round completion check
+        // ✅ Log played cards state
         console.log(`🔍 DEBUG: Played cards count: ${room.game.playedCards.length}`);
         console.log(`🔍 DEBUG: Played cards details:`, room.game.playedCards.map(pc => ({
             player: pc.player.name,
@@ -617,21 +617,9 @@ io.on('connection', (socket) => {
             playerIndex: pc.playerIndex
         })));
         
-        // ✅ CRITICAL DEBUG: Check if this is a bot play that should NOT trigger round completion
-        if (targetPlayer.isBot && room.game.playedCards.length === 3) {
-            console.log(`🔍 DEBUG: Bot ${targetPlayer.name} played 3rd card - this should NOT trigger round completion yet`);
-            console.log(`🔍 DEBUG: Waiting for Bot 4 to play the 4th card`);
-        }
-        
-        // ✅ CRITICAL DEBUG: Log EXACTLY when round completion check happens
-        console.log(`🔍 CRITICAL DEBUG: Round completion check triggered!`);
-        console.log(`🔍 CRITICAL DEBUG: playedCards.length = ${room.game.playedCards.length}`);
-        console.log(`🔍 CRITICAL DEBUG: This should ONLY happen when 4 cards are played!`);
-        console.log(`🔍 CRITICAL DEBUG: Current player: ${targetPlayer.name} (${clientPlayerIndex})`);
-        console.log(`🔍 CRITICAL DEBUG: If this is NOT the 4th card, this is a BUG!`);
-        
-        // ✅ Check if round is complete
+        // ✅ Check if round is complete (only when 4 cards are played)
         if (room.game.playedCards.length === 4) {
+            console.log(`🏁 Round completion check triggered - 4 cards played!`);
             console.log(`🏁 Round complete in room ${socket.roomCode}`);
             
             // ✅ CRITICAL FIX: Implement proper scoring logic with draw handling
@@ -976,13 +964,12 @@ io.on('connection', (socket) => {
             if (currentPlayer && currentPlayer.id !== socket.id) {
                 console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer.name} (${currentPlayer.id}), but event from ${socket.id}`);
                 console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round`);
-                room.game.roundJustCompleted = false; // Reset the flag
-                return;
+                return; // Don't reset the flag here - let it be reset when the correct player plays
             }
             
-            console.log(`🔍 DEBUG: botTurnComplete from correct player during new round - allowing to proceed`);
-            room.game.roundJustCompleted = false; // Reset the flag
-            return; // Exit early, don't change current player
+            console.log(`🔍 DEBUG: botTurnComplete from correct player during new round - resetting flag and allowing normal turn progression`);
+            room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
+            // Don't return here - continue to normal turn progression logic
         }
         
         // ✅ Move to next player after bot turn is complete
