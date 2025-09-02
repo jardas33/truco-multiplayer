@@ -1062,7 +1062,185 @@ io.on('connection', (socket) => {
         });
 
         console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
+
+        // ✅ CRITICAL FIX: Handle bot response server-side
+        const responsePlayer = room.players[nextPlayerIndex];
+        if (responsePlayer && responsePlayer.isBot) {
+            console.log(`🤖 Server-side: Bot ${responsePlayer.name} needs to respond to Truco`);
+            setTimeout(() => {
+                // Simulate bot decision
+                const decision = Math.random() < 0.5 ? 1 : 2; // 50% accept, 50% reject
+                console.log(`🤖 Server-side: Bot ${responsePlayer.name} decided: ${decision === 1 ? 'Accept' : 'Reject'}`);
+                
+                // Send bot response directly to server
+                const botSocket = { id: responsePlayer.id, roomCode: socket.roomCode };
+                const botData = { response: decision };
+                
+                // Process the bot response
+                processTrucoResponse(botSocket, botData, room);
+            }, 1500);
+        }
     });
+
+    // ✅ Helper function to process Truco responses (used by both client and server-side bot responses)
+    function processTrucoResponse(socket, data, room) {
+        console.log(`🎯 Processing Truco response in room: ${socket.roomCode}`, data);
+        
+        if (!room || !room.game || !room.game.trucoState) {
+            console.log(`❌ No active Truco in room ${socket.roomCode}`);
+            return;
+        }
+
+        // ✅ Validate it's the response player's turn
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            console.log(`❌ Player ${socket.id} not found in room`);
+            return;
+        }
+
+        const playerIndex = room.players.indexOf(player);
+        
+        // ✅ COMPREHENSIVE DEBUGGING
+        console.log(`🔍 TRUCO DEBUG - Player: ${player.name} (${playerIndex})`);
+        console.log(`🔍 TRUCO DEBUG - Truco State:`, {
+            waitingForResponse: room.game.trucoState.waitingForResponse,
+            responsePlayerIndex: room.game.trucoState.responsePlayerIndex,
+            currentValue: room.game.trucoState.currentValue,
+            potentialValue: room.game.trucoState.potentialValue,
+            callerIndex: room.game.trucoState.callerIndex,
+            callerTeam: room.game.trucoState.callerTeam
+        });
+        console.log(`🔍 TRUCO DEBUG - All Players:`, room.players.map((p, i) => `${i}: ${p.name} (${p.team})`));
+        
+        // ✅ CRITICAL FIX: Check if Truco is still waiting for response
+        if (!room.game.trucoState.waitingForResponse) {
+            console.log(`❌ Truco is not waiting for response`);
+            return;
+        }
+        
+        if (room.game.trucoState.responsePlayerIndex !== playerIndex) {
+            console.log(`❌ Player ${player.name} tried to respond to Truco out of turn`);
+            console.log(`❌ Expected response player index: ${room.game.trucoState.responsePlayerIndex}, got: ${playerIndex}`);
+            console.log(`❌ Expected response player: ${room.players[room.game.trucoState.responsePlayerIndex]?.name}`);
+            return;
+        }
+
+        const response = data.response; // 1 = accept, 2 = reject, 3 = raise
+        console.log(`🎯 ${player.name} responded to Truco: ${response === 1 ? 'Accept' : response === 2 ? 'Reject' : 'Raise'}`);
+
+        if (response === 1) {
+            // ✅ Accept Truco
+            room.game.trucoState.currentValue = room.game.trucoState.potentialValue;
+            room.game.trucoState.isActive = false;
+            room.game.trucoState.waitingForResponse = false;
+            room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
+
+            console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
+
+            // ✅ Emit Truco accepted event
+            io.to(socket.roomCode).emit('trucoAccepted', {
+                accepter: socket.id,
+                accepterName: player.name,
+                accepterTeam: player.team,
+                newGameValue: room.game.trucoState.currentValue,
+                roomCode: socket.roomCode
+            });
+
+        } else if (response === 2) {
+            // ✅ Reject Truco
+            const winningTeam = room.game.trucoState.callerTeam;
+            const winningTeamName = winningTeam === 'team1' ? 'Team Alfa' : 'Team Beta';
+            
+            room.game.trucoState.isActive = false;
+            room.game.trucoState.waitingForResponse = false;
+            room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
+
+            console.log(`❌ Truco rejected! ${winningTeamName} wins with ${room.game.trucoState.currentValue} games`);
+
+            // ✅ Emit Truco rejected event
+            io.to(socket.roomCode).emit('trucoRejected', {
+                rejecter: socket.id,
+                rejecterName: player.name,
+                rejecterTeam: player.team,
+                winningTeam: winningTeam,
+                winningTeamName: winningTeamName,
+                gameValue: room.game.trucoState.currentValue,
+                roomCode: socket.roomCode
+            });
+
+        } else if (response === 3) {
+            // ✅ Raise Truco
+            if (room.game.trucoState.potentialValue >= 12) {
+                console.log(`❌ Cannot raise beyond 12 games`);
+                return;
+            }
+
+            // ✅ Increase potential value
+            if (room.game.trucoState.potentialValue === 3) {
+                room.game.trucoState.potentialValue = 6;
+            } else if (room.game.trucoState.potentialValue === 6) {
+                room.game.trucoState.potentialValue = 9;
+            } else if (room.game.trucoState.potentialValue === 9) {
+                room.game.trucoState.potentialValue = 12;
+            }
+
+            // ✅ Find next player from opposite team for response
+            // In Truco, when someone raises, the next player from the opposite team responds
+            const raiserTeam = player.team;
+            let nextPlayerIndex = -1;
+            
+            // Find the next player from the opposite team (not the raiser's team)
+            for (let i = 1; i < 4; i++) {
+                const checkIndex = (playerIndex + i) % 4;
+                if (room.players[checkIndex].team !== raiserTeam) {
+                    nextPlayerIndex = checkIndex;
+                    break;
+                }
+            }
+            
+            // Fallback: if no opposite team player found, use the original caller
+            if (nextPlayerIndex === -1) {
+                nextPlayerIndex = room.game.trucoState.callerIndex;
+            }
+            
+            room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
+            room.game.trucoState.waitingForResponse = true; // ✅ CRITICAL FIX: Set waiting for response after raise
+
+            console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games`);
+            console.log(`🎯 Next player to respond: ${room.players[nextPlayerIndex].name} (${room.players[nextPlayerIndex].team})`);
+
+            // ✅ Emit Truco raised event
+            io.to(socket.roomCode).emit('trucoRaised', {
+                raiser: socket.id,
+                raiserName: player.name,
+                raiserTeam: player.team,
+                newPotentialValue: room.game.trucoState.potentialValue,
+                responsePlayerIndex: nextPlayerIndex,
+                responsePlayerName: room.players[nextPlayerIndex].name,
+                roomCode: socket.roomCode
+            });
+
+            // ✅ Handle bot response for raised Truco
+            const nextResponsePlayer = room.players[nextPlayerIndex];
+            if (nextResponsePlayer && nextResponsePlayer.isBot) {
+                console.log(`🤖 Server-side: Bot ${nextResponsePlayer.name} needs to respond to raised Truco`);
+                setTimeout(() => {
+                    // Simulate bot decision for raise
+                    const decision = Math.random() < 0.3 ? 3 : (Math.random() < 0.6 ? 1 : 2); // 30% raise, 30% accept, 40% reject
+                    console.log(`🤖 Server-side: Bot ${nextResponsePlayer.name} decided: ${decision === 1 ? 'Accept' : decision === 2 ? 'Reject' : 'Raise'}`);
+                    
+                    // Send bot response directly to server
+                    const botSocket = { id: nextResponsePlayer.id, roomCode: socket.roomCode };
+                    const botData = { response: decision };
+                    
+                    // Process the bot response
+                    processTrucoResponse(botSocket, botData, room);
+                }, 1500);
+            }
+        }
+
+        console.log(`✅ Truco response processed for user ${socket.id} in room ${socket.roomCode}`);
+    }
 
     // ✅ Handle Truco responses (accept, reject, raise)
     socket.on('respondTruco', (data) => {
@@ -1075,11 +1253,14 @@ io.on('connection', (socket) => {
         }
         
         const room = rooms.get(socket.roomCode);
-        if (!room || !room.game || !room.game.trucoState) {
-            console.log(`❌ No active Truco in room ${socket.roomCode}`);
-            socket.emit('error', 'No active Truco');
+        if (!room) {
+            console.log(`❌ Room ${socket.roomCode} not found for Truco response`);
+            socket.emit('error', 'Room not found');
             return;
         }
+
+        // ✅ Use shared function to process Truco response
+        processTrucoResponse(socket, data, room);
 
         // ✅ Validate it's the response player's turn
         const player = room.players.find(p => p.id === socket.id);
