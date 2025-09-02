@@ -524,26 +524,33 @@ function setupSocketListeners() {
         // Show Truco message
         showTrucoMessage(`${data.callerName} called Truco for ${data.potentialValue} games!`);
         
-        // ✅ CRITICAL FIX: Allow the designated response player to respond
+        // ✅ CRITICAL FIX: Only allow the designated response player to respond
         if (data.responsePlayerIndex !== undefined) {
             const responsePlayer = window.game.players[data.responsePlayerIndex];
             const currentPlayer = window.game.players[window.game.currentPlayerIndex];
+            const localPlayerIndex = window.game.currentPlayerIndex;
             
             console.log(`🔍 TRUCO RESPONSE DEBUG - Current player: ${currentPlayer?.name} (${window.game.currentPlayerIndex})`);
             console.log(`🔍 TRUCO RESPONSE DEBUG - Response player: ${responsePlayer?.name} (${data.responsePlayerIndex})`);
+            console.log(`🔍 TRUCO RESPONSE DEBUG - Local player index: ${localPlayerIndex}`);
+            console.log(`🔍 TRUCO RESPONSE DEBUG - Is local player the response player? ${localPlayerIndex === data.responsePlayerIndex}`);
             
-            // ✅ CRITICAL FIX: Allow response player to respond (don't check currentPlayerIndex for Truco)
+            // ✅ CRITICAL FIX: Only allow the designated response player to respond
             // In Truco, the response player is determined by the server, not by turn order
-            if (responsePlayer && responsePlayer.isBot) {
-                console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
-                setTimeout(() => {
-                    responsePlayer.botRespondTruco();
-                }, 1500);
-            } else if (responsePlayer && !responsePlayer.isBot) {
-                console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
-                showTrucoResponseButtons();
+            if (localPlayerIndex === data.responsePlayerIndex) {
+                if (responsePlayer && responsePlayer.isBot) {
+                    console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
+                    setTimeout(() => {
+                        responsePlayer.botRespondTruco();
+                    }, 1500);
+                } else if (responsePlayer && !responsePlayer.isBot) {
+                    console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
+                    showTrucoResponseButtons();
+                } else {
+                    console.log(`🔍 TRUCO RESPONSE DEBUG - No valid response player found`);
+                }
             } else {
-                console.log(`🔍 TRUCO RESPONSE DEBUG - No valid response player found`);
+                console.log(`🔍 TRUCO RESPONSE DEBUG - Local player (${localPlayerIndex}) is not the response player (${data.responsePlayerIndex}), skipping response trigger`);
             }
         }
     });
