@@ -62,6 +62,8 @@ function initSocket() {
         // ✅ Handle turn changes with improved validation
         socket.on('turnChanged', (data) => {
             console.log('🔄 Turn changed event received:', data);
+            console.log(`🔍 DEBUG: turnChanged event received. New current player index: ${data.currentPlayer}`);
+            console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
             // ✅ turnChanged event received and processed
             
             // ✅ CRITICAL TEST: Log that we're in the turnChanged handler

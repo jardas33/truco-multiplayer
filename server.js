@@ -845,6 +845,8 @@ io.on('connection', (socket) => {
                 console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged emission for ${nextRoundStarter.name}`);
                 console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for round completion`);
                 
+                console.log(`🔍 DEBUG: Emitting turnChanged event for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                console.log(`🔍 DEBUG: Round completion turnChanged event stack trace:`, new Error().stack);
                 io.to(socket.roomCode).emit('turnChanged', {
                     currentPlayer: room.game.currentPlayer,
                     allHands: room.game.hands
@@ -895,6 +897,8 @@ io.on('connection', (socket) => {
             console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for human player progression`);
             
             // Emit turn change event with the new current player IMMEDIATELY
+            console.log(`🔍 DEBUG: Emitting turnChanged event for human player progression with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: Human turnChanged event stack trace:`, new Error().stack);
             io.to(socket.roomCode).emit('turnChanged', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands
@@ -992,6 +996,7 @@ io.on('connection', (socket) => {
         // Emit turn change event with the new current player
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
+        console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
         io.to(socket.roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands
