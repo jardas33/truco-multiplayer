@@ -397,7 +397,7 @@ io.on('connection', (socket) => {
                         if (room.game && room.game.started) {
                             console.log(`⚠️ WARNING: Attempting to delete room ${socket.roomCode} during active game after disconnect - PREVENTING DELETION`);
                         } else {
-                            rooms.delete(socket.roomCode);
+                        rooms.delete(socket.roomCode);
                             console.log(`🗑️ Room ${socket.roomCode} deleted (empty and no active game after disconnect)`);
                         }
                     }
@@ -767,6 +767,9 @@ io.on('connection', (socket) => {
             
             // ✅ CRITICAL FIX: Round winner should start the next round
             // Find the player who won the round and set them as current player
+            console.log(`🔍 CRITICAL DEBUG: Round completion - roundWinner object:`, roundWinner);
+            console.log(`🔍 CRITICAL DEBUG: Round completion - roundWinner.name: "${roundWinner.name}"`);
+            console.log(`🔍 CRITICAL DEBUG: Round completion - roundWinner.team: "${roundWinner.team}"`);
             const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === roundWinner.name);
                 console.log(`🔍 DEBUG: Round winner player index search result: ${roundWinnerPlayerIndex}`);
                 
@@ -1366,13 +1369,13 @@ io.on('connection', (socket) => {
             console.log(`❌ No room code provided for manual new game request`);
             return;
         }
-        
+
         const room = rooms.get(data.roomCode);
         if (!room) {
             console.log(`❌ Room ${data.roomCode} not found for manual new game request`);
             return;
         }
-        
+
         console.log(`🎮 Executing manual startNewGame for room ${data.roomCode}`);
         startNewGame(room, 'manual', data.roomCode);
     });
@@ -1871,6 +1874,11 @@ function startNewGame(room, winningTeam, roomId) {
             isBot: room.players[startingPlayerIndex].isBot
         });
         
+        // ✅ CRITICAL DEBUG: Log the exact currentPlayer value that will be sent
+        console.log(`🔍 CRITICAL DEBUG: startNewGame - room.game.currentPlayer set to: ${room.game.currentPlayer}`);
+        console.log(`🔍 CRITICAL DEBUG: startNewGame - This should be the starting player for the new game`);
+        console.log(`🔍 CRITICAL DEBUG: startNewGame - If this is wrong, the newGameStarted event will be wrong`);
+        
         // Update player hands
         room.players.forEach((player, index) => {
             player.hand = hands[index];
@@ -1880,12 +1888,15 @@ function startNewGame(room, winningTeam, roomId) {
         
         // Emit new game started event with both scores and games
         console.log(`SERVER: Emitting 'newGameStarted' for room ${roomId} with scores:`, room.game.scores, 'and games:', room.game.games);
+        console.log(`🔍 CRITICAL DEBUG: newGameStarted event - currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+        console.log(`🔍 CRITICAL DEBUG: newGameStarted event - This should be the starting player for the new game`);
         io.to(roomId).emit('newGameStarted', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands,
             scores: room.game.scores,
             games: room.game.games
         });
+        console.log(`🔍 CRITICAL DEBUG: newGameStarted event emitted successfully`);
         
     } catch (error) {
         console.error(`❌ Error starting new game:`, error);
