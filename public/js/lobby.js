@@ -64,6 +64,8 @@ function initSocket() {
             console.log('🔄 Turn changed event received:', data);
             console.log(`🔍 DEBUG: turnChanged event received. New current player index: ${data.currentPlayer}`);
             console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
+            console.log(`🔍 DEBUG: turnChanged event timestamp: ${new Date().toISOString()}`);
+            console.log(`🔍 DEBUG: Previous currentPlayerIndex: ${window.game?.currentPlayerIndex}`);
             // ✅ turnChanged event received and processed
             
             // ✅ CRITICAL TEST: Log that we're in the turnChanged handler
@@ -87,8 +89,10 @@ function initSocket() {
             }
             
             // ✅ CRITICAL FIX: Update current player FIRST to prevent race conditions
+            console.log(`🔍 DEBUG: About to update currentPlayerIndex from ${window.game.currentPlayerIndex} to ${data.currentPlayer}`);
             window.game.currentPlayerIndex = data.currentPlayer;
             console.log(`🔄 Updated currentPlayerIndex to: ${data.currentPlayer}`);
+            console.log(`🔍 DEBUG: currentPlayerIndex update completed at: ${new Date().toISOString()}`);
             
             // ✅ CRITICAL FIX: Update player active states for turn indicator
             console.log(`🔄 Updating player active states. Server currentPlayer: ${data.currentPlayer}`);
