@@ -515,7 +515,7 @@ function createDeck() {
        
        // ✅ CRITICAL FIX: In multiplayer mode, do NOT run client-side game state management
        // The server handles all game state transitions via newGameStarted events
-       if (window.isMultiplayer) {
+       if (window.isMultiplayerMode) {
          console.log(`🔍 CRITICAL DEBUG: endGame() called in multiplayer mode - NOT running client-side game state logic`);
          console.log(`🔍 CRITICAL DEBUG: Server will handle new game creation via newGameStarted event`);
          return; // Exit early, let server handle everything
