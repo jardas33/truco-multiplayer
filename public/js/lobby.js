@@ -902,6 +902,9 @@ function setupSocketListeners() {
         console.log('🔍 DEBUG: newGameStarted event received with data:', data);
         console.log('🔍 DEBUG: Event received at timestamp:', new Date().toISOString());
         
+        // ✅ CRITICAL FIX: Start new game in history tracking
+        startNewGameInHistory();
+        
         // ✅ CRITICAL FIX: Reset game completion flag to allow card playing in new game
         window.gameCompleted = false;
         console.log('🔓 New game started - card playing enabled');
@@ -1412,11 +1415,23 @@ function updateGameScores(scores, isGamesScore = false) {
 
 // ✅ CRITICAL FIX: Round History functionality
 let roundHistory = []; // Store round history data
+let currentGameNumber = 1; // Track current game number
 
 // Function to add round to history
 function addRoundToHistory(roundData) {
-    roundHistory.push(roundData);
-    console.log(`📋 Round added to history:`, roundData);
+    // Add game number to round data
+    const roundWithGame = {
+        ...roundData,
+        gameNumber: currentGameNumber
+    };
+    roundHistory.push(roundWithGame);
+    console.log(`📋 Round added to history for Game ${currentGameNumber}:`, roundWithGame);
+}
+
+// Function to start new game in history
+function startNewGameInHistory() {
+    currentGameNumber++;
+    console.log(`📋 New game started in history: Game ${currentGameNumber}`);
 }
 
 // Function to show round history modal
@@ -1435,33 +1450,84 @@ function showRoundHistory() {
     if (roundHistory.length === 0) {
         historyHTML = '<p style="text-align: center; color: #bdc3c7; font-style: italic;">No rounds completed yet.</p>';
     } else {
+        // Group rounds by game
+        const roundsByGame = {};
         roundHistory.forEach((round, index) => {
-            const roundNumber = index + 1;
+            const gameNum = round.gameNumber || 1;
+            if (!roundsByGame[gameNum]) {
+                roundsByGame[gameNum] = [];
+            }
+            roundsByGame[gameNum].push({ ...round, originalIndex: index });
+        });
+        
+        // Display rounds grouped by game
+        Object.keys(roundsByGame).sort((a, b) => parseInt(a) - parseInt(b)).forEach(gameNum => {
+            const gameRounds = roundsByGame[gameNum];
+            
+            // Game header
+            historyHTML += `
+                <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #3498db, #2980b9); border-radius: 12px; border: 2px solid #2980b9;">
+                    <h2 style="margin: 0 0 15px 0; color: #fff; text-align: center; font-size: 24px;">
+                        🎮 GAME ${gameNum} 🎮
+                    </h2>
+            `;
+            
+                        // Rounds for this game
+            gameRounds.forEach((round, roundIndex) => {
+                const roundNumber = roundIndex + 1;
+                
+                // Handle draw rounds
+                if (round.isDraw) {
+                    historyHTML += `
+                        <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.15); border-radius: 8px; border-left: 4px solid #FFA500;">
+                            <h3 style="margin: 0 0 10px 0; color: #FFA500; font-size: 18px;">Round ${roundNumber}</h3>
+                            <div style="margin-bottom: 8px; color: #fff;">
+                                <strong>Result:</strong> 🤝 DRAW
+                            </div>
+                            <div style="margin-bottom: 8px; color: #fff;">
+                                <strong>Cards Played:</strong>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-left: 20px;">
+                                ${round.cards.map(card => `
+                                    <div style="padding: 8px; background: rgba(255,255,255,0.2); border-radius: 5px; font-size: 14px; color: #fff;">
+                                        <strong>${card.player.name}:</strong> ${card.card.name}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Handle regular rounds with winners
             const winnerName = round.winner.name;
             const winnerCard = round.winner.card;
             const winnerTeam = round.winner.team === 'team1' ? 'Team Alfa' : 'Team Beta';
             
             historyHTML += `
-                <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; border-left: 4px solid #FFD700;">
-                    <h3 style="margin: 0 0 10px 0; color: #FFD700;">Round ${roundNumber}</h3>
-                    <div style="margin-bottom: 8px;">
+                        <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.15); border-radius: 8px; border-left: 4px solid #FFD700;">
+                            <h3 style="margin: 0 0 10px 0; color: #FFD700; font-size: 18px;">Round ${roundNumber}</h3>
+                            <div style="margin-bottom: 8px; color: #fff;">
                         <strong>Winner:</strong> ${winnerName} (${winnerTeam})
                     </div>
-                    <div style="margin-bottom: 8px;">
+                            <div style="margin-bottom: 8px; color: #fff;">
                         <strong>Winning Card:</strong> ${winnerCard}
                     </div>
-                    <div style="margin-bottom: 8px;">
+                            <div style="margin-bottom: 8px; color: #fff;">
                         <strong>Cards Played:</strong>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-left: 20px;">
                         ${round.cards.map(card => `
-                            <div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: 14px;">
+                                    <div style="padding: 8px; background: rgba(255,255,255,0.2); border-radius: 5px; font-size: 14px; color: #fff;">
                                 <strong>${card.player.name}:</strong> ${card.card.name}
                         </div>
                     `).join('')}
                     </div>
                 </div>
             `;
+                }
+            });
+            
+            // Close game section
+            historyHTML += `</div>`;
         });
     }
     
