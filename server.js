@@ -1231,7 +1231,14 @@ io.on('connection', (socket) => {
             // ✅ Start new game after 3 seconds
             setTimeout(() => {
                 console.log(`🔍 DEBUG: About to call startNewGame with winningTeam: ${winningTeam}`);
+                console.log(`🔍 DEBUG: Room state before startNewGame:`, {
+                    roomCode: socket.roomCode,
+                    gameStarted: room.game?.started,
+                    games: room.game?.games,
+                    players: room.players.map(p => ({ name: p.name, team: p.team }))
+                });
                 startNewGame(room, winningTeam, socket.roomCode);
+                console.log(`🔍 DEBUG: startNewGame call completed`);
             }, 3000);
 
         } else if (response === 3) {
@@ -1863,6 +1870,12 @@ function determineRoundWinner(playedCards, room) {
 // ✅ CRITICAL FIX: Function to start a new game after a team wins
 function startNewGame(room, winningTeam, roomId) {
     console.log(`🎮 Starting new game in room: ${roomId} after ${winningTeam} won`);
+    console.log(`🔍 DEBUG: startNewGame function called with parameters:`, {
+        roomId: roomId,
+        winningTeam: winningTeam,
+        roomExists: !!room,
+        roomPlayers: room?.players?.map(p => ({ name: p.name, team: p.team }))
+    });
     
     try {
         // ✅ CRITICAL FIX: Preserve games score, only reset round scores
@@ -1964,6 +1977,12 @@ function startNewGame(room, winningTeam, roomId) {
         room.game.playedCards = [];
         
         console.log(`🔍 DEBUG: Final starting player index validated: ${startingPlayerIndex} (${room.players[startingPlayerIndex]?.name})`);
+        console.log(`🔍 DEBUG: Starting player details:`, {
+            name: room.players[startingPlayerIndex].name,
+            team: room.players[startingPlayerIndex].team,
+            index: startingPlayerIndex,
+            isBot: room.players[startingPlayerIndex].isBot
+        });
         
         // Update player hands
         room.players.forEach((player, index) => {
