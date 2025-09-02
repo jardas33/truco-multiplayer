@@ -839,6 +839,8 @@ io.on('connection', (socket) => {
                 
                 // ✅ UI FIX: Emit turnChanged immediately for round completion
                 console.log(`🎯 Emitting turnChanged immediately for round completion`);
+                console.log(`🔍 DEBUG: About to emit turnChanged for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
                 
                 // ✅ CRITICAL DEBUG: Track roundComplete turnChanged emission
                 const timestamp = new Date().toISOString();
@@ -890,11 +892,16 @@ io.on('connection', (socket) => {
             
             // ✅ UI FIX: Emit turnChanged immediately for human player progression
             console.log(`🎯 Emitting turnChanged immediately for human player progression`);
+            console.log(`🔍 DEBUG: About to emit turnChanged for human player progression with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
             
             // ✅ CRITICAL DEBUG: Track human player turnChanged emission
             const timestamp = new Date().toISOString();
             console.log(`🔍 CRITICAL DEBUG: [${timestamp}] HUMAN PLAYER turnChanged emission for ${targetPlayer.name}`);
             console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for human player progression`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] Human player turnChanged - currentPlayer: ${room.game.currentPlayer}`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] Human player turnChanged - player name: ${room.players[room.game.currentPlayer]?.name}`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] Human player turnChanged - player team: ${room.players[room.game.currentPlayer]?.team}`);
             
             // Emit turn change event with the new current player IMMEDIATELY
             console.log(`🔍 DEBUG: Emitting turnChanged event for human player progression with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
@@ -997,6 +1004,9 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
         console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
+        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event - currentPlayer: ${room.game.currentPlayer}`);
+        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event - player name: ${room.players[room.game.currentPlayer]?.name}`);
+        console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event - player team: ${room.players[room.game.currentPlayer]?.team}`);
         io.to(socket.roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands
