@@ -968,15 +968,18 @@ io.on('connection', (socket) => {
             }
             
             console.log(`🔍 DEBUG: botTurnComplete from correct player during new round - resetting flag and allowing normal turn progression`);
+            console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with turn progression`);
             room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
             // Don't return here - continue to normal turn progression logic
         }
         
         // ✅ Move to next player after bot turn is complete
         const previousPlayer = room.game.currentPlayer;
+        console.log(`🔍 DEBUG: botTurnComplete processing - previousPlayer: ${previousPlayer} (${room.players[previousPlayer]?.name})`);
         
         // ✅ CRITICAL FIX: Use team-based alternating turn order
         const newPlayer = getNextPlayerFromOppositeTeam(room.players, room.game.currentPlayer);
+        console.log(`🔍 DEBUG: getNextPlayerFromOppositeTeam returned: ${newPlayer} (${room.players[newPlayer]?.name})`);
         
         // ✅ CRITICAL FIX: Prevent duplicate turnChanged events for the same player
         if (room.game.currentPlayer === newPlayer) {
