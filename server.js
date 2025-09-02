@@ -965,21 +965,18 @@ io.on('connection', (socket) => {
             const currentPlayer = room.players[room.game.currentPlayer];
             console.log(`🔍 DEBUG: Current player ID: ${currentPlayer?.id}, Socket ID: ${socket.id}, Match: ${currentPlayer?.id === socket.id}`);
             
-            // ✅ CRITICAL FIX: Allow botTurnComplete from human player's socket when it's a bot's turn
-            // The human player's client manages all bot logic, so botTurnComplete events come from the human player's socket
-            if (currentPlayer && currentPlayer.isBot && currentPlayer.id !== socket.id) {
-                console.log(`🔍 DEBUG: botTurnComplete from human player's socket for bot ${currentPlayer.name} - this is expected behavior`);
-                // Don't return here - continue with normal processing
-            } else if (currentPlayer && !currentPlayer.isBot && currentPlayer.id !== socket.id) {
-                console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer.name} (${currentPlayer.id}), but event from ${socket.id}`);
-                console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round`);
+            // ✅ CRITICAL FIX: Only allow botTurnComplete to proceed if it's from the current player's socket
+            // This prevents old botTurnComplete events from interfering with new rounds
+            if (currentPlayer && currentPlayer.id === socket.id) {
+                console.log(`🔍 DEBUG: botTurnComplete from current player ${currentPlayer.name} - this is expected for round winner starting new round`);
+                console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
+                room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
+                // Don't return here - continue to normal turn progression logic
+            } else {
+                console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer?.name} (${currentPlayer?.id}), but event from ${socket.id}`);
+                console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round - round winner should start`);
                 return; // Don't reset the flag here - let it be reset when the correct player plays
             }
-            
-            console.log(`🔍 DEBUG: botTurnComplete from correct player during new round - resetting flag and allowing normal turn progression`);
-            console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with turn progression`);
-            room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
-            // Don't return here - continue to normal turn progression logic
         }
         
         // ✅ Move to next player after bot turn is complete
