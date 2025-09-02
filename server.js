@@ -1180,6 +1180,13 @@ io.on('connection', (socket) => {
             const winningTeam = room.game.trucoState.callerTeam;
             const winningTeamName = winningTeam === 'team1' ? 'Team Alfa' : 'Team Beta';
             
+            // ✅ CRITICAL DEBUG: Log Truco rejection details
+            console.log(`🔍 DEBUG: Truco rejection - callerTeam: ${room.game.trucoState.callerTeam}`);
+            console.log(`🔍 DEBUG: Truco rejection - callerIndex: ${room.game.trucoState.callerIndex}`);
+            console.log(`🔍 DEBUG: Truco rejection - caller: ${room.players[room.game.trucoState.callerIndex]?.name}`);
+            console.log(`🔍 DEBUG: Truco rejection - winningTeam: ${winningTeam}`);
+            console.log(`🔍 DEBUG: Truco rejection - winningTeamName: ${winningTeamName}`);
+            
             room.game.trucoState.isActive = false;
             room.game.trucoState.waitingForResponse = false;
             room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
@@ -1898,12 +1905,18 @@ function startNewGame(room, winningTeam, roomId) {
             console.log(`🔍 DEBUG: Using winningTeam to determine starting player: ${winningTeam}`);
             console.log(`🔍 DEBUG: All players and their teams:`, room.players.map((p, i) => `${i}: ${p.name} → ${p.team}`));
             
+            // ✅ CRITICAL DEBUG: Check each player individually
+            room.players.forEach((player, index) => {
+                console.log(`🔍 DEBUG: Player ${index}: ${player.name}, team: ${player.team}, matches winningTeam ${winningTeam}? ${player.team === winningTeam}`);
+            });
+            
             const winningTeamPlayerIndex = room.players.findIndex(p => p.team === winningTeam);
             console.log(`🔍 DEBUG: findIndex result for team ${winningTeam}: ${winningTeamPlayerIndex}`);
             
             if (winningTeamPlayerIndex !== -1) {
                 startingPlayerIndex = winningTeamPlayerIndex;
                 console.log(`🔍 DEBUG: Starting player set to first player from winning team: ${room.players[startingPlayerIndex].name} (index ${startingPlayerIndex})`);
+                console.log(`🔍 DEBUG: This player's team: ${room.players[startingPlayerIndex].team}`);
             } else {
                 console.log(`🔍 DEBUG: No player found from winning team, using default starting player`);
             }
