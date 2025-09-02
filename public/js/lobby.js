@@ -852,11 +852,12 @@ function setupSocketListeners() {
             console.log(`🎮 Games score - Team 1: ${data.games.team1}, Team 2: ${data.games.team2}`);
         }
         
-        // ✅ CRITICAL FIX: Handle game winner
+        // ✅ CRITICAL FIX: Handle game winner - will be shown in combined popup
         if (data.gameWinner) {
             const winningTeam = data.gameWinner === 'team1' ? 'Team Alfa' : 'Team Beta';
-            showGameWinnerMessage(winningTeam);
             console.log(`🎮 Game winner: ${winningTeam}`);
+            // Store winning team for combined popup
+            window.lastGameWinner = winningTeam;
         }
         
         // ✅ CRITICAL FIX: Clear played cards immediately for game completion
@@ -1017,8 +1018,8 @@ function setupSocketListeners() {
             }, 1000); // 1-second delay for new game initialization
         }
         
-        // Show new game message
-        showNewGameMessage();
+        // Show combined game winner + new game message
+        showCombinedGameMessage();
         
         // Force game redraw to show new game state
         if (typeof redraw === 'function') {
@@ -1155,10 +1156,88 @@ function showDrawMessagePopup() {
     }
 }
 
-// ✅ CRITICAL FIX: Function to display game winner message
+// ✅ CRITICAL FIX: Function to display combined game winner + new game message
+function showCombinedGameMessage() {
+    const winningTeam = window.lastGameWinner || null;
+    addToPopupQueue('combinedGame', winningTeam, 6000); // Longer duration for combined message
+}
+
+// ✅ DEPRECATED: Function to display game winner message (now combined)
 function showGameWinnerMessage(winningTeam) {
     addToPopupQueue('gameWinner', winningTeam, 5000); // Longer duration for game winner
     }
+
+function showCombinedGameMessagePopup(winningTeam) {
+    // Create combined game winner + new game message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'combinedGameMessage';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #FFD700, #4CAF50);
+        color: #000;
+        padding: 30px 40px;
+        border-radius: 20px;
+        font-size: 22px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        z-index: 1001;
+        border: 4px solid #FF8C00;
+        min-width: 350px;
+    `;
+    
+    let content = '';
+    if (winningTeam) {
+        content = `
+            <div style="margin-bottom: 20px;">🎮 GAME WINNER! 🎮</div>
+            <div style="font-size: 20px; color: #8B0000; margin-bottom: 15px;">${winningTeam}</div>
+            <div style="font-size: 16px; margin-bottom: 20px;">Congratulations!</div>
+            <div style="border-top: 2px solid #000; padding-top: 15px; margin-top: 15px;">
+                <div style="font-size: 18px;">🃏 NEW GAME STARTED! 🃏</div>
+            </div>
+        `;
+    } else {
+        content = `
+            <div style="margin-bottom: 15px;">🃏 NEW GAME STARTED! 🃏</div>
+        `;
+    }
+    
+    messageDiv.innerHTML = `
+        <button id="closeCombinedGameBtn" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        ">✕</button>
+        ${content}
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Add close button functionality
+    const closeBtn = document.getElementById('closeCombinedGameBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            clearCurrentPopup();
+        });
+    }
+}
 
 function showGameWinnerMessagePopup(winningTeam) {
     
@@ -1219,7 +1298,7 @@ function showGameWinnerMessagePopup(winningTeam) {
     }
 }
 
-// ✅ CRITICAL FIX: Function to display new game message
+// ✅ DEPRECATED: Function to display new game message (now combined with game winner)
 function showNewGameMessage() {
     // Remove any existing new game message
     const existingMessage = document.getElementById('newGameMessage');
@@ -2453,6 +2532,9 @@ function showPopup(type, data, duration) {
             break;
         case 'gameWinner':
             showGameWinnerMessagePopup(data);
+            break;
+        case 'combinedGame':
+            showCombinedGameMessagePopup(data);
             break;
     }
     
