@@ -902,6 +902,12 @@ function setupSocketListeners() {
         
         // Update current player
         if (data.currentPlayer !== undefined) {
+            console.log('🔍 DEBUG: newGameStarted - received currentPlayer:', data.currentPlayer);
+            console.log('🔍 DEBUG: newGameStarted - currentPlayer type:', typeof data.currentPlayer);
+            console.log('🔍 DEBUG: newGameStarted - currentPlayer name:', window.game.players[data.currentPlayer]?.name);
+            console.log('🔍 DEBUG: newGameStarted - currentPlayer team:', window.game.players[data.currentPlayer]?.team);
+            console.log('🔍 DEBUG: newGameStarted - currentPlayer isBot:', window.game.players[data.currentPlayer]?.isBot);
+            
             window.game.currentPlayerIndex = data.currentPlayer;
             console.log('🔄 New game - current player:', data.currentPlayer);
             

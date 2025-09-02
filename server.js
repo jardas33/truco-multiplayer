@@ -1237,6 +1237,13 @@ io.on('connection', (socket) => {
                     games: room.game?.games,
                     players: room.players.map(p => ({ name: p.name, team: p.team }))
                 });
+                
+                // ✅ CRITICAL DEBUG: Check if winningTeam is correct
+                console.log(`🔍 DEBUG: winningTeam value: "${winningTeam}"`);
+                console.log(`🔍 DEBUG: winningTeam type: ${typeof winningTeam}`);
+                console.log(`🔍 DEBUG: winningTeam === 'team1': ${winningTeam === 'team1'}`);
+                console.log(`🔍 DEBUG: winningTeam === 'team2': ${winningTeam === 'team2'}`);
+                
                 startNewGame(room, winningTeam, socket.roomCode);
                 console.log(`🔍 DEBUG: startNewGame call completed`);
             }, 3000);
