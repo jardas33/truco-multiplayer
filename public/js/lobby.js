@@ -502,6 +502,122 @@ function setupSocketListeners() {
             // handler body intentionally trimmed for brevity; it already exists above
         });
 
+    // ✅ Handle Truco events
+    socket.on('trucoCalled', (data) => {
+        console.log('🎯 Truco called event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for Truco event');
+            return;
+        }
+
+        // Update game state
+        window.game.trucoState = {
+            isActive: true,
+            currentValue: data.currentValue,
+            potentialValue: data.potentialValue,
+            callerTeam: data.callerTeam,
+            waitingForResponse: true,
+            responsePlayerIndex: data.responsePlayerIndex
+        };
+
+        // Show Truco message
+        showTrucoMessage(`${data.callerName} called Truco for ${data.potentialValue} games!`);
+        
+        // If it's a bot's turn to respond, trigger bot response
+        if (data.responsePlayerIndex !== undefined) {
+            const responsePlayer = window.game.players[data.responsePlayerIndex];
+            if (responsePlayer && responsePlayer.isBot) {
+                console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
+                setTimeout(() => {
+                    responsePlayer.botRespondTruco();
+                }, 1500);
+            } else if (responsePlayer && !responsePlayer.isBot) {
+                console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
+                showTrucoResponseButtons();
+            }
+        }
+    });
+
+    socket.on('trucoAccepted', (data) => {
+        console.log('✅ Truco accepted event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for Truco accepted event');
+            return;
+        }
+
+        // Update game state
+        window.game.trucoState.isActive = false;
+        window.game.trucoState.waitingForResponse = false;
+        window.game.gameValue = data.newValue;
+
+        // Show acceptance message
+        showTrucoMessage(`${data.accepterName} accepted Truco! Game is now worth ${data.newValue} games.`);
+        
+        // Hide Truco response buttons
+        hideTrucoResponseButtons();
+        
+        // Continue with normal game flow
+        console.log(`✅ Truco accepted - game continues with value ${data.newValue}`);
+    });
+
+    socket.on('trucoRejected', (data) => {
+        console.log('❌ Truco rejected event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for Truco rejected event');
+            return;
+        }
+
+        // Update game state
+        window.game.trucoState.isActive = false;
+        window.game.trucoState.waitingForResponse = false;
+
+        // Show rejection message
+        showTrucoMessage(`${data.rejecterName} rejected Truco! ${data.winningTeamName} wins with ${data.gameValue} games.`);
+        
+        // Hide Truco response buttons
+        hideTrucoResponseButtons();
+        
+        // End the game
+        setTimeout(() => {
+            if (window.game) {
+                window.game.endGame(data.winningTeamName);
+            }
+        }, 3000);
+    });
+
+    socket.on('trucoRaised', (data) => {
+        console.log('📈 Truco raised event received:', data);
+        
+        if (!window.game) {
+            console.log('❌ No game instance found for Truco raised event');
+            return;
+        }
+
+        // Update game state
+        window.game.trucoState.potentialValue = data.newPotentialValue;
+        window.game.trucoState.responsePlayerIndex = data.responsePlayerIndex;
+
+        // Show raise message
+        showTrucoMessage(`${data.raiserName} raised Truco to ${data.newPotentialValue} games!`);
+        
+        // If it's a bot's turn to respond, trigger bot response
+        if (data.responsePlayerIndex !== undefined) {
+            const responsePlayer = window.game.players[data.responsePlayerIndex];
+            if (responsePlayer && responsePlayer.isBot) {
+                console.log(`🤖 Bot ${responsePlayer.name} needs to respond to raised Truco`);
+                setTimeout(() => {
+                    responsePlayer.botRespondTruco();
+                }, 1500);
+            } else if (responsePlayer && !responsePlayer.isBot) {
+                console.log(`👤 Human player ${responsePlayer.name} can respond to raised Truco`);
+                showTrucoResponseButtons();
+            }
+        }
+    });
+
     // ✅ Handle round completion events
     socket.on('roundComplete', (data) => {
         console.log('🏁 Round complete event received:', data);
@@ -2234,3 +2350,160 @@ function triggerBotPlay(botPlayerIndex) {
 // ✅ Turn message function removed per user request
 
 // ✅ Turn message CSS and initialization removed per user request
+
+// ✅ Truco UI functions
+function showTrucoMessage(message) {
+    // Remove any existing Truco message
+    const existingMessage = document.getElementById('trucoMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create Truco message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'trucoMessage';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #FF6B35, #F7931E);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 1000;
+        border: 3px solid #E65100;
+        min-width: 350px;
+        animation: fadeInOut 0.5s ease-in;
+    `;
+    
+    messageDiv.innerHTML = `
+        <div style="font-size: 24px; margin-bottom: 10px;">🎯</div>
+        <div>${message}</div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove message after 4 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.style.animation = 'fadeOut 0.5s ease-out';
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 500);
+        }
+    }, 4000);
+}
+
+function showTrucoResponseButtons() {
+    // Remove any existing buttons
+    hideTrucoResponseButtons();
+    
+    // Create Accept button
+    const acceptBtn = document.createElement('button');
+    acceptBtn.id = 'acceptTrucoBtn';
+    acceptBtn.textContent = 'Accept';
+    acceptBtn.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-right: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 1001;
+    `;
+    
+    // Create Reject button
+    const rejectBtn = document.createElement('button');
+    rejectBtn.id = 'rejectTrucoBtn';
+    rejectBtn.textContent = 'Reject';
+    rejectBtn.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-left: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 1001;
+    `;
+    
+    // Create Raise button
+    const raiseBtn = document.createElement('button');
+    raiseBtn.id = 'raiseTrucoBtn';
+    raiseBtn.textContent = 'Raise';
+    raiseBtn.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(50px);
+        background: linear-gradient(135deg, #FF9800, #F57C00);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 1001;
+    `;
+    
+    // Add event listeners
+    acceptBtn.addEventListener('click', () => {
+        console.log('👤 Human player accepted Truco');
+        socket.emit('respondTruco', { response: 1 });
+        hideTrucoResponseButtons();
+    });
+    
+    rejectBtn.addEventListener('click', () => {
+        console.log('👤 Human player rejected Truco');
+        socket.emit('respondTruco', { response: 2 });
+        hideTrucoResponseButtons();
+    });
+    
+    raiseBtn.addEventListener('click', () => {
+        console.log('👤 Human player raised Truco');
+        socket.emit('respondTruco', { response: 3 });
+        hideTrucoResponseButtons();
+    });
+    
+    document.body.appendChild(acceptBtn);
+    document.body.appendChild(rejectBtn);
+    document.body.appendChild(raiseBtn);
+    
+    console.log('🎯 Truco response buttons shown');
+}
+
+function hideTrucoResponseButtons() {
+    const acceptBtn = document.getElementById('acceptTrucoBtn');
+    const rejectBtn = document.getElementById('rejectTrucoBtn');
+    const raiseBtn = document.getElementById('raiseTrucoBtn');
+    
+    if (acceptBtn) acceptBtn.remove();
+    if (rejectBtn) rejectBtn.remove();
+    if (raiseBtn) raiseBtn.remove();
+    
+    console.log('🎯 Truco response buttons hidden');
+}

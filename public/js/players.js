@@ -62,16 +62,16 @@ class Player {
 
       console.log(`🤖 Bot ${this.name} is responding to Truco call.`);
       
-      if (!window.game) {
-        console.error('❌ No game instance found for bot Truco response');
+      if (!window.game || !window.game.trucoState) {
+        console.error('❌ No game instance or Truco state found for bot Truco response');
         return;
       }
 
-      // Bot makes decision based on current game value and team strategy
+      // Bot makes decision based on current potential value
       let decision;
-      const currentValue = window.game.potentialGameValue || 3;
+      const potentialValue = window.game.trucoState.potentialValue || 3;
       
-      if (currentValue >= 12) {
+      if (potentialValue >= 12) {
         // Can't raise anymore, must accept or reject
         decision = Math.random() < 0.7 ? 1 : 2; // 70% accept, 30% reject
       } else {
@@ -88,10 +88,13 @@ class Player {
       
       console.log(`🤖 Bot ${this.name} decided: ${decision === 1 ? 'Accept' : decision === 2 ? 'Reject' : 'Raise'}`);
       
-      // Make the decision after a short delay
+      // Send response to server
       setTimeout(() => {
-        if (window.game) {
-          window.game.respondTruco(this, decision);
+        if (typeof socket !== 'undefined' && socket) {
+          socket.emit('respondTruco', { response: decision });
+          console.log(`🤖 Bot ${this.name} sent Truco response: ${decision}`);
+        } else {
+          console.error('❌ Socket not available for bot Truco response');
         }
       }, 1000);
     }

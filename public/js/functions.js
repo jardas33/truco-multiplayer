@@ -6,78 +6,18 @@ function truco() {
     return;
   }
 
-  // Set Truco state
-  isInTrucoPhase = true;
-  window.game.trucoState = true;
-  
-  // Initialize Truco values if this is the first call
-  if (!window.game.potentialGameValue) {
-    window.game.potentialGameValue = 3; // Start with 3 games
-    window.game.initialTrucoCallerIndex = window.game.currentPlayerIndex;
-    window.game.lastActionWasRaise = false;
-    window.game.trucoCallerTeam = window.game.players[window.game.currentPlayerIndex].team;
-  } else {
-    // This is a raise - set the caller team to the current player's team
-    window.game.trucoCallerTeam = window.game.players[window.game.currentPlayerIndex].team;
+  // Check if Truco is already active
+  if (window.game.trucoState && window.game.trucoState.isActive) {
+    console.log(`❌ Truco is already active`);
+    return;
   }
 
-  // Move to next player (opponent) for response
-  let nextPlayerIndex = (window.game.currentPlayerIndex + 1) % window.game.players.length;
-  
-  // Set popup message
-  if (window.game.gameValue > 1) {
-    popupMessage = `📈 ${window.game.players[window.game.currentPlayerIndex].name} raised Truco to ${window.game.potentialGameValue} games!`;
+  // Send Truco request to server
+  if (typeof socket !== 'undefined' && socket) {
+    socket.emit('requestTruco', {});
+    console.log(`🎯 Truco request sent to server`);
   } else {
-    popupMessage = `🎯 ${window.game.players[window.game.currentPlayerIndex].name} called Truco!`;
-  }
-  
-  // Show popup
-  try {
-    openPopup(true);
-  } catch (error) {
-    console.warn('⚠️ Could not show popup, continuing with game');
-  }
-  window.game.currentPlayerIndex = nextPlayerIndex;
-  
-  console.log(`🔄 Turn moved to ${window.game.players[nextPlayerIndex].name} for Truco response`);
-
-  // If next player is a bot, make them respond to Truco
-  if (window.game.players[nextPlayerIndex].isBot) {
-    console.log(`🤖 Bot ${window.game.players[nextPlayerIndex].name} responding to Truco`);
-    setTimeout(() => {
-      window.game.players[nextPlayerIndex].botRespondTruco();
-    }, 1000);
-  } else {
-    // Human player - show response buttons
-    console.log(`👤 Human player ${window.game.players[nextPlayerIndex].name} can respond to Truco`);
-    if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
-      // Position buttons in the center of the screen
-      const buttonWidth = 200;
-      const buttonHeight = 50;
-      const buttonSpacing = 20;
-      const totalWidth = buttonWidth * 3 + buttonSpacing * 2;
-      const startX = (windowWidth - totalWidth) / 2;
-      const buttonY = windowHeight / 2 + 100; // Below the popup
-      
-      // Position Accept button (left)
-      buttonAcceptTruco.position(startX, buttonY);
-      buttonAcceptTruco.show();
-      
-      // Position Reject button (center)
-      buttonRejectTruco.position(startX + buttonWidth + buttonSpacing, buttonY);
-      buttonRejectTruco.show();
-      
-      // Only show raise button if game value can still be increased
-      if (window.game.potentialGameValue < 12) {
-        buttonRaiseTruco.position(startX + (buttonWidth + buttonSpacing) * 2, buttonY);
-        buttonRaiseTruco.show();
-      }
-    }
-  }
-
-  // Hide Truco button for current player
-  if (trucoButton) {
-    trucoButton.hide();
+    console.error('❌ Socket not available for Truco request');
   }
 }
 
