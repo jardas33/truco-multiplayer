@@ -236,6 +236,12 @@ function mousePressed() {
         return;
     }
     
+    // ✅ CRITICAL FIX: Prevent card playing after game completion
+    if (window.gameCompleted) {
+        console.log('🔒 Card playing disabled - game has been completed');
+        return;
+    }
+    
     // ✅ Get the current player whose turn it is
     const currentPlayer = window.game.getCurrentPlayer();
     if (!currentPlayer || !currentPlayer.hand) {

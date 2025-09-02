@@ -261,6 +261,12 @@ function createDeck() {
        console.log(`🎯 Current turn: ${this.players[this.currentPlayerIndex].name} (Player ${this.currentPlayerIndex})`);
        console.log(`🎯 Game state: ${gameState}, Truco state: ${this.trucoState}`);
        
+       // ✅ CRITICAL FIX: Prevent card playing after game completion
+       if (window.gameCompleted) {
+         console.log('🔒 playCard rejected - game has been completed');
+         return null;
+       }
+       
        // ✅ STRICT TURN VALIDATION - Only current player can play
        if (gameState !== gameStateEnum.Playing || 
            player.playerIndex !== this.currentPlayerIndex || 

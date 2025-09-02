@@ -244,22 +244,27 @@ function showTrucoButton() {
   
   // Check if it's the human player's turn
   if (window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
-    // Check if this is a raise attempt during an ongoing Truco game
-    if (window.game.gameValue > 1) {
-      // This is a raise - check if current player can raise
-      const currentPlayerTeam = currentPlayer.team;
-      
-      if (window.game.trucoCallerTeam === null) {
-        // No team has called Truco yet, or after accepting a raise, both teams can call again
-        // Show button with raise text
-        trucoButton.html("RAISE TRUCO");
-        trucoButton.show();
-      } else if (currentPlayerTeam !== window.game.trucoCallerTeam) {
-        // Opposing team can raise
+    const currentPlayerTeam = currentPlayer.team;
+    
+    // ✅ CRITICAL FIX: Check server-side Truco state to prevent multiple calls
+    if (window.game.trucoState && window.game.trucoState.isActive) {
+      // Truco is active - check if this player can raise
+      if (currentPlayerTeam !== window.game.trucoState.callerTeam) {
+        // Opposite team can raise
         trucoButton.html("RAISE TRUCO");
         trucoButton.show();
       } else {
-        // Cannot raise on own team's turn
+        // Same team cannot call Truco again
+        trucoButton.hide();
+      }
+    } else if (window.game.trucoState && window.game.trucoState.callerTeam !== null) {
+      // ✅ CRITICAL FIX: Truco was called before - only opposite team can raise
+      if (currentPlayerTeam !== window.game.trucoState.callerTeam) {
+        // Opposite team can raise
+        trucoButton.html("RAISE TRUCO");
+        trucoButton.show();
+      } else {
+        // Same team cannot call Truco again
         trucoButton.hide();
       }
     } else {

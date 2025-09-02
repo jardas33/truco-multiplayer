@@ -807,6 +807,10 @@ function setupSocketListeners() {
     socket.on('gameComplete', (data) => {
         console.log('🎮 Game complete event received:', data);
         
+        // ✅ CRITICAL FIX: Set game completion flag to prevent further card playing
+        window.gameCompleted = true;
+        console.log('🔒 Game completed - card playing disabled until new game starts');
+        
         if (!window.game) {
             console.log('❌ No game instance found for game complete event');
             return;
@@ -896,6 +900,10 @@ function setupSocketListeners() {
         console.log('🎮 New game started event received:', data);
         console.log('🔍 DEBUG: newGameStarted event received with data:', data);
         console.log('🔍 DEBUG: Event received at timestamp:', new Date().toISOString());
+        
+        // ✅ CRITICAL FIX: Reset game completion flag to allow card playing in new game
+        window.gameCompleted = false;
+        console.log('🔓 New game started - card playing enabled');
         
         if (!window.game) {
             console.log('❌ No game instance found for new game event');

@@ -1076,6 +1076,22 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Truco already active');
             return;
         }
+        
+        // ✅ CRITICAL FIX: Prevent same player from calling Truco multiple times
+        // Only players from the opposite team can raise after Truco is accepted
+        if (room.game.trucoState.callerIndex !== null && room.game.trucoState.callerIndex === playerIndex) {
+            console.log(`❌ Player ${player.name} cannot call Truco again - only opposite team can raise`);
+            socket.emit('error', 'You cannot call Truco again - only the opposite team can raise');
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Prevent same team from calling Truco multiple times
+        // Only the opposite team can raise after Truco is accepted
+        if (room.game.trucoState.callerTeam !== null && room.game.trucoState.callerTeam === player.team) {
+            console.log(`❌ Team ${player.team} cannot call Truco again - only opposite team can raise`);
+            socket.emit('error', 'Your team cannot call Truco again - only the opposite team can raise');
+            return;
+        }
 
         // ✅ Start Truco
         room.game.trucoState.isActive = true;
