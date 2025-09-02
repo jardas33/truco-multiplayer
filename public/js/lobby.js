@@ -1269,7 +1269,6 @@ function showNewGameMessage() {
             line-height: 1;
         ">✕</button>
         <div style="margin-bottom: 15px;">🃏 NEW GAME STARTED! 🃏</div>
-        <div style="font-size: 18px; margin-bottom: 10px;">Fresh cards dealt!</div>
     `;
     
     document.body.appendChild(messageDiv);
