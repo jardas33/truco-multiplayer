@@ -800,7 +800,6 @@ function setupSocketListeners() {
     // ✅ Handle game complete event (when a team wins the game)
     socket.on('gameComplete', (data) => {
         console.log('🎮 Game complete event received:', data);
-        console.log('🔍 DEBUG: gameComplete event received with data:', data);
         
         if (!window.game) {
             console.log('❌ No game instance found for game complete event');
@@ -852,13 +851,11 @@ function setupSocketListeners() {
         
         // ✅ CRITICAL FIX: Clear played cards immediately for game completion
         window.playedCards = [];
-        console.log('🎮 Game complete - cleared played cards immediately');
         
         // ✅ CRITICAL FIX: Reset round scores to 0 for new game
         if (window.game && window.game.scores) {
             window.game.scores.team1 = 0;
             window.game.scores.team2 = 0;
-            console.log('🎮 Game complete - reset round scores to 0:', window.game.scores);
         }
         
         // ✅ Force game redraw to show game completion state
@@ -867,11 +864,6 @@ function setupSocketListeners() {
         }
         
         console.log('✅ Game completion handled successfully - waiting for new game to start');
-        
-        // 🔍 DEBUG: Check if we're waiting for newGameStarted event
-        console.log('🔍 Waiting for newGameStarted event...');
-        console.log('🔍 Current window.game.scores:', window.game?.scores);
-        console.log('🔍 Current window.game.games:', window.game?.games);
         
         // 🔍 DEBUG: Set a fallback timer to check if newGameStarted is received
         setTimeout(() => {

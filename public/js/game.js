@@ -390,19 +390,7 @@ function createDeck() {
         console.log(`🤝 Draw detected with ${drawCards.length} cards of equal value`);
       }
 
-             // Show round result popup with concise winner info
-       if (isDraw) {
-         popupMessage = `🤝 ROUND DRAW!\n\n${drawCards.map(pc => `${pc.card.name} by ${pc.player.name}`).join('\n')}`;
-       } else {
-         const winnerTeam = winningCard.player.team === "team1" ? "Team Alfa" : "Team Beta";
-         popupMessage = `🏆 ${winningCard.player.name} wins with ${winningCard.card.name}\n\n${winnerTeam}`;
-       }
-      
-      try {
-        openPopup(true);
-      } catch (error) {
-        console.warn('⚠️ Could not show round result popup, continuing with game');
-      }
+      // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
 
       // Determine round winner based on draw rules
       let roundWinner = null;
@@ -519,13 +507,7 @@ function createDeck() {
          endGame(winner) {
        console.log(`🏁 Game ended! Winner: ${winner}`);
        
-               // Show game end popup with concise winner info
-        popupMessage = `🏁 ${winner} wins the game!`;
-       try {
-         openPopup(true);
-       } catch (error) {
-         console.warn('⚠️ Could not show game end popup, continuing with game');
-       }
+        // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
        
        // Check if a team has won the set
        if (this.games.team1 >= 12) {
@@ -534,26 +516,14 @@ function createDeck() {
          this.games.team2 = 0;
          console.log(`🏆 Team Alfa won the set! Total sets: ${this.sets.team1}`);
          
-                   // Show set win popup with concise winner info
-          popupMessage = `🏆 Team Alfa wins the set!`;
-         try {
-           openPopup(true);
-         } catch (error) {
-           console.warn('⚠️ Could not show set win popup, continuing with game');
-         }
+          // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
        } else if (this.games.team2 >= 12) {
          this.sets.team2++;
          this.games.team1 = 0;
          this.games.team2 = 0;
          console.log(`🏆 Team Beta won the set! Total sets: ${this.sets.team2}`);
          
-                   // Show set win popup with concise winner info
-          popupMessage = `🏆 Team Beta wins the set!`;
-         try {
-           openPopup(true);
-         } catch (error) {
-           console.warn('⚠️ Could not show set win popup, continuing with game');
-         }
+          // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
        }
    
        // Reset for next game
@@ -693,13 +663,7 @@ function createDeck() {
           this.lastActionWasRaise = false;
           this.potentialGameValue = 0;
    
-                                       // Show acceptance message
-           popupMessage = `✅ Truco accepted! Game worth ${this.gameValue} games.`;
-          try {
-            openPopup(true);
-          } catch (error) {
-            console.warn('⚠️ Could not show popup, continuing with game');
-          }
+          // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
    
          // Hide Truco response buttons
          if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
@@ -738,13 +702,7 @@ function createDeck() {
           
           console.log(`🏆 ${winningTeamName} wins ${gamesWon} games by rejecting Truco!`);
           
-          // Show rejection message with correct game count
-          popupMessage = `❌ Truco rejected! ${winningTeamName} wins ${gamesWon} games.`;
-          try {
-            openPopup(true);
-          } catch (error) {
-            console.warn('⚠️ Could not show popup, continuing with game');
-          }
+          // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
          
          // Hide Truco response buttons
          if (buttonAcceptTruco && buttonRejectTruco && buttonRaiseTruco) {
@@ -800,13 +758,7 @@ function createDeck() {
          
          this.currentPlayerIndex = nextPlayerIndex;
          
-                                       // Show raise message
-           popupMessage = `📈 Truco raised to ${this.potentialGameValue} games!`;
-          try {
-            openPopup(true);
-          } catch (error) {
-            console.warn('⚠️ Could not show popup, continuing with game');
-          }
+          // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
    
          // If next player is a bot, make them respond
          if (this.players[nextPlayerIndex].isBot) {
