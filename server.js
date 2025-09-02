@@ -966,10 +966,13 @@ io.on('connection', (socket) => {
         if (room.game.roundJustCompleted) {
             console.log(`🔄 Round just completed - NOT changing current player, round winner should start`);
             console.log(`🔍 DEBUG: Current player remains: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: botTurnComplete from socket: ${socket.id}`);
             
             // ✅ CRITICAL FIX: Check if the bot completing their turn is actually the current player
             // This prevents old botTurnComplete events from interfering with new rounds
             const currentPlayer = room.players[room.game.currentPlayer];
+            console.log(`🔍 DEBUG: Current player ID: ${currentPlayer?.id}, Socket ID: ${socket.id}, Match: ${currentPlayer?.id === socket.id}`);
+            
             if (currentPlayer && currentPlayer.id !== socket.id) {
                 console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer.name} (${currentPlayer.id}), but event from ${socket.id}`);
                 console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round`);
@@ -977,6 +980,7 @@ io.on('connection', (socket) => {
                 return;
             }
             
+            console.log(`🔍 DEBUG: botTurnComplete from correct player during new round - allowing to proceed`);
             room.game.roundJustCompleted = false; // Reset the flag
             return; // Exit early, don't change current player
         }
