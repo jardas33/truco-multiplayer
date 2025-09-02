@@ -513,6 +513,14 @@ function createDeck() {
          endGame(winner) {
        console.log(`🏁 Game ended! Winner: ${winner}`);
        
+       // ✅ CRITICAL FIX: In multiplayer mode, do NOT run client-side game state management
+       // The server handles all game state transitions via newGameStarted events
+       if (window.isMultiplayer) {
+         console.log(`🔍 CRITICAL DEBUG: endGame() called in multiplayer mode - NOT running client-side game state logic`);
+         console.log(`🔍 CRITICAL DEBUG: Server will handle new game creation via newGameStarted event`);
+         return; // Exit early, let server handle everything
+       }
+       
         // ✅ OLD POPUP SYSTEM REMOVED - Now handled by lobby.js for multiplayer
        
        // Check if a team has won the set
