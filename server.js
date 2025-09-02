@@ -822,6 +822,10 @@ io.on('connection', (socket) => {
             console.log(`🔄 Clearing played cards before round complete emission`);
             room.game.playedCards = [];
             
+            // ✅ CRITICAL FIX: Set flag to prevent botTurnComplete from changing current player
+            room.game.roundJustCompleted = true;
+            console.log(`🔄 Set roundJustCompleted flag to prevent botTurnComplete from overriding round winner`);
+            
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             console.log(`🔍 DEBUG: Emitting roundComplete with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             io.to(socket.roomCode).emit('roundComplete', {
@@ -956,6 +960,15 @@ io.on('connection', (socket) => {
         }
         
         room.game.lastBotTurnComplete = now;
+        
+        // ✅ CRITICAL FIX: Check if we're in a new round (after round completion)
+        // If so, don't change the current player - the round winner should start
+        if (room.game.roundJustCompleted) {
+            console.log(`🔄 Round just completed - NOT changing current player, round winner should start`);
+            console.log(`🔍 DEBUG: Current player remains: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            room.game.roundJustCompleted = false; // Reset the flag
+            return; // Exit early, don't change current player
+        }
         
         // ✅ Move to next player after bot turn is complete
         const previousPlayer = room.game.currentPlayer;
