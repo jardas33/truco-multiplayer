@@ -1161,6 +1161,21 @@ io.on('connection', (socket) => {
 
             console.log(`❌ Truco rejected! ${winningTeamName} wins with ${room.game.trucoState.currentValue} games`);
 
+            // ✅ CRITICAL FIX: End game immediately when Truco is rejected
+            // Update game scores
+            if (!room.game.games) {
+                room.game.games = { team1: 0, team2: 0 };
+            }
+            
+            const gameValue = room.game.trucoState.currentValue;
+            if (winningTeam === 'team1') {
+                room.game.games.team1 += gameValue;
+                console.log(`🎮 Team 1 games increased by ${gameValue} to: ${room.game.games.team1}`);
+            } else if (winningTeam === 'team2') {
+                room.game.games.team2 += gameValue;
+                console.log(`🎮 Team 2 games increased by ${gameValue} to: ${room.game.games.team2}`);
+            }
+
             // ✅ Emit Truco rejected event
             io.to(socket.roomCode).emit('trucoRejected', {
                 rejecter: socket.id,
@@ -1171,6 +1186,20 @@ io.on('connection', (socket) => {
                 gameValue: room.game.trucoState.currentValue,
                 roomCode: socket.roomCode
             });
+
+            // ✅ Emit game complete event for Truco rejection
+            io.to(socket.roomCode).emit('gameComplete', {
+                roundWinner: null, // No round winner in Truco rejection
+                scores: room.game.scores,
+                games: room.game.games,
+                gameWinner: winningTeam,
+                trucoRejected: true // Flag to indicate this was a Truco rejection
+            });
+
+            // ✅ Start new game after 3 seconds
+            setTimeout(() => {
+                startNewGame(room, winningTeam, socket.roomCode);
+            }, 3000);
 
         } else if (response === 3) {
             // ✅ Raise Truco
@@ -1830,16 +1859,28 @@ function startNewGame(room, winningTeam, roomId) {
         // Update game state
         room.game.hands = hands;
         
-        // ✅ CRITICAL FIX: Winner of last round starts next game (not first game)
-        // Find the player who won the last round and set them as current player
+        // ✅ CRITICAL FIX: Winner of last round or winning team starts next game
         let startingPlayerIndex = 0; // Default to first player for first game
         
-        console.log(`🔍 DEBUG: Checking for last round winner in startNewGame`);
+        console.log(`🔍 DEBUG: Checking for starting player in startNewGame`);
+        console.log(`🔍 DEBUG: winningTeam:`, winningTeam);
         console.log(`🔍 DEBUG: room.lastRoundWinner:`, room.lastRoundWinner);
-        console.log(`🔍 DEBUG: room.players:`, room.players.map(p => ({ name: p.name, id: p.id })));
+        console.log(`🔍 DEBUG: room.players:`, room.players.map(p => ({ name: p.name, id: p.id, team: p.team })));
         
-        // Look for the last round winner in the room's game state
-        if (room.lastRoundWinner) {
+        // ✅ CRITICAL FIX: If winningTeam is provided (from Truco rejection), find first player from that team
+        if (winningTeam) {
+            console.log(`🔍 DEBUG: Using winningTeam to determine starting player: ${winningTeam}`);
+            const winningTeamPlayerIndex = room.players.findIndex(p => p.team === winningTeam);
+            if (winningTeamPlayerIndex !== -1) {
+                startingPlayerIndex = winningTeamPlayerIndex;
+                console.log(`🔍 DEBUG: Starting player set to first player from winning team: ${room.players[startingPlayerIndex].name} (index ${startingPlayerIndex})`);
+            } else {
+                console.log(`🔍 DEBUG: No player found from winning team, using default starting player`);
+            }
+        }
+        
+        // Look for the last round winner in the room's game state (only if no winningTeam from Truco rejection)
+        else if (room.lastRoundWinner) {
             console.log(`🔍 DEBUG: Found lastRoundWinner:`, room.lastRoundWinner);
             console.log(`🔍 DEBUG: All players in room for new game:`, room.players.map((p, i) => `${i}: ${p.name} (${p.isBot ? 'Bot' : 'Human'})`));
             console.log(`🔍 DEBUG: Looking for winner name: "${room.lastRoundWinner.name}"`);
