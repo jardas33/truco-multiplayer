@@ -670,16 +670,20 @@ io.on('connection', (socket) => {
                 room.lastRoundWinner = roundWinner;
                 console.log(`🎯 Stored last round winner for next game: ${roundWinner.name}`);
                 
-                // ✅ CRITICAL FIX: Increment games score for winning team
+                // ✅ CRITICAL FIX: Increment games score for winning team using Truco value
                 if (!room.game.games) {
                     room.game.games = { team1: 0, team2: 0 };
                 }
+                
+                // ✅ Use Truco game value if available, otherwise default to 1
+                const gameValue = room.game.trucoState && room.game.trucoState.currentValue ? room.game.trucoState.currentValue : 1;
+                
                 if (gameWinner === 'team1') {
-                    room.game.games.team1 += 1;
-                    console.log(`🎮 Team 1 games increased to: ${room.game.games.team1}`);
+                    room.game.games.team1 += gameValue;
+                    console.log(`🎮 Team 1 games increased by ${gameValue} to: ${room.game.games.team1}`);
                 } else if (gameWinner === 'team2') {
-                    room.game.games.team2 += 1;
-                    console.log(`🎮 Team 2 games increased to: ${room.game.games.team2}`);
+                    room.game.games.team2 += gameValue;
+                    console.log(`🎮 Team 2 games increased by ${gameValue} to: ${room.game.games.team2}`);
                 }
                 
                 // Clear played cards immediately for game winner
