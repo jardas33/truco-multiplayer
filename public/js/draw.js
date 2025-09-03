@@ -131,23 +131,23 @@ function draw() {
             } else {
                 // Split long text into multiple lines if needed
                 const words = text.split(' ');
-                let line = '';
+                let currentLine = '';
                 let lineY = currentY;
                 
                 for (let i = 0; i < words.length; i++) {
-                    const testLine = line + words[i] + ' ';
+                    const testLine = currentLine + words[i] + ' ';
                     const testWidth = textWidth(testLine);
                     
-                    if (testWidth > maxWidth && line !== '') {
-                        text(line, textX, lineY);
-                        line = words[i] + ' ';
+                    if (testWidth > maxWidth && currentLine !== '') {
+                        text(currentLine, textX, lineY);
+                        currentLine = words[i] + ' ';
                         lineY += lineHeight;
                     } else {
-                        line = testLine;
+                        currentLine = testLine;
                     }
                 }
-                if (line !== '') {
-                    text(line, textX, lineY);
+                if (currentLine !== '') {
+                    text(currentLine, textX, lineY);
                 }
                 currentY = lineY + lineHeight;
             }
