@@ -706,6 +706,10 @@ io.on('connection', (socket) => {
                     // Round 1 draw, Round 2 had winner, Round 3 draw → Round 2 winner wins
                     gameWinner = secondRound.winner;
                     console.log(`🎮 Game ends due to draw resolution: Round 2 winner (${secondRound.winner}) wins after Round 3 draw!`);
+                } else if (!firstRound.isDraw && !secondRound.isDraw && thirdRound.isDraw) {
+                    // Round 1 had winner, Round 2 had winner, Round 3 draw → Round 1 winner wins
+                    gameWinner = firstRound.winner;
+                    console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins after Round 3 draw!`);
                 } else if (!firstRound.isDraw && secondRound.isDraw && thirdRound.isDraw) {
                     // Round 1 had winner, Rounds 2&3 draws → Round 1 winner wins
                     gameWinner = firstRound.winner;
