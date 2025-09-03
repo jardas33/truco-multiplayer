@@ -811,6 +811,16 @@ function setupSocketListeners() {
         window.gameCompleted = true;
         console.log('🔒 Game completed - card playing disabled until new game starts');
         
+        // ✅ CRITICAL FIX: Cancel any pending bot plays from the previous game
+        if (window.pendingBotTimeouts) {
+            window.pendingBotTimeouts.forEach(timeoutId => {
+                clearTimeout(timeoutId);
+                console.log('🚫 Cancelled pending bot timeout:', timeoutId);
+            });
+            window.pendingBotTimeouts = [];
+            console.log('🚫 All pending bot plays cancelled due to game completion');
+        }
+        
         if (!window.game) {
             console.log('❌ No game instance found for game complete event');
             return;
@@ -2432,6 +2442,11 @@ function showCopySuccess() {
 function triggerBotPlay(botPlayerIndex) {
     console.log(`🤖 Triggering bot play for player index: ${botPlayerIndex}`);
     
+    // ✅ CRITICAL FIX: Initialize pending timeouts array if it doesn't exist
+    if (!window.pendingBotTimeouts) {
+        window.pendingBotTimeouts = [];
+    }
+    
     if (!window.game || !window.game.players[botPlayerIndex]) {
         console.error(`❌ Invalid game state or player index: ${botPlayerIndex}`);
         return;
@@ -2462,15 +2477,16 @@ function triggerBotPlay(botPlayerIndex) {
         console.log(`🤖 Bot ${botPlayer.name} decided to call Truco instead of playing a card!`);
         
         // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
-        setTimeout(() => {
+        const trucoTimeoutId = setTimeout(() => {
             try {
-                // ✅ CRITICAL FIX: Validate bot can still call Truco
-                if (window.game && 
-                    window.game.players[botPlayerIndex] &&
-                    window.game.players[botPlayerIndex].isBot &&
-                    !window.game.players[botPlayerIndex].hasPlayedThisTurn &&
-                    window.game.players[botPlayerIndex].hand &&
-                    window.game.players[botPlayerIndex].hand.length > 0) {
+                            // ✅ CRITICAL FIX: Validate bot can still call Truco
+            if (window.game && 
+                !window.gameCompleted &&
+                window.game.players[botPlayerIndex] &&
+                window.game.players[botPlayerIndex].isBot &&
+                !window.game.players[botPlayerIndex].hasPlayedThisTurn &&
+                window.game.players[botPlayerIndex].hand &&
+                window.game.players[botPlayerIndex].hand.length > 0) {
                     
                     console.log(`🤖 Bot ${botPlayer.name} calling Truco!`);
                     
@@ -2502,14 +2518,18 @@ function triggerBotPlay(botPlayerIndex) {
                 console.error(`❌ Bot Truco call failed for ${botPlayer.name}:`, botTrucoError);
             }
         }, 100); // Minimal delay to prevent race conditions
+        
+        // ✅ CRITICAL FIX: Track timeout ID for cancellation
+        window.pendingBotTimeouts.push(trucoTimeoutId);
     } else {
         console.log(`🤖 Bot ${botPlayer.name} will play a card immediately`);
         
         // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
-    setTimeout(() => {
+        const cardTimeoutId = setTimeout(() => {
         try {
             // ✅ CRITICAL FIX: Validate bot can still play
             if (window.game && 
+                !window.gameCompleted &&
                 window.game.players[botPlayerIndex] &&
                 window.game.players[botPlayerIndex].isBot &&
                 !window.game.players[botPlayerIndex].hasPlayedThisTurn &&
@@ -2552,6 +2572,9 @@ function triggerBotPlay(botPlayerIndex) {
             console.error(`❌ Bot play failed for ${botPlayer.name}:`, botPlayError);
         }
         }, 100); // Minimal delay to prevent race conditions
+        
+        // ✅ CRITICAL FIX: Track timeout ID for cancellation
+        window.pendingBotTimeouts.push(cardTimeoutId);
     }
 }
 
