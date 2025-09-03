@@ -740,17 +740,33 @@ io.on('connection', (socket) => {
                 
                 // ✅ Use Truco game value if available, otherwise default to 1
                 const gameValue = room.game.trucoState && room.game.trucoState.currentValue ? room.game.trucoState.currentValue : 1;
+                console.log(`🔍 GAME VALUE DEBUG - trucoState exists: ${!!room.game.trucoState}, currentValue: ${room.game.trucoState?.currentValue}, calculated gameValue: ${gameValue}`);
+                if (room.game.trucoState) {
+                    console.log(`🔍 TRUCO STATE AT GAME COMPLETION:`, {
+                        isActive: room.game.trucoState.isActive,
+                        currentValue: room.game.trucoState.currentValue,
+                        potentialValue: room.game.trucoState.potentialValue,
+                        callerTeam: room.game.trucoState.callerTeam,
+                        callerIndex: room.game.trucoState.callerIndex,
+                        waitingForResponse: room.game.trucoState.waitingForResponse,
+                        responsePlayerIndex: room.game.trucoState.responsePlayerIndex,
+                        rejectionValue: room.game.trucoState.rejectionValue
+                    });
+                }
                 
                 if (gameWinner === 'team1') {
+                    const oldGames = room.game.games.team1;
                     room.game.games.team1 += gameValue;
-                    console.log(`🎮 Team 1 games increased by ${gameValue} to: ${room.game.games.team1}`);
+                    console.log(`🎮 Team 1 games increased by ${gameValue} from ${oldGames} to: ${room.game.games.team1}`);
                 } else if (gameWinner === 'team2') {
+                    const oldGames = room.game.games.team2;
                     room.game.games.team2 += gameValue;
-                    console.log(`🎮 Team 2 games increased by ${gameValue} to: ${room.game.games.team2}`);
+                    console.log(`🎮 Team 2 games increased by ${gameValue} from ${oldGames} to: ${room.game.games.team2}`);
                 }
                 
                 // ✅ CRITICAL FIX: Check for set wins (12 games = 1 set)
                 let setWinner = null;
+                console.log(`🔍 SET WIN CHECK DEBUG - Team1 games: ${room.game.games.team1}, Team2 games: ${room.game.games.team2}`);
                 if (room.game.games.team1 >= 12) {
                     room.game.sets.team1++;
                     room.game.games.team1 = 0;
@@ -763,6 +779,8 @@ io.on('connection', (socket) => {
                     room.game.games.team2 = 0;
                     setWinner = 'team2';
                     console.log(`🏆 Team Beta won the set! Total sets: ${room.game.sets.team2}. Games reset to 0.`);
+                } else {
+                    console.log(`🔍 SET WIN CHECK DEBUG - No set win condition met (need 12 games)`);
                 }
                 
                 // Clear played cards immediately for game winner
@@ -1553,7 +1571,7 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Not in a room');
             return;
         }
-
+        
         const room = rooms.get(roomCode);
         if (!room) {
             console.log(`❌ Room ${roomCode} not found for Bot Truco response`);
@@ -1586,7 +1604,7 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Not in a room');
             return;
         }
-        
+
         const room = rooms.get(roomCode);
         if (!room) {
             console.log(`❌ Room ${roomCode} not found for Truco response`);
