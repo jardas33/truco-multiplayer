@@ -1251,6 +1251,9 @@ io.on('connection', (socket) => {
         
         if (isRaise) {
             eventData.newPotentialValue = room.game.trucoState.potentialValue;
+            // ✅ CRITICAL FIX: For trucoRaised events, also include raiserName for client compatibility
+            eventData.raiserName = requestingPlayer.name;
+            eventData.raiserTeam = requestingPlayer.team;
         }
         
         io.to(socket.roomCode).emit(eventName, eventData);
@@ -1351,6 +1354,13 @@ io.on('connection', (socket) => {
             } else {
                 console.log(`🎯 First game/round - keeping current player after Truco acceptance: ${room.players[room.game.currentPlayer]?.name}`);
             }
+
+            // ✅ CRITICAL FIX: Emit turnChanged event after Truco acceptance to sync client state
+            console.log(`🔄 Emitting turnChanged after Truco acceptance - currentPlayer: ${room.game.currentPlayer}`);
+            io.to(roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.players.map(p => p.hand)
+            });
 
             // ✅ Emit Truco accepted event
             io.to(roomCode).emit('trucoAccepted', {
