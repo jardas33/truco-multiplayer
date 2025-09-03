@@ -558,22 +558,23 @@ function setupSocketListeners() {
             console.log(`🔍 TRUCO RESPONSE DEBUG - Local player index: ${localPlayerIndex}`);
             console.log(`🔍 TRUCO RESPONSE DEBUG - Is local player the response player? ${localPlayerIndex === data.responsePlayerIndex}`);
             
-            // ✅ CRITICAL FIX: Only allow the designated response player to respond
-            // In Truco, the response player is determined by the server, not by turn order
-            if (localPlayerIndex === data.responsePlayerIndex) {
-                if (responsePlayer && responsePlayer.isBot) {
+            // ✅ CRITICAL FIX: Handle bot responses and human responses separately
+            if (responsePlayer && responsePlayer.isBot) {
+                // Bot response - only trigger if it's the bot's turn to respond
+                if (localPlayerIndex === data.responsePlayerIndex) {
                     console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
                     setTimeout(() => {
                         responsePlayer.botRespondTruco();
                     }, 1500);
-                } else if (responsePlayer && !responsePlayer.isBot) {
-                    console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
-                    showTrucoResponseButtons();
                 } else {
-                    console.log(`🔍 TRUCO RESPONSE DEBUG - No valid response player found`);
+                    console.log(`🔍 TRUCO RESPONSE DEBUG - Bot ${responsePlayer.name} is not the local player, skipping bot response trigger`);
                 }
+            } else if (responsePlayer && !responsePlayer.isBot) {
+                // Human response - always allow human player to respond to Truco calls
+                console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
+                showTrucoResponseButtons();
             } else {
-                console.log(`🔍 TRUCO RESPONSE DEBUG - Local player (${localPlayerIndex}) is not the response player (${data.responsePlayerIndex}), skipping response trigger`);
+                console.log(`🔍 TRUCO RESPONSE DEBUG - No valid response player found`);
             }
         }
     });
