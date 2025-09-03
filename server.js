@@ -1407,11 +1407,10 @@ io.on('connection', (socket) => {
             room.game.trucoState.waitingForResponse = false;
             room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
             
-            // ✅ CRITICAL FIX: Update callerTeam to the accepter's team after acceptance
-            // This ensures that the opposite team can raise next
-            console.log(`🔍 TRUCO ACCEPTANCE DEBUG - Updating callerTeam from ${room.game.trucoState.callerTeam} to ${respondingPlayer.team}`);
-            room.game.trucoState.callerTeam = respondingPlayer.team;
-            room.game.trucoState.callerIndex = playerIndex;
+            // ✅ CRITICAL FIX: Keep callerTeam as the original caller's team
+            // The original caller's team cannot raise, the accepter's team can raise
+            console.log(`🔍 TRUCO ACCEPTANCE DEBUG - Keeping callerTeam as original caller: ${room.game.trucoState.callerTeam}`);
+            // Don't update callerTeam - keep it as the original caller's team
 
             console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
             console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}, rejectionValue: ${room.game.trucoState.rejectionValue}`);
