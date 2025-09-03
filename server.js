@@ -1364,19 +1364,10 @@ io.on('connection', (socket) => {
             console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
             console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}, rejectionValue: ${room.game.trucoState.rejectionValue}`);
 
-            // ✅ CRITICAL FIX: After Truco acceptance, ensure the game continues with the correct player
-            // In the first game/round, keep the current player. In subsequent rounds, use the round winner
-            if (room.lastRoundWinner !== null && room.lastRoundWinner !== undefined) {
-                const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
-                if (roundWinnerPlayerIndex !== -1) {
-                    room.game.currentPlayer = roundWinnerPlayerIndex;
-                    console.log(`🎯 After Truco acceptance, round winner ${room.lastRoundWinner.name} will continue playing (index ${roundWinnerPlayerIndex})`);
-                } else {
-                    console.log(`⚠️ Could not find round winner after Truco acceptance, keeping current player`);
-                }
-            } else {
-                console.log(`🎯 First game/round - keeping current player after Truco acceptance: ${room.players[room.game.currentPlayer]?.name}`);
-            }
+            // ✅ CRITICAL FIX: After Truco acceptance, the CALLER should continue playing
+            // The person who called Truco should continue, not the person who accepted
+            room.game.currentPlayer = room.game.trucoState.callerIndex;
+            console.log(`🎯 After Truco acceptance, caller ${room.players[room.game.trucoState.callerIndex]?.name} will continue playing (index ${room.game.trucoState.callerIndex})`);
 
             // ✅ CRITICAL FIX: Emit turnChanged event after Truco acceptance to sync client state
             console.log(`🔄 Emitting turnChanged after Truco acceptance - currentPlayer: ${room.game.currentPlayer}`);
