@@ -125,12 +125,12 @@ function draw() {
         ];
         
         let currentY = startY;
-        instructions.forEach(text => {
-            if (text === "") {
+        instructions.forEach(instructionText => {
+            if (instructionText === "") {
                 currentY += lineHeight / 2; // Add space between paragraphs
             } else {
                 // Split long text into multiple lines if needed
-                const words = text.split(' ');
+                const words = instructionText.split(' ');
                 let currentLine = '';
                 let lineY = currentY;
                 
