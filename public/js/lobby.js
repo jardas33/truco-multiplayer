@@ -1707,32 +1707,50 @@ function backToMainMenuFromGame() {
     
     // ✅ IMPROVED: Return to actual main menu, not lobby
     if (confirm('Are you sure you want to leave the game? You will return to the main menu.')) {
-        // Disconnect from socket to return to main menu
-        if (socket) {
-            socket.disconnect();
-            console.log('🔌 Disconnected from server');
+        console.log('🔄 Starting main menu transition...');
+        
+        // ✅ CRITICAL: Don't disconnect socket - we want to keep connection for future games
+        // Just leave the current room instead
+        if (socket && window.roomId) {
+            console.log('🚪 Leaving room:', window.roomId);
+            socket.emit('leaveRoom', window.roomId);
         }
         
-        // Reset all game state
+        // ✅ COMPREHENSIVE STATE RESET
         window.game = null;
         window.gameCompleted = false;
         window.playedCards = [];
         window.isMultiplayerMode = false;
         window.roomId = null;
+        window.gameCanvas = null;
         
-        // Hide game elements
+        // ✅ HIDE ALL GAME ELEMENTS
         const gameDiv = document.getElementById('Game');
+        const roomControls = document.getElementById('roomControls');
+        const instructionsDiv = document.getElementById('Instructions');
+        const valuesDiv = document.getElementById('Values');
+        
         if (gameDiv) {
             gameDiv.style.display = 'none';
+            console.log('✅ Game div hidden');
         }
         
-        // Hide room controls
-        const roomControls = document.getElementById('roomControls');
         if (roomControls) {
             roomControls.style.display = 'none';
+            console.log('✅ Room controls hidden');
         }
         
-        // Move canvas back to Menu div and show it properly
+        if (instructionsDiv) {
+            instructionsDiv.style.display = 'none';
+            console.log('✅ Instructions div hidden');
+        }
+        
+        if (valuesDiv) {
+            valuesDiv.style.display = 'none';
+            console.log('✅ Values div hidden');
+        }
+        
+        // ✅ CANVAS MANAGEMENT
         const canvas = document.querySelector('canvas');
         const menuDiv = document.getElementById('Menu');
         
@@ -1740,27 +1758,43 @@ function backToMainMenuFromGame() {
             // Move canvas to Menu div
             menuDiv.appendChild(canvas);
             canvas.style.display = 'block';
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.zIndex = '1';
+            console.log('✅ Canvas moved to Menu div');
         }
         
-        // Show main menu
+        // ✅ SHOW MAIN MENU
         if (menuDiv) {
             menuDiv.style.display = 'block';
+            console.log('✅ Menu div shown');
         }
         
-        // Hide game buttons
+        // ✅ HIDE GAME BUTTONS
         hideGameButtons();
         
-        // Reset game state to main menu
+        // ✅ RESET GAME STATE
         if (typeof gameState !== 'undefined') {
             gameState = gameStateEnum.Menu;
+            console.log('✅ Game state reset to Menu');
         }
         
-        // Force p5.js to redraw the canvas
+        // ✅ FORCE UI REFRESH
         if (typeof loop === 'function') {
             loop();
+            console.log('✅ P5.js loop called');
         }
         
-        console.log('✅ Returned to main menu');
+        // ✅ ADDITIONAL UI REFRESH
+        setTimeout(() => {
+            if (typeof redraw === 'function') {
+                redraw();
+                console.log('✅ P5.js redraw called');
+            }
+        }, 100);
+        
+        console.log('✅ Successfully returned to main menu');
     } else {
         console.log('❌ User cancelled return to main menu');
     }
