@@ -76,9 +76,9 @@
         
         <!-- ✅ Round History Modal -->
         <div id="roundHistoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
-          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;">
-            <!-- Close button positioned relative to modal container -->
-            <button id="closeRoundHistoryBtn" style="position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; z-index: 2001;">✕</button>
+          <!-- Close button positioned outside scrollable area -->
+          <button id="closeRoundHistoryBtn" style="position: fixed; top: 20px; right: 20px; background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; z-index: 2001; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">✕</button>
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div style="text-align: center; margin-bottom: 20px;">
               <h2 style="margin: 0; color: #FFD700;">🏆 Round History</h2>
             </div>
