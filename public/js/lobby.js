@@ -2835,70 +2835,109 @@ function showTrucoResponseButtons() {
     // Remove any existing buttons
     hideTrucoResponseButtons();
     
-    // Create Accept button
-    const acceptBtn = document.createElement('button');
-    acceptBtn.id = 'acceptTrucoBtn';
-    acceptBtn.textContent = 'Accept';
-    acceptBtn.style.cssText = `
+    // Create popup container
+    const popupContainer = document.createElement('div');
+    popupContainer.id = 'trucoResponsePopup';
+    popupContainer.style.cssText = `
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translateX(-50%) translateY(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        border: 3px solid #FFD700;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        z-index: 1001;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        min-width: 300px;
+    `;
+    
+    // Create title
+    const title = document.createElement('div');
+    title.textContent = '🎯 Respond to Truco';
+    title.style.cssText = `
+        color: #FFD700;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    `;
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    `;
+    
+    // Create Accept button
+    const acceptBtn = document.createElement('button');
+    acceptBtn.id = 'acceptTrucoBtn';
+    acceptBtn.textContent = '✅ Accept';
+    acceptBtn.style.cssText = `
         background: linear-gradient(135deg, #4CAF50, #45a049);
         color: white;
         border: none;
-        padding: 15px 30px;
+        padding: 15px 25px;
         border-radius: 10px;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
-        margin-right: 10px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1001;
+        transition: all 0.3s ease;
+        min-width: 100px;
     `;
     
     // Create Reject button
     const rejectBtn = document.createElement('button');
     rejectBtn.id = 'rejectTrucoBtn';
-    rejectBtn.textContent = 'Reject';
+    rejectBtn.textContent = '❌ Reject';
     rejectBtn.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translateX(-50%) translateY(-50%);
         background: linear-gradient(135deg, #f44336, #d32f2f);
         color: white;
         border: none;
-        padding: 15px 30px;
+        padding: 15px 25px;
         border-radius: 10px;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
-        margin-left: 10px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1001;
+        transition: all 0.3s ease;
+        min-width: 100px;
     `;
     
     // Create Raise button
     const raiseBtn = document.createElement('button');
     raiseBtn.id = 'raiseTrucoBtn';
-    raiseBtn.textContent = 'Raise';
+    raiseBtn.textContent = '📈 Raise';
     raiseBtn.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translateX(-50%) translateY(50px);
         background: linear-gradient(135deg, #FF9800, #F57C00);
         color: white;
         border: none;
-        padding: 15px 30px;
+        padding: 15px 25px;
         border-radius: 10px;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1001;
+        transition: all 0.3s ease;
+        min-width: 100px;
     `;
+    
+    // Add hover effects
+    [acceptBtn, rejectBtn, raiseBtn].forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            btn.style.transform = 'scale(1.05)';
+            btn.style.boxShadow = '0 8px 20px rgba(0,0,0,0.4)';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+        });
+    });
     
     // Add event listeners
     acceptBtn.addEventListener('click', () => {
@@ -2919,14 +2958,25 @@ function showTrucoResponseButtons() {
         hideTrucoResponseButtons();
     });
     
-    document.body.appendChild(acceptBtn);
-    document.body.appendChild(rejectBtn);
-    document.body.appendChild(raiseBtn);
+    // Assemble popup
+    buttonContainer.appendChild(acceptBtn);
+    buttonContainer.appendChild(rejectBtn);
+    buttonContainer.appendChild(raiseBtn);
+    popupContainer.appendChild(title);
+    popupContainer.appendChild(buttonContainer);
+    document.body.appendChild(popupContainer);
     
     console.log('🎯 Truco response buttons shown');
 }
 
 function hideTrucoResponseButtons() {
+    // Remove the entire popup container
+    const popupContainer = document.getElementById('trucoResponsePopup');
+    if (popupContainer) {
+        popupContainer.remove();
+    }
+    
+    // Also remove individual buttons if they exist (fallback)
     const acceptBtn = document.getElementById('acceptTrucoBtn');
     const rejectBtn = document.getElementById('rejectTrucoBtn');
     const raiseBtn = document.getElementById('raiseTrucoBtn');
