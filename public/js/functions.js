@@ -632,13 +632,18 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible - ALIGNED with empty space between bottom buttons, a little lower
-            trucoButton.position(width/2 - 50, height/2 + 160);
+            // Force repositioning to ensure it's visible - MOVED MORE TO THE RIGHT, aligned with empty space between bottom buttons
+            trucoButton.position(width/2 + 20, height/2 + 160);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
-            // Force red background
+            // Force red background and double size
             trucoButton.style('background', '#dc3545 !important');
             trucoButton.style('background-color', '#dc3545 !important');
+            trucoButton.style('font-size', '80px'); // Double the font size
+            trucoButton.style('padding', '80px 160px'); // Double the padding
+            trucoButton.style('border', '10px solid #fff !important'); // Double the border thickness
+            trucoButton.style('border-radius', '50px'); // More rounded corners for larger button
+            trucoButton.style('box-shadow', '0 30px 60px rgba(0,0,0,0.7)'); // Enhanced shadow
         } catch (error) {
             console.warn('Could not show Truco button:', error);
         }
