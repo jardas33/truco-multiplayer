@@ -98,22 +98,22 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 - 100, height - 80); // Position in bottom center - more prominent
+    trucoButton.position(width/2 - 120, height - 100); // Position in bottom center - much more prominent
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
     trucoButton.style('position', 'absolute'); // Force absolute positioning
-    trucoButton.style('font-size', '32px'); // Even bigger text for emphasis
-    trucoButton.style('padding', '30px 60px'); // Even bigger button for emphasis
-    trucoButton.style('background-color', '#dc3545'); // Darker red background for better visibility
+    trucoButton.style('font-size', '40px'); // Much bigger text for emphasis
+    trucoButton.style('padding', '40px 80px'); // Much bigger button for emphasis
+    trucoButton.style('background-color', '#dc3545'); // Bright red background
     trucoButton.style('color', 'white'); // White text
-    trucoButton.style('border', '4px solid #fff'); // Thicker white border for emphasis
-    trucoButton.style('border-radius', '20px'); // More rounded corners
+    trucoButton.style('border', '5px solid #fff'); // Thicker white border for emphasis
+    trucoButton.style('border-radius', '25px'); // More rounded corners
     trucoButton.style('font-weight', 'bold'); // Bold text
-    trucoButton.style('box-shadow', '0 12px 24px rgba(0,0,0,0.6)'); // Enhanced shadow for more depth
+    trucoButton.style('box-shadow', '0 15px 30px rgba(0,0,0,0.7)'); // Enhanced shadow for more depth
     trucoButton.style('cursor', 'pointer'); // Pointer cursor
     trucoButton.style('transition', 'all 0.3s ease'); // Smooth transitions
-    trucoButton.style('transform', 'scale(1.1)'); // Slightly larger scale for emphasis
+    trucoButton.style('transform', 'scale(1.2)'); // Larger scale for emphasis
     trucoButton.hide();
 
     // Create truco response buttons with proper styling and positioning

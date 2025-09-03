@@ -266,7 +266,7 @@ function draw() {
         }
         
         // Show game UI buttons
-        if (backToMainMenuButton) backToMainMenuButton.show();
+        if (backToMainMenuButton) backToMainMenuButton.hide(); // Hide old p5.js button
         
         // ✅ Show new game buttons
         if (typeof showGameButtons === 'function') {
