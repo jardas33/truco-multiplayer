@@ -7,6 +7,12 @@ function draw() {
         return;
     }
     
+    // Check if canvas is hidden (for main menu) - if so, don't draw anything
+    const canvas = document.querySelector('canvas');
+    if (canvas && canvas.style.display === 'none') {
+        return; // Don't draw anything if canvas is hidden
+    }
+    
     // Fix canvas parenting based on game state
     if (window.gameCanvas) {
         try {
