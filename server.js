@@ -1388,7 +1388,7 @@ io.on('connection', (socket) => {
             room.game.trucoState.waitingForResponse = false;
             room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
 
-            console.log(`❌ Truco rejected! ${winningTeamName} wins with ${room.game.trucoState.currentValue} games`);
+            console.log(`❌ Truco rejected! ${winningTeamName} wins with ${gameValue} games`);
 
             // ✅ CRITICAL FIX: End game immediately when Truco is rejected
             // Update game scores
@@ -1396,11 +1396,11 @@ io.on('connection', (socket) => {
                 room.game.games = { team1: 0, team2: 0 };
             }
             
-            // ✅ CRITICAL FIX: When Truco is rejected, award the CURRENT VALUE (not original value)
-            // If Truco was accepted and then raised, the currentValue should be the accepted value
-            // If Truco was never accepted, currentValue should be 1
-            const gameValue = room.game.trucoState.currentValue;
-            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${gameValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
+            // ✅ CRITICAL FIX: When Truco is rejected, award the POTENTIAL VALUE (the raised amount)
+            // If Truco was called and raised, the potentialValue should be the raised amount
+            // If Truco was never raised, potentialValue should be 3 (the original Truco value)
+            const gameValue = room.game.trucoState.potentialValue;
+            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${gameValue}`);
             
             if (winningTeam === 'team1') {
                 room.game.games.team1 += gameValue;
@@ -1417,7 +1417,7 @@ io.on('connection', (socket) => {
                 rejecterTeam: respondingPlayer.team,
                 winningTeam: winningTeam,
                 winningTeamName: winningTeamName,
-                gameValue: room.game.trucoState.currentValue,
+                gameValue: gameValue,
                 roomCode: socket.roomCode
             });
 
