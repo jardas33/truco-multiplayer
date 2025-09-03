@@ -96,6 +96,13 @@ class Player {
         if (typeof socket !== 'undefined' && socket) {
           // ✅ CRITICAL FIX: Include bot player index for server identification
           const botPlayerIndex = window.game.players.indexOf(this);
+          console.log(`🔍 DEBUG: Bot ${this.name} about to emit respondTruco event`);
+          console.log(`🔍 DEBUG: Socket exists:`, !!socket);
+          console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
+          console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+          console.log(`🔍 DEBUG: Bot player index:`, botPlayerIndex);
+          console.log(`🔍 DEBUG: Response decision:`, decision);
+          
           socket.emit('respondTruco', { 
             response: decision,
             botPlayerIndex: botPlayerIndex  // Include bot's player index for server validation
