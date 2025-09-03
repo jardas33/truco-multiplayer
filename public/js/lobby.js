@@ -190,17 +190,18 @@ function initSocket() {
                         
                         // ✅ PACING FIX: Use immediate validation but delayed execution for visual pacing
                         if (window.game && 
+                            !window.gameCompleted &&
                             window.game.players[data.currentPlayer] &&
                             window.game.players[data.currentPlayer].isBot &&
                             window.game.players[data.currentPlayer].hand && 
                             window.game.players[data.currentPlayer].hand.length > 0 &&
-                            !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
+                                    !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
                             !window.game.players[data.currentPlayer].isPlaying) {
-                            
+                                    
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
                             // ✅ PACING FIX: Execute bot play with visual delay for better UX
-                            setTimeout(() => {
+                            const turnChangedTimeoutId = setTimeout(() => {
                                     const bot = window.game.players[data.currentPlayer];
                                     const cardIndex = 0;
                                     const selectedCard = bot.hand[cardIndex];
@@ -235,6 +236,12 @@ function initSocket() {
                                     }, 1000); // 1 second delay for pacing
                                     }
                             }, 1500); // 1.5 second visual delay for pacing
+                            
+                            // ✅ CRITICAL FIX: Track timeout ID for cancellation
+                            if (!window.pendingBotTimeouts) {
+                                window.pendingBotTimeouts = [];
+                            }
+                            window.pendingBotTimeouts.push(turnChangedTimeoutId);
                         } else {
                             console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
                         }
@@ -784,8 +791,9 @@ function setupSocketListeners() {
                 nextRoundStarter.hasPlayedThisTurn = false;
                 
                 // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
-                setTimeout(() => {
+                const roundCompleteTimeoutId = setTimeout(() => {
                     if (window.game && 
+                        !window.gameCompleted &&
                         window.game.players[data.currentPlayer] &&
                         window.game.players[data.currentPlayer].isBot &&
                         window.game.players[data.currentPlayer].hand && 
@@ -796,6 +804,12 @@ function setupSocketListeners() {
                         triggerBotPlay(data.currentPlayer);
                     }
                 }, 500); // Small delay to ensure state is fully synchronized
+                
+                // ✅ CRITICAL FIX: Track timeout ID for cancellation
+                if (!window.pendingBotTimeouts) {
+                    window.pendingBotTimeouts = [];
+                }
+                window.pendingBotTimeouts.push(roundCompleteTimeoutId);
             }
         }
         
@@ -1058,8 +1072,9 @@ function setupSocketListeners() {
             console.log(`🤖 Bot ${currentPlayer.name} starts new game - triggering bot play`);
             
             // ✅ CRITICAL FIX: Trigger bot play for new game starter
-            setTimeout(() => {
+            const newGameTimeoutId = setTimeout(() => {
                 if (window.game && 
+                    !window.gameCompleted &&
                     window.game.players[window.game.currentPlayerIndex] &&
                     window.game.players[window.game.currentPlayerIndex].isBot &&
                     window.game.players[window.game.currentPlayerIndex].hand && 
@@ -1070,6 +1085,12 @@ function setupSocketListeners() {
                     triggerBotPlay(window.game.currentPlayerIndex);
                 }
             }, 1000); // 1-second delay for new game initialization
+            
+            // ✅ CRITICAL FIX: Track timeout ID for cancellation
+            if (!window.pendingBotTimeouts) {
+                window.pendingBotTimeouts = [];
+            }
+            window.pendingBotTimeouts.push(newGameTimeoutId);
         }
         
         // Show combined game winner + new game message
