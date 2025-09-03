@@ -105,7 +105,7 @@ function draw() {
         textSize(16);
         textAlign(LEFT);
         fill(255); // White text
-        const startY = boxY + 100;
+        const startY = boxY + 120; // Increased spacing from title (was 100, now 120)
         const lineHeight = 22;
         const textX = boxX + 50;
         const maxWidth = boxWidth - 100;
@@ -178,7 +178,15 @@ function draw() {
             });
         }
         
-        instructionsCloseButton.position(width/2 - 50, boxY + boxHeight + 20);
+        instructionsCloseButton.position(width/2 - 50, boxY + boxHeight + 30);
+        instructionsCloseButton.style('background-color', '#dc3545');
+        instructionsCloseButton.style('color', 'white');
+        instructionsCloseButton.style('border', '2px solid #fff');
+        instructionsCloseButton.style('border-radius', '5px');
+        instructionsCloseButton.style('padding', '10px 20px');
+        instructionsCloseButton.style('font-size', '16px');
+        instructionsCloseButton.style('font-weight', 'bold');
+        instructionsCloseButton.style('cursor', 'pointer');
         instructionsCloseButton.show();
     }
     else if (gameState === gameStateEnum.CardValues) {
