@@ -119,9 +119,11 @@ class Player {
           
           console.log(`🔍 DEBUG: Event data:`, JSON.stringify(eventData, null, 2));
           
-          socket.emit('respondTruco', eventData);
+          // ✅ CRITICAL FIX: Try using a different event name to test if the issue is with respondTruco specifically
+          console.log(`🔍 DEBUG: Trying botRespondTruco event instead of respondTruco...`);
+          socket.emit('botRespondTruco', eventData);
           console.log(`🤖 Bot ${this.name} sent Truco response: ${decision} (bot index: ${botPlayerIndex})`);
-          console.log(`🔍 DEBUG: respondTruco event emitted successfully`);
+          console.log(`🔍 DEBUG: botRespondTruco event emitted successfully`);
         } else {
           console.error('❌ Socket not available for bot Truco response');
         }

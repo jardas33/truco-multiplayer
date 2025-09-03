@@ -1495,6 +1495,39 @@ io.on('connection', (socket) => {
         }
     }
 
+    // ✅ Handle bot Truco responses (accept, reject, raise) - temporary test
+    socket.on('botRespondTruco', (data) => {
+        console.log(`🤖 Bot Truco response received`, data);
+        console.log(`🔍 DEBUG: botRespondTruco event handler called`);
+        console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
+        console.log(`🔍 DEBUG: Socket ID:`, socket.id);
+        console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+        console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
+        console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
+        
+        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+        console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
+        
+        if (!roomCode) {
+            console.log(`❌ User ${socket.id} not in a room - no roomCode found`);
+            socket.emit('error', 'Not in a room');
+            return;
+        }
+
+        const room = rooms.get(roomCode);
+        if (!room) {
+            console.log(`❌ Room ${roomCode} not found for Bot Truco response`);
+            socket.emit('error', 'Room not found');
+            return;
+        }
+
+        // ✅ Use shared function to process Truco response
+        processTrucoResponse(socket, data, room, roomCode);
+    });
+
     // ✅ Handle Truco responses (accept, reject, raise)
     socket.on('respondTruco', (data) => {
         console.log(`🎯 Truco response received`, data);
