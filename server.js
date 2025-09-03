@@ -1396,11 +1396,12 @@ io.on('connection', (socket) => {
                 room.game.games = { team1: 0, team2: 0 };
             }
             
-            // ✅ CRITICAL FIX: When Truco is rejected, award the POTENTIAL VALUE (the raised amount)
-            // If Truco was called and raised, the potentialValue should be the raised amount
-            // If Truco was never raised, potentialValue should be 3 (the original Truco value)
-            const gameValue = room.game.trucoState.potentialValue;
-            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${gameValue}`);
+            // ✅ CRITICAL FIX: When Truco is rejected, award the CURRENT VALUE
+            // If Truco was called and rejected immediately: currentValue = 1
+            // If Truco was accepted: currentValue = 3
+            // If Truco was raised after acceptance: currentValue = 6, 9, or 12
+            const gameValue = room.game.trucoState.currentValue;
+            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${gameValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
             
             if (winningTeam === 'team1') {
                 room.game.games.team1 += gameValue;
@@ -1454,8 +1455,9 @@ io.on('connection', (socket) => {
             // ✅ Raise Truco - Handle raise in processTrucoResponse
             console.log(`📈 ${respondingPlayer.name} raised Truco to ${room.game.trucoState.potentialValue + 3} games`);
             
-            // Update potential value
+            // Update both potential value and current value
             room.game.trucoState.potentialValue += 3;
+            room.game.trucoState.currentValue = room.game.trucoState.potentialValue;
             
             // ✅ CRITICAL FIX: Find next player to respond (back-and-forth between caller and opposite team)
             let nextPlayerIndex = -1;
