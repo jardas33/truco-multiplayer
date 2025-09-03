@@ -661,17 +661,54 @@ io.on('connection', (socket) => {
             // ✅ Check if a team has won enough rounds to win the game
             const roundsToWin = 2; // Best of 3 rounds
             let gameWinner = null;
-            // ✅ Check for game winner (only if there's a clear round winner)
+            
+            // ✅ CRITICAL FIX: Check for game winner with proper draw resolution logic
             if (roundWinner) {
-            if (room.game.scores.team1 >= roundsToWin) {
-                gameWinner = 'team1';
-                console.log(`🎮 Team 1 wins the game!`);
-            } else if (room.game.scores.team2 >= roundsToWin) {
-                gameWinner = 'team2';
-                console.log(`🎮 Team 2 wins the game!`);
+                // Clear round winner - check if team has enough wins
+                if (room.game.scores.team1 >= roundsToWin) {
+                    gameWinner = 'team1';
+                    console.log(`🎮 Team 1 wins the game!`);
+                } else if (room.game.scores.team2 >= roundsToWin) {
+                    gameWinner = 'team2';
+                    console.log(`🎮 Team 2 wins the game!`);
                 }
-            } else {
-                console.log(`🤝 Draw in round ${currentRound} - game continues to next round`);
+            } else if (currentRound === 2 && room.game.roundResults.length >= 2) {
+                // ✅ CRITICAL FIX: Handle special case - Round 1 was draw, Round 2 has winner
+                const firstRound = room.game.roundResults[0];
+                const secondRound = room.game.roundResults[1];
+                
+                if (firstRound.isDraw && secondRound.winner) {
+                    // Round 1 was draw, Round 2 has winner → Game ends immediately
+                    gameWinner = secondRound.winner;
+                    console.log(`🎮 Game ends due to draw resolution: Round 1 was draw, Round 2 winner (${secondRound.winner}) wins the game!`);
+                } else if (!firstRound.isDraw && secondRound.isDraw) {
+                    // Round 1 had winner, Round 2 is draw → Round 1 winner wins the game
+                    gameWinner = firstRound.winner;
+                    console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins due to Round 2 draw!`);
+                }
+            } else if (currentRound === 3 && room.game.roundResults.length >= 3) {
+                // ✅ CRITICAL FIX: Handle Round 3 draw resolution
+                const firstRound = room.game.roundResults[0];
+                const secondRound = room.game.roundResults[1];
+                const thirdRound = room.game.roundResults[2];
+                
+                if (firstRound.isDraw && secondRound.isDraw && thirdRound.winner) {
+                    // Both Round 1 and 2 were draws, Round 3 has winner → Round 3 winner wins
+                    gameWinner = thirdRound.winner;
+                    console.log(`🎮 Game ends due to draw resolution: Round 3 winner (${thirdRound.winner}) wins after Rounds 1&2 draws!`);
+                } else if (firstRound.isDraw && !secondRound.isDraw && thirdRound.isDraw) {
+                    // Round 1 draw, Round 2 had winner, Round 3 draw → Round 2 winner wins
+                    gameWinner = secondRound.winner;
+                    console.log(`🎮 Game ends due to draw resolution: Round 2 winner (${secondRound.winner}) wins after Round 3 draw!`);
+                } else if (!firstRound.isDraw && secondRound.isDraw && thirdRound.isDraw) {
+                    // Round 1 had winner, Rounds 2&3 draws → Round 1 winner wins
+                    gameWinner = firstRound.winner;
+                    console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins after Rounds 2&3 draws!`);
+                }
+            }
+            
+            if (!gameWinner) {
+                console.log(`🤝 Round ${currentRound} - game continues to next round`);
             }
             
             // ✅ CRITICAL FIX: If game is won, handle game completion separately
