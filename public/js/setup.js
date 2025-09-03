@@ -98,23 +98,23 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 - 60, height/2 + 160); // Centered by middle of button (assuming ~120px width)
+    trucoButton.position(width/2 - 80, height/2 + 160); // Moved left to align with center of space between bottom buttons
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
     trucoButton.style('position', 'absolute'); // Force absolute positioning
-    trucoButton.style('font-size', '35px !important'); // Smaller font size
-    trucoButton.style('padding', '35px 70px !important'); // Smaller padding
+    trucoButton.style('font-size', '30px !important'); // 15% smaller font size (35 * 0.85)
+    trucoButton.style('padding', '30px 60px !important'); // 15% smaller padding (35*0.85, 70*0.85)
     trucoButton.style('background', '#dc3545 !important'); // Force bright red background
     trucoButton.style('background-color', '#dc3545 !important'); // Force bright red background
     trucoButton.style('color', 'white !important'); // Force white text
-    trucoButton.style('border', '4px solid #fff !important'); // Smaller border thickness
-    trucoButton.style('border-radius', '20px !important'); // Smaller rounded corners
+    trucoButton.style('border', '3px solid #fff !important'); // 15% smaller border thickness (4 * 0.85)
+    trucoButton.style('border-radius', '17px !important'); // 15% smaller rounded corners (20 * 0.85)
     trucoButton.style('font-weight', 'bold !important'); // Bold text
-    trucoButton.style('box-shadow', '0 15px 30px rgba(0,0,0,0.7) !important'); // Smaller shadow
+    trucoButton.style('box-shadow', '0 13px 26px rgba(0,0,0,0.7) !important'); // 15% smaller shadow (15*0.85, 30*0.85)
     trucoButton.style('cursor', 'pointer !important'); // Pointer cursor
     trucoButton.style('transition', 'all 0.3s ease !important'); // Smooth transitions
-    trucoButton.style('transform', 'scale(0.6) !important'); // Smaller scale
+    trucoButton.style('transform', 'scale(0.51) !important'); // 15% smaller scale (0.6 * 0.85)
     trucoButton.hide();
 
     // Create truco response buttons with proper styling and positioning
