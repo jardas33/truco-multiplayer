@@ -1954,92 +1954,10 @@ function determineRoundWinner(playedCards, room) {
     if (drawCards.length > 1) {
         console.log(`🤝 DRAW DETECTED: ${drawCards.length} cards with value ${highestValue}`);
         
-        // Apply Truco draw rules
-        const currentRound = (room.game.roundResults ? room.game.roundResults.length : 0) + 1;
-        console.log(`🔍 Current round: ${currentRound}`);
-        
-        let drawWinner = null;
-        
-        if (currentRound === 1) {
-            // First round draw: winner will be determined by next round
-            console.log(`🤝 First round draw - winner will be determined by next round`);
-            drawWinner = null; // No winner yet
-        } else if (currentRound === 2) {
-            // Second round draw: winner is the team that won round 1
-            if (room.game.roundResults && room.game.roundResults.length > 0) {
-                const firstRoundWinner = room.game.roundResults[0].winner;
-                if (firstRoundWinner) {
-                    // Find a player from the winning team
-                    const winningTeamPlayer = room.players.find(p => p.team === firstRoundWinner);
-                    if (winningTeamPlayer) {
-                        drawWinner = {
-                            name: winningTeamPlayer.name,
-                            team: firstRoundWinner,
-                            card: 'Draw Resolution',
-                            value: highestValue,
-                            isDrawResolution: true
-                        };
-                        console.log(`🤝 Second round draw resolved: ${firstRoundWinner} wins due to first round victory`);
-                    }
-                }
-            }
-            
-            if (!drawWinner) {
-                console.log(`⚠️ Could not resolve second round draw - no first round winner found`);
-                drawWinner = null;
-            }
-        } else if (currentRound === 3) {
-            // Third round draw: check previous rounds
-            if (room.game.roundResults && room.game.roundResults.length >= 2) {
-                const firstRound = room.game.roundResults[0];
-                const secondRound = room.game.roundResults[1];
-                
-                if (firstRound.isDraw && secondRound.isDraw) {
-                    // Both first and second rounds were draws - winner of third round wins the game
-                    console.log(`🤝 Third round draw - but first and second rounds were also draws, so this round determines winner`);
-                    drawWinner = null; // Let the third round winner be determined normally (no draw resolution needed)
-                } else if (firstRound.isDraw && !secondRound.isDraw) {
-                    // First round was draw, second round had winner - second round winner wins
-                    const secondRoundWinner = secondRound.winner;
-                    if (secondRoundWinner) {
-                        const winningTeamPlayer = room.players.find(p => p.team === secondRoundWinner);
-                        if (winningTeamPlayer) {
-                            drawWinner = {
-                                name: winningTeamPlayer.name,
-                                team: secondRoundWinner,
-                                card: 'Draw Resolution',
-                                value: highestValue,
-                                isDrawResolution: true
-                            };
-                            console.log(`🤝 Third round draw resolved: ${secondRoundWinner} wins due to second round victory (first round was draw)`);
-                        }
-                    }
-                } else if (!firstRound.isDraw) {
-                    // First round had winner, third round draw - first round winner wins
-                    const firstRoundWinner = firstRound.winner;
-                    if (firstRoundWinner) {
-                        const winningTeamPlayer = room.players.find(p => p.team === firstRoundWinner);
-                        if (winningTeamPlayer) {
-                            drawWinner = {
-                                name: winningTeamPlayer.name,
-                                team: firstRoundWinner,
-                                card: 'Draw Resolution',
-                                value: highestValue,
-                                isDrawResolution: true
-                            };
-                            console.log(`🤝 Third round draw resolved: ${firstRoundWinner} wins due to first round victory`);
-                        }
-                    }
-                }
-            }
-            
-            if (!drawWinner) {
-                console.log(`⚠️ Could not resolve third round draw`);
-                drawWinner = null;
-            }
-        }
-        
-        return drawWinner;
+        // ✅ CRITICAL FIX: Don't resolve draws in determineRoundWinner
+        // Let the main game logic handle draw resolution
+        console.log(`🤝 Draw detected - returning null to let main game logic handle resolution`);
+        return null;
     } else {
         // No draw - clear winner
     console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
