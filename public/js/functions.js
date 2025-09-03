@@ -1,5 +1,5 @@
 function truco() {
-  console.log(`🎯 Truco called by ${window.game?.players[window.game?.currentPlayerIndex]?.name}`);
+  console.log(`🎯 Truco/Raise called by ${window.game?.players[window.game?.currentPlayerIndex]?.name}`);
   
   if (!window.game) {
     console.error('❌ No game instance found');
@@ -12,10 +12,18 @@ function truco() {
     return;
   }
 
-  // Send Truco request to server
+  // Determine if this is a Truco call or a Raise
+  const isRaise = window.game.trucoState && window.game.trucoState.callerTeam !== null && window.game.trucoState.currentValue > 1;
+  
+  if (isRaise) {
+    console.log(`📈 Raise Truco request sent to server`);
+  } else {
+    console.log(`🎯 Truco request sent to server`);
+  }
+
+  // Send Truco/Raise request to server
   if (typeof socket !== 'undefined' && socket) {
     socket.emit('requestTruco', {});
-    console.log(`🎯 Truco request sent to server`);
   } else {
     console.error('❌ Socket not available for Truco request');
   }
@@ -246,29 +254,29 @@ function showTrucoButton() {
   if (window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
     const currentPlayerTeam = currentPlayer.team;
     
-    // ✅ CRITICAL FIX: Check server-side Truco state to prevent multiple calls
+    // ✅ CRITICAL FIX: Proper Truco button logic
     if (window.game.trucoState && window.game.trucoState.isActive) {
-      // Truco is active - check if this player can raise
-      if (currentPlayerTeam !== window.game.trucoState.callerTeam) {
-        // Opposite team can raise
-        trucoButton.html("RAISE TRUCO");
-        trucoButton.show();
-      } else {
-        // Same team cannot call Truco again
-        trucoButton.hide();
-      }
+      // Truco is currently active (waiting for response) - hide button
+      trucoButton.hide();
     } else if (window.game.trucoState && window.game.trucoState.callerTeam !== null) {
-      // ✅ CRITICAL FIX: Truco was called before - only opposite team can raise
-      if (currentPlayerTeam !== window.game.trucoState.callerTeam) {
-        // Opposite team can raise
-        trucoButton.html("RAISE TRUCO");
-        trucoButton.show();
+      // Truco was called before - check if this player can raise
+      if (window.game.trucoState.currentValue > 1) {
+        // Truco was accepted - only opposite team can raise
+        if (currentPlayerTeam !== window.game.trucoState.callerTeam) {
+          // Opposite team can raise
+          trucoButton.html("RAISE");
+          trucoButton.show();
+        } else {
+          // Same team cannot raise
+          trucoButton.hide();
+        }
       } else {
-        // Same team cannot call Truco again
-        trucoButton.hide();
+        // Truco was rejected - anyone can call Truco again
+        trucoButton.html("TRUCO");
+        trucoButton.show();
       }
     } else {
-      // Initial Truco call - show button with normal text
+      // No Truco called yet - show normal Truco button
       trucoButton.html("TRUCO");
       trucoButton.show();
     }

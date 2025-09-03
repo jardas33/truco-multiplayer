@@ -2909,23 +2909,29 @@ function showTrucoResponseButtons() {
         min-width: 100px;
     `;
     
-    // Create Raise button
-    const raiseBtn = document.createElement('button');
-    raiseBtn.id = 'raiseTrucoBtn';
-    raiseBtn.textContent = '📈 Raise';
-    raiseBtn.style.cssText = `
-        background: linear-gradient(135deg, #FF9800, #F57C00);
-        color: white;
-        border: none;
-        padding: 15px 25px;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-        min-width: 100px;
-    `;
+                            // Create Raise button (only show if potential value < 12)
+                        const raiseBtn = document.createElement('button');
+                        raiseBtn.id = 'raiseTrucoBtn';
+                        raiseBtn.textContent = '📈 Raise';
+                        raiseBtn.style.cssText = `
+                            background: linear-gradient(135deg, #FF9800, #F57C00);
+                            color: white;
+                            border: none;
+                            padding: 15px 25px;
+                            border-radius: 10px;
+                            font-size: 16px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                            transition: all 0.3s ease;
+                            min-width: 100px;
+                        `;
+                        
+                        // Only show raise button if potential value is less than 12
+                        const potentialValue = window.game.trucoState?.potentialValue || 3;
+                        if (potentialValue >= 12) {
+                            raiseBtn.style.display = 'none';
+                        }
     
     // Add hover effects
     [acceptBtn, rejectBtn, raiseBtn].forEach(btn => {

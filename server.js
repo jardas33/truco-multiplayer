@@ -1203,27 +1203,54 @@ io.on('connection', (socket) => {
             }
         }
 
-        // ✅ Start Truco
+        // ✅ Start Truco or Raise
         room.game.trucoState.isActive = true;
-        room.game.trucoState.currentValue = 1;
-        room.game.trucoState.potentialValue = 3;
-        room.game.trucoState.callerTeam = requestingPlayer.team;
-        room.game.trucoState.callerIndex = playerIndex;
+        
+        // Check if this is a raise (Truco was already accepted)
+        const isRaise = room.game.trucoState.callerTeam !== null && room.game.trucoState.currentValue > 1;
+        
+        if (isRaise) {
+            // This is a raise - increase potential value
+            if (room.game.trucoState.potentialValue === 3) {
+                room.game.trucoState.potentialValue = 6;
+            } else if (room.game.trucoState.potentialValue === 6) {
+                room.game.trucoState.potentialValue = 9;
+            } else if (room.game.trucoState.potentialValue === 9) {
+                room.game.trucoState.potentialValue = 12;
+            }
+            console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games by ${requestingPlayer.name}`);
+        } else {
+            // This is an initial Truco call
+            room.game.trucoState.currentValue = 1;
+            room.game.trucoState.potentialValue = 3;
+            room.game.trucoState.callerTeam = requestingPlayer.team;
+            room.game.trucoState.callerIndex = playerIndex;
+            console.log(`🎯 Initial Truco called by ${requestingPlayer.name}`);
+        }
+        
         room.game.trucoState.waitingForResponse = true;
 
-        // ✅ Find next player from opposite team for response
+        // ✅ CRITICAL FIX: Find next player in turn order for response (not just opposite team)
         console.log(`🔍 TRUCO CALL DEBUG - Caller: ${requestingPlayer.name} (${playerIndex}) from team ${requestingPlayer.team}`);
         console.log(`🔍 TRUCO CALL DEBUG - All Players:`, room.players.map((p, i) => `${i}: ${p.name} (${p.team})`));
         
-        const nextPlayerIndex = getNextPlayerFromOppositeTeam(room.players, playerIndex);
+        // Find the next player in turn order (clockwise) to respond to Truco
+        let nextPlayerIndex = -1;
+        for (let i = 1; i < 4; i++) {
+            const checkIndex = (playerIndex + i) % 4;
+            nextPlayerIndex = checkIndex;
+            break;
+        }
+        
         room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
 
         console.log(`🎯 Truco called by ${requestingPlayer.name} (${requestingPlayer.team}) for 3 games`);
         console.log(`🎯 Next player to respond: ${room.players[nextPlayerIndex].name} (${room.players[nextPlayerIndex].team})`);
         console.log(`🔍 TRUCO CALL DEBUG - Final responsePlayerIndex: ${nextPlayerIndex}`);
 
-        // ✅ Emit Truco called event to all players
-        io.to(socket.roomCode).emit('trucoCalled', {
+        // ✅ Emit Truco called/raised event to all players
+        const eventName = isRaise ? 'trucoRaised' : 'trucoCalled';
+        const eventData = {
             caller: socket.id,
             callerName: requestingPlayer.name,
             callerTeam: requestingPlayer.team,
@@ -1232,7 +1259,13 @@ io.on('connection', (socket) => {
             responsePlayerIndex: nextPlayerIndex,
             responsePlayerName: room.players[nextPlayerIndex].name,
             roomCode: socket.roomCode
-        });
+        };
+        
+        if (isRaise) {
+            eventData.newPotentialValue = room.game.trucoState.potentialValue;
+        }
+        
+        io.to(socket.roomCode).emit(eventName, eventData);
 
         console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
 
@@ -1404,77 +1437,11 @@ io.on('connection', (socket) => {
             }, 3000);
 
         } else if (response === 3) {
-            // ✅ Raise Truco
-            if (room.game.trucoState.potentialValue >= 12) {
-                console.log(`❌ Cannot raise beyond 12 games`);
-                return;
-            }
-
-            // ✅ CRITICAL FIX: Increase potential value properly
-            const oldPotentialValue = room.game.trucoState.potentialValue;
-            if (room.game.trucoState.potentialValue === 3) {
-                room.game.trucoState.potentialValue = 6;
-            } else if (room.game.trucoState.potentialValue === 6) {
-                room.game.trucoState.potentialValue = 9;
-            } else if (room.game.trucoState.potentialValue === 9) {
-                room.game.trucoState.potentialValue = 12;
-            }
-            
-            console.log(`🔍 TRUCO RAISE DEBUG - Raised from ${oldPotentialValue} to ${room.game.trucoState.potentialValue} games`);
-
-            // ✅ Find next player from opposite team for response
-            // In Truco, when someone raises, the next player from the opposite team responds
-            const raiserTeam = respondingPlayer.team;
-            let nextPlayerIndex = -1;
-            
-            // Find the next player from the opposite team (not the raiser's team)
-            for (let i = 1; i < 4; i++) {
-                const checkIndex = (playerIndex + i) % 4;
-                if (room.players[checkIndex].team !== raiserTeam) {
-                    nextPlayerIndex = checkIndex;
-                    break;
-                }
-            }
-            
-            // Fallback: if no opposite team player found, use the original caller
-            if (nextPlayerIndex === -1) {
-                nextPlayerIndex = room.game.trucoState.callerIndex;
-            }
-            
-            room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
-            room.game.trucoState.waitingForResponse = true; // ✅ CRITICAL FIX: Set waiting for response after raise
-
-            console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games`);
-            console.log(`🎯 Next player to respond: ${room.players[nextPlayerIndex].name} (${room.players[nextPlayerIndex].team})`);
-
-            // ✅ Emit Truco raised event
-            io.to(socket.roomCode).emit('trucoRaised', {
-                raiser: socket.id,
-                raiserName: respondingPlayer.name,
-                raiserTeam: respondingPlayer.team,
-                newPotentialValue: room.game.trucoState.potentialValue,
-                responsePlayerIndex: nextPlayerIndex,
-                responsePlayerName: room.players[nextPlayerIndex].name,
-                roomCode: socket.roomCode
-            });
-
-            // ✅ Handle bot response for raised Truco
-            const nextResponsePlayer = room.players[nextPlayerIndex];
-            if (nextResponsePlayer && nextResponsePlayer.isBot) {
-                console.log(`🤖 Server-side: Bot ${nextResponsePlayer.name} needs to respond to raised Truco`);
-                setTimeout(() => {
-                    // Simulate bot decision for raise
-                    const decision = Math.random() < 0.3 ? 3 : (Math.random() < 0.6 ? 1 : 2); // 30% raise, 30% accept, 40% reject
-                    console.log(`🤖 Server-side: Bot ${nextResponsePlayer.name} decided: ${decision === 1 ? 'Accept' : decision === 2 ? 'Reject' : 'Raise'}`);
-                    
-                    // Send bot response directly to server
-                    const botSocket = { id: nextResponsePlayer.id, roomCode: socket.roomCode };
-                    const botData = { response: decision };
-                    
-                    // Process the bot response
-                    processTrucoResponse(botSocket, botData, room);
-                }, 1500);
-            }
+            // ✅ Raise Truco - This should not happen in processTrucoResponse anymore
+            // Raises are now handled in the requestTruco handler
+            console.log(`❌ Raise response received in processTrucoResponse - this should not happen`);
+            console.log(`❌ Raises should be handled via requestTruco event, not respondTruco`);
+            return;
         }
 
         console.log(`✅ Truco response processed for user ${socket.id} in room ${socket.roomCode}`);
