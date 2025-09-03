@@ -574,9 +574,13 @@ function setupSocketListeners() {
                     responsePlayer.botRespondTruco();
                 }, 1500);
             } else if (responsePlayer && !responsePlayer.isBot) {
-                // Human response - always allow human player to respond to Truco calls
-                console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
-                showTrucoResponseButtons();
+                // Human response - only show response buttons to the specific player who needs to respond
+                if (localPlayerIndex === data.responsePlayerIndex) {
+                    console.log(`👤 Human player ${responsePlayer.name} (local player) can respond to Truco`);
+                    showTrucoResponseButtons();
+                } else {
+                    console.log(`👤 Human player ${responsePlayer.name} needs to respond, but this is not the local player`);
+                }
             } else {
                 console.log(`🔍 TRUCO RESPONSE DEBUG - No valid response player found`);
             }
