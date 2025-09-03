@@ -1275,12 +1275,13 @@ io.on('connection', (socket) => {
 
     // ✅ Helper function to process Truco responses (used by both client and server-side bot responses)
     function processTrucoResponse(socket, data, room) {
-        console.log(`🎯 Processing Truco response in room: ${socket.roomCode}`, data);
-        
-        if (!room || !room.game || !room.game.trucoState) {
-            console.log(`❌ No active Truco in room ${socket.roomCode}`);
-            return;
-        }
+        try {
+            console.log(`🎯 Processing Truco response in room: ${socket.roomCode}`, data);
+            
+            if (!room || !room.game || !room.game.trucoState) {
+                console.log(`❌ No active Truco in room ${socket.roomCode}`);
+                return;
+            }
         
         // ✅ Validate it's the response player's turn (handle both human and bot responses)
         let playerIndex = -1;
@@ -1349,9 +1350,9 @@ io.on('connection', (socket) => {
             console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
             console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
 
-            // ✅ CRITICAL FIX: After Truco acceptance, ensure the game continues with the round winner
-            // The round winner should be the one who plays first after Truco acceptance
-            if (room.lastRoundWinner !== null) {
+            // ✅ CRITICAL FIX: After Truco acceptance, ensure the game continues with the correct player
+            // In the first game/round, keep the current player. In subsequent rounds, use the round winner
+            if (room.lastRoundWinner !== null && room.lastRoundWinner !== undefined) {
                 const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
                 if (roundWinnerPlayerIndex !== -1) {
                     room.game.currentPlayer = roundWinnerPlayerIndex;
@@ -1360,7 +1361,7 @@ io.on('connection', (socket) => {
                     console.log(`⚠️ Could not find round winner after Truco acceptance, keeping current player`);
                 }
             } else {
-                console.log(`⚠️ No round winner found after Truco acceptance, keeping current player`);
+                console.log(`🎯 First game/round - keeping current player after Truco acceptance: ${room.players[room.game.currentPlayer]?.name}`);
             }
 
             // ✅ Emit Truco accepted event
@@ -1499,6 +1500,11 @@ io.on('connection', (socket) => {
         }
 
         console.log(`✅ Truco response processed for user ${socket.id} in room ${socket.roomCode}`);
+        } catch (error) {
+            console.error(`❌ Error processing Truco response:`, error);
+            console.error(`❌ Error stack:`, error.stack);
+            // Don't crash the server, just log the error
+        }
     }
 
     // ✅ Handle Truco responses (accept, reject, raise)
