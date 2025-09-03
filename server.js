@@ -965,10 +965,15 @@ io.on('connection', (socket) => {
             const currentPlayer = room.players[room.game.currentPlayer];
             console.log(`🔍 DEBUG: Current player ID: ${currentPlayer?.id}, Socket ID: ${socket.id}, Match: ${currentPlayer?.id === socket.id}`);
             
-            // ✅ CRITICAL FIX: Only allow botTurnComplete to proceed if it's from the current player's socket
-            // This prevents old botTurnComplete events from interfering with new rounds
-            if (currentPlayer && currentPlayer.id === socket.id) {
-                console.log(`🔍 DEBUG: botTurnComplete from current player ${currentPlayer.name} - this is expected for round winner starting new round`);
+            // ✅ CRITICAL FIX: Allow botTurnComplete from human player's socket when it's a bot's turn
+            // The human player's client manages all bot logic, so botTurnComplete events come from the human player's socket
+            if (currentPlayer && currentPlayer.isBot) {
+                console.log(`🔍 DEBUG: botTurnComplete from human player's socket for bot ${currentPlayer.name} - this is expected behavior`);
+                console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
+                room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
+                // Don't return here - continue to normal turn progression logic
+            } else if (currentPlayer && !currentPlayer.isBot && currentPlayer.id === socket.id) {
+                console.log(`🔍 DEBUG: botTurnComplete from human player ${currentPlayer.name} - this is expected for round winner starting new round`);
                 console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
                 room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
                 // Don't return here - continue to normal turn progression logic
