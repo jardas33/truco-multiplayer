@@ -254,20 +254,22 @@ function showTrucoButton() {
   if (window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
     const currentPlayerTeam = currentPlayer.team;
     
-    // ✅ CRITICAL FIX: Proper Truco button logic
+    // ✅ NEW LOGIC: Dynamic Truco/Raise button based on Truco state
     if (window.game.trucoState && window.game.trucoState.isActive) {
       // Truco is currently active (waiting for response) - hide button
       trucoButton.hide();
     } else if (window.game.trucoState && window.game.trucoState.callerTeam !== null) {
       // Truco was called before - check if this player can raise
       if (window.game.trucoState.currentValue > 1) {
-        // Truco was accepted - only opposite team can raise
-        if (currentPlayerTeam !== window.game.trucoState.callerTeam) {
-          // Opposite team can raise
+        // Truco was accepted - check if this team can raise
+        const lastCallerTeam = window.game.trucoState.callerTeam;
+        
+        if (currentPlayerTeam !== lastCallerTeam) {
+          // Opposite team can raise - show RAISE button
           trucoButton.html("RAISE");
           trucoButton.show();
         } else {
-          // Same team cannot raise
+          // Same team cannot raise - hide button
           trucoButton.hide();
         }
       } else {

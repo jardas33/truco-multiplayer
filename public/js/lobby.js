@@ -265,6 +265,11 @@ function initSocket() {
             }
             
             console.log('✅ Turn changed event processed successfully');
+            
+            // ✅ CRITICAL FIX: Update Truco button after turn change
+            if (typeof showTrucoButton === 'function') {
+                showTrucoButton();
+            }
         });
 
         socket.on('connect_error', (error) => {
@@ -610,6 +615,11 @@ function setupSocketListeners() {
         
         // Continue with normal game flow
         console.log(`✅ Truco accepted - game continues with value ${data.newGameValue}`);
+        
+        // ✅ CRITICAL FIX: Update Truco button after acceptance
+        if (typeof showTrucoButton === 'function') {
+            showTrucoButton();
+        }
     });
 
     socket.on('trucoRejected', (data) => {
@@ -644,6 +654,11 @@ function setupSocketListeners() {
         // ✅ CRITICAL FIX: Don't call endGame() here - server handles game completion
         // The server will emit gameComplete event and start a new game automatically
         console.log('✅ Truco rejection handled - waiting for server to complete game and start new one');
+        
+        // ✅ CRITICAL FIX: Update Truco button after rejection
+        if (typeof showTrucoButton === 'function') {
+            showTrucoButton();
+        }
     });
 
     socket.on('trucoRaised', (data) => {
@@ -667,9 +682,18 @@ function setupSocketListeners() {
         // Update game state
         window.game.trucoState.potentialValue = data.newPotentialValue;
         window.game.trucoState.responsePlayerIndex = data.responsePlayerIndex;
+        // ✅ CRITICAL FIX: Update callerTeam to the team that just raised
+        if (data.raiserTeam) {
+            window.game.trucoState.callerTeam = data.raiserTeam;
+        }
 
         // Show raise message
         showTrucoMessage(`${data.raiserName} raised Truco to ${data.newPotentialValue} games!`);
+        
+        // ✅ CRITICAL FIX: Update Truco button after raise
+        if (typeof showTrucoButton === 'function') {
+            showTrucoButton();
+        }
         
         // If it's a bot's turn to respond, trigger bot response
         if (data.responsePlayerIndex !== undefined) {
@@ -984,6 +1008,11 @@ function setupSocketListeners() {
                 responsePlayerIndex: null
             };
             console.log('🔄 Client-side Truco state reset for new game - all players can call Truco again');
+            
+            // ✅ CRITICAL FIX: Update Truco button after new game starts
+            if (typeof showTrucoButton === 'function') {
+                showTrucoButton();
+            }
         }
         
         if (!window.game) {
