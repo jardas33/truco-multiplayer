@@ -1199,17 +1199,32 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // ✅ Validate it's the response player's turn
+        // ✅ Validate it's the response player's turn (handle both human and bot responses)
         const player = room.players.find(p => p.id === socket.id);
-        if (!player) {
-            console.log(`❌ Player ${socket.id} not found in room`);
-            return;
+        let playerIndex = -1;
+        let respondingPlayer = null;
+        
+        if (player) {
+            // Human player response
+            playerIndex = room.players.indexOf(player);
+            respondingPlayer = player;
+            console.log(`🎯 Human player ${player.name} responding to Truco`);
+        } else {
+            // Bot response (sent from human player's socket)
+            // Find the current response player (should be a bot)
+            const responsePlayer = room.players[room.game.trucoState.responsePlayerIndex];
+            if (responsePlayer && responsePlayer.isBot) {
+                playerIndex = room.game.trucoState.responsePlayerIndex;
+                respondingPlayer = responsePlayer;
+                console.log(`🤖 Bot ${responsePlayer.name} responding to Truco via human socket`);
+            } else {
+                console.log(`❌ Invalid Truco response - response player is not a bot`);
+                return;
+            }
         }
         
-        const playerIndex = room.players.indexOf(player);
-        
         // ✅ COMPREHENSIVE DEBUGGING
-        console.log(`🔍 TRUCO DEBUG - Player: ${player.name} (${playerIndex})`);
+        console.log(`🔍 TRUCO DEBUG - Player: ${respondingPlayer.name} (${playerIndex})`);
         console.log(`🔍 TRUCO DEBUG - Truco State:`, {
             waitingForResponse: room.game.trucoState.waitingForResponse,
             responsePlayerIndex: room.game.trucoState.responsePlayerIndex,
@@ -1227,14 +1242,14 @@ io.on('connection', (socket) => {
         }
         
         if (room.game.trucoState.responsePlayerIndex !== playerIndex) {
-            console.log(`❌ Player ${player.name} tried to respond to Truco out of turn`);
+            console.log(`❌ Player ${respondingPlayer.name} tried to respond to Truco out of turn`);
             console.log(`❌ Expected response player index: ${room.game.trucoState.responsePlayerIndex}, got: ${playerIndex}`);
             console.log(`❌ Expected response player: ${room.players[room.game.trucoState.responsePlayerIndex]?.name}`);
             return;
         }
 
         const response = data.response; // 1 = accept, 2 = reject, 3 = raise
-        console.log(`🎯 ${player.name} responded to Truco: ${response === 1 ? 'Accept' : response === 2 ? 'Reject' : 'Raise'}`);
+        console.log(`🎯 ${respondingPlayer.name} responded to Truco: ${response === 1 ? 'Accept' : response === 2 ? 'Reject' : 'Raise'}`);
 
         if (response === 1) {
             // ✅ Accept Truco
@@ -1248,8 +1263,8 @@ io.on('connection', (socket) => {
             // ✅ Emit Truco accepted event
             io.to(socket.roomCode).emit('trucoAccepted', {
                 accepter: socket.id,
-                accepterName: player.name,
-                accepterTeam: player.team,
+                accepterName: respondingPlayer.name,
+                accepterTeam: respondingPlayer.team,
                 newGameValue: room.game.trucoState.currentValue,
                 roomCode: socket.roomCode
             });
@@ -1290,8 +1305,8 @@ io.on('connection', (socket) => {
             // ✅ Emit Truco rejected event
             io.to(socket.roomCode).emit('trucoRejected', {
                 rejecter: socket.id,
-                rejecterName: player.name,
-                rejecterTeam: player.team,
+                rejecterName: respondingPlayer.name,
+                rejecterTeam: respondingPlayer.team,
                 winningTeam: winningTeam,
                 winningTeamName: winningTeamName,
                 gameValue: room.game.trucoState.currentValue,
@@ -1345,7 +1360,7 @@ io.on('connection', (socket) => {
 
             // ✅ Find next player from opposite team for response
             // In Truco, when someone raises, the next player from the opposite team responds
-            const raiserTeam = player.team;
+            const raiserTeam = respondingPlayer.team;
             let nextPlayerIndex = -1;
             
             // Find the next player from the opposite team (not the raiser's team)
@@ -1371,8 +1386,8 @@ io.on('connection', (socket) => {
             // ✅ Emit Truco raised event
             io.to(socket.roomCode).emit('trucoRaised', {
                 raiser: socket.id,
-                raiserName: player.name,
-                raiserTeam: player.team,
+                raiserName: respondingPlayer.name,
+                raiserTeam: respondingPlayer.team,
                 newPotentialValue: room.game.trucoState.potentialValue,
                 responsePlayerIndex: nextPlayerIndex,
                 responsePlayerName: room.players[nextPlayerIndex].name,
