@@ -639,11 +639,12 @@ function drawGameState() {
             // Force red background and double size
             trucoButton.style('background', '#dc3545 !important');
             trucoButton.style('background-color', '#dc3545 !important');
-            trucoButton.style('font-size', '80px'); // Double the font size
-            trucoButton.style('padding', '80px 160px'); // Double the padding
+            trucoButton.style('font-size', '80px !important'); // Double the font size
+            trucoButton.style('padding', '80px 160px !important'); // Double the padding
             trucoButton.style('border', '10px solid #fff !important'); // Double the border thickness
-            trucoButton.style('border-radius', '50px'); // More rounded corners for larger button
-            trucoButton.style('box-shadow', '0 30px 60px rgba(0,0,0,0.7)'); // Enhanced shadow
+            trucoButton.style('border-radius', '50px !important'); // More rounded corners for larger button
+            trucoButton.style('box-shadow', '0 30px 60px rgba(0,0,0,0.7) !important'); // Enhanced shadow
+            trucoButton.style('transform', 'scale(1.2) !important'); // Larger scale for emphasis
         } catch (error) {
             console.warn('Could not show Truco button:', error);
         }

@@ -13,13 +13,19 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
     <style>
-      /* Force TRUCO button to have red background */
+      /* Force TRUCO button to have red background and double size */
       button:contains("TRUCO"), 
       .truco-button,
       [id*="truco"],
       button[style*="TRUCO"] {
         background-color: #dc3545 !important;
         background: #dc3545 !important;
+        font-size: 80px !important;
+        padding: 80px 160px !important;
+        border: 10px solid #fff !important;
+        border-radius: 50px !important;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.7) !important;
+        transform: scale(1.2) !important;
       }
       
       /* Additional rule for p5.js buttons */
@@ -27,6 +33,12 @@
       button[style*="position: absolute"][style*="z-index: 200"] {
         background-color: #dc3545 !important;
         background: #dc3545 !important;
+        font-size: 80px !important;
+        padding: 80px 160px !important;
+        border: 10px solid #fff !important;
+        border-radius: 50px !important;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.7) !important;
+        transform: scale(1.2) !important;
       }
     </style>
   </head>

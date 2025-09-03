@@ -103,18 +103,18 @@ function setup() {
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
     trucoButton.style('position', 'absolute'); // Force absolute positioning
-    trucoButton.style('font-size', '80px'); // Double the font size for emphasis
-    trucoButton.style('padding', '80px 160px'); // Double the padding for emphasis
+    trucoButton.style('font-size', '80px !important'); // Double the font size for emphasis
+    trucoButton.style('padding', '80px 160px !important'); // Double the padding for emphasis
     trucoButton.style('background', '#dc3545 !important'); // Force bright red background
     trucoButton.style('background-color', '#dc3545 !important'); // Force bright red background
     trucoButton.style('color', 'white !important'); // Force white text
     trucoButton.style('border', '10px solid #fff !important'); // Double the border thickness
-    trucoButton.style('border-radius', '50px'); // More rounded corners for larger button
-    trucoButton.style('font-weight', 'bold'); // Bold text
-    trucoButton.style('box-shadow', '0 30px 60px rgba(0,0,0,0.7)'); // Enhanced shadow for more depth
-    trucoButton.style('cursor', 'pointer'); // Pointer cursor
-    trucoButton.style('transition', 'all 0.3s ease'); // Smooth transitions
-    trucoButton.style('transform', 'scale(1.2)'); // Larger scale for emphasis
+    trucoButton.style('border-radius', '50px !important'); // More rounded corners for larger button
+    trucoButton.style('font-weight', 'bold !important'); // Bold text
+    trucoButton.style('box-shadow', '0 30px 60px rgba(0,0,0,0.7) !important'); // Enhanced shadow for more depth
+    trucoButton.style('cursor', 'pointer !important'); // Pointer cursor
+    trucoButton.style('transition', 'all 0.3s ease !important'); // Smooth transitions
+    trucoButton.style('transform', 'scale(1.2) !important'); // Larger scale for emphasis
     trucoButton.hide();
 
     // Create truco response buttons with proper styling and positioning
