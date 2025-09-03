@@ -1502,6 +1502,8 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         console.log(`🔍 DEBUG: Socket ID:`, socket.id);
         console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+        console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
+        console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
         // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
         const roomCode = data.roomCode || socket.roomCode;
