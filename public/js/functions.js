@@ -632,10 +632,13 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible - CENTERED and much more prominent
-            trucoButton.position(width/2 - 120, height - 100);
+            // Force repositioning to ensure it's visible - CENTERED under played cards
+            trucoButton.position(width/2 - 120, height/2 + 50);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
+            // Force red background
+            trucoButton.style('background', '#dc3545 !important');
+            trucoButton.style('background-color', '#dc3545 !important');
         } catch (error) {
             console.warn('Could not show Truco button:', error);
         }

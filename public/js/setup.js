@@ -98,16 +98,17 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 - 120, height - 100); // Position in bottom center - much more prominent
+    trucoButton.position(width/2 - 120, height/2 + 50); // Position under played cards area
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
     trucoButton.style('position', 'absolute'); // Force absolute positioning
     trucoButton.style('font-size', '40px'); // Much bigger text for emphasis
     trucoButton.style('padding', '40px 80px'); // Much bigger button for emphasis
-    trucoButton.style('background-color', '#dc3545'); // Bright red background
-    trucoButton.style('color', 'white'); // White text
-    trucoButton.style('border', '5px solid #fff'); // Thicker white border for emphasis
+    trucoButton.style('background', '#dc3545 !important'); // Force bright red background
+    trucoButton.style('background-color', '#dc3545 !important'); // Force bright red background
+    trucoButton.style('color', 'white !important'); // Force white text
+    trucoButton.style('border', '5px solid #fff !important'); // Force thicker white border
     trucoButton.style('border-radius', '25px'); // More rounded corners
     trucoButton.style('font-weight', 'bold'); // Bold text
     trucoButton.style('box-shadow', '0 15px 30px rgba(0,0,0,0.7)'); // Enhanced shadow for more depth
