@@ -1701,6 +1701,109 @@ function hideRoundHistoryButton() {
     }
 }
 
+// ✅ Back to Main Menu from Game function
+function backToMainMenuFromGame() {
+    console.log('🏠 Returning to main menu from game');
+    
+    // Disconnect from socket if connected
+    if (socket) {
+        socket.disconnect();
+        console.log('🔌 Disconnected from server');
+    }
+    
+    // Reset game state
+    window.game = null;
+    window.gameCompleted = false;
+    window.playedCards = [];
+    window.isMultiplayerMode = false;
+    window.roomId = null;
+    
+    // Hide game elements
+    const gameDiv = document.getElementById('Game');
+    if (gameDiv) {
+        gameDiv.style.display = 'none';
+    }
+    
+    // Show menu elements
+    const menuDiv = document.getElementById('Menu');
+    if (menuDiv) {
+        menuDiv.style.display = 'block';
+    }
+    
+    // Hide game buttons
+    hideGameButtons();
+    
+    // Reset game state
+    if (typeof gameState !== 'undefined') {
+        gameState = gameStateEnum.Menu;
+    }
+    
+    console.log('✅ Returned to main menu');
+}
+
+// ✅ Show Card Values from Game function
+function showCardValuesFromGame() {
+    console.log('🃏 Showing card values from game');
+    
+    // Store current game state
+    if (typeof gameState !== 'undefined') {
+        previousGameState = gameState;
+        gameState = gameStateEnum.CardValues;
+    }
+    
+    // Hide game elements
+    const gameDiv = document.getElementById('Game');
+    if (gameDiv) {
+        gameDiv.style.display = 'none';
+    }
+    
+    // Show values elements
+    const valuesDiv = document.getElementById('Values');
+    if (valuesDiv) {
+        valuesDiv.style.display = 'block';
+    }
+    
+    console.log('✅ Card values displayed');
+}
+
+// ✅ Hide Game Buttons function
+function hideGameButtons() {
+    const gameBackToMenuBtn = document.getElementById('gameBackToMenuBtn');
+    const gameCardValuesBtn = document.getElementById('gameCardValuesBtn');
+    const roundHistoryBtn = document.getElementById('roundHistoryBtn');
+    
+    if (gameBackToMenuBtn) {
+        gameBackToMenuBtn.style.display = 'none';
+    }
+    if (gameCardValuesBtn) {
+        gameCardValuesBtn.style.display = 'none';
+    }
+    if (roundHistoryBtn) {
+        roundHistoryBtn.style.display = 'none';
+    }
+    
+    console.log('🎮 Game buttons hidden');
+}
+
+// ✅ Show Game Buttons function
+function showGameButtons() {
+    const gameBackToMenuBtn = document.getElementById('gameBackToMenuBtn');
+    const gameCardValuesBtn = document.getElementById('gameCardValuesBtn');
+    const roundHistoryBtn = document.getElementById('roundHistoryBtn');
+    
+    if (gameBackToMenuBtn) {
+        gameBackToMenuBtn.style.display = 'block';
+    }
+    if (gameCardValuesBtn) {
+        gameCardValuesBtn.style.display = 'block';
+    }
+    if (roundHistoryBtn) {
+        roundHistoryBtn.style.display = 'block';
+    }
+    
+    console.log('🎮 Game buttons shown');
+}
+
 function setupButtonListeners() {
     console.log('Setting up button listeners...');
     
@@ -1769,6 +1872,24 @@ function setupButtonListeners() {
         closeRoundHistoryBtn.onclick = () => {
             console.log('📋 Close Round History button clicked');
             hideRoundHistory();
+        };
+    }
+    
+    // ✅ Back to Main Menu button (in game)
+    const gameBackToMenuBtn = document.getElementById('gameBackToMenuBtn');
+    if (gameBackToMenuBtn) {
+        gameBackToMenuBtn.onclick = () => {
+            console.log('🏠 Back to Main Menu button clicked');
+            backToMainMenuFromGame();
+        };
+    }
+    
+    // ✅ Card Values button (in game)
+    const gameCardValuesBtn = document.getElementById('gameCardValuesBtn');
+    if (gameCardValuesBtn) {
+        gameCardValuesBtn.onclick = () => {
+            console.log('🃏 Card Values button clicked');
+            showCardValuesFromGame();
         };
     }
     

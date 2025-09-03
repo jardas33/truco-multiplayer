@@ -197,9 +197,31 @@ function draw() {
             instructionsCloseButton = createButton('Close');
             instructionsCloseButton.class('close-button');
             instructionsCloseButton.mousePressed(() => {
-                gameState = gameStateEnum.Menu;
+                // ✅ Return to previous state (game or menu)
+                if (previousGameState === gameStateEnum.Playing) {
+                    // Return to game
+                    gameState = gameStateEnum.Playing;
+                    const gameDiv = document.getElementById('Game');
+                    if (gameDiv) {
+                        gameDiv.style.display = 'block';
+                    }
+                    const valuesDiv = document.getElementById('Values');
+                    if (valuesDiv) {
+                        valuesDiv.style.display = 'none';
+                    }
+                } else {
+                    // Return to menu
+                    gameState = gameStateEnum.Menu;
+                    const menuDiv = document.getElementById('Menu');
+                    if (menuDiv) {
+                        menuDiv.style.display = 'block';
+                    }
+                    const valuesDiv = document.getElementById('Values');
+                    if (valuesDiv) {
+                        valuesDiv.style.display = 'none';
+                    }
+                }
                 instructionsCloseButton.hide();
-                menuDiv.show();
                 loop();
             });
         }
@@ -219,8 +241,18 @@ function draw() {
         if (instructionsDiv) instructionsDiv.style('display', 'none');
         if (valuesDiv) valuesDiv.style('display', 'none');
         
+        // ✅ Hide game buttons when not in game
+        if (typeof hideGameButtons === 'function') {
+            hideGameButtons();
+        }
+        
         // Show game UI buttons
         if (backToMainMenuButton) backToMainMenuButton.show();
+        
+        // ✅ Show new game buttons
+        if (typeof showGameButtons === 'function') {
+            showGameButtons();
+        }
         
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
