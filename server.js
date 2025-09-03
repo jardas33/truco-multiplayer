@@ -1498,6 +1498,8 @@ io.on('connection', (socket) => {
     // ✅ Handle Truco responses (accept, reject, raise)
     socket.on('respondTruco', (data) => {
         console.log(`🎯 Truco response received in room: ${socket.roomCode}`, data);
+        console.log(`🔍 DEBUG: respondTruco event handler called`);
+        console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         
         if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);

@@ -630,6 +630,8 @@ function setupSocketListeners() {
 
     socket.on('trucoRejected', (data) => {
         console.log('❌ Truco rejected event received:', data);
+        console.log('🔍 DEBUG: trucoRejected event handler called');
+        console.log('🔍 DEBUG: Event data:', JSON.stringify(data, null, 2));
         
         if (!window.game) {
             console.log('❌ No game instance found for Truco rejected event');
@@ -889,6 +891,8 @@ function setupSocketListeners() {
     // ✅ Handle game complete event (when a team wins the game)
     socket.on('gameComplete', (data) => {
         console.log('🎮 Game complete event received:', data);
+        console.log('🔍 DEBUG: gameComplete event handler called');
+        console.log('🔍 DEBUG: Event data:', JSON.stringify(data, null, 2));
         
         // ✅ CRITICAL FIX: Set game completion flag to prevent further card playing
         window.gameCompleted = true;
