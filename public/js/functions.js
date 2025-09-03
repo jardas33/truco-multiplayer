@@ -632,8 +632,8 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible - CENTERED under played cards
-            trucoButton.position(width/2 - 120, height/2 + 50);
+            // Force repositioning to ensure it's visible - CENTERED under played cards, higher up
+            trucoButton.position(width/2 - 120, height/2 + 20);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
             // Force red background

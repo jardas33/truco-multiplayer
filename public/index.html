@@ -16,7 +16,15 @@
       /* Force TRUCO button to have red background */
       button:contains("TRUCO"), 
       .truco-button,
-      [id*="truco"] {
+      [id*="truco"],
+      button[style*="TRUCO"] {
+        background-color: #dc3545 !important;
+        background: #dc3545 !important;
+      }
+      
+      /* Additional rule for p5.js buttons */
+      canvas + button,
+      button[style*="position: absolute"][style*="z-index: 200"] {
         background-color: #dc3545 !important;
         background: #dc3545 !important;
       }
@@ -84,12 +92,12 @@
         </button>
         
         <!-- ✅ Round History Button (Below TRUCO - Left) -->
-        <button id="roundHistoryBtn" style="display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-100px); z-index: 1000; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+        <button id="roundHistoryBtn" style="display: none; position: absolute; bottom: 80px; left: 50%; transform: translateX(-150px); z-index: 1000; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
           📋 Round History
         </button>
         
         <!-- ✅ Card Values Button (Below TRUCO - Right) -->
-        <button id="gameCardValuesBtn" style="display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(20px); z-index: 1000; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+        <button id="gameCardValuesBtn" style="display: none; position: absolute; bottom: 80px; left: 50%; transform: translateX(50px); z-index: 1000; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
           🃏 Card Values
         </button>
         
