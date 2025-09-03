@@ -636,15 +636,15 @@ function drawGameState() {
             trucoButton.position(width/2 - 15, height/2 + 160);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
-            // Force red background and proper size
+            // Force red background and balanced size
             trucoButton.style('background', '#dc3545 !important');
             trucoButton.style('background-color', '#dc3545 !important');
-            trucoButton.style('font-size', '27px !important'); // Proper font size
-            trucoButton.style('padding', '27px 54px !important'); // Proper padding
-            trucoButton.style('border', '3px solid #fff !important'); // Proper border thickness
-            trucoButton.style('border-radius', '17px !important'); // Proper rounded corners
-            trucoButton.style('box-shadow', '0 10px 20px rgba(0,0,0,0.7) !important'); // Proper shadow
-            trucoButton.style('transform', 'scale(0.4) !important'); // Proper scale
+            trucoButton.style('font-size', '50px !important'); // Balanced font size
+            trucoButton.style('padding', '50px 100px !important'); // Balanced padding
+            trucoButton.style('border', '6px solid #fff !important'); // Balanced border thickness
+            trucoButton.style('border-radius', '30px !important'); // Balanced rounded corners
+            trucoButton.style('box-shadow', '0 20px 40px rgba(0,0,0,0.7) !important'); // Balanced shadow
+            trucoButton.style('transform', 'scale(0.8) !important'); // Balanced scale
         } catch (error) {
             console.warn('Could not show Truco button:', error);
         }

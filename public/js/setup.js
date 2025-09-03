@@ -103,18 +103,18 @@ function setup() {
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
     trucoButton.style('position', 'absolute'); // Force absolute positioning
-    trucoButton.style('font-size', '27px !important'); // Proper font size
-    trucoButton.style('padding', '27px 54px !important'); // Proper padding
+    trucoButton.style('font-size', '50px !important'); // Balanced font size
+    trucoButton.style('padding', '50px 100px !important'); // Balanced padding
     trucoButton.style('background', '#dc3545 !important'); // Force bright red background
     trucoButton.style('background-color', '#dc3545 !important'); // Force bright red background
     trucoButton.style('color', 'white !important'); // Force white text
-    trucoButton.style('border', '3px solid #fff !important'); // Proper border thickness
-    trucoButton.style('border-radius', '17px !important'); // Proper rounded corners
+    trucoButton.style('border', '6px solid #fff !important'); // Balanced border thickness
+    trucoButton.style('border-radius', '30px !important'); // Balanced rounded corners
     trucoButton.style('font-weight', 'bold !important'); // Bold text
-    trucoButton.style('box-shadow', '0 10px 20px rgba(0,0,0,0.7) !important'); // Proper shadow
+    trucoButton.style('box-shadow', '0 20px 40px rgba(0,0,0,0.7) !important'); // Balanced shadow
     trucoButton.style('cursor', 'pointer !important'); // Pointer cursor
     trucoButton.style('transition', 'all 0.3s ease !important'); // Smooth transitions
-    trucoButton.style('transform', 'scale(0.4) !important'); // Proper scale
+    trucoButton.style('transform', 'scale(0.8) !important'); // Balanced scale
     trucoButton.hide();
 
     // Create truco response buttons with proper styling and positioning
