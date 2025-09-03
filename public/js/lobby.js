@@ -1716,7 +1716,8 @@ function backToMainMenuFromGame() {
         // ✅ ADDITIONAL GAME-SPECIFIC CLEANUP
         window.gameCompleted = false;
         window.playedCards = [];
-        window.gameCanvas = null;
+        // Don't clear gameCanvas reference - we need it for future games
+        // window.gameCanvas = null;
         
         // ✅ HIDE ALL GAME ELEMENTS
         const gameDiv = document.getElementById('Game');
@@ -2485,7 +2486,23 @@ function startMultiplayerGame(data) {
                 console.error('❌ Error moving canvas to Game div:', error);
             }
         } else {
-            console.error('❌ No gameCanvas found!');
+            // ✅ CRITICAL FIX: Restore gameCanvas reference if it was cleared
+            console.log('🔄 gameCanvas reference was cleared, restoring from DOM...');
+            const canvas = document.querySelector('canvas');
+            if (canvas) {
+                window.gameCanvas = canvas;
+                console.log('✅ gameCanvas reference restored from DOM');
+                try {
+                    console.log('🔄 Moving restored canvas to Game div...');
+                    window.gameCanvas.parent('Game');
+                    canvas.style.display = 'block';
+                    console.log('✅ Restored canvas moved to Game div and shown successfully');
+                } catch (error) {
+                    console.error('❌ Error moving restored canvas to Game div:', error);
+                }
+            } else {
+                console.error('❌ No canvas found in DOM either!');
+            }
         }
         
         // ✅ CRITICAL FIX: Show round history button
