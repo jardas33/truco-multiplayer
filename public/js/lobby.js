@@ -560,15 +560,11 @@ function setupSocketListeners() {
             
             // ✅ CRITICAL FIX: Handle bot responses and human responses separately
             if (responsePlayer && responsePlayer.isBot) {
-                // Bot response - only trigger if it's the bot's turn to respond
-                if (localPlayerIndex === data.responsePlayerIndex) {
-                    console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
-                    setTimeout(() => {
-                        responsePlayer.botRespondTruco();
-                    }, 1500);
-                } else {
-                    console.log(`🔍 TRUCO RESPONSE DEBUG - Bot ${responsePlayer.name} is not the local player, skipping bot response trigger`);
-                }
+                // Bot response - always allow human player's client to trigger bot responses
+                console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
+                setTimeout(() => {
+                    responsePlayer.botRespondTruco();
+                }, 1500);
             } else if (responsePlayer && !responsePlayer.isBot) {
                 // Human response - always allow human player to respond to Truco calls
                 console.log(`👤 Human player ${responsePlayer.name} can respond to Truco`);
