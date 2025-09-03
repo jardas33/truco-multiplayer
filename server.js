@@ -1219,6 +1219,14 @@ io.on('connection', (socket) => {
                 return;
             } else if (room.game.trucoState.currentValue > 1) {
                 // Truco was accepted, only opposite team can raise
+                console.log(`🔍 TRUCO RAISE VALIDATION DEBUG:`);
+                console.log(`🔍 - requestingPlayer.team: ${requestingPlayer.team}`);
+                console.log(`🔍 - callerTeam: ${room.game.trucoState.callerTeam}`);
+                console.log(`🔍 - currentValue: ${room.game.trucoState.currentValue}`);
+                console.log(`🔍 - potentialValue: ${room.game.trucoState.potentialValue}`);
+                console.log(`🔍 - callerIndex: ${room.game.trucoState.callerIndex}`);
+                console.log(`🔍 - callerName: ${room.players[room.game.trucoState.callerIndex]?.name}`);
+                
                 if (room.game.trucoState.callerTeam === requestingPlayer.team) {
                     console.log(`❌ Team ${requestingPlayer.team} cannot raise - only opposite team can raise`);
                     socket.emit('error', 'Your team cannot raise - only the opposite team can raise');
@@ -1253,8 +1261,18 @@ io.on('connection', (socket) => {
                 room.game.trucoState.potentialValue = 12;
             }
             // ✅ CRITICAL FIX: Update caller team and index when raising
+            console.log(`🔍 TRUCO RAISE DEBUG - Before update:`);
+            console.log(`🔍 - Old callerTeam: ${room.game.trucoState.callerTeam}`);
+            console.log(`🔍 - Old callerIndex: ${room.game.trucoState.callerIndex}`);
+            console.log(`🔍 - New callerTeam: ${requestingPlayer.team}`);
+            console.log(`🔍 - New callerIndex: ${playerIndex}`);
+            
             room.game.trucoState.callerTeam = requestingPlayer.team;
             room.game.trucoState.callerIndex = playerIndex;
+            
+            console.log(`🔍 TRUCO RAISE DEBUG - After update:`);
+            console.log(`🔍 - callerTeam: ${room.game.trucoState.callerTeam}`);
+            console.log(`🔍 - callerIndex: ${room.game.trucoState.callerIndex}`);
             console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games by ${requestingPlayer.name} (team: ${requestingPlayer.team})`);
         } else {
             // This is an initial Truco call
