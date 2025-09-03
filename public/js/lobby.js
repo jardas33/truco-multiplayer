@@ -2872,7 +2872,7 @@ function triggerBotPlay(botPlayerIndex) {
                     // ✅ CRITICAL FIX: Set up success handler for Truco raise
                     // When Truco is successfully raised, complete the bot's turn
                     const trucoRaiseSuccessHandler = (data) => {
-                        if (data.raiserName === botPlayer.name) {
+                        if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco raise successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
