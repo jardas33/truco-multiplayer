@@ -1349,6 +1349,20 @@ io.on('connection', (socket) => {
             console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
             console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
 
+            // ✅ CRITICAL FIX: After Truco acceptance, ensure the game continues with the round winner
+            // The round winner should be the one who plays first after Truco acceptance
+            if (room.lastRoundWinner !== null) {
+                const roundWinnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
+                if (roundWinnerPlayerIndex !== -1) {
+                    room.game.currentPlayer = roundWinnerPlayerIndex;
+                    console.log(`🎯 After Truco acceptance, round winner ${room.lastRoundWinner.name} will continue playing (index ${roundWinnerPlayerIndex})`);
+                } else {
+                    console.log(`⚠️ Could not find round winner after Truco acceptance, keeping current player`);
+                }
+            } else {
+                console.log(`⚠️ No round winner found after Truco acceptance, keeping current player`);
+            }
+
             // ✅ Emit Truco accepted event
             io.to(socket.roomCode).emit('trucoAccepted', {
                 accepter: socket.id,
@@ -1443,8 +1457,26 @@ io.on('connection', (socket) => {
             // Update potential value
             room.game.trucoState.potentialValue += 3;
             
-            // Find next player to respond (opposite team)
-            const nextPlayerIndex = (playerIndex + 1) % room.players.length;
+            // ✅ CRITICAL FIX: Find next player to respond (back-and-forth between caller and opposite team)
+            let nextPlayerIndex = -1;
+            
+            // If the current responder is from the opposite team, go back to the caller
+            if (respondingPlayer.team !== room.game.trucoState.callerTeam) {
+                nextPlayerIndex = room.game.trucoState.callerIndex;
+                console.log(`📈 Raise by opposite team - going back to caller: ${room.players[nextPlayerIndex].name}`);
+            } else {
+                // If the current responder is the caller, go to the next opposite team player
+                for (let i = 1; i < 4; i++) {
+                    const checkIndex = (room.game.trucoState.callerIndex + i) % 4;
+                    const checkPlayer = room.players[checkIndex];
+                    if (checkPlayer.team !== room.game.trucoState.callerTeam) {
+                        nextPlayerIndex = checkIndex;
+                        break;
+                    }
+                }
+                console.log(`📈 Raise by caller - going to opposite team: ${room.players[nextPlayerIndex].name}`);
+            }
+            
             const nextPlayer = room.players[nextPlayerIndex];
             
             // Update response player
