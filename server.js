@@ -1083,16 +1083,31 @@ io.on('connection', (socket) => {
             console.log(`🎯 Human player ${player.name} requesting Truco`);
         } else {
             // Bot request (sent from human player's socket)
-            // Find the current player (should be a bot)
-            const currentPlayer = room.players[room.game.currentPlayer];
-            if (currentPlayer && currentPlayer.isBot) {
-                playerIndex = room.game.currentPlayer;
-                requestingPlayer = currentPlayer;
-                console.log(`🤖 Bot ${currentPlayer.name} requesting Truco via human socket`);
+            // Check if botPlayerIndex is provided in the data
+            if (data.botPlayerIndex !== undefined) {
+                // Use the provided bot player index
+                const botPlayer = room.players[data.botPlayerIndex];
+                if (botPlayer && botPlayer.isBot) {
+                    playerIndex = data.botPlayerIndex;
+                    requestingPlayer = botPlayer;
+                    console.log(`🤖 Bot ${botPlayer.name} requesting Truco via human socket (index: ${data.botPlayerIndex})`);
+                } else {
+                    console.log(`❌ Invalid Truco request - botPlayerIndex ${data.botPlayerIndex} is not a bot`);
+                    socket.emit('error', 'Invalid bot request');
+                    return;
+                }
             } else {
-                console.log(`❌ Invalid Truco request - current player is not a bot`);
-                socket.emit('error', 'Invalid request');
-                return;
+                // Fallback: Find the current player (should be a bot)
+                const currentPlayer = room.players[room.game.currentPlayer];
+                if (currentPlayer && currentPlayer.isBot) {
+                    playerIndex = room.game.currentPlayer;
+                    requestingPlayer = currentPlayer;
+                    console.log(`🤖 Bot ${currentPlayer.name} requesting Truco via human socket (fallback)`);
+                } else {
+                    console.log(`❌ Invalid Truco request - current player is not a bot`);
+                    socket.emit('error', 'Invalid request');
+                    return;
+                }
             }
         }
 

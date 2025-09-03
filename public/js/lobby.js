@@ -2618,9 +2618,10 @@ function triggerBotPlay(botPlayerIndex) {
                     
                     console.log(`🤖 Bot ${botPlayer.name} calling Truco!`);
                     
-                    // ✅ CRITICAL FIX: Emit requestTruco event for the bot
+                    // ✅ CRITICAL FIX: Emit requestTruco event for the bot with bot player index
                     socket.emit('requestTruco', {
-                        roomCode: window.roomId
+                        roomCode: window.roomId,
+                        botPlayerIndex: botPlayerIndex  // Include bot's player index for server validation
                     });
                     
                     console.log(`🤖 Bot ${botPlayer.name} Truco request emitted successfully`);
