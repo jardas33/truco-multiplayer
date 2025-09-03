@@ -154,29 +154,30 @@ function draw() {
         });
         
         // Create and position close button (outside the box, centered at bottom)
-        if (!instructionsCloseButton) {
-            instructionsCloseButton = createButton('Close');
-            instructionsCloseButton.class('close-button');
-            instructionsCloseButton.mousePressed(() => {
-                gameState = gameStateEnum.Menu;
-                const menuDiv = document.getElementById('Menu');
-                if (menuDiv) {
-                    menuDiv.style.display = 'block';
-                }
-                const instructionsDiv = document.getElementById('Instructions');
-                if (instructionsDiv) {
-                    instructionsDiv.style.display = 'none';
-                }
-                
-                // ✅ CRITICAL: Move canvas back to Menu div
-                let canvas = document.querySelector('canvas');
-                if (canvas && menuDiv) {
-                    menuDiv.appendChild(canvas);
-                }
-                instructionsCloseButton.hide();
-                loop();
-            });
+        if (instructionsCloseButton) {
+            instructionsCloseButton.remove();
         }
+        instructionsCloseButton = createButton('Close');
+        instructionsCloseButton.class('close-button');
+        instructionsCloseButton.mousePressed(() => {
+            gameState = gameStateEnum.Menu;
+            const menuDiv = document.getElementById('Menu');
+            if (menuDiv) {
+                menuDiv.style.display = 'block';
+            }
+            const instructionsDiv = document.getElementById('Instructions');
+            if (instructionsDiv) {
+                instructionsDiv.style.display = 'none';
+            }
+            
+            // ✅ CRITICAL: Move canvas back to Menu div
+            let canvas = document.querySelector('canvas');
+            if (canvas && menuDiv) {
+                menuDiv.appendChild(canvas);
+            }
+            instructionsCloseButton.hide();
+            loop();
+        });
         
         instructionsCloseButton.position(width/2 - 50, boxY + boxHeight + 30);
         instructionsCloseButton.style('background-color', '#dc3545');
@@ -187,6 +188,7 @@ function draw() {
         instructionsCloseButton.style('font-size', '16px');
         instructionsCloseButton.style('font-weight', 'bold');
         instructionsCloseButton.style('cursor', 'pointer');
+        instructionsCloseButton.style('z-index', '1001');
         instructionsCloseButton.show();
     }
     else if (gameState === gameStateEnum.CardValues) {
