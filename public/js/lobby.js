@@ -517,6 +517,16 @@ function setupSocketListeners() {
             return;
         }
 
+        // ✅ TRUCO HISTORY: Track Truco call event
+        currentRoundTrucoEvents.push({
+            type: 'called',
+            caller: data.callerName,
+            callerTeam: data.callerTeam,
+            potentialValue: data.potentialValue,
+            timestamp: new Date().toISOString()
+        });
+        console.log('📋 Truco call tracked for round history');
+
         // Update game state
         window.game.trucoState = {
             isActive: true,
@@ -569,6 +579,16 @@ function setupSocketListeners() {
             return;
         }
 
+        // ✅ TRUCO HISTORY: Track Truco acceptance event
+        currentRoundTrucoEvents.push({
+            type: 'accepted',
+            accepter: data.accepterName,
+            accepterTeam: data.accepterTeam,
+            newGameValue: data.newGameValue,
+            timestamp: new Date().toISOString()
+        });
+        console.log('📋 Truco acceptance tracked for round history');
+
         // Update game state
         window.game.trucoState.isActive = false;
         window.game.trucoState.waitingForResponse = false;
@@ -591,6 +611,17 @@ function setupSocketListeners() {
             console.log('❌ No game instance found for Truco rejected event');
             return;
         }
+
+        // ✅ TRUCO HISTORY: Track Truco rejection event
+        currentRoundTrucoEvents.push({
+            type: 'rejected',
+            rejecter: data.rejecterName,
+            rejecterTeam: data.rejecterTeam,
+            winningTeam: data.winningTeam,
+            gameValue: data.gameValue,
+            timestamp: new Date().toISOString()
+        });
+        console.log('📋 Truco rejection tracked for round history');
 
         // Update game state
         window.game.trucoState.isActive = false;
@@ -617,6 +648,16 @@ function setupSocketListeners() {
             console.log('❌ No game instance found for Truco raised event');
             return;
         }
+
+        // ✅ TRUCO HISTORY: Track Truco raise event
+        currentRoundTrucoEvents.push({
+            type: 'raised',
+            raiser: data.raiserName,
+            raiserTeam: data.raiserTeam,
+            newPotentialValue: data.newPotentialValue,
+            timestamp: new Date().toISOString()
+        });
+        console.log('📋 Truco raise tracked for round history');
 
         // Update game state
         window.game.trucoState.potentialValue = data.newPotentialValue;
@@ -1426,16 +1467,22 @@ function updateGameScores(scores, isGamesScore = false) {
 // ✅ CRITICAL FIX: Round History functionality
 let roundHistory = []; // Store round history data
 let currentGameNumber = 1; // Track current game number
+let currentRoundTrucoEvents = []; // Track Truco events for current round
 
 // Function to add round to history
 function addRoundToHistory(roundData) {
-    // Add game number to round data
+    // Add game number and Truco events to round data
     const roundWithGame = {
         ...roundData,
-        gameNumber: currentGameNumber
+        gameNumber: currentGameNumber,
+        trucoEvents: [...currentRoundTrucoEvents] // Copy current round's Truco events
     };
     roundHistory.push(roundWithGame);
     console.log(`📋 Round added to history for Game ${currentGameNumber}:`, roundWithGame);
+    
+    // Reset Truco events for next round
+    currentRoundTrucoEvents = [];
+    console.log('📋 Truco events reset for next round');
 }
 
 // Function to start new game in history
@@ -1504,6 +1551,36 @@ function showRoundHistory() {
                                     </div>
                                 `).join('')}
                             </div>
+                            
+                            ${round.trucoEvents && round.trucoEvents.length > 0 ? `
+                                <div style="margin-top: 12px; padding: 10px; background: rgba(255, 193, 7, 0.2); border-radius: 6px; border-left: 3px solid #FFC107;">
+                                    <div style="margin-bottom: 6px; color: #FFC107; font-weight: bold;">
+                                        🎯 TRUCO EVENTS:
+                                    </div>
+                                    ${round.trucoEvents.map(event => {
+                                        switch(event.type) {
+                                            case 'called':
+                                                return `<div style="color: #fff; font-size: 13px; margin-bottom: 4px;">
+                                                    <strong>📢 Called:</strong> ${event.caller} (${event.callerTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - Game worth ${event.potentialValue} games
+                                                </div>`;
+                                            case 'accepted':
+                                                return `<div style="color: #4CAF50; font-size: 13px; margin-bottom: 4px;">
+                                                    <strong>✅ Accepted:</strong> ${event.accepter} (${event.accepterTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - Game now worth ${event.newGameValue} games
+                                                </div>`;
+                                            case 'rejected':
+                                                return `<div style="color: #f44336; font-size: 13px; margin-bottom: 4px;">
+                                                    <strong>❌ Rejected:</strong> ${event.rejecter} (${event.rejecterTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - ${event.winningTeam === 'team1' ? 'Team Alfa' : 'Team Beta'} wins ${event.gameValue} games
+                                                </div>`;
+                                            case 'raised':
+                                                return `<div style="color: #FF9800; font-size: 13px; margin-bottom: 4px;">
+                                                    <strong>📈 Raised:</strong> ${event.raiser} (${event.raiserTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - Game now worth ${event.newPotentialValue} games
+                                                </div>`;
+                                            default:
+                                                return '';
+                                        }
+                                    }).join('')}
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 } else {
@@ -1531,6 +1608,36 @@ function showRoundHistory() {
                         </div>
                     `).join('')}
                     </div>
+                    
+                    ${round.trucoEvents && round.trucoEvents.length > 0 ? `
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 193, 7, 0.2); border-radius: 6px; border-left: 3px solid #FFC107;">
+                            <div style="margin-bottom: 6px; color: #FFC107; font-weight: bold;">
+                                🎯 TRUCO EVENTS:
+                            </div>
+                            ${round.trucoEvents.map(event => {
+                                switch(event.type) {
+                                    case 'called':
+                                        return `<div style="color: #fff; font-size: 13px; margin-bottom: 4px;">
+                                            <strong>📢 Called:</strong> ${event.caller} (${event.callerTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - Game worth ${event.potentialValue} games
+                                        </div>`;
+                                    case 'accepted':
+                                        return `<div style="color: #4CAF50; font-size: 13px; margin-bottom: 4px;">
+                                            <strong>✅ Accepted:</strong> ${event.accepter} (${event.accepterTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - Game now worth ${event.newGameValue} games
+                                        </div>`;
+                                    case 'rejected':
+                                        return `<div style="color: #f44336; font-size: 13px; margin-bottom: 4px;">
+                                            <strong>❌ Rejected:</strong> ${event.rejecter} (${event.rejecterTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - ${event.winningTeam === 'team1' ? 'Team Alfa' : 'Team Beta'} wins ${event.gameValue} games
+                                        </div>`;
+                                    case 'raised':
+                                        return `<div style="color: #FF9800; font-size: 13px; margin-bottom: 4px;">
+                                            <strong>📈 Raised:</strong> ${event.raiser} (${event.raiserTeam === 'team1' ? 'Team Alfa' : 'Team Beta'}) - Game now worth ${event.newPotentialValue} games
+                                        </div>`;
+                                    default:
+                                        return '';
+                                }
+                            }).join('')}
+                        </div>
+                    ` : ''}
                 </div>
             `;
                 }
