@@ -2596,6 +2596,11 @@ function startMultiplayerGame(data) {
         
         console.log('🎉 Multiplayer game started successfully');
         
+        // ✅ CRITICAL FIX: Update Truco button visibility after game starts
+        if (typeof showTrucoButton === 'function') {
+            showTrucoButton();
+        }
+        
         // ✅ DEBUG: Log complete game state for troubleshooting
         logMultiplayerGameState();
         

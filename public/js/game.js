@@ -214,9 +214,8 @@ function createDeck() {
         if (typeof backToMainMenuButton !== 'undefined' && backToMainMenuButton) {
             backToMainMenuButton.show();
         }
-        if (typeof trucoButton !== 'undefined' && trucoButton) {
-            trucoButton.show();
-        }
+        // ✅ CRITICAL FIX: Let showTrucoButton() handle Truco button visibility based on game state
+        // Don't unconditionally show the button here
         
         // If current player is a bot, it plays automatically
         if (this.players[this.currentPlayerIndex].isBot) {
