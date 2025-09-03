@@ -1732,6 +1732,17 @@ function backToMainMenuFromGame() {
             roomControls.style.display = 'none';
         }
         
+        // Hide canvas to prevent green background
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            canvas.style.display = 'none';
+        }
+        
+        // Also hide the canvas using p5.js method
+        if (typeof window.gameCanvas !== 'undefined' && window.gameCanvas) {
+            window.gameCanvas.hide();
+        }
+        
         // Show main menu
         const menuDiv = document.getElementById('Menu');
         if (menuDiv) {
