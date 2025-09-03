@@ -855,30 +855,6 @@ io.on('connection', (socket) => {
             room.game.lastBotTurnComplete = null;
             console.log(`🔄 Reset rate limiting timestamp for new round`);
             
-            // ✅ CRITICAL FIX: Reset Truco state for new round (but preserve game value if Truco was accepted)
-            if (room.game.trucoState.currentValue > 1) {
-                // Truco was accepted in previous round - keep the game value but reset the call state
-                room.game.trucoState.isActive = false;
-                room.game.trucoState.waitingForResponse = false;
-                room.game.trucoState.responsePlayerIndex = null;
-                // Keep currentValue and potentialValue, but reset caller info for new round
-                room.game.trucoState.callerTeam = null;
-                room.game.trucoState.callerIndex = null;
-                console.log(`🔄 Truco state reset for new round - game value ${room.game.trucoState.currentValue} preserved, new Truco calls allowed`);
-            } else {
-                // No Truco was accepted - full reset
-                room.game.trucoState = {
-                    isActive: false,
-                    currentValue: 1,
-                    potentialValue: 3,
-                    callerTeam: null,
-                    callerIndex: null,
-                    waitingForResponse: false,
-                    responsePlayerIndex: null
-                };
-                console.log(`🔄 Truco state fully reset for new round - all players can call Truco again`);
-            }
-            
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             console.log(`🔍 DEBUG: Emitting roundComplete with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             io.to(socket.roomCode).emit('roundComplete', {
@@ -1304,8 +1280,8 @@ io.on('connection', (socket) => {
             
             if (!room || !room.game || !room.game.trucoState) {
                 console.log(`❌ No active Truco in room ${socket.roomCode}`);
-                return;
-            }
+            return;
+        }
         
         // ✅ Validate it's the response player's turn (handle both human and bot responses)
         let playerIndex = -1;
