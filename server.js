@@ -1500,6 +1500,8 @@ io.on('connection', (socket) => {
         console.log(`🎯 Truco response received`, data);
         console.log(`🔍 DEBUG: respondTruco event handler called`);
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
+        console.log(`🔍 DEBUG: Socket ID:`, socket.id);
+        console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
         
         // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
         const roomCode = data.roomCode || socket.roomCode;

@@ -93,6 +93,8 @@ class Player {
       
       // Send response to server
       setTimeout(() => {
+        // ✅ CRITICAL FIX: Use the human player's socket (which is connected to the room)
+        // instead of the bot's local socket object
         if (typeof socket !== 'undefined' && socket) {
           // ✅ CRITICAL FIX: Include bot player index for server identification
           const botPlayerIndex = window.game.players.indexOf(this);
@@ -104,6 +106,8 @@ class Player {
           console.log(`🔍 DEBUG: Bot player index:`, botPlayerIndex);
           console.log(`🔍 DEBUG: Response decision:`, decision);
           
+          // ✅ CRITICAL FIX: Use the human player's socket to send bot response
+          // The bot's socket is just a local object, not a real server connection
           socket.emit('respondTruco', { 
             response: decision,
             botPlayerIndex: botPlayerIndex,  // Include bot's player index for server validation
