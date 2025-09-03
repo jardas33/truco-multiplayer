@@ -632,19 +632,19 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible - ADJUSTED POSITION, moved back to the left half of the previous rightward movement
-            trucoButton.position(width/2 - 15, height/2 + 160);
+            // Force repositioning to ensure it's visible - CENTERED by middle of button
+            trucoButton.position(width/2 - 60, height/2 + 160);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
-            // Force red background and balanced size
+            // Force red background and smaller size
             trucoButton.style('background', '#dc3545 !important');
             trucoButton.style('background-color', '#dc3545 !important');
-            trucoButton.style('font-size', '50px !important'); // Balanced font size
-            trucoButton.style('padding', '50px 100px !important'); // Balanced padding
-            trucoButton.style('border', '6px solid #fff !important'); // Balanced border thickness
-            trucoButton.style('border-radius', '30px !important'); // Balanced rounded corners
-            trucoButton.style('box-shadow', '0 20px 40px rgba(0,0,0,0.7) !important'); // Balanced shadow
-            trucoButton.style('transform', 'scale(0.8) !important'); // Balanced scale
+            trucoButton.style('font-size', '35px !important'); // Smaller font size
+            trucoButton.style('padding', '35px 70px !important'); // Smaller padding
+            trucoButton.style('border', '4px solid #fff !important'); // Smaller border thickness
+            trucoButton.style('border-radius', '20px !important'); // Smaller rounded corners
+            trucoButton.style('box-shadow', '0 15px 30px rgba(0,0,0,0.7) !important'); // Smaller shadow
+            trucoButton.style('transform', 'scale(0.6) !important'); // Smaller scale
         } catch (error) {
             console.warn('Could not show Truco button:', error);
         }
