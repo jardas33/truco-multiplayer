@@ -1262,12 +1262,12 @@ io.on('connection', (socket) => {
     });
 
     // ✅ Helper function to process Truco responses (used by both client and server-side bot responses)
-    function processTrucoResponse(socket, data, room) {
+    function processTrucoResponse(socket, data, room, roomCode) {
         try {
-            console.log(`🎯 Processing Truco response in room: ${socket.roomCode}`, data);
+            console.log(`🎯 Processing Truco response in room: ${roomCode}`, data);
             
             if (!room || !room.game || !room.game.trucoState) {
-                console.log(`❌ No active Truco in room ${socket.roomCode}`);
+                console.log(`❌ No active Truco in room ${roomCode}`);
             return;
         }
         
@@ -1353,12 +1353,12 @@ io.on('connection', (socket) => {
             }
 
             // ✅ Emit Truco accepted event
-            io.to(socket.roomCode).emit('trucoAccepted', {
+            io.to(roomCode).emit('trucoAccepted', {
                 accepter: socket.id,
                 accepterName: respondingPlayer.name,
                 accepterTeam: respondingPlayer.team,
                 newGameValue: room.game.trucoState.currentValue,
-                roomCode: socket.roomCode
+                roomCode: roomCode
             });
 
         } else if (response === 2) {
@@ -1401,18 +1401,18 @@ io.on('connection', (socket) => {
             }
 
             // ✅ Emit Truco rejected event
-            io.to(socket.roomCode).emit('trucoRejected', {
+            io.to(roomCode).emit('trucoRejected', {
                 rejecter: socket.id,
                 rejecterName: respondingPlayer.name,
                 rejecterTeam: respondingPlayer.team,
                 winningTeam: winningTeam,
                 winningTeamName: winningTeamName,
                 gameValue: gameValue,
-                roomCode: socket.roomCode
+                roomCode: roomCode
             });
 
             // ✅ Emit game complete event for Truco rejection
-            io.to(socket.roomCode).emit('gameComplete', {
+            io.to(roomCode).emit('gameComplete', {
                 roundWinner: null, // No round winner in Truco rejection
                 scores: room.game.scores,
                 games: room.game.games,
@@ -1477,17 +1477,17 @@ io.on('connection', (socket) => {
             console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games. Next to respond: ${nextPlayer.name}`);
             
             // Emit trucoRaised event
-            io.to(socket.roomCode).emit('trucoRaised', {
+            io.to(roomCode).emit('trucoRaised', {
                 raiser: socket.id,
                 raiserName: respondingPlayer.name,
                 raiserTeam: respondingPlayer.team,
                 newPotentialValue: room.game.trucoState.potentialValue,
                 responsePlayerIndex: nextPlayerIndex,
-                roomCode: socket.roomCode
+                roomCode: roomCode
             });
         }
 
-        console.log(`✅ Truco response processed for user ${socket.id} in room ${socket.roomCode}`);
+        console.log(`✅ Truco response processed for user ${socket.id} in room ${roomCode}`);
         } catch (error) {
             console.error(`❌ Error processing Truco response:`, error);
             console.error(`❌ Error stack:`, error.stack);
@@ -1497,25 +1497,29 @@ io.on('connection', (socket) => {
 
     // ✅ Handle Truco responses (accept, reject, raise)
     socket.on('respondTruco', (data) => {
-        console.log(`🎯 Truco response received in room: ${socket.roomCode}`, data);
+        console.log(`🎯 Truco response received`, data);
         console.log(`🔍 DEBUG: respondTruco event handler called`);
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         
-        if (!socket.roomCode) {
-            console.log(`❌ User ${socket.id} not in a room`);
+        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        
+        if (!roomCode) {
+            console.log(`❌ User ${socket.id} not in a room - no roomCode found`);
             socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for Truco response`);
+            console.log(`❌ Room ${roomCode} not found for Truco response`);
             socket.emit('error', 'Room not found');
             return;
         }
 
         // ✅ Use shared function to process Truco response
-        processTrucoResponse(socket, data, room);
+        processTrucoResponse(socket, data, room, roomCode);
     });
 
     // ✅ Handle manual new game request (fallback mechanism)

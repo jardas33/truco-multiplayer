@@ -100,12 +100,14 @@ class Player {
           console.log(`🔍 DEBUG: Socket exists:`, !!socket);
           console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
           console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+          console.log(`🔍 DEBUG: Window roomId:`, window.roomId);
           console.log(`🔍 DEBUG: Bot player index:`, botPlayerIndex);
           console.log(`🔍 DEBUG: Response decision:`, decision);
           
           socket.emit('respondTruco', { 
             response: decision,
-            botPlayerIndex: botPlayerIndex  // Include bot's player index for server validation
+            botPlayerIndex: botPlayerIndex,  // Include bot's player index for server validation
+            roomCode: window.roomId  // ✅ CRITICAL FIX: Include room code in the event data
           });
           console.log(`🤖 Bot ${this.name} sent Truco response: ${decision} (bot index: ${botPlayerIndex})`);
         } else {
