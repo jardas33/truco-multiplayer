@@ -98,7 +98,7 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 - 120, height/2 + 120); // Position well below played cards area
+    trucoButton.position(width/2 - 120, height/2 + 80); // Centered in screen, a little lower
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything
