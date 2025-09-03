@@ -665,12 +665,12 @@ io.on('connection', (socket) => {
             // ✅ CRITICAL FIX: Check for game winner with proper draw resolution logic
             if (roundWinner) {
                 // Clear round winner - check if team has enough wins
-                if (room.game.scores.team1 >= roundsToWin) {
-                    gameWinner = 'team1';
-                    console.log(`🎮 Team 1 wins the game!`);
-                } else if (room.game.scores.team2 >= roundsToWin) {
-                    gameWinner = 'team2';
-                    console.log(`🎮 Team 2 wins the game!`);
+            if (room.game.scores.team1 >= roundsToWin) {
+                gameWinner = 'team1';
+                console.log(`🎮 Team 1 wins the game!`);
+            } else if (room.game.scores.team2 >= roundsToWin) {
+                gameWinner = 'team2';
+                console.log(`🎮 Team 2 wins the game!`);
                 }
             } else if (currentRound === 2 && room.game.roundResults.length >= 2) {
                 // ✅ CRITICAL FIX: Handle special case - Round 1 was draw, Round 2 has winner
@@ -1002,19 +1002,23 @@ io.on('connection', (socket) => {
             const currentPlayer = room.players[room.game.currentPlayer];
             console.log(`🔍 DEBUG: Current player ID: ${currentPlayer?.id}, Socket ID: ${socket.id}, Match: ${currentPlayer?.id === socket.id}`);
             
-            // ✅ CRITICAL FIX: Allow botTurnComplete from human player's socket when it's a bot's turn
-            // The human player's client manages all bot logic, so botTurnComplete events come from the human player's socket
-            if (currentPlayer && currentPlayer.isBot) {
+            // ✅ CRITICAL FIX: Only allow botTurnComplete to reset roundJustCompleted if it's from the current player
+            // This prevents old botTurnComplete events from interfering with new rounds
+            if (currentPlayer && currentPlayer.id === socket.id) {
+                // Current player is sending botTurnComplete - this is expected
+                console.log(`🔍 DEBUG: botTurnComplete from current player ${currentPlayer.name} - this is expected behavior`);
+                console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
+                room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
+                // Don't return here - continue to normal turn progression logic
+            } else if (currentPlayer && currentPlayer.isBot) {
+                // Current player is a bot, but botTurnComplete is coming from human player's socket
+                // This is expected - human player's client manages all bot logic
                 console.log(`🔍 DEBUG: botTurnComplete from human player's socket for bot ${currentPlayer.name} - this is expected behavior`);
                 console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
                 room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
                 // Don't return here - continue to normal turn progression logic
-            } else if (currentPlayer && !currentPlayer.isBot && currentPlayer.id === socket.id) {
-                console.log(`🔍 DEBUG: botTurnComplete from human player ${currentPlayer.name} - this is expected for round winner starting new round`);
-                console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
-                room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
-                // Don't return here - continue to normal turn progression logic
             } else {
+                // botTurnComplete is from a different player - this is likely from a previous round
                 console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer?.name} (${currentPlayer?.id}), but event from ${socket.id}`);
                 console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round - round winner should start`);
                 return; // Don't reset the flag here - let it be reset when the correct player plays
@@ -1127,7 +1131,7 @@ io.on('connection', (socket) => {
             }
         } else {
             // Human player request
-            const player = room.players.find(p => p.id === socket.id);
+        const player = room.players.find(p => p.id === socket.id);
             if (player) {
                 playerIndex = room.players.indexOf(player);
                 requestingPlayer = player;
@@ -1135,7 +1139,7 @@ io.on('connection', (socket) => {
             } else {
                 console.log(`❌ Invalid Truco request - no player found for socket`);
                 socket.emit('error', 'Invalid request');
-                return;
+            return;
             }
         }
 
@@ -1250,7 +1254,7 @@ io.on('connection', (socket) => {
                 console.log(`🤖 Bot ${botPlayer.name} responding to Truco via human socket (index: ${data.botPlayerIndex})`);
             } else {
                 console.log(`❌ Invalid Truco response - botPlayerIndex ${data.botPlayerIndex} is not a bot`);
-                return;
+            return;
             }
         } else {
             // Human player response
