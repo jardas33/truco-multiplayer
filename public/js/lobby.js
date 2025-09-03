@@ -1755,6 +1755,11 @@ function backToMainMenuFromGame() {
             gameState = gameStateEnum.Menu;
         }
         
+        // Force p5.js to redraw the canvas
+        if (typeof loop === 'function') {
+            loop();
+        }
+        
         console.log('✅ Returned to main menu');
     } else {
         console.log('❌ User cancelled return to main menu');
@@ -1807,7 +1812,7 @@ function hideGameButtons() {
         roundHistoryBtn.style.display = 'none';
     }
     
-    console.log('🎮 Game buttons hidden');
+    // Game buttons hidden
 }
 
 // ✅ Show Game Buttons function
@@ -1826,7 +1831,7 @@ function showGameButtons() {
         roundHistoryBtn.style.display = 'block';
     }
     
-    console.log('🎮 Game buttons shown');
+    // Game buttons shown
 }
 
 function setupButtonListeners() {

@@ -98,7 +98,7 @@ function setup() {
     backToMainMenuButton.hide();
 
     trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 + 20, height/2 + 160); // Moved more to the right, aligned with empty space between bottom buttons
+    trucoButton.position(width/2 - 15, height/2 + 160); // Adjusted position - moved back to the left half of the previous rightward movement
     trucoButton.mousePressed(truco);
     trucoButton.parent(gameDiv);
     trucoButton.style('z-index', '200'); // Ensure it's above everything

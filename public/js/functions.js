@@ -632,8 +632,8 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible - MOVED MORE TO THE RIGHT, aligned with empty space between bottom buttons
-            trucoButton.position(width/2 + 20, height/2 + 160);
+            // Force repositioning to ensure it's visible - ADJUSTED POSITION, moved back to the left half of the previous rightward movement
+            trucoButton.position(width/2 - 15, height/2 + 160);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
             // Force red background and double size
