@@ -2872,6 +2872,8 @@ function triggerBotPlay(botPlayerIndex) {
             // Truco was accepted - only opposite team can raise
             if (botPlayer.team === window.game.trucoState.callerTeam) {
                 canCallTruco = false; // Same team cannot raise
+            } else if (window.game.trucoState.potentialValue >= 12) {
+                canCallTruco = false; // Cannot raise above 12 games
             }
         } else {
             // Truco was rejected (currentValue = 1), anyone can call again
@@ -2879,7 +2881,7 @@ function triggerBotPlay(botPlayerIndex) {
         }
     }
     
-    console.log(`🤖 Bot ${botPlayer.name} can call Truco: ${canCallTruco}, team: ${botPlayer.team}, callerTeam: ${window.game.trucoState?.callerTeam}`);
+    console.log(`🤖 Bot ${botPlayer.name} can call Truco: ${canCallTruco}, team: ${botPlayer.team}, callerTeam: ${window.game.trucoState?.callerTeam}, potentialValue: ${window.game.trucoState?.potentialValue}`);
     
     if (shouldCallTruco && canCallTruco) {
         console.log(`🤖 Bot ${botPlayer.name} decided to call Truco instead of playing a card!`);

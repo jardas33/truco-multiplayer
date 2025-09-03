@@ -1237,6 +1237,13 @@ io.on('connection', (socket) => {
         const isRaise = room.game.trucoState.callerTeam !== null && room.game.trucoState.currentValue > 1;
         
         if (isRaise) {
+            // ✅ CRITICAL FIX: Check if we can raise further (max 12 games)
+            if (room.game.trucoState.potentialValue >= 12) {
+                console.log(`❌ Cannot raise Truco above 12 games - current value: ${room.game.trucoState.potentialValue}`);
+                socket.emit('error', 'Cannot raise Truco above 12 games');
+                return;
+            }
+            
             // This is a raise - increase potential value and update caller
             if (room.game.trucoState.potentialValue === 3) {
                 room.game.trucoState.potentialValue = 6;
