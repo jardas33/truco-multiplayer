@@ -2823,19 +2823,86 @@ function triggerBotPlay(botPlayerIndex) {
                     
                     console.log(`🤖 Bot ${botPlayer.name} Truco request emitted successfully`);
                     
-                    // ✅ CRITICAL FIX: Mark bot as having played this turn (Truco counts as an action)
-                    botPlayer.hasPlayedThisTurn = true;
+                    // ✅ CRITICAL FIX: Don't mark as played yet - wait for Truco response
+                    // If Truco fails, we need to fall back to playing a card
                     
-                    // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
-                    try {
-                        console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} after Truco call`);
-                        socket.emit('botTurnComplete', {
-                            roomCode: window.roomId
-                        });
-                        console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
-                    } catch (botCompleteError) {
-                        console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
-                    }
+                    // ✅ CRITICAL FIX: Set up fallback timeout in case Truco call fails
+                    const trucoFallbackTimeout = setTimeout(() => {
+                        console.log(`🤖 Bot ${botPlayer.name} Truco call timeout - falling back to playing a card`);
+                        if (!botPlayer.hasPlayedThisTurn && botPlayer.hand && botPlayer.hand.length > 0) {
+                            // Play a random card as fallback
+                            const cardIndex = Math.floor(Math.random() * botPlayer.hand.length);
+                            console.log(`🤖 Bot ${botPlayer.name} playing fallback card at index ${cardIndex}`);
+                            
+                            // Emit card play event
+                            socket.emit('playCard', {
+                                roomCode: window.roomId,
+                                cardIndex: cardIndex,
+                                botPlayerIndex: botPlayerIndex
+                            });
+                            
+                            // Mark as played and complete turn
+                            botPlayer.hasPlayedThisTurn = true;
+                            socket.emit('botTurnComplete', {
+                                roomCode: window.roomId
+                            });
+                        }
+                    }, 2000); // 2 second timeout for Truco response
+                    
+                    // Store timeout for cleanup
+                    window.pendingBotTimeouts.push(trucoFallbackTimeout);
+                    
+                    // ✅ CRITICAL FIX: Set up success handler for Truco call
+                    // When Truco is successfully called, complete the bot's turn
+                    const trucoSuccessHandler = (data) => {
+                        if (data.callerName === botPlayer.name) {
+                            console.log(`🤖 Bot ${botPlayer.name} Truco call successful - completing turn`);
+                            botPlayer.hasPlayedThisTurn = true;
+                            socket.emit('botTurnComplete', {
+                                roomCode: window.roomId
+                            });
+                            // Remove the fallback timeout since Truco was successful
+                            clearTimeout(trucoFallbackTimeout);
+                            // Remove this listener since it's no longer needed
+                            socket.off('trucoCalled', trucoSuccessHandler);
+                        }
+                    };
+                    
+                    // Listen for successful Truco call
+                    socket.on('trucoCalled', trucoSuccessHandler);
+                    
+                    // ✅ CRITICAL FIX: Set up error handler for failed Truco call
+                    const trucoErrorHandler = (errorMessage) => {
+                        if (errorMessage.includes('cannot raise') || errorMessage.includes('cannot call')) {
+                            console.log(`🤖 Bot ${botPlayer.name} Truco call failed: ${errorMessage} - falling back to playing a card`);
+                            // Clear the fallback timeout since we're handling it now
+                            clearTimeout(trucoFallbackTimeout);
+                            // Remove the success handler since Truco failed
+                            socket.off('trucoCalled', trucoSuccessHandler);
+                            
+                            // Play a random card as fallback
+                            if (!botPlayer.hasPlayedThisTurn && botPlayer.hand && botPlayer.hand.length > 0) {
+                                const cardIndex = Math.floor(Math.random() * botPlayer.hand.length);
+                                console.log(`🤖 Bot ${botPlayer.name} playing fallback card at index ${cardIndex}`);
+                                
+                                // Emit card play event
+                                socket.emit('playCard', {
+                                    roomCode: window.roomId,
+                                    cardIndex: cardIndex,
+                                    botPlayerIndex: botPlayerIndex
+                                });
+                                
+                                // Mark as played and complete turn
+                                botPlayer.hasPlayedThisTurn = true;
+                                socket.emit('botTurnComplete', {
+                                    roomCode: window.roomId
+                                });
+                            }
+                        }
+                    };
+                    
+                    // Listen for Truco errors
+                    socket.on('error', trucoErrorHandler);
                     
                 } else {
                     console.log(`🤖 Bot ${botPlayer.name} can no longer call Truco - state changed`);
