@@ -2454,9 +2454,11 @@ function triggerBotPlay(botPlayerIndex) {
     }
     
     // ✅ NEW FEATURE: Bot can occasionally call Truco instead of playing a card
-    const shouldCallTruco = Math.random() < 0.15; // 15% chance to call Truco
+    const shouldCallTruco = Math.random() < 0.25; // 25% chance to call Truco (increased for better visibility)
     
-    if (shouldCallTruco && !window.game.trucoState?.isActive) {
+    console.log(`🤖 Bot ${botPlayer.name} Truco decision: shouldCall=${shouldCallTruco}, trucoActive=${window.game.trucoState}`);
+    
+    if (shouldCallTruco && !window.game.trucoState) {
         console.log(`🤖 Bot ${botPlayer.name} decided to call Truco instead of playing a card!`);
         
         // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
