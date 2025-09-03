@@ -641,12 +641,9 @@ function setupSocketListeners() {
         // Hide Truco response buttons
         hideTrucoResponseButtons();
         
-        // End the game
-        setTimeout(() => {
-            if (window.game) {
-                window.game.endGame(data.winningTeamName);
-            }
-        }, 3000);
+        // ✅ CRITICAL FIX: Don't call endGame() here - server handles game completion
+        // The server will emit gameComplete event and start a new game automatically
+        console.log('✅ Truco rejection handled - waiting for server to complete game and start new one');
     });
 
     socket.on('trucoRaised', (data) => {
