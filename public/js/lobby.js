@@ -562,7 +562,7 @@ function setupSocketListeners() {
         if (data.responsePlayerIndex !== undefined) {
             const responsePlayer = window.game.players[data.responsePlayerIndex];
             const currentPlayer = window.game.players[window.game.currentPlayerIndex];
-            const localPlayerIndex = window.game.currentPlayerIndex;
+            const localPlayerIndex = window.localPlayerIndex;
             
             console.log(`🔍 TRUCO RESPONSE DEBUG - Current player: ${currentPlayer?.name} (${window.game.currentPlayerIndex})`);
             console.log(`🔍 TRUCO RESPONSE DEBUG - Response player: ${responsePlayer?.name} (${data.responsePlayerIndex})`);
