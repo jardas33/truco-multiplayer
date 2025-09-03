@@ -1178,20 +1178,29 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // ✅ CRITICAL FIX: Prevent same player from calling Truco multiple times
-        // Only players from the opposite team can raise after Truco is accepted
-        if (room.game.trucoState.callerIndex !== null && room.game.trucoState.callerIndex === playerIndex) {
-            console.log(`❌ Player ${requestingPlayer.name} cannot call Truco again - only opposite team can raise`);
-            socket.emit('error', 'You cannot call Truco again - only the opposite team can raise');
-            return;
-        }
+        // ✅ CRITICAL FIX: Proper Truco calling rules
+        // 1. If no Truco has been called yet (callerIndex is null), anyone can call
+        // 2. If Truco was called but not accepted yet (isActive = true), no one can call again
+        // 3. If Truco was accepted (isActive = false, currentValue > 1), only opposite team can raise
         
-        // ✅ CRITICAL FIX: Prevent same team from calling Truco multiple times
-        // Only the opposite team can raise after Truco is accepted
-        if (room.game.trucoState.callerTeam !== null && room.game.trucoState.callerTeam === requestingPlayer.team) {
-            console.log(`❌ Team ${requestingPlayer.team} cannot call Truco again - only opposite team can raise`);
-            socket.emit('error', 'Your team cannot call Truco again - only the opposite team can raise');
-            return;
+        if (room.game.trucoState.callerIndex !== null) {
+            // Truco has been called before
+            if (room.game.trucoState.isActive) {
+                // Truco is currently active (waiting for response), no one can call again
+                console.log(`❌ Truco is currently active - no one can call Truco again`);
+                socket.emit('error', 'Truco is currently active - wait for response');
+                return;
+            } else if (room.game.trucoState.currentValue > 1) {
+                // Truco was accepted, only opposite team can raise
+                if (room.game.trucoState.callerTeam === requestingPlayer.team) {
+                    console.log(`❌ Team ${requestingPlayer.team} cannot raise - only opposite team can raise`);
+                    socket.emit('error', 'Your team cannot raise - only the opposite team can raise');
+                    return;
+                }
+            } else {
+                // Truco was rejected, anyone can call again
+                console.log(`✅ Previous Truco was rejected - ${requestingPlayer.name} can call Truco again`);
+            }
         }
 
         // ✅ Start Truco
@@ -1305,6 +1314,7 @@ io.on('connection', (socket) => {
             room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
 
             console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
+            console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
 
             // ✅ Emit Truco accepted event
             io.to(socket.roomCode).emit('trucoAccepted', {
@@ -1339,7 +1349,12 @@ io.on('connection', (socket) => {
                 room.game.games = { team1: 0, team2: 0 };
             }
             
+            // ✅ CRITICAL FIX: When Truco is rejected, award the CURRENT VALUE (not original value)
+            // If Truco was accepted and then raised, the currentValue should be the accepted value
+            // If Truco was never accepted, currentValue should be 1
             const gameValue = room.game.trucoState.currentValue;
+            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${gameValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
+            
             if (winningTeam === 'team1') {
                 room.game.games.team1 += gameValue;
                 console.log(`🎮 Team 1 games increased by ${gameValue} to: ${room.game.games.team1}`);
@@ -1395,7 +1410,8 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // ✅ Increase potential value
+            // ✅ CRITICAL FIX: Increase potential value properly
+            const oldPotentialValue = room.game.trucoState.potentialValue;
             if (room.game.trucoState.potentialValue === 3) {
                 room.game.trucoState.potentialValue = 6;
             } else if (room.game.trucoState.potentialValue === 6) {
@@ -1403,6 +1419,8 @@ io.on('connection', (socket) => {
             } else if (room.game.trucoState.potentialValue === 9) {
                 room.game.trucoState.potentialValue = 12;
             }
+            
+            console.log(`🔍 TRUCO RAISE DEBUG - Raised from ${oldPotentialValue} to ${room.game.trucoState.potentialValue} games`);
 
             // ✅ Find next player from opposite team for response
             // In Truco, when someone raises, the next player from the opposite team responds
@@ -1913,6 +1931,7 @@ function startNewGame(room, winningTeam, roomId) {
             responsePlayerIndex: null
         };
         console.log(`🔄 Truco state reset for new game - all players can call Truco again`);
+        console.log(`🔍 TRUCO STATE RESET DEBUG - New trucoState:`, room.game.trucoState);
         
         // Reset all players' hasPlayedThisTurn flags
         room.players.forEach(player => {
