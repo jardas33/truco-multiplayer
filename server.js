@@ -1186,23 +1186,8 @@ io.on('connection', (socket) => {
 
         console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
 
-        // ✅ CRITICAL FIX: Handle bot response server-side
-        const responsePlayer = room.players[nextPlayerIndex];
-        if (responsePlayer && responsePlayer.isBot) {
-            console.log(`🤖 Server-side: Bot ${responsePlayer.name} needs to respond to Truco`);
-            setTimeout(() => {
-                // Simulate bot decision
-                const decision = Math.random() < 0.5 ? 1 : 2; // 50% accept, 50% reject
-                console.log(`🤖 Server-side: Bot ${responsePlayer.name} decided: ${decision === 1 ? 'Accept' : 'Reject'}`);
-                
-                // Send bot response directly to server
-                const botSocket = { id: responsePlayer.id, roomCode: socket.roomCode };
-                const botData = { response: decision };
-                
-                // Process the bot response
-                processTrucoResponse(botSocket, botData, room);
-            }, 1500);
-        }
+        // ✅ Bot responses are handled client-side via the trucoCalled event
+        // This ensures consistency with other bot actions and prevents double responses
     });
 
     // ✅ Helper function to process Truco responses (used by both client and server-side bot responses)
