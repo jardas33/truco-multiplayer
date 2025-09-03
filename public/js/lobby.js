@@ -1709,24 +1709,16 @@ function backToMainMenuFromGame() {
     if (confirm('Are you sure you want to leave the game? You will return to the main menu.')) {
         console.log('🔄 Starting main menu transition...');
         
-        // ✅ CRITICAL: Don't disconnect socket - we want to keep connection for future games
-        // Just leave the current room instead
-        if (socket && window.roomId) {
-            console.log('🚪 Leaving room:', window.roomId);
-            socket.emit('leaveRoom', window.roomId);
-        }
+        // ✅ Use existing leaveRoomAndReturnToMenu function for proper room cleanup
+        leaveRoomAndReturnToMenu();
         
-        // ✅ COMPREHENSIVE STATE RESET
-        window.game = null;
+        // ✅ ADDITIONAL GAME-SPECIFIC CLEANUP
         window.gameCompleted = false;
         window.playedCards = [];
-        window.isMultiplayerMode = false;
-        window.roomId = null;
         window.gameCanvas = null;
         
         // ✅ HIDE ALL GAME ELEMENTS
         const gameDiv = document.getElementById('Game');
-        const roomControls = document.getElementById('roomControls');
         const instructionsDiv = document.getElementById('Instructions');
         const valuesDiv = document.getElementById('Values');
         
@@ -1734,12 +1726,6 @@ function backToMainMenuFromGame() {
             gameDiv.style.display = 'none';
             console.log('✅ Game div hidden');
         }
-        
-        // Don't hide room controls - we need them for main menu
-        // if (roomControls) {
-        //     roomControls.style.display = 'none';
-        //     console.log('✅ Room controls hidden');
-        // }
         
         if (instructionsDiv) {
             instructionsDiv.style.display = 'none';
@@ -1761,16 +1747,10 @@ function backToMainMenuFromGame() {
             console.log('✅ Canvas hidden for main menu');
         }
         
-        // ✅ SHOW MAIN MENU AND ROOM CONTROLS
+        // ✅ SHOW MAIN MENU
         if (menuDiv) {
             menuDiv.style.display = 'block';
             console.log('✅ Menu div shown');
-        }
-        
-        // Show room controls for main menu
-        if (roomControls) {
-            roomControls.style.display = 'block';
-            console.log('✅ Room controls shown');
         }
         
         // ✅ HIDE GAME BUTTONS
