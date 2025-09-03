@@ -607,6 +607,13 @@ function setupSocketListeners() {
         window.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
         window.game.trucoState.currentValue = data.newGameValue; // ✅ CRITICAL FIX: Update currentValue when Truco is accepted
         window.game.gameValue = data.newGameValue;
+        
+        // ✅ CRITICAL FIX: Update callerTeam to the accepter's team after acceptance
+        // This ensures that the opposite team can raise next
+        if (data.accepterTeam) {
+            console.log(`🔍 TRUCO ACCEPTANCE DEBUG - Updating callerTeam from ${window.game.trucoState.callerTeam} to ${data.accepterTeam}`);
+            window.game.trucoState.callerTeam = data.accepterTeam;
+        }
 
         // Show acceptance message
         showTrucoMessage(`${data.accepterName} accepted Truco! Game is now worth ${data.newGameValue} games.`);
