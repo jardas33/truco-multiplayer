@@ -1071,17 +1071,33 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ Validate it's the player's turn
+        // ✅ Validate it's the player's turn (handle both human and bot requests)
         const player = room.players.find(p => p.id === socket.id);
-        if (!player) {
-            console.log(`❌ Player ${socket.id} not found in room`);
-            socket.emit('error', 'Player not found in room');
-            return;
+        let playerIndex = -1;
+        let requestingPlayer = null;
+        
+        if (player) {
+            // Human player request
+            playerIndex = room.players.indexOf(player);
+            requestingPlayer = player;
+            console.log(`🎯 Human player ${player.name} requesting Truco`);
+        } else {
+            // Bot request (sent from human player's socket)
+            // Find the current player (should be a bot)
+            const currentPlayer = room.players[room.game.currentPlayer];
+            if (currentPlayer && currentPlayer.isBot) {
+                playerIndex = room.game.currentPlayer;
+                requestingPlayer = currentPlayer;
+                console.log(`🤖 Bot ${currentPlayer.name} requesting Truco via human socket`);
+            } else {
+                console.log(`❌ Invalid Truco request - current player is not a bot`);
+                socket.emit('error', 'Invalid request');
+                return;
+            }
         }
 
-        const playerIndex = room.players.indexOf(player);
         if (room.game.currentPlayer !== playerIndex) {
-            console.log(`❌ Player ${player.name} tried to call Truco out of turn`);
+            console.log(`❌ Player ${requestingPlayer?.name} tried to call Truco out of turn`);
             socket.emit('error', 'Not your turn');
             return;
         }
@@ -1109,15 +1125,15 @@ io.on('connection', (socket) => {
         // ✅ CRITICAL FIX: Prevent same player from calling Truco multiple times
         // Only players from the opposite team can raise after Truco is accepted
         if (room.game.trucoState.callerIndex !== null && room.game.trucoState.callerIndex === playerIndex) {
-            console.log(`❌ Player ${player.name} cannot call Truco again - only opposite team can raise`);
+            console.log(`❌ Player ${requestingPlayer.name} cannot call Truco again - only opposite team can raise`);
             socket.emit('error', 'You cannot call Truco again - only the opposite team can raise');
             return;
         }
         
         // ✅ CRITICAL FIX: Prevent same team from calling Truco multiple times
         // Only the opposite team can raise after Truco is accepted
-        if (room.game.trucoState.callerTeam !== null && room.game.trucoState.callerTeam === player.team) {
-            console.log(`❌ Team ${player.team} cannot call Truco again - only opposite team can raise`);
+        if (room.game.trucoState.callerTeam !== null && room.game.trucoState.callerTeam === requestingPlayer.team) {
+            console.log(`❌ Team ${requestingPlayer.team} cannot call Truco again - only opposite team can raise`);
             socket.emit('error', 'Your team cannot call Truco again - only the opposite team can raise');
             return;
         }
@@ -1126,26 +1142,26 @@ io.on('connection', (socket) => {
         room.game.trucoState.isActive = true;
         room.game.trucoState.currentValue = 1;
         room.game.trucoState.potentialValue = 3;
-        room.game.trucoState.callerTeam = player.team;
+        room.game.trucoState.callerTeam = requestingPlayer.team;
         room.game.trucoState.callerIndex = playerIndex;
         room.game.trucoState.waitingForResponse = true;
 
         // ✅ Find next player from opposite team for response
-        console.log(`🔍 TRUCO CALL DEBUG - Caller: ${player.name} (${playerIndex}) from team ${player.team}`);
+        console.log(`🔍 TRUCO CALL DEBUG - Caller: ${requestingPlayer.name} (${playerIndex}) from team ${requestingPlayer.team}`);
         console.log(`🔍 TRUCO CALL DEBUG - All Players:`, room.players.map((p, i) => `${i}: ${p.name} (${p.team})`));
         
         const nextPlayerIndex = getNextPlayerFromOppositeTeam(room.players, playerIndex);
         room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
 
-        console.log(`🎯 Truco called by ${player.name} (${player.team}) for 3 games`);
+        console.log(`🎯 Truco called by ${requestingPlayer.name} (${requestingPlayer.team}) for 3 games`);
         console.log(`🎯 Next player to respond: ${room.players[nextPlayerIndex].name} (${room.players[nextPlayerIndex].team})`);
         console.log(`🔍 TRUCO CALL DEBUG - Final responsePlayerIndex: ${nextPlayerIndex}`);
 
         // ✅ Emit Truco called event to all players
         io.to(socket.roomCode).emit('trucoCalled', {
             caller: socket.id,
-            callerName: player.name,
-            callerTeam: player.team,
+            callerName: requestingPlayer.name,
+            callerTeam: requestingPlayer.team,
             currentValue: room.game.trucoState.currentValue,
             potentialValue: room.game.trucoState.potentialValue,
             responsePlayerIndex: nextPlayerIndex,
