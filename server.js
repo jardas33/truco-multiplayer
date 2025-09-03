@@ -583,6 +583,12 @@ io.on('connection', (socket) => {
         // ✅ CRITICAL DEBUG: Log after adding card to playedCards
         console.log(`🔍 DEBUG: Card added. New count: ${room.game.playedCards.length}`);
         console.log(`✅ ${targetPlayer.name} played ${playedCard.name} in room ${socket.roomCode}`);
+        
+        // ✅ CRITICAL FIX: Reset roundJustCompleted flag when round winner starts playing
+        if (room.game.roundJustCompleted) {
+            console.log(`🔄 Round winner ${targetPlayer.name} started playing - resetting roundJustCompleted flag`);
+            room.game.roundJustCompleted = false;
+        }
 
         // ✅ CRITICAL FIX: Create clean, serializable played cards array
         const cleanPlayedCards = room.game.playedCards.map(playedCard => ({
@@ -995,34 +1001,12 @@ io.on('connection', (socket) => {
         if (room.game.roundJustCompleted) {
             console.log(`🔄 Round just completed - NOT changing current player, round winner should start`);
             console.log(`🔍 DEBUG: Current player remains: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-            console.log(`🔍 DEBUG: botTurnComplete from socket: ${socket.id}`);
+            console.log(`🔍 DEBUG: botTurnComplete from socket: ${socket.id} - IGNORING to preserve round winner`);
             
-            // ✅ CRITICAL FIX: Check if the bot completing their turn is actually the current player
-            // This prevents old botTurnComplete events from interfering with new rounds
-            const currentPlayer = room.players[room.game.currentPlayer];
-            console.log(`🔍 DEBUG: Current player ID: ${currentPlayer?.id}, Socket ID: ${socket.id}, Match: ${currentPlayer?.id === socket.id}`);
-            
-            // ✅ CRITICAL FIX: Only allow botTurnComplete to reset roundJustCompleted if it's from the current player
-            // This prevents old botTurnComplete events from interfering with new rounds
-            if (currentPlayer && currentPlayer.id === socket.id) {
-                // Current player is sending botTurnComplete - this is expected
-                console.log(`🔍 DEBUG: botTurnComplete from current player ${currentPlayer.name} - this is expected behavior`);
-                console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
-                room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
-                // Don't return here - continue to normal turn progression logic
-            } else if (currentPlayer && currentPlayer.isBot) {
-                // Current player is a bot, but botTurnComplete is coming from human player's socket
-                // This is expected - human player's client manages all bot logic
-                console.log(`🔍 DEBUG: botTurnComplete from human player's socket for bot ${currentPlayer.name} - this is expected behavior`);
-                console.log(`🔍 DEBUG: About to reset roundJustCompleted flag and continue with normal turn progression`);
-                room.game.roundJustCompleted = false; // Reset the flag and continue with normal turn progression
-                // Don't return here - continue to normal turn progression logic
-            } else {
-                // botTurnComplete is from a different player - this is likely from a previous round
-                console.log(`⚠️ botTurnComplete from wrong player during new round - current player is ${currentPlayer?.name} (${currentPlayer?.id}), but event from ${socket.id}`);
-                console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round - round winner should start`);
-                return; // Don't reset the flag here - let it be reset when the correct player plays
-            }
+            // ✅ CRITICAL FIX: Always ignore botTurnComplete when roundJustCompleted is true
+            // The round winner should start the next round, not the next player in sequence
+            console.log(`🔍 DEBUG: Ignoring botTurnComplete from previous round - round winner should start`);
+            return; // Always return early - don't change current player
         }
         
         // ✅ Move to next player after bot turn is complete
