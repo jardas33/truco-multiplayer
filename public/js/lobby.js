@@ -605,6 +605,7 @@ function setupSocketListeners() {
         window.game.trucoState.isActive = false;
         window.game.trucoState.waitingForResponse = false;
         window.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
+        window.game.trucoState.currentValue = data.newGameValue; // ✅ CRITICAL FIX: Update currentValue when Truco is accepted
         window.game.gameValue = data.newGameValue;
 
         // Show acceptance message
@@ -2861,7 +2862,24 @@ function triggerBotPlay(botPlayerIndex) {
     
     console.log(`🤖 Bot ${botPlayer.name} Truco decision: shouldCall=${shouldCallTruco}, trucoActive=${window.game.trucoState}`);
     
-    if (shouldCallTruco && !window.game.trucoState.isActive) {
+    // ✅ CRITICAL FIX: Check if bot's team can call Truco/raise
+    let canCallTruco = true;
+    if (window.game.trucoState && window.game.trucoState.callerTeam !== null) {
+        if (window.game.trucoState.isActive) {
+            // Truco is currently active - no one can call
+            canCallTruco = false;
+        } else if (window.game.trucoState.currentValue > 1) {
+            // Truco was accepted - only opposite team can raise
+            if (botPlayer.team === window.game.trucoState.callerTeam) {
+                canCallTruco = false; // Same team cannot raise
+            }
+        }
+        // If Truco was rejected (currentValue = 1), anyone can call again
+    }
+    
+    console.log(`🤖 Bot ${botPlayer.name} can call Truco: ${canCallTruco}, team: ${botPlayer.team}, callerTeam: ${window.game.trucoState?.callerTeam}`);
+    
+    if (shouldCallTruco && canCallTruco) {
         console.log(`🤖 Bot ${botPlayer.name} decided to call Truco instead of playing a card!`);
         
         // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
