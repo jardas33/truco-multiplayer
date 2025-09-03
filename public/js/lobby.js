@@ -596,9 +596,10 @@ function setupSocketListeners() {
         });
         console.log('📋 Truco acceptance tracked for round history');
 
-        // Update game state
+        // Update game state to match server
         window.game.trucoState.isActive = false;
         window.game.trucoState.waitingForResponse = false;
+        window.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
         window.game.gameValue = data.newGameValue;
 
         // Show acceptance message
