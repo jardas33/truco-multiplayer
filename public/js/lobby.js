@@ -1705,17 +1705,20 @@ function hideRoundHistoryButton() {
 function backToMainMenuFromGame() {
     console.log('🏠 Returning to main menu from game');
     
-    // ✅ IMPROVED: Don't disconnect, just return to lobby
-    if (confirm('Are you sure you want to leave the game? You will return to the lobby.')) {
-        // Don't disconnect from socket - stay connected to room
-        console.log('🏠 Returning to lobby without disconnecting');
+    // ✅ IMPROVED: Return to actual main menu, not lobby
+    if (confirm('Are you sure you want to leave the game? You will return to the main menu.')) {
+        // Disconnect from socket to return to main menu
+        if (socket) {
+            socket.disconnect();
+            console.log('🔌 Disconnected from server');
+        }
         
-        // Reset game state but keep room connection
+        // Reset all game state
         window.game = null;
         window.gameCompleted = false;
         window.playedCards = [];
         window.isMultiplayerMode = false;
-        // Keep window.roomId to stay in the room
+        window.roomId = null;
         
         // Hide game elements
         const gameDiv = document.getElementById('Game');
@@ -1723,23 +1726,29 @@ function backToMainMenuFromGame() {
             gameDiv.style.display = 'none';
         }
         
-        // Show lobby elements (not main menu)
+        // Hide room controls
         const roomControls = document.getElementById('roomControls');
         if (roomControls) {
-            roomControls.style.display = 'block';
+            roomControls.style.display = 'none';
+        }
+        
+        // Show main menu
+        const menuDiv = document.getElementById('Menu');
+        if (menuDiv) {
+            menuDiv.style.display = 'block';
         }
         
         // Hide game buttons
         hideGameButtons();
         
-        // Reset game state
+        // Reset game state to main menu
         if (typeof gameState !== 'undefined') {
             gameState = gameStateEnum.Menu;
         }
         
-        console.log('✅ Returned to lobby');
+        console.log('✅ Returned to main menu');
     } else {
-        console.log('❌ User cancelled return to lobby');
+        console.log('❌ User cancelled return to main menu');
     }
 }
 

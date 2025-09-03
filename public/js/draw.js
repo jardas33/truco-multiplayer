@@ -179,8 +179,7 @@ function draw() {
             "7's (14)",
             "6's (15)",
             "5's (16)",
-            "4's (17)",
-            "Standard power"
+            "4's (17)"
         ];
         
         // Draw left column
