@@ -196,7 +196,10 @@ function initSocket() {
                             window.game.players[data.currentPlayer].hand && 
                             window.game.players[data.currentPlayer].hand.length > 0 &&
                                     !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                            !window.game.players[data.currentPlayer].isPlaying) {
+                            !window.game.players[data.currentPlayer].isPlaying &&
+                            // ✅ CRITICAL FIX: Don't play card if bot needs to respond to Truco
+                            !(window.game.trucoState && window.game.trucoState.waitingForResponse && 
+                              window.game.trucoState.responsePlayerIndex === data.currentPlayer)) {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
@@ -2590,6 +2593,13 @@ function triggerBotPlay(botPlayerIndex) {
     
     if (!botPlayer.hand || botPlayer.hand.length === 0) {
         console.error(`❌ Bot ${botPlayer.name} has no cards to play`);
+        return;
+    }
+    
+    // ✅ CRITICAL FIX: Don't play card if bot needs to respond to Truco
+    if (window.game.trucoState && window.game.trucoState.waitingForResponse && 
+        window.game.trucoState.responsePlayerIndex === botPlayerIndex) {
+        console.log(`🤖 Bot ${botPlayer.name} needs to respond to Truco, not play a card`);
         return;
     }
     
