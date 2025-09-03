@@ -632,8 +632,8 @@ function drawGameState() {
     if (trucoButton && typeof trucoButton.show === 'function') {
         try {
             trucoButton.show();
-            // Force repositioning to ensure it's visible - CENTERED
-            trucoButton.position(width/2 - 75, height - 100);
+            // Force repositioning to ensure it's visible - CENTERED and prominent
+            trucoButton.position(width/2 - 100, height - 80);
             trucoButton.style('z-index', '200');
             trucoButton.style('position', 'absolute');
         } catch (error) {

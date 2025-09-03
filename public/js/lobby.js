@@ -1705,20 +1705,17 @@ function hideRoundHistoryButton() {
 function backToMainMenuFromGame() {
     console.log('🏠 Returning to main menu from game');
     
-    // ✅ IMPROVED: Don't disconnect immediately, let user confirm
-    if (confirm('Are you sure you want to leave the game? This will disconnect you from the server.')) {
-        // Disconnect from socket if connected
-        if (socket) {
-            socket.disconnect();
-            console.log('🔌 Disconnected from server');
-        }
+    // ✅ IMPROVED: Don't disconnect, just return to lobby
+    if (confirm('Are you sure you want to leave the game? You will return to the lobby.')) {
+        // Don't disconnect from socket - stay connected to room
+        console.log('🏠 Returning to lobby without disconnecting');
         
-        // Reset game state
+        // Reset game state but keep room connection
         window.game = null;
         window.gameCompleted = false;
         window.playedCards = [];
         window.isMultiplayerMode = false;
-        window.roomId = null;
+        // Keep window.roomId to stay in the room
         
         // Hide game elements
         const gameDiv = document.getElementById('Game');
@@ -1726,10 +1723,10 @@ function backToMainMenuFromGame() {
             gameDiv.style.display = 'none';
         }
         
-        // Show menu elements
-        const menuDiv = document.getElementById('Menu');
-        if (menuDiv) {
-            menuDiv.style.display = 'block';
+        // Show lobby elements (not main menu)
+        const roomControls = document.getElementById('roomControls');
+        if (roomControls) {
+            roomControls.style.display = 'block';
         }
         
         // Hide game buttons
@@ -1740,9 +1737,9 @@ function backToMainMenuFromGame() {
             gameState = gameStateEnum.Menu;
         }
         
-        console.log('✅ Returned to main menu');
+        console.log('✅ Returned to lobby');
     } else {
-        console.log('❌ User cancelled return to main menu');
+        console.log('❌ User cancelled return to lobby');
     }
 }
 
