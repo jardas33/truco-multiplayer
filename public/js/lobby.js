@@ -1735,10 +1735,11 @@ function backToMainMenuFromGame() {
             console.log('✅ Game div hidden');
         }
         
-        if (roomControls) {
-            roomControls.style.display = 'none';
-            console.log('✅ Room controls hidden');
-        }
+        // Don't hide room controls - we need them for main menu
+        // if (roomControls) {
+        //     roomControls.style.display = 'none';
+        //     console.log('✅ Room controls hidden');
+        // }
         
         if (instructionsDiv) {
             instructionsDiv.style.display = 'none';
@@ -1750,25 +1751,26 @@ function backToMainMenuFromGame() {
             console.log('✅ Values div hidden');
         }
         
-        // ✅ CANVAS MANAGEMENT
+        // ✅ CANVAS MANAGEMENT - Hide canvas completely for main menu
         const canvas = document.querySelector('canvas');
         const menuDiv = document.getElementById('Menu');
         
-        if (canvas && menuDiv) {
-            // Move canvas to Menu div
-            menuDiv.appendChild(canvas);
-            canvas.style.display = 'block';
-            canvas.style.position = 'absolute';
-            canvas.style.top = '0';
-            canvas.style.left = '0';
-            canvas.style.zIndex = '1';
-            console.log('✅ Canvas moved to Menu div');
+        if (canvas) {
+            // Hide canvas completely - main menu uses HTML elements, not canvas
+            canvas.style.display = 'none';
+            console.log('✅ Canvas hidden for main menu');
         }
         
-        // ✅ SHOW MAIN MENU
+        // ✅ SHOW MAIN MENU AND ROOM CONTROLS
         if (menuDiv) {
             menuDiv.style.display = 'block';
             console.log('✅ Menu div shown');
+        }
+        
+        // Show room controls for main menu
+        if (roomControls) {
+            roomControls.style.display = 'block';
+            console.log('✅ Room controls shown');
         }
         
         // ✅ HIDE GAME BUTTONS
@@ -2487,12 +2489,17 @@ function startMultiplayerGame(data) {
             valuesElement.style.display = 'none';
         }
         
-        // Move canvas to Game div
+        // Move canvas to Game div and show it
         if (window.gameCanvas) {
             try {
                 console.log('🔄 Moving canvas to Game div...');
                 window.gameCanvas.parent('Game');
-                console.log('✅ Canvas moved to Game div successfully');
+                // Show canvas for game
+                const canvas = document.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                }
+                console.log('✅ Canvas moved to Game div and shown successfully');
             } catch (error) {
                 console.error('❌ Error moving canvas to Game div:', error);
             }
