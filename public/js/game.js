@@ -101,7 +101,15 @@ function createDeck() {
        this.sets = { team1: 0, team2: 0 };
        this.gameValue = 1;
        this.potentialGameValue = 0;
-       this.trucoState = false;
+       this.trucoState = {
+         isActive: false,
+         currentValue: 1,
+         potentialValue: 0,
+         callerTeam: null,
+         callerIndex: null,
+         waitingForResponse: false,
+         responsePlayerIndex: null
+       };
        this.initialTrucoCallerIndex = null;
        this.roundResults = [];
        this.IsDraw = false;
@@ -161,7 +169,15 @@ function createDeck() {
         });
         
         // Reset Truco state
-        this.trucoState = false;
+        this.trucoState = {
+          isActive: false,
+          currentValue: 1,
+          potentialValue: 0,
+          callerTeam: null,
+          callerIndex: null,
+          waitingForResponse: false,
+          responsePlayerIndex: null
+        };
         this.initialTrucoCallerIndex = null;
         this.lastActionWasRaise = false;
         this.potentialGameValue = 0;
@@ -223,7 +239,7 @@ function createDeck() {
         return;
       }
       
-      if (this.trucoState === true) {
+      if (this.trucoState.isActive === true) {
         console.log(`⏸️ Game paused during truco decision`);
         return; // Game is paused during truco decision
       }
@@ -553,7 +569,15 @@ function createDeck() {
                    // Reset game state
           this.scores = { team1: 0, team2: 0 };
           this.gameValue = 1;
-          this.trucoState = false;
+          this.trucoState = {
+            isActive: false,
+            currentValue: 1,
+            potentialValue: 0,
+            callerTeam: null,
+            callerIndex: null,
+            waitingForResponse: false,
+            responsePlayerIndex: null
+          };
           this.initialTrucoCallerIndex = null;
           this.lastActionWasRaise = false;
           this.potentialGameValue = 0;
@@ -593,7 +617,7 @@ function createDeck() {
      }
   
         requestTruco(player) {
-      if (this.trucoState !== null || player !== this.players[this.currentPlayerIndex]) {
+      if (this.trucoState.isActive !== false || player !== this.players[this.currentPlayerIndex]) {
         return false;
       }
    
@@ -627,7 +651,7 @@ function createDeck() {
         console.log(`📊 Current game value: ${this.gameValue}, Potential value: ${this.potentialGameValue}`);
       }
    
-      this.trucoState = true;
+      this.trucoState.isActive = true;
       this.initialTrucoCallerIndex = this.currentPlayerIndex;
       this.lastActionWasRaise = true;
       this.potentialGameValue = this.potentialGameValue || 3;
@@ -849,7 +873,15 @@ function createDeck() {
        // Reset game state for a new game
        this.scores = { team1: 0, team2: 0 };
        this.gameValue = 1;
-       this.trucoState = false;
+       this.trucoState = {
+         isActive: false,
+         currentValue: 1,
+         potentialValue: 0,
+         callerTeam: null,
+         callerIndex: null,
+         waitingForResponse: false,
+         responsePlayerIndex: null
+       };
        this.initialTrucoCallerIndex = null;
        this.roundResults = [];
        this.IsDraw = false;
@@ -879,7 +911,7 @@ function createDeck() {
 
     handleCardPlay(card, playerId) {
       // Handle a card played by another player in multiplayer mode
-      if (this.trucoState === true) {
+      if (this.trucoState.isActive === true) {
         return; // Game is paused during truco decision
       }
 

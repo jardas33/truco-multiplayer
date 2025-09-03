@@ -2601,7 +2601,7 @@ function triggerBotPlay(botPlayerIndex) {
     
     console.log(`🤖 Bot ${botPlayer.name} Truco decision: shouldCall=${shouldCallTruco}, trucoActive=${window.game.trucoState}`);
     
-    if (shouldCallTruco && !window.game.trucoState) {
+    if (shouldCallTruco && (!window.game.trucoState || !window.game.trucoState.isActive)) {
         console.log(`🤖 Bot ${botPlayer.name} decided to call Truco instead of playing a card!`);
         
         // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
