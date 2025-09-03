@@ -1072,42 +1072,33 @@ io.on('connection', (socket) => {
         }
 
         // ✅ Validate it's the player's turn (handle both human and bot requests)
-        const player = room.players.find(p => p.id === socket.id);
         let playerIndex = -1;
         let requestingPlayer = null;
         
-        if (player) {
-            // Human player request
-            playerIndex = room.players.indexOf(player);
-            requestingPlayer = player;
-            console.log(`🎯 Human player ${player.name} requesting Truco`);
-        } else {
+        // ✅ PRIORITY: Check if this is a bot request first (botPlayerIndex provided)
+        if (data.botPlayerIndex !== undefined) {
             // Bot request (sent from human player's socket)
-            // Check if botPlayerIndex is provided in the data
-            if (data.botPlayerIndex !== undefined) {
-                // Use the provided bot player index
-                const botPlayer = room.players[data.botPlayerIndex];
-                if (botPlayer && botPlayer.isBot) {
-                    playerIndex = data.botPlayerIndex;
-                    requestingPlayer = botPlayer;
-                    console.log(`🤖 Bot ${botPlayer.name} requesting Truco via human socket (index: ${data.botPlayerIndex})`);
-                } else {
-                    console.log(`❌ Invalid Truco request - botPlayerIndex ${data.botPlayerIndex} is not a bot`);
-                    socket.emit('error', 'Invalid bot request');
-                    return;
-                }
+            const botPlayer = room.players[data.botPlayerIndex];
+            if (botPlayer && botPlayer.isBot) {
+                playerIndex = data.botPlayerIndex;
+                requestingPlayer = botPlayer;
+                console.log(`🤖 Bot ${botPlayer.name} requesting Truco via human socket (index: ${data.botPlayerIndex})`);
             } else {
-                // Fallback: Find the current player (should be a bot)
-                const currentPlayer = room.players[room.game.currentPlayer];
-                if (currentPlayer && currentPlayer.isBot) {
-                    playerIndex = room.game.currentPlayer;
-                    requestingPlayer = currentPlayer;
-                    console.log(`🤖 Bot ${currentPlayer.name} requesting Truco via human socket (fallback)`);
-                } else {
-                    console.log(`❌ Invalid Truco request - current player is not a bot`);
-                    socket.emit('error', 'Invalid request');
-                    return;
-                }
+                console.log(`❌ Invalid Truco request - botPlayerIndex ${data.botPlayerIndex} is not a bot`);
+                socket.emit('error', 'Invalid bot request');
+                return;
+            }
+        } else {
+            // Human player request
+            const player = room.players.find(p => p.id === socket.id);
+            if (player) {
+                playerIndex = room.players.indexOf(player);
+                requestingPlayer = player;
+                console.log(`🎯 Human player ${player.name} requesting Truco`);
+            } else {
+                console.log(`❌ Invalid Truco request - no player found for socket`);
+                socket.emit('error', 'Invalid request');
+                return;
             }
         }
 
