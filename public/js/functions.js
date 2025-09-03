@@ -242,7 +242,7 @@ function showTrucoButton() {
   console.log('🔍 DEBUG: showTrucoButton() called');
   console.log('🔍 DEBUG: window.game exists:', !!window.game);
   console.log('🔍 DEBUG: currentPlayerIndex:', window.game?.currentPlayerIndex);
-  console.log('🔍 DEBUG: selfPlayer:', selfPlayer);
+  console.log('🔍 DEBUG: localPlayerIndex:', window.localPlayerIndex);
   console.log('🔍 DEBUG: isInTrucoPhase:', isInTrucoPhase);
   
   if (!window.game) {
@@ -262,7 +262,7 @@ function showTrucoButton() {
   console.log('🔍 DEBUG: Truco state:', window.game.trucoState);
   
   // Check if it's the human player's turn
-  if (window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
+  if (window.game.currentPlayerIndex === window.localPlayerIndex && isInTrucoPhase == false) {
     const currentPlayerTeam = currentPlayer.team;
     
     console.log('🔍 DEBUG: It is human player turn - checking Truco state');
@@ -707,8 +707,8 @@ function drawScoringInfo() {
         teamBetaRounds = window.game.scores.team2 || 0;
         teamAlfaGames = window.game.games ? window.game.games.team1 : 0; // Use games score
         teamBetaGames = window.game.games ? window.game.games.team2 : 0; // Use games score
-        teamAlfaSets = 0;  // Sets not implemented yet
-        teamBetaSets = 0;  // Sets not implemented yet
+        teamAlfaSets = window.game.sets ? window.game.sets.team1 : 0; // ✅ CRITICAL FIX: Use actual set scores
+        teamBetaSets = window.game.sets ? window.game.sets.team2 : 0; // ✅ CRITICAL FIX: Use actual set scores
         
         // ✅ Multiplayer scoring data processed (no debug logging)
     } else {

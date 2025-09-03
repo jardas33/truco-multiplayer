@@ -117,7 +117,7 @@ function initSocket() {
             // ✅ Update all player hands with proper formatting and fallback
             if (data.allHands) {
                 data.allHands.forEach((hand, index) => {
-                    if (window.game.players[index]) {
+                    if (window.game.players[index] && hand && Array.isArray(hand)) {
                         // ✅ Convert server card format to client format with fallback
                         const clientHand = hand.map(card => {
                             const cardImage = getCardImageWithFallback(card.name);
@@ -2873,8 +2873,10 @@ function triggerBotPlay(botPlayerIndex) {
             if (botPlayer.team === window.game.trucoState.callerTeam) {
                 canCallTruco = false; // Same team cannot raise
             }
+        } else {
+            // Truco was rejected (currentValue = 1), anyone can call again
+            canCallTruco = true;
         }
-        // If Truco was rejected (currentValue = 1), anyone can call again
     }
     
     console.log(`🤖 Bot ${botPlayer.name} can call Truco: ${canCallTruco}, team: ${botPlayer.team}, callerTeam: ${window.game.trucoState?.callerTeam}`);
@@ -2918,8 +2920,8 @@ function triggerBotPlay(botPlayerIndex) {
                             // Emit card play event
                             socket.emit('playCard', {
                                 roomCode: window.roomId,
-                                cardIndex: cardIndex,
-                                botPlayerIndex: botPlayerIndex
+                                playerIndex: botPlayerIndex,
+                                cardIndex: cardIndex
                             });
                             
                             // Mark as played and complete turn
@@ -2989,8 +2991,8 @@ function triggerBotPlay(botPlayerIndex) {
                                 // Emit card play event
                                 socket.emit('playCard', {
                                     roomCode: window.roomId,
-                                    cardIndex: cardIndex,
-                                    botPlayerIndex: botPlayerIndex
+                                    playerIndex: botPlayerIndex,
+                                    cardIndex: cardIndex
                                 });
                                 
                                 // Mark as played and complete turn

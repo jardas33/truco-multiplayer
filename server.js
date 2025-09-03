@@ -1237,7 +1237,7 @@ io.on('connection', (socket) => {
         const isRaise = room.game.trucoState.callerTeam !== null && room.game.trucoState.currentValue > 1;
         
         if (isRaise) {
-            // This is a raise - increase potential value
+            // This is a raise - increase potential value and update caller
             if (room.game.trucoState.potentialValue === 3) {
                 room.game.trucoState.potentialValue = 6;
             } else if (room.game.trucoState.potentialValue === 6) {
@@ -1245,7 +1245,10 @@ io.on('connection', (socket) => {
             } else if (room.game.trucoState.potentialValue === 9) {
                 room.game.trucoState.potentialValue = 12;
             }
-            console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games by ${requestingPlayer.name}`);
+            // ✅ CRITICAL FIX: Update caller team and index when raising
+            room.game.trucoState.callerTeam = requestingPlayer.team;
+            room.game.trucoState.callerIndex = playerIndex;
+            console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games by ${requestingPlayer.name} (team: ${requestingPlayer.team})`);
         } else {
             // This is an initial Truco call
             room.game.trucoState.currentValue = 1;
