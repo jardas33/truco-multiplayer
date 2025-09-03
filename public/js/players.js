@@ -108,12 +108,14 @@ class Player {
           
           // ✅ CRITICAL FIX: Use the human player's socket to send bot response
           // The bot's socket is just a local object, not a real server connection
+          console.log(`🔍 DEBUG: About to emit respondTruco event to server...`);
           socket.emit('respondTruco', { 
             response: decision,
             botPlayerIndex: botPlayerIndex,  // Include bot's player index for server validation
             roomCode: window.roomId  // ✅ CRITICAL FIX: Include room code in the event data
           });
           console.log(`🤖 Bot ${this.name} sent Truco response: ${decision} (bot index: ${botPlayerIndex})`);
+          console.log(`🔍 DEBUG: respondTruco event emitted successfully`);
         } else {
           console.error('❌ Socket not available for bot Truco response');
         }
