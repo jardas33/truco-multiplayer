@@ -278,12 +278,17 @@ function showTrucoButton() {
       console.log('🔍 DEBUG: Current value:', window.game.trucoState.currentValue);
       
       if (window.game.trucoState.currentValue > 1) {
-        // Truco was accepted - check if this team can raise
+        // Truco was accepted (or raised and accepted) - check if this team can raise
         const lastCallerTeam = window.game.trucoState.callerTeam;
         
         console.log('🔍 DEBUG: Truco was accepted - lastCallerTeam:', lastCallerTeam, 'currentPlayerTeam:', currentPlayerTeam);
+        console.log('🔍 DEBUG: Potential value:', window.game.trucoState.potentialValue);
         
-        if (currentPlayerTeam !== lastCallerTeam) {
+        // Check if we can still raise (not at 12 games limit)
+        if (window.game.trucoState.potentialValue >= 12) {
+          console.log('🔍 DEBUG: Cannot raise above 12 games - hiding button');
+          trucoButton.hide();
+        } else if (currentPlayerTeam !== lastCallerTeam) {
           // Opposite team can raise - show RAISE button
           console.log('🔍 DEBUG: Opposite team can raise - showing RAISE button');
           trucoButton.html("RAISE");
