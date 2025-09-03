@@ -730,9 +730,12 @@ io.on('connection', (socket) => {
                 room.lastRoundWinner = roundWinner;
                 console.log(`🎯 Stored last round winner for next game: ${roundWinner.name}`);
                 
-                // ✅ CRITICAL FIX: Increment games score for winning team using Truco value
+                // ✅ CRITICAL FIX: Initialize games and sets tracking if not present
                 if (!room.game.games) {
                     room.game.games = { team1: 0, team2: 0 };
+                }
+                if (!room.game.sets) {
+                    room.game.sets = { team1: 0, team2: 0 };
                 }
                 
                 // ✅ Use Truco game value if available, otherwise default to 1
@@ -746,17 +749,35 @@ io.on('connection', (socket) => {
                     console.log(`🎮 Team 2 games increased by ${gameValue} to: ${room.game.games.team2}`);
                 }
                 
+                // ✅ CRITICAL FIX: Check for set wins (12 games = 1 set)
+                let setWinner = null;
+                if (room.game.games.team1 >= 12) {
+                    room.game.sets.team1++;
+                    room.game.games.team1 = 0;
+                    room.game.games.team2 = 0;
+                    setWinner = 'team1';
+                    console.log(`🏆 Team Alfa won the set! Total sets: ${room.game.sets.team1}. Games reset to 0.`);
+                } else if (room.game.games.team2 >= 12) {
+                    room.game.sets.team2++;
+                    room.game.games.team1 = 0;
+                    room.game.games.team2 = 0;
+                    setWinner = 'team2';
+                    console.log(`🏆 Team Beta won the set! Total sets: ${room.game.sets.team2}. Games reset to 0.`);
+                }
+                
                 // Clear played cards immediately for game winner
                 room.game.playedCards = [];
                 
                 // Emit game complete event instead of round complete
                 console.log(`🔍 DEBUG: Emitting gameComplete event to room ${socket.roomCode}`);
-                console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, gameWinner });
+                console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, sets: room.game.sets, gameWinner, setWinner });
                 io.to(socket.roomCode).emit('gameComplete', {
                     roundWinner: roundWinner,
                     scores: room.game.scores,
                     games: room.game.games,
-                    gameWinner: gameWinner
+                    sets: room.game.sets,
+                    gameWinner: gameWinner,
+                    setWinner: setWinner
                 });
                 console.log(`🔍 DEBUG: gameComplete event emitted successfully`);
                 
@@ -2113,15 +2134,16 @@ function startNewGame(room, winningTeam, roomId) {
         
         console.log(`🔄 New game started with fresh deck and hands`);
         
-        // Emit new game started event with both scores and games
-        console.log(`SERVER: Emitting 'newGameStarted' for room ${roomId} with scores:`, room.game.scores, 'and games:', room.game.games);
+        // Emit new game started event with scores, games, and sets
+        console.log(`SERVER: Emitting 'newGameStarted' for room ${roomId} with scores:`, room.game.scores, 'games:', room.game.games, 'and sets:', room.game.sets);
         console.log(`🔍 CRITICAL DEBUG: newGameStarted event - currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
         console.log(`🔍 CRITICAL DEBUG: newGameStarted event - This should be the starting player for the new game`);
         io.to(roomId).emit('newGameStarted', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands,
             scores: room.game.scores,
-            games: room.game.games
+            games: room.game.games,
+            sets: room.game.sets
         });
         console.log(`🔍 CRITICAL DEBUG: newGameStarted event emitted successfully`);
         

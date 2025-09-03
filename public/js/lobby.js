@@ -949,6 +949,23 @@ function setupSocketListeners() {
             console.log(`🎮 Games score - Team 1: ${data.games.team1}, Team 2: ${data.games.team2}`);
         }
         
+        // ✅ CRITICAL FIX: Update sets score
+        if (data.sets) {
+            if (!window.game.sets) {
+                window.game.sets = { team1: 0, team2: 0 };
+            }
+            window.game.sets = data.sets;
+            console.log(`🏆 Sets score - Team 1: ${data.sets.team1}, Team 2: ${data.sets.team2}`);
+        }
+        
+        // ✅ CRITICAL FIX: Handle set win notification
+        if (data.setWinner) {
+            const winningTeam = data.setWinner === 'team1' ? 'Team Alfa' : 'Team Beta';
+            console.log(`🏆 Set won by: ${winningTeam}`);
+            // Store set winner for combined popup
+            window.lastSetWinner = winningTeam;
+        }
+        
         // ✅ CRITICAL FIX: Handle game winner - will be shown in combined popup
         if (data.gameWinner) {
             const winningTeam = data.gameWinner === 'team1' ? 'Team Alfa' : 'Team Beta';
@@ -1093,6 +1110,16 @@ function setupSocketListeners() {
             console.log('🔄 New game - received games from server:', data.games);
             updateGameScores(data.games, true);
             console.log('🔄 New game - games score updated, window.game.games now:', window.game.games);
+        }
+        
+        // Update sets score
+        if (data.sets) {
+            console.log('🔄 New game - received sets from server:', data.sets);
+            if (!window.game.sets) {
+                window.game.sets = { team1: 0, team2: 0 };
+            }
+            window.game.sets = data.sets;
+            console.log('🔄 New game - sets score updated, window.game.sets now:', window.game.sets);
         }
         
         // Reset bot flags for new game
