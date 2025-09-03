@@ -239,50 +239,74 @@ function imageClick(image) {
 
 
 function showTrucoButton() {
+  console.log('🔍 DEBUG: showTrucoButton() called');
+  console.log('🔍 DEBUG: window.game exists:', !!window.game);
+  console.log('🔍 DEBUG: currentPlayerIndex:', window.game?.currentPlayerIndex);
+  console.log('🔍 DEBUG: selfPlayer:', selfPlayer);
+  console.log('🔍 DEBUG: isInTrucoPhase:', isInTrucoPhase);
+  
   if (!window.game) {
+    console.log('🔍 DEBUG: No game instance - hiding button');
     trucoButton.hide();
     return;
   }
   
   const currentPlayer = window.game.players[window.game.currentPlayerIndex];
   if (!currentPlayer) {
+    console.log('🔍 DEBUG: No current player - hiding button');
     trucoButton.hide();
     return;
   }
+  
+  console.log('🔍 DEBUG: Current player:', currentPlayer.name, 'Team:', currentPlayer.team);
+  console.log('🔍 DEBUG: Truco state:', window.game.trucoState);
   
   // Check if it's the human player's turn
   if (window.game.currentPlayerIndex + 1 == selfPlayer && isInTrucoPhase == false) {
     const currentPlayerTeam = currentPlayer.team;
     
+    console.log('🔍 DEBUG: It is human player turn - checking Truco state');
+    
     // ✅ NEW LOGIC: Dynamic Truco/Raise button based on Truco state
     if (window.game.trucoState && window.game.trucoState.isActive) {
       // Truco is currently active (waiting for response) - hide button
+      console.log('🔍 DEBUG: Truco is active - hiding button');
       trucoButton.hide();
     } else if (window.game.trucoState && window.game.trucoState.callerTeam !== null) {
       // Truco was called before - check if this player can raise
+      console.log('🔍 DEBUG: Truco was called before - callerTeam:', window.game.trucoState.callerTeam);
+      console.log('🔍 DEBUG: Current value:', window.game.trucoState.currentValue);
+      
       if (window.game.trucoState.currentValue > 1) {
         // Truco was accepted - check if this team can raise
         const lastCallerTeam = window.game.trucoState.callerTeam;
         
+        console.log('🔍 DEBUG: Truco was accepted - lastCallerTeam:', lastCallerTeam, 'currentPlayerTeam:', currentPlayerTeam);
+        
         if (currentPlayerTeam !== lastCallerTeam) {
           // Opposite team can raise - show RAISE button
+          console.log('🔍 DEBUG: Opposite team can raise - showing RAISE button');
           trucoButton.html("RAISE");
           trucoButton.show();
         } else {
           // Same team cannot raise - hide button
+          console.log('🔍 DEBUG: Same team cannot raise - hiding button');
           trucoButton.hide();
         }
       } else {
         // Truco was rejected - anyone can call Truco again
+        console.log('🔍 DEBUG: Truco was rejected - showing TRUCO button');
         trucoButton.html("TRUCO");
         trucoButton.show();
       }
     } else {
       // No Truco called yet - show normal Truco button
+      console.log('🔍 DEBUG: No Truco called yet - showing TRUCO button');
       trucoButton.html("TRUCO");
       trucoButton.show();
     }
   } else {
+    console.log('🔍 DEBUG: Not human player turn or in Truco phase - hiding button');
     trucoButton.hide();
   }
 }

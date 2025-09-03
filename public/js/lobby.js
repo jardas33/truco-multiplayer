@@ -617,8 +617,14 @@ function setupSocketListeners() {
         console.log(`✅ Truco accepted - game continues with value ${data.newGameValue}`);
         
         // ✅ CRITICAL FIX: Update Truco button after acceptance
+        console.log('🔍 DEBUG: About to call showTrucoButton after Truco acceptance');
+        console.log('🔍 DEBUG: showTrucoButton function exists:', typeof showTrucoButton === 'function');
         if (typeof showTrucoButton === 'function') {
+            console.log('🔍 DEBUG: Calling showTrucoButton()');
             showTrucoButton();
+            console.log('🔍 DEBUG: showTrucoButton() called successfully');
+        } else {
+            console.error('❌ showTrucoButton function not found!');
         }
     });
 
