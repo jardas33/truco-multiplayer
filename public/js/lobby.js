@@ -526,6 +526,9 @@ function setupSocketListeners() {
     // ✅ Handle Truco events
     socket.on('trucoCalled', (data) => {
         console.log('🎯 Truco called event received:', data);
+        console.log('🔍 TRUCO EVENT DEBUG - Local player index:', window.localPlayerIndex);
+        console.log('🔍 TRUCO EVENT DEBUG - Response player index:', data.responsePlayerIndex);
+        console.log('🔍 TRUCO EVENT DEBUG - Is this client the response player?', window.localPlayerIndex === data.responsePlayerIndex);
         
         if (!window.game) {
             console.log('❌ No game instance found for Truco event');
@@ -3208,6 +3211,7 @@ function showTrucoMessagePopup(message) {
 }
 
 function showTrucoResponseButtons() {
+    console.log('🎯 showTrucoResponseButtons() called - showing response popup');
     // Remove any existing buttons
     hideTrucoResponseButtons();
     
@@ -3348,7 +3352,7 @@ function showTrucoResponseButtons() {
     popupContainer.appendChild(buttonContainer);
     document.body.appendChild(popupContainer);
     
-    console.log('🎯 Truco response buttons shown');
+    console.log('🎯 Truco response buttons shown successfully');
 }
 
 function hideTrucoResponseButtons() {
