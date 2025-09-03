@@ -116,10 +116,17 @@ function draw() {
         instructionsDiv.show();
     }
     else if (gameState === gameStateEnum.CardValues) {
-        menuDiv.hide();
-        gameDiv.hide();
-        instructionsDiv.hide();
-        valuesDiv.show();
+        // ✅ CRITICAL: Ensure proper div visibility
+        if (menuDiv) menuDiv.hide();
+        if (gameDiv) gameDiv.hide();
+        if (instructionsDiv) instructionsDiv.hide();
+        if (valuesDiv) valuesDiv.show();
+        
+        // ✅ CRITICAL: Move canvas to Values div
+        let canvas = document.querySelector('canvas');
+        if (canvas && valuesDiv) {
+            valuesDiv.elt.appendChild(canvas);
+        }
         
         // Draw golden box
         const boxWidth = 1000;
@@ -209,6 +216,12 @@ function draw() {
                     if (valuesDiv) {
                         valuesDiv.style.display = 'none';
                     }
+                    
+                    // ✅ CRITICAL: Move canvas back to Game div
+                    let canvas = document.querySelector('canvas');
+                    if (canvas && gameDiv) {
+                        gameDiv.appendChild(canvas);
+                    }
                 } else {
                     // Return to menu
                     gameState = gameStateEnum.Menu;
@@ -219,6 +232,12 @@ function draw() {
                     const valuesDiv = document.getElementById('Values');
                     if (valuesDiv) {
                         valuesDiv.style.display = 'none';
+                    }
+                    
+                    // ✅ CRITICAL: Move canvas back to Menu div
+                    let canvas = document.querySelector('canvas');
+                    if (canvas && menuDiv) {
+                        menuDiv.appendChild(canvas);
                     }
                 }
                 instructionsCloseButton.hide();

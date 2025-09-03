@@ -1705,40 +1705,45 @@ function hideRoundHistoryButton() {
 function backToMainMenuFromGame() {
     console.log('🏠 Returning to main menu from game');
     
-    // Disconnect from socket if connected
-    if (socket) {
-        socket.disconnect();
-        console.log('🔌 Disconnected from server');
+    // ✅ IMPROVED: Don't disconnect immediately, let user confirm
+    if (confirm('Are you sure you want to leave the game? This will disconnect you from the server.')) {
+        // Disconnect from socket if connected
+        if (socket) {
+            socket.disconnect();
+            console.log('🔌 Disconnected from server');
+        }
+        
+        // Reset game state
+        window.game = null;
+        window.gameCompleted = false;
+        window.playedCards = [];
+        window.isMultiplayerMode = false;
+        window.roomId = null;
+        
+        // Hide game elements
+        const gameDiv = document.getElementById('Game');
+        if (gameDiv) {
+            gameDiv.style.display = 'none';
+        }
+        
+        // Show menu elements
+        const menuDiv = document.getElementById('Menu');
+        if (menuDiv) {
+            menuDiv.style.display = 'block';
+        }
+        
+        // Hide game buttons
+        hideGameButtons();
+        
+        // Reset game state
+        if (typeof gameState !== 'undefined') {
+            gameState = gameStateEnum.Menu;
+        }
+        
+        console.log('✅ Returned to main menu');
+    } else {
+        console.log('❌ User cancelled return to main menu');
     }
-    
-    // Reset game state
-    window.game = null;
-    window.gameCompleted = false;
-    window.playedCards = [];
-    window.isMultiplayerMode = false;
-    window.roomId = null;
-    
-    // Hide game elements
-    const gameDiv = document.getElementById('Game');
-    if (gameDiv) {
-        gameDiv.style.display = 'none';
-    }
-    
-    // Show menu elements
-    const menuDiv = document.getElementById('Menu');
-    if (menuDiv) {
-        menuDiv.style.display = 'block';
-    }
-    
-    // Hide game buttons
-    hideGameButtons();
-    
-    // Reset game state
-    if (typeof gameState !== 'undefined') {
-        gameState = gameStateEnum.Menu;
-    }
-    
-    console.log('✅ Returned to main menu');
 }
 
 // ✅ Show Card Values from Game function
@@ -1761,6 +1766,11 @@ function showCardValuesFromGame() {
     const valuesDiv = document.getElementById('Values');
     if (valuesDiv) {
         valuesDiv.style.display = 'block';
+    }
+    
+    // ✅ CRITICAL: Force canvas to redraw for card values
+    if (typeof loop === 'function') {
+        loop();
     }
     
     console.log('✅ Card values displayed');
