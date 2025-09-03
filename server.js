@@ -1855,30 +1855,9 @@ function startNewGame(room, winningTeam, roomId) {
         console.log(`🔍 DEBUG: room.lastRoundWinner:`, room.lastRoundWinner);
         console.log(`🔍 DEBUG: room.players:`, room.players.map(p => ({ name: p.name, id: p.id, team: p.team })));
         
-        // ✅ CRITICAL FIX: If winningTeam is provided (from Truco rejection), find first player from that team
-        if (winningTeam) {
-            console.log(`🔍 DEBUG: Using winningTeam to determine starting player: ${winningTeam}`);
-            console.log(`🔍 DEBUG: All players and their teams:`, room.players.map((p, i) => `${i}: ${p.name} → ${p.team}`));
-            
-            // ✅ CRITICAL DEBUG: Check each player individually
-            room.players.forEach((player, index) => {
-                console.log(`🔍 DEBUG: Player ${index}: ${player.name}, team: ${player.team}, matches winningTeam ${winningTeam}? ${player.team === winningTeam}`);
-            });
-            
-            const winningTeamPlayerIndex = room.players.findIndex(p => p.team === winningTeam);
-            console.log(`🔍 DEBUG: findIndex result for team ${winningTeam}: ${winningTeamPlayerIndex}`);
-            
-            if (winningTeamPlayerIndex !== -1) {
-                startingPlayerIndex = winningTeamPlayerIndex;
-                console.log(`🔍 DEBUG: Starting player set to first player from winning team: ${room.players[startingPlayerIndex].name} (index ${startingPlayerIndex})`);
-                console.log(`🔍 DEBUG: This player's team: ${room.players[startingPlayerIndex].team}`);
-            } else {
-                console.log(`🔍 DEBUG: No player found from winning team, using default starting player`);
-            }
-        }
-        
-        // Look for the last round winner in the room's game state (only if no winningTeam from Truco rejection)
-        else if (room.lastRoundWinner) {
+        // ✅ CRITICAL FIX: Prioritize lastRoundWinner for normal game completions
+        // Only use winningTeam logic if it's a Truco rejection and no lastRoundWinner is available
+        if (room.lastRoundWinner) {
             console.log(`🔍 DEBUG: Found lastRoundWinner:`, room.lastRoundWinner);
             console.log(`🔍 DEBUG: All players in room for new game:`, room.players.map((p, i) => `${i}: ${p.name} (${p.isBot ? 'Bot' : 'Human'})`));
             console.log(`🔍 DEBUG: Looking for winner name: "${room.lastRoundWinner.name}"`);
@@ -1900,6 +1879,28 @@ function startNewGame(room, winningTeam, roomId) {
                 console.log(`⚠️ DEBUG: Last round winner name:`, room.lastRoundWinner.name);
                 console.log(`⚠️ DEBUG: This suggests a name mismatch between round winner and player list!`);
                 console.log(`⚠️ DEBUG: This is a CRITICAL ISSUE that needs to be fixed!`);
+            }
+        }
+        
+        // ✅ CRITICAL FIX: If no lastRoundWinner but winningTeam is provided (from Truco rejection), find first player from that team
+        else if (winningTeam && (winningTeam === 'team1' || winningTeam === 'team2')) {
+            console.log(`🔍 DEBUG: Using winningTeam to determine starting player: ${winningTeam}`);
+            console.log(`🔍 DEBUG: All players and their teams:`, room.players.map((p, i) => `${i}: ${p.name} → ${p.team}`));
+            
+            // ✅ CRITICAL DEBUG: Check each player individually
+            room.players.forEach((player, index) => {
+                console.log(`🔍 DEBUG: Player ${index}: ${player.name}, team: ${player.team}, matches winningTeam ${winningTeam}? ${player.team === winningTeam}`);
+            });
+            
+            const winningTeamPlayerIndex = room.players.findIndex(p => p.team === winningTeam);
+            console.log(`🔍 DEBUG: findIndex result for team ${winningTeam}: ${winningTeamPlayerIndex}`);
+            
+            if (winningTeamPlayerIndex !== -1) {
+                startingPlayerIndex = winningTeamPlayerIndex;
+                console.log(`🔍 DEBUG: Starting player set to first player from winning team: ${room.players[startingPlayerIndex].name} (index ${startingPlayerIndex})`);
+                console.log(`🔍 DEBUG: This player's team: ${room.players[startingPlayerIndex].team}`);
+            } else {
+                console.log(`🔍 DEBUG: No player found from winning team, using default starting player`);
             }
         } else {
             console.log(`ℹ️ No last round winner found, defaulting to index 0`);
