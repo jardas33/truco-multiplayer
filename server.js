@@ -1504,6 +1504,8 @@ io.on('connection', (socket) => {
         // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
         const roomCode = data.roomCode || socket.roomCode;
         console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+        console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
         
         if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room - no roomCode found`);
