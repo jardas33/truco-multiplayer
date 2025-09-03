@@ -1373,6 +1373,10 @@ io.on('connection', (socket) => {
             console.log(`🔍 DEBUG: Truco rejection - winningTeam: ${winningTeam}`);
             console.log(`🔍 DEBUG: Truco rejection - winningTeamName: ${winningTeamName}`);
             
+            // ✅ CRITICAL FIX: Declare gameValue before using it
+            const gameValue = room.game.trucoState.currentValue;
+            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${gameValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
+            
             room.game.trucoState.isActive = false;
             room.game.trucoState.waitingForResponse = false;
             room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
@@ -1389,8 +1393,7 @@ io.on('connection', (socket) => {
             // If Truco was called and rejected immediately: currentValue = 1
             // If Truco was accepted: currentValue = 3
             // If Truco was raised after acceptance: currentValue = 6, 9, or 12
-            const gameValue = room.game.trucoState.currentValue;
-            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${gameValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
+            // gameValue already declared above
             
             if (winningTeam === 'team1') {
                 room.game.games.team1 += gameValue;
