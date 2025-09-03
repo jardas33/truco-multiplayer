@@ -3090,7 +3090,7 @@ let popupQueue = [];
 let currentPopup = null;
 let popupTimeout = null;
 
-function addToPopupQueue(type, data, duration = 4000) {
+function addToPopupQueue(type, data, duration = 2000) {
     popupQueue.push({ type, data, duration });
     console.log(`📋 Added ${type} popup to queue. Queue length: ${popupQueue.length}`);
     processPopupQueue();
