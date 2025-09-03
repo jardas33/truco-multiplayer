@@ -1234,6 +1234,7 @@ io.on('connection', (socket) => {
             room.game.trucoState.potentialValue = 3;
             room.game.trucoState.callerTeam = requestingPlayer.team;
             room.game.trucoState.callerIndex = playerIndex;
+            room.game.trucoState.rejectionValue = 1; // ✅ CRITICAL FIX: Set rejection value for initial Truco call
             console.log(`🎯 Initial Truco called by ${requestingPlayer.name}`);
         }
         
@@ -1355,12 +1356,13 @@ io.on('connection', (socket) => {
         if (response === 1) {
             // ✅ Accept Truco
             room.game.trucoState.currentValue = room.game.trucoState.potentialValue;
+            room.game.trucoState.rejectionValue = room.game.trucoState.potentialValue; // ✅ CRITICAL FIX: Update rejection value when Truco is accepted
             room.game.trucoState.isActive = false;
             room.game.trucoState.waitingForResponse = false;
             room.game.trucoState.responsePlayerIndex = null; // ✅ CRITICAL FIX: Clear response player
 
             console.log(`✅ Truco accepted! Game now worth ${room.game.trucoState.currentValue} games`);
-            console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
+            console.log(`🔍 TRUCO ACCEPTANCE DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}, rejectionValue: ${room.game.trucoState.rejectionValue}`);
 
             // ✅ CRITICAL FIX: After Truco acceptance, ensure the game continues with the correct player
             // In the first game/round, keep the current player. In subsequent rounds, use the round winner
@@ -1404,10 +1406,12 @@ io.on('connection', (socket) => {
             console.log(`🔍 DEBUG: Truco rejection - winningTeam: ${winningTeam}`);
             console.log(`🔍 DEBUG: Truco rejection - winningTeamName: ${winningTeamName}`);
             
-            // ✅ CRITICAL FIX: Declare gameValue before using it
-            const gameValue = room.game.trucoState.currentValue;
-            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${gameValue}, potentialValue: ${room.game.trucoState.potentialValue}`);
-            console.log(`🔍 TRUCO REJECTION DEBUG - Awarding ${gameValue} games (current value, not potential raised value)`);
+            // ✅ CRITICAL FIX: Use rejectionValue if available, otherwise fall back to currentValue
+            const gameValue = room.game.trucoState.rejectionValue !== undefined ? 
+                room.game.trucoState.rejectionValue : 
+                room.game.trucoState.currentValue;
+            console.log(`🔍 TRUCO REJECTION DEBUG - currentValue: ${room.game.trucoState.currentValue}, potentialValue: ${room.game.trucoState.potentialValue}, rejectionValue: ${room.game.trucoState.rejectionValue}`);
+            console.log(`🔍 TRUCO REJECTION DEBUG - Awarding ${gameValue} games (using ${room.game.trucoState.rejectionValue !== undefined ? 'rejectionValue' : 'currentValue'})`);
             
             room.game.trucoState.isActive = false;
             room.game.trucoState.waitingForResponse = false;
@@ -1484,6 +1488,11 @@ io.on('connection', (socket) => {
             const oldPotentialValue = room.game.trucoState.potentialValue;
             room.game.trucoState.potentialValue += 3;
             console.log(`🔍 TRUCO RAISE DEBUG - potentialValue: ${oldPotentialValue} → ${room.game.trucoState.potentialValue}, currentValue unchanged: ${room.game.trucoState.currentValue}`);
+            
+            // ✅ CRITICAL FIX: Store the value that was active when the next responder was asked to respond
+            // This is the value they should get if they reject
+            room.game.trucoState.rejectionValue = oldPotentialValue;
+            console.log(`🔍 TRUCO RAISE DEBUG - Set rejectionValue to: ${room.game.trucoState.rejectionValue} (the value active when next responder was asked)`);
             
             // ✅ CRITICAL FIX: Find next player to respond (back-and-forth between caller and opposite team)
             let nextPlayerIndex = -1;
