@@ -94,8 +94,13 @@ class Player {
       // Send response to server
       setTimeout(() => {
         if (typeof socket !== 'undefined' && socket) {
-          socket.emit('respondTruco', { response: decision });
-          console.log(`🤖 Bot ${this.name} sent Truco response: ${decision}`);
+          // ✅ CRITICAL FIX: Include bot player index for server identification
+          const botPlayerIndex = window.game.players.indexOf(this);
+          socket.emit('respondTruco', { 
+            response: decision,
+            botPlayerIndex: botPlayerIndex  // Include bot's player index for server validation
+          });
+          console.log(`🤖 Bot ${this.name} sent Truco response: ${decision} (bot index: ${botPlayerIndex})`);
         } else {
           console.error('❌ Socket not available for bot Truco response');
         }

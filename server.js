@@ -1200,25 +1200,30 @@ io.on('connection', (socket) => {
         }
         
         // ✅ Validate it's the response player's turn (handle both human and bot responses)
-        const player = room.players.find(p => p.id === socket.id);
         let playerIndex = -1;
         let respondingPlayer = null;
         
-        if (player) {
-            // Human player response
-            playerIndex = room.players.indexOf(player);
-            respondingPlayer = player;
-            console.log(`🎯 Human player ${player.name} responding to Truco`);
-        } else {
+        // ✅ PRIORITY: Check if this is a bot response first (botPlayerIndex provided)
+        if (data.botPlayerIndex !== undefined) {
             // Bot response (sent from human player's socket)
-            // Find the current response player (should be a bot)
-            const responsePlayer = room.players[room.game.trucoState.responsePlayerIndex];
-            if (responsePlayer && responsePlayer.isBot) {
-                playerIndex = room.game.trucoState.responsePlayerIndex;
-                respondingPlayer = responsePlayer;
-                console.log(`🤖 Bot ${responsePlayer.name} responding to Truco via human socket`);
+            const botPlayer = room.players[data.botPlayerIndex];
+            if (botPlayer && botPlayer.isBot) {
+                playerIndex = data.botPlayerIndex;
+                respondingPlayer = botPlayer;
+                console.log(`🤖 Bot ${botPlayer.name} responding to Truco via human socket (index: ${data.botPlayerIndex})`);
             } else {
-                console.log(`❌ Invalid Truco response - response player is not a bot`);
+                console.log(`❌ Invalid Truco response - botPlayerIndex ${data.botPlayerIndex} is not a bot`);
+                return;
+            }
+        } else {
+            // Human player response
+            const player = room.players.find(p => p.id === socket.id);
+            if (player) {
+                playerIndex = room.players.indexOf(player);
+                respondingPlayer = player;
+                console.log(`🎯 Human player ${player.name} responding to Truco`);
+            } else {
+                console.log(`❌ Invalid Truco response - no player found for socket`);
                 return;
             }
         }
