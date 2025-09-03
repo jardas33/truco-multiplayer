@@ -1437,11 +1437,31 @@ io.on('connection', (socket) => {
             }, 3000);
 
         } else if (response === 3) {
-            // ✅ Raise Truco - This should not happen in processTrucoResponse anymore
-            // Raises are now handled in the requestTruco handler
-            console.log(`❌ Raise response received in processTrucoResponse - this should not happen`);
-            console.log(`❌ Raises should be handled via requestTruco event, not respondTruco`);
-            return;
+            // ✅ Raise Truco - Handle raise in processTrucoResponse
+            console.log(`📈 ${respondingPlayer.name} raised Truco to ${room.game.trucoState.potentialValue + 3} games`);
+            
+            // Update potential value
+            room.game.trucoState.potentialValue += 3;
+            
+            // Find next player to respond (opposite team)
+            const nextPlayerIndex = (playerIndex + 1) % room.players.length;
+            const nextPlayer = room.players[nextPlayerIndex];
+            
+            // Update response player
+            room.game.trucoState.responsePlayerIndex = nextPlayerIndex;
+            room.game.trucoState.waitingForResponse = true;
+            
+            console.log(`📈 Truco raised to ${room.game.trucoState.potentialValue} games. Next to respond: ${nextPlayer.name}`);
+            
+            // Emit trucoRaised event
+            io.to(socket.roomCode).emit('trucoRaised', {
+                raiser: socket.id,
+                raiserName: respondingPlayer.name,
+                raiserTeam: respondingPlayer.team,
+                newPotentialValue: room.game.trucoState.potentialValue,
+                responsePlayerIndex: nextPlayerIndex,
+                roomCode: socket.roomCode
+            });
         }
 
         console.log(`✅ Truco response processed for user ${socket.id} in room ${socket.roomCode}`);
