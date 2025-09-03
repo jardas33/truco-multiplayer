@@ -1096,8 +1096,15 @@ io.on('connection', (socket) => {
             }
         }
 
+        // ✅ CRITICAL DEBUG: Log Truco request validation details
+        console.log(`🔍 TRUCO REQUEST DEBUG - Current player: ${room.game.currentPlayer}`);
+        console.log(`🔍 TRUCO REQUEST DEBUG - Player index: ${playerIndex}`);
+        console.log(`🔍 TRUCO REQUEST DEBUG - Requesting player: ${requestingPlayer?.name}`);
+        console.log(`🔍 TRUCO REQUEST DEBUG - Is current player? ${room.game.currentPlayer === playerIndex}`);
+        
         if (room.game.currentPlayer !== playerIndex) {
             console.log(`❌ Player ${requestingPlayer?.name} tried to call Truco out of turn`);
+            console.log(`❌ Expected current player: ${room.game.currentPlayer}, got: ${playerIndex}`);
             socket.emit('error', 'Not your turn');
             return;
         }
