@@ -2077,7 +2077,7 @@ function setupButtonListeners() {
 }
 
 function createRoom() {
-            // ✅ createRoom function called
+    // ✅ createRoom function called
     
     if (!socket) {
         console.error('❌ Socket not initialized in createRoom');
