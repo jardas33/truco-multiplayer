@@ -795,6 +795,17 @@ class PokerClient {
             return;
         }
         
+        // Set game state to Playing
+        if (typeof gameState !== 'undefined' && typeof gameStateEnum !== 'undefined') {
+            gameState = gameStateEnum.Playing;
+            window.gameState = gameStateEnum.Playing;
+            console.log('🎮 Game state set to Playing');
+        }
+        
+        // Set global game instance for draw function
+        window.game = this.game;
+        console.log('🎮 Global game instance set');
+        
         UIUtils.showGame();
         this.game.startNewHand();
     }
