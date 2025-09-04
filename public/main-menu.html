@@ -206,32 +206,6 @@
                 <div class="game-status status-classic">CLASSIC</div>
             </div>
 
-            <!-- SPADES -->
-            <div class="game-card" onclick="selectGame('spades')">
-                <span class="game-icon">♠️</span>
-                <div class="game-name">SPADES</div>
-                <div class="game-description">Partnership trick-taking game with bidding. Work with your partner to meet your bid!</div>
-                <div class="game-players">4 Players</div>
-                <div class="game-status status-popular">POPULAR</div>
-            </div>
-
-            <!-- EUCHRE -->
-            <div class="game-card" onclick="selectGame('euchre')">
-                <span class="game-icon">🃏</span>
-                <div class="game-name">EUCHRE</div>
-                <div class="game-description">Fast-paced partnership game with trump selection. Popular in the Midwest!</div>
-                <div class="game-players">4 Players</div>
-                <div class="game-status status-classic">CLASSIC</div>
-            </div>
-
-            <!-- GIN RUMMY -->
-            <div class="game-card" onclick="selectGame('gin-rummy')">
-                <span class="game-icon">🃏</span>
-                <div class="game-name">GIN RUMMY</div>
-                <div class="game-description">Form melds and reduce deadwood. A classic two-player game that's easy to learn!</div>
-                <div class="game-players">2-4 Players</div>
-                <div class="game-status status-classic">CLASSIC</div>
-            </div>
 
             <!-- GO FISH -->
             <div class="game-card" onclick="selectGame('go-fish')">
@@ -273,34 +247,25 @@
             // Navigate to the appropriate game
             switch(gameType) {
                 case 'truco':
-                    window.location.href = 'index.html';
+                    window.location.href = '/truco';
                     break;
                 case 'poker':
-                    window.location.href = 'poker.html';
+                    window.location.href = '/poker';
                     break;
                 case 'blackjack':
-                    window.location.href = 'blackjack.html';
+                    window.location.href = '/blackjack';
                     break;
                 case 'hearts':
-                    window.location.href = 'hearts.html';
-                    break;
-                case 'spades':
-                    window.location.href = 'spades.html';
-                    break;
-                case 'euchre':
-                    window.location.href = 'euchre.html';
-                    break;
-                case 'gin-rummy':
-                    window.location.href = 'gin-rummy.html';
+                    window.location.href = '/hearts';
                     break;
                 case 'go-fish':
-                    window.location.href = 'go-fish.html';
+                    window.location.href = '/go-fish';
                     break;
                 case 'war':
-                    window.location.href = 'war.html';
+                    window.location.href = '/war';
                     break;
                 case 'crazy-eights':
-                    window.location.href = 'crazy-eights.html';
+                    window.location.href = '/crazy-eights';
                     break;
                 default:
                     console.error('Unknown game type:', gameType);

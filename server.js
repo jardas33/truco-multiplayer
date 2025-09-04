@@ -25,9 +25,33 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/main-menu.html');
 });
 
-// Truco game route
+// Game routes
 app.get('/truco', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
+});
+
+app.get('/poker', (req, res) => {
+    res.sendFile(__dirname + '/public/poker.html');
+});
+
+app.get('/blackjack', (req, res) => {
+    res.sendFile(__dirname + '/public/blackjack.html');
+});
+
+app.get('/hearts', (req, res) => {
+    res.sendFile(__dirname + '/public/hearts.html');
+});
+
+app.get('/go-fish', (req, res) => {
+    res.sendFile(__dirname + '/public/go-fish.html');
+});
+
+app.get('/war', (req, res) => {
+    res.sendFile(__dirname + '/public/war.html');
+});
+
+app.get('/crazy-eights', (req, res) => {
+    res.sendFile(__dirname + '/public/crazy-eights.html');
 });
 
 // Socket.IO connection handling
