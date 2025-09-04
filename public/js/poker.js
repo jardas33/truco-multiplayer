@@ -897,6 +897,30 @@ class PokerClient {
             startGameBtn.disabled = false;
             console.log('✅ Start Game button shown and styled orange');
         }
+        
+        // Force button colors with a delay to override any CSS
+        setTimeout(() => {
+            if (addBotBtn) {
+                addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
+                addBotBtn.style.setProperty('color', 'white', 'important');
+                addBotBtn.style.setProperty('border', 'none', 'important');
+                console.log('🔄 Add Bot button color forced to green');
+            }
+            
+            if (removeBotBtn) {
+                removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
+                removeBotBtn.style.setProperty('color', 'white', 'important');
+                removeBotBtn.style.setProperty('border', 'none', 'important');
+                console.log('🔄 Remove Bot button color forced to red');
+            }
+            
+            if (startGameBtn) {
+                startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
+                startGameBtn.style.setProperty('color', 'white', 'important');
+                startGameBtn.style.setProperty('border', 'none', 'important');
+                console.log('🔄 Start Game button color forced to orange');
+            }
+        }, 100);
     }
 
     // Copy room code

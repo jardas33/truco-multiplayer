@@ -243,38 +243,44 @@
             display: none !important;
         }
 
-        /* Standardize button colors to match Truco exactly - Higher specificity */
-        .room-controls #addBotBtn {
+        /* AGGRESSIVE button color overrides - Maximum specificity */
+        #addBotBtn {
             background-color: #4CAF50 !important; /* Green for add */
             color: white !important;
             border: none !important;
+            background: #4CAF50 !important;
         }
 
-        .room-controls #addBotBtn:hover {
+        #addBotBtn:hover {
             background-color: #45a049 !important;
+            background: #45a049 !important;
         }
 
-        .room-controls #startGameBtn {
+        #startGameBtn {
             background-color: #FF9800 !important; /* Orange for start */
             color: white !important;
             border: none !important;
+            background: #FF9800 !important;
         }
 
-        .room-controls #startGameBtn:hover {
+        #startGameBtn:hover {
             background-color: #F57C00 !important;
+            background: #F57C00 !important;
         }
 
-        .room-controls #removeBotBtn {
+        #removeBotBtn {
             background-color: #f44336 !important; /* Red for remove */
             color: white !important;
             border: none !important;
+            background: #f44336 !important;
         }
 
-        .room-controls #removeBotBtn:hover {
+        #removeBotBtn:hover {
             background-color: #da190b !important;
+            background: #da190b !important;
         }
 
-        .room-controls #backToMainMenuBtn {
+        #backToMainMenuBtn {
             background-color: #2196F3 !important; /* Blue for navigation */
             color: white !important;
             border: none !important;
@@ -290,11 +296,10 @@
             ← Back to Main Menu
           </button>
           
-          <input type="text" id="roomInput" placeholder="Room Code" />
           <button id="createRoomBtn">Create Room</button>
           <button id="joinRoomBtn">Join Room</button>
           
-          <!-- Room Code Display with Copy Button Next to Yellow Box -->
+          <!-- Room Code Display with Copy Button -->
                 <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
                   <div style="margin: 5px 0; font-size: 16px; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <div id="roomCodeText" style="background-color: #FFD700; color: black; font-family: monospace; font-size: 18px; padding: 8px 12px; border-radius: 4px; font-weight: bold;"></div>

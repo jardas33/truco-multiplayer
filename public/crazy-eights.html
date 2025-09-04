@@ -362,38 +362,44 @@
             display: none !important;
         }
 
-        /* Standardize button colors to match Truco exactly */
-        .room-controls #addBotBtn {
+        /* AGGRESSIVE button color overrides - Maximum specificity */
+        #addBotBtn {
             background-color: #4CAF50 !important; /* Green for add */
             color: white !important;
             border: none !important;
+            background: #4CAF50 !important;
         }
 
-        .room-controls #addBotBtn:hover {
+        #addBotBtn:hover {
             background-color: #45a049 !important;
+            background: #45a049 !important;
         }
 
-        .room-controls #startGameBtn {
+        #startGameBtn {
             background-color: #FF9800 !important; /* Orange for start */
             color: white !important;
             border: none !important;
+            background: #FF9800 !important;
         }
 
-        .room-controls #startGameBtn:hover {
+        #startGameBtn:hover {
             background-color: #F57C00 !important;
+            background: #F57C00 !important;
         }
 
-        .room-controls #removeBotBtn {
+        #removeBotBtn {
             background-color: #f44336 !important; /* Red for remove */
             color: white !important;
             border: none !important;
+            background: #f44336 !important;
         }
 
-        .room-controls #removeBotBtn:hover {
+        #removeBotBtn:hover {
             background-color: #da190b !important;
+            background: #da190b !important;
         }
 
-        .room-controls #backToMainMenuBtn {
+        #backToMainMenuBtn {
             background-color: #2196F3 !important; /* Blue for navigation */
             color: white !important;
             border: none !important;
@@ -409,7 +415,6 @@
             ← Back to Main Menu
           </button>
           
-          <input type="text" id="roomInput" placeholder="Room Code" />
           <button id="createRoomBtn">Create Room</button>
           <button id="joinRoomBtn">Join Room</button>
           
