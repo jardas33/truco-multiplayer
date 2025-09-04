@@ -914,6 +914,155 @@ class HeartsClient {
     }
 }
 
+// 🎨 HEARTS RENDERING FUNCTIONS
+function drawGameState() {
+    if (!window.game || !window.game.players) {
+        console.log('🎨 Hearts: No game or players available for rendering');
+        return;
+    }
+    
+    console.log('🎨 Drawing Hearts game state');
+    
+    // Clear canvas with hearts theme background
+    background(100, 0, 50); // Dark red/pink
+    
+    // Draw game elements
+    drawHeartsTable();
+    drawPlayers();
+    drawTrick();
+    drawGameInfo();
+}
+
+function drawHeartsTable() {
+    // Draw table outline
+    stroke(150, 0, 75);
+    strokeWeight(8);
+    noFill();
+    rect(50, 50, width - 100, height - 100, 20);
+    
+    // Draw table surface
+    fill(120, 0, 60, 100);
+    noStroke();
+    rect(60, 60, width - 120, height - 120, 15);
+}
+
+function drawPlayers() {
+    if (!window.game.players) return;
+    
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = Math.min(width, height) * 0.3;
+    
+    window.game.players.forEach((player, index) => {
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const x = centerX + cos(angle) * radius;
+        const y = centerY + sin(angle) * radius;
+        
+        // Draw player area
+        fill(0, 0, 0, 150);
+        stroke(255);
+        strokeWeight(2);
+        ellipse(x, y, 120, 80);
+        
+        // Draw player name
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(player.name, x, y - 20);
+        
+        // Draw player score
+        textSize(10);
+        text(`Score: ${player.score || 0}`, x, y);
+        
+        // Draw cards count
+        text(`Cards: ${player.hand ? player.hand.length : 0}`, x, y + 15);
+        
+        // Highlight current player
+        if (index === window.game.currentPlayer) {
+            stroke(255, 255, 0);
+            strokeWeight(4);
+            noFill();
+            ellipse(x, y, 130, 90);
+        }
+    });
+}
+
+function drawTrick() {
+    if (!window.game.currentTrick && (!window.game.playedCards || window.game.playedCards.length === 0)) {
+        return;
+    }
+    
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    // Draw trick area
+    fill(0, 0, 0, 150);
+    stroke(255);
+    strokeWeight(2);
+    rect(centerX - 150, centerY - 50, 300, 100, 10);
+    
+    // Draw trick label
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text('Current Trick', centerX, centerY - 30);
+    
+    // Draw cards in trick
+    const cards = window.game.currentTrick || window.game.playedCards || [];
+    if (cards.length > 0) {
+        drawTrickCards(centerX, centerY + 10, cards);
+    } else {
+        textSize(12);
+        text('No cards played yet', centerX, centerY + 10);
+    }
+}
+
+function drawTrickCards(centerX, centerY, cards) {
+    const cardWidth = 40;
+    const cardHeight = 56;
+    const spacing = 10;
+    const totalWidth = (cards.length - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    cards.forEach((cardData, index) => {
+        const x = startX + index * (cardWidth + spacing);
+        const y = centerY - cardHeight / 2;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(x, y, cardWidth, cardHeight, 5);
+        
+        // Draw card content
+        if (cardData.card && cardData.card.name) {
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text(cardData.card.name, x + cardWidth/2, y + cardHeight/2);
+        }
+    });
+}
+
+function drawGameInfo() {
+    // Draw game phase
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text(`Phase: ${window.game.gamePhase || 'playing'}`, 20, 20);
+    
+    // Draw current player info
+    if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
+        const currentPlayer = window.game.players[window.game.currentPlayer];
+        text(`Current Player: ${currentPlayer.name}`, 20, 40);
+    }
+    
+    // Draw round info
+    if (window.game.roundNumber) {
+        text(`Round: ${window.game.roundNumber}`, 20, 60);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.heartsClient = new HeartsClient();

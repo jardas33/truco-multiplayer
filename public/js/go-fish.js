@@ -730,6 +730,206 @@ class GoFishClient {
     }
 }
 
+// 🎨 GO FISH RENDERING FUNCTIONS
+function drawGameState() {
+    if (!window.game || !window.game.players) {
+        console.log('🎨 Go Fish: No game or players available for rendering');
+        return;
+    }
+    
+    console.log('🎨 Drawing Go Fish game state');
+    
+    // Clear canvas with ocean-like background
+    background(0, 50, 100); // Dark blue ocean
+    
+    // Draw game elements
+    drawGoFishTable();
+    drawPlayers();
+    drawPond();
+    drawGameInfo();
+}
+
+function drawGoFishTable() {
+    // Draw table outline
+    stroke(0, 100, 150);
+    strokeWeight(8);
+    noFill();
+    rect(50, 50, width - 100, height - 100, 20);
+    
+    // Draw table surface
+    fill(0, 80, 120, 100);
+    noStroke();
+    rect(60, 60, width - 120, height - 120, 15);
+}
+
+function drawPlayers() {
+    if (!window.game.players) return;
+    
+    const playerY = height * 0.2;
+    const playerWidth = 150;
+    const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
+    
+    window.game.players.forEach((player, index) => {
+        const playerX = spacing + index * (playerWidth + spacing);
+        
+        // Draw player area
+        fill(0, 0, 0, 150);
+        stroke(255);
+        strokeWeight(2);
+        rect(playerX, playerY - 40, playerWidth, 80, 10);
+        
+        // Highlight current player
+        if (index === window.game.currentPlayer) {
+            stroke(255, 255, 0);
+            strokeWeight(4);
+            noFill();
+            rect(playerX - 5, playerY - 45, playerWidth + 10, 90, 15);
+        }
+        
+        // Draw player name
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(player.name, playerX + playerWidth/2, playerY - 20);
+        
+        // Draw cards count
+        textSize(10);
+        text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY);
+        
+        // Draw sets count
+        text(`Sets: ${player.sets ? player.sets.length : 0}`, playerX + playerWidth/2, playerY + 15);
+        
+        // Draw player cards (small representation)
+        if (player.hand && player.hand.length > 0) {
+            drawPlayerCards(playerX + playerWidth/2, playerY + 30, player.hand, 20, 28);
+        }
+    });
+}
+
+function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight) {
+    if (!cards || cards.length === 0) return;
+    
+    const maxCards = 8; // Show max 8 cards
+    const cardsToShow = cards.slice(0, maxCards);
+    const spacing = 5;
+    const totalWidth = (cardsToShow.length - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    cardsToShow.forEach((card, index) => {
+        const x = startX + index * (cardWidth + spacing);
+        const y = centerY - cardHeight / 2;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(1);
+        rect(x, y, cardWidth, cardHeight, 3);
+        
+        // Draw card content
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(6);
+        text(card.name, x + cardWidth/2, y + cardHeight/2);
+    });
+    
+    // Show "+X more" if there are more cards
+    if (cards.length > maxCards) {
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(8);
+        text(`+${cards.length - maxCards}`, centerX, centerY + 20);
+    }
+}
+
+function drawPond() {
+    const centerX = width / 2;
+    const pondY = height * 0.6;
+    
+    // Draw pond area
+    fill(0, 0, 0, 150);
+    stroke(255);
+    strokeWeight(2);
+    rect(centerX - 200, pondY - 50, 400, 100, 10);
+    
+    // Draw pond label
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text('Pond', centerX, pondY - 30);
+    
+    // Draw cards in pond
+    if (window.game.pond && window.game.pond.length > 0) {
+        drawCards(centerX, pondY + 10, window.game.pond, 40, 56, false);
+    } else {
+        textSize(12);
+        text('No cards in pond', centerX, pondY + 10);
+    }
+}
+
+function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
+    if (!cards || cards.length === 0) return;
+    
+    const spacing = 10;
+    const maxVisible = Math.min(cards.length, 5);
+    const totalWidth = (maxVisible - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    for (let i = 0; i < maxVisible; i++) {
+        const x = startX + i * (cardWidth + spacing);
+        const y = centerY - cardHeight / 2;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(x, y, cardWidth, cardHeight, 5);
+        
+        if (showCards && cards[i].name) {
+            // Draw card content
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text(cards[i].name, x + cardWidth/2, y + cardHeight/2);
+        } else {
+            // Draw card back
+            fill(0, 0, 150);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text('?', x + cardWidth/2, y + cardHeight/2);
+        }
+    }
+    
+    // Show count if more than 5 cards
+    if (cards.length > 5) {
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(`+${cards.length - 5}`, centerX, centerY + 40);
+    }
+}
+
+function drawGameInfo() {
+    // Draw game phase
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text(`Phase: ${window.game.gamePhase || 'playing'}`, 20, 20);
+    
+    // Draw current player info
+    if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
+        const currentPlayer = window.game.players[window.game.currentPlayer];
+        text(`Current Player: ${currentPlayer.name}`, 20, 40);
+    }
+    
+    // Draw winner if game is over
+    if (window.game.gameOver && window.game.winner) {
+        fill(255, 255, 0);
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        text(`Winner: ${window.game.winner.name}!`, width/2, height/2);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();

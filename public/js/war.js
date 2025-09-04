@@ -772,6 +772,188 @@ class WarClient {
     }
 }
 
+// 🎨 WAR RENDERING FUNCTIONS
+function drawGameState() {
+    if (!window.game || !window.game.players) {
+        console.log('🎨 War: No game or players available for rendering');
+        return;
+    }
+    
+    console.log('🎨 Drawing War game state');
+    
+    // Clear canvas with war theme background
+    background(50, 50, 0); // Dark yellow/brown
+    
+    // Draw game elements
+    drawWarTable();
+    drawPlayers();
+    drawBattlefield();
+    drawGameInfo();
+}
+
+function drawWarTable() {
+    // Draw table outline
+    stroke(100, 100, 0);
+    strokeWeight(8);
+    noFill();
+    rect(50, 50, width - 100, height - 100, 20);
+    
+    // Draw table surface
+    fill(80, 80, 0, 100);
+    noStroke();
+    rect(60, 60, width - 120, height - 120, 15);
+}
+
+function drawPlayers() {
+    if (!window.game.players) return;
+    
+    const playerY = height * 0.2;
+    const playerWidth = 200;
+    const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
+    
+    window.game.players.forEach((player, index) => {
+        const playerX = spacing + index * (playerWidth + spacing);
+        
+        // Draw player area
+        fill(0, 0, 0, 150);
+        stroke(255);
+        strokeWeight(2);
+        rect(playerX, playerY - 60, playerWidth, 120, 10);
+        
+        // Highlight current player
+        if (index === window.game.currentPlayer) {
+            stroke(255, 255, 0);
+            strokeWeight(4);
+            noFill();
+            rect(playerX - 5, playerY - 65, playerWidth + 10, 130, 15);
+        }
+        
+        // Draw player name
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(14);
+        text(player.name, playerX + playerWidth/2, playerY - 40);
+        
+        // Draw cards count
+        textSize(12);
+        text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY - 20);
+        
+        // Draw player cards (small representation)
+        if (player.hand && player.hand.length > 0) {
+            drawPlayerCards(playerX + playerWidth/2, playerY + 10, player.hand, 30, 42);
+        }
+    });
+}
+
+function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight) {
+    if (!cards || cards.length === 0) return;
+    
+    const maxCards = 6; // Show max 6 cards
+    const cardsToShow = cards.slice(0, maxCards);
+    const spacing = 5;
+    const totalWidth = (cardsToShow.length - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    cardsToShow.forEach((card, index) => {
+        const x = startX + index * (cardWidth + spacing);
+        const y = centerY - cardHeight / 2;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(1);
+        rect(x, y, cardWidth, cardHeight, 3);
+        
+        // Draw card content
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(6);
+        text(card.name, x + cardWidth/2, y + cardHeight/2);
+    });
+    
+    // Show "+X more" if there are more cards
+    if (cards.length > maxCards) {
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(8);
+        text(`+${cards.length - maxCards}`, centerX, centerY + 25);
+    }
+}
+
+function drawBattlefield() {
+    const centerX = width / 2;
+    const battlefieldY = height * 0.6;
+    
+    // Draw battlefield area
+    fill(0, 0, 0, 150);
+    stroke(255);
+    strokeWeight(2);
+    rect(centerX - 200, battlefieldY - 50, 400, 100, 10);
+    
+    // Draw battlefield label
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text('Battlefield', centerX, battlefieldY - 30);
+    
+    // Draw cards in battle
+    if (window.game.battleCards && window.game.battleCards.length > 0) {
+        drawBattleCards(centerX, battlefieldY + 10, window.game.battleCards);
+    } else {
+        textSize(12);
+        text('No battle in progress', centerX, battlefieldY + 10);
+    }
+}
+
+function drawBattleCards(centerX, centerY, cards) {
+    const cardWidth = 50;
+    const cardHeight = 70;
+    const spacing = 20;
+    const totalWidth = (cards.length - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    cards.forEach((card, index) => {
+        const x = startX + index * (cardWidth + spacing);
+        const y = centerY - cardHeight / 2;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(x, y, cardWidth, cardHeight, 5);
+        
+        // Draw card content
+        if (card.name) {
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text(card.name, x + cardWidth/2, y + cardHeight/2);
+        }
+    });
+}
+
+function drawGameInfo() {
+    // Draw game phase
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text(`Phase: ${window.game.gamePhase || 'playing'}`, 20, 20);
+    
+    // Draw current player info
+    if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
+        const currentPlayer = window.game.players[window.game.currentPlayer];
+        text(`Current Player: ${currentPlayer.name}`, 20, 40);
+    }
+    
+    // Draw winner if game is over
+    if (window.game.gameOver && window.game.winner) {
+        fill(255, 255, 0);
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        text(`Winner: ${window.game.winner.name}!`, width/2, height/2);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.warClient = new WarClient();

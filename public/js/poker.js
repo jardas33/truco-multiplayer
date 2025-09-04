@@ -1173,6 +1173,193 @@ class PokerClient {
     }
 }
 
+// 🎨 POKER RENDERING FUNCTIONS
+function drawGameState() {
+    if (!window.game || !window.game.players) {
+        console.log('🎨 Poker: No game or players available for rendering');
+        return;
+    }
+    
+    console.log('🎨 Drawing poker game state');
+    
+    // Clear canvas with poker table background
+    background(0, 100, 0); // Dark green poker table
+    
+    // Draw poker table elements
+    drawPokerTable();
+    drawCommunityCards();
+    drawPlayers();
+    drawPot();
+    drawGameInfo();
+}
+
+function drawPokerTable() {
+    // Draw poker table outline
+    stroke(0, 150, 0);
+    strokeWeight(8);
+    noFill();
+    ellipse(width/2, height/2, width * 0.8, height * 0.6);
+    
+    // Draw table felt texture
+    fill(0, 80, 0, 100);
+    noStroke();
+    ellipse(width/2, height/2, width * 0.75, height * 0.55);
+}
+
+function drawCommunityCards() {
+    if (!window.game.communityCards || window.game.communityCards.length === 0) {
+        return;
+    }
+    
+    const centerX = width/2;
+    const centerY = height/2;
+    const cardWidth = 60;
+    const cardHeight = 84;
+    const spacing = 15;
+    
+    // Draw community cards in the center
+    fill(255);
+    stroke(0);
+    strokeWeight(2);
+    
+    const totalWidth = (window.game.communityCards.length - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    window.game.communityCards.forEach((card, index) => {
+        const x = startX + index * (cardWidth + spacing);
+        const y = centerY - cardHeight/2;
+        
+        // Draw card background
+        rect(x, y, cardWidth, cardHeight, 5);
+        
+        // Draw card content
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(10);
+        text(card.name, x + cardWidth/2, y + cardHeight/2);
+    });
+}
+
+function drawPlayers() {
+    if (!window.game.players) return;
+    
+    const centerX = width/2;
+    const centerY = height/2;
+    const radius = Math.min(width, height) * 0.3;
+    
+    window.game.players.forEach((player, index) => {
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const x = centerX + cos(angle) * radius;
+        const y = centerY + sin(angle) * radius;
+        
+        // Draw player area
+        fill(0, 0, 0, 150);
+        stroke(255);
+        strokeWeight(2);
+        ellipse(x, y, 120, 80);
+        
+        // Draw player name
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(player.name, x, y - 20);
+        
+        // Draw player chips
+        textSize(10);
+        text(`$${player.chips}`, x, y);
+        
+        // Draw player cards
+        if (player.hand && player.hand.length > 0) {
+            drawPlayerCards(x, y, player.hand, index === window.pokerClient?.localPlayerIndex);
+        }
+        
+        // Highlight current player
+        if (index === window.game.currentPlayer) {
+            stroke(255, 255, 0);
+            strokeWeight(4);
+            noFill();
+            ellipse(x, y, 130, 90);
+        }
+    });
+}
+
+function drawPlayerCards(x, y, hand, isLocalPlayer) {
+    const cardWidth = 30;
+    const cardHeight = 42;
+    const spacing = 5;
+    
+    hand.forEach((card, index) => {
+        const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
+        const cardY = y + 20;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(1);
+        rect(cardX, cardY, cardWidth, cardHeight, 3);
+        
+        // Draw card content (only show for local player or if revealed)
+        if (isLocalPlayer || card.isRevealed) {
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
+        } else {
+            // Draw card back
+            fill(0, 0, 150);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text('?', cardX + cardWidth/2, cardY + cardHeight/2);
+        }
+    });
+}
+
+function drawPot() {
+    if (window.game.pot > 0) {
+        fill(255, 215, 0); // Gold color
+        textAlign(CENTER, CENTER);
+        textSize(16);
+        text(`Pot: $${window.game.pot}`, width/2, height/2 + 100);
+    }
+}
+
+function drawGameInfo() {
+    // Draw game phase
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text(`Phase: ${window.game.gamePhase || 'preflop'}`, 20, 20);
+    
+    // Draw current bet
+    if (window.game.currentBet > 0) {
+        text(`Current Bet: $${window.game.currentBet}`, 20, 40);
+    }
+    
+    // Draw hand rankings on the right
+    drawHandRankings();
+}
+
+function drawHandRankings() {
+    const rankings = [
+        'Royal Flush', 'Straight Flush', 'Four of a Kind', 'Full House',
+        'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card'
+    ];
+    
+    const startX = width - 200;
+    const startY = 20;
+    
+    fill(255, 255, 0); // Yellow title
+    textAlign(LEFT, TOP);
+    textSize(16);
+    text('Hand Rankings', startX, startY);
+    
+    fill(255);
+    textSize(12);
+    rankings.forEach((ranking, index) => {
+        text(ranking, startX, startY + 25 + index * 15);
+    });
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.pokerClient = new PokerClient();

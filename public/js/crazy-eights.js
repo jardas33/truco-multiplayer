@@ -845,6 +845,184 @@ class CrazyEightsClient {
     }
 }
 
+// 🎨 CRAZY EIGHTS RENDERING FUNCTIONS
+function drawGameState() {
+    if (!window.game || !window.game.players) {
+        console.log('🎨 Crazy Eights: No game or players available for rendering');
+        return;
+    }
+    
+    console.log('🎨 Drawing Crazy Eights game state');
+    
+    // Clear canvas with crazy eights theme background
+    background(50, 0, 100); // Dark purple
+    
+    // Draw game elements
+    drawCrazyEightsTable();
+    drawPlayers();
+    drawDiscardPile();
+    drawDrawPile();
+    drawGameInfo();
+}
+
+function drawCrazyEightsTable() {
+    // Draw table outline
+    stroke(100, 0, 150);
+    strokeWeight(8);
+    noFill();
+    rect(50, 50, width - 100, height - 100, 20);
+    
+    // Draw table surface
+    fill(80, 0, 120, 100);
+    noStroke();
+    rect(60, 60, width - 120, height - 120, 15);
+}
+
+function drawPlayers() {
+    if (!window.game.players) return;
+    
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = Math.min(width, height) * 0.3;
+    
+    window.game.players.forEach((player, index) => {
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const x = centerX + cos(angle) * radius;
+        const y = centerY + sin(angle) * radius;
+        
+        // Draw player area
+        fill(0, 0, 0, 150);
+        stroke(255);
+        strokeWeight(2);
+        ellipse(x, y, 120, 80);
+        
+        // Draw player name
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(player.name, x, y - 20);
+        
+        // Draw cards count
+        textSize(10);
+        text(`Cards: ${player.hand ? player.hand.length : 0}`, x, y);
+        
+        // Highlight current player
+        if (index === window.game.currentPlayer) {
+            stroke(255, 255, 0);
+            strokeWeight(4);
+            noFill();
+            ellipse(x, y, 130, 90);
+        }
+    });
+}
+
+function drawDiscardPile() {
+    const centerX = width / 2;
+    const discardY = height * 0.4;
+    
+    // Draw discard pile area
+    fill(0, 0, 0, 150);
+    stroke(255);
+    strokeWeight(2);
+    rect(centerX - 100, discardY - 50, 200, 100, 10);
+    
+    // Draw discard pile label
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text('Discard Pile', centerX, discardY - 30);
+    
+    // Draw top card
+    if (window.game.discardPile && window.game.discardPile.length > 0) {
+        const topCard = window.game.discardPile[window.game.discardPile.length - 1];
+        drawCard(centerX, discardY + 10, topCard, 60, 84, true);
+    } else {
+        textSize(12);
+        text('No cards discarded', centerX, discardY + 10);
+    }
+}
+
+function drawDrawPile() {
+    const centerX = width / 2;
+    const drawY = height * 0.7;
+    
+    // Draw draw pile area
+    fill(0, 0, 0, 150);
+    stroke(255);
+    strokeWeight(2);
+    rect(centerX - 100, drawY - 50, 200, 100, 10);
+    
+    // Draw draw pile label
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text('Draw Pile', centerX, drawY - 30);
+    
+    // Draw cards count
+    if (window.game.drawPile && window.game.drawPile.length > 0) {
+        textSize(12);
+        text(`${window.game.drawPile.length} cards`, centerX, drawY + 10);
+        
+        // Draw card back representation
+        drawCard(centerX, drawY + 30, null, 40, 56, false);
+    } else {
+        textSize(12);
+        text('No cards left', centerX, drawY + 10);
+    }
+}
+
+function drawCard(centerX, centerY, card, cardWidth, cardHeight, showCard) {
+    const x = centerX - cardWidth / 2;
+    const y = centerY - cardHeight / 2;
+    
+    // Draw card
+    fill(255);
+    stroke(0);
+    strokeWeight(2);
+    rect(x, y, cardWidth, cardHeight, 5);
+    
+    if (showCard && card && card.name) {
+        // Draw card content
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(8);
+        text(card.name, centerX, centerY);
+    } else {
+        // Draw card back
+        fill(0, 0, 150);
+        textAlign(CENTER, CENTER);
+        textSize(8);
+        text('?', centerX, centerY);
+    }
+}
+
+function drawGameInfo() {
+    // Draw game phase
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text(`Phase: ${window.game.gamePhase || 'playing'}`, 20, 20);
+    
+    // Draw current player info
+    if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
+        const currentPlayer = window.game.players[window.game.currentPlayer];
+        text(`Current Player: ${currentPlayer.name}`, 20, 40);
+    }
+    
+    // Draw current suit if set
+    if (window.game.currentSuit) {
+        text(`Current Suit: ${window.game.currentSuit}`, 20, 60);
+    }
+    
+    // Draw winner if game is over
+    if (window.game.gameOver && window.game.winner) {
+        fill(255, 255, 0);
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        text(`Winner: ${window.game.winner.name}!`, width/2, height/2);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.crazyEightsClient = new CrazyEightsClient();

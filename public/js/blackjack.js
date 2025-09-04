@@ -991,6 +991,173 @@ class BlackjackClient {
     }
 }
 
+// 🎨 BLACKJACK RENDERING FUNCTIONS
+function drawGameState() {
+    if (!window.game || !window.game.players) {
+        console.log('🎨 Blackjack: No game or players available for rendering');
+        return;
+    }
+    
+    console.log('🎨 Drawing blackjack game state');
+    
+    // Clear canvas with blackjack table background
+    background(0, 100, 0); // Dark green table
+    
+    // Draw blackjack table elements
+    drawBlackjackTable();
+    drawDealerArea();
+    drawPlayerAreas();
+    drawGameInfo();
+}
+
+function drawBlackjackTable() {
+    // Draw table outline
+    stroke(0, 150, 0);
+    strokeWeight(8);
+    noFill();
+    rect(50, 50, width - 100, height - 100, 20);
+    
+    // Draw table felt
+    fill(0, 80, 0, 100);
+    noStroke();
+    rect(60, 60, width - 120, height - 120, 15);
+}
+
+function drawDealerArea() {
+    const centerX = width / 2;
+    const dealerY = height * 0.3;
+    
+    // Draw dealer area
+    fill(0, 0, 0, 150);
+    stroke(255);
+    strokeWeight(2);
+    rect(centerX - 150, dealerY - 50, 300, 100, 10);
+    
+    // Draw dealer label
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text('Dealer', centerX, dealerY - 30);
+    
+    // Draw dealer cards
+    if (window.game.dealer && window.game.dealer.hand) {
+        drawCards(centerX, dealerY + 10, window.game.dealer.hand, 60, 84, true);
+    }
+    
+    // Draw dealer value
+    if (window.game.dealer && window.game.dealer.value !== undefined) {
+        textSize(14);
+        text(`Value: ${window.game.dealer.value}`, centerX, dealerY + 50);
+    }
+}
+
+function drawPlayerAreas() {
+    if (!window.game.players) return;
+    
+    const playerY = height * 0.7;
+    const playerWidth = 200;
+    const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
+    
+    window.game.players.forEach((player, index) => {
+        const playerX = spacing + index * (playerWidth + spacing);
+        
+        // Draw player area
+        fill(0, 0, 0, 150);
+        stroke(255);
+        strokeWeight(2);
+        rect(playerX, playerY - 50, playerWidth, 100, 10);
+        
+        // Highlight current player
+        if (index === window.game.currentPlayer) {
+            stroke(255, 255, 0);
+            strokeWeight(4);
+            noFill();
+            rect(playerX - 5, playerY - 55, playerWidth + 10, 110, 15);
+        }
+        
+        // Draw player name
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(14);
+        text(player.name, playerX + playerWidth/2, playerY - 30);
+        
+        // Draw player chips
+        textSize(12);
+        text(`Chips: $${player.chips}`, playerX + playerWidth/2, playerY - 10);
+        
+        // Draw player bet
+        if (player.bet > 0) {
+            text(`Bet: $${player.bet}`, playerX + playerWidth/2, playerY + 10);
+        }
+        
+        // Draw player cards
+        if (player.hand && player.hand.length > 0) {
+            drawCards(playerX + playerWidth/2, playerY + 30, player.hand, 40, 56, true);
+        }
+        
+        // Draw player value
+        if (player.value !== undefined) {
+            textSize(12);
+            text(`Value: ${player.value}`, playerX + playerWidth/2, playerY + 50);
+        }
+        
+        // Draw player status
+        if (player.isBusted) {
+            fill(255, 0, 0);
+            text('BUSTED!', playerX + playerWidth/2, playerY + 70);
+        } else if (player.hasBlackjack) {
+            fill(0, 255, 0);
+            text('BLACKJACK!', playerX + playerWidth/2, playerY + 70);
+        }
+    });
+}
+
+function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
+    if (!cards || cards.length === 0) return;
+    
+    const spacing = 10;
+    const totalWidth = (cards.length - 1) * (cardWidth + spacing);
+    const startX = centerX - totalWidth / 2;
+    
+    cards.forEach((card, index) => {
+        const x = startX + index * (cardWidth + spacing);
+        const y = centerY - cardHeight / 2;
+        
+        // Draw card
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(x, y, cardWidth, cardHeight, 5);
+        
+        if (showCards && card.name) {
+            // Draw card content
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text(card.name, x + cardWidth/2, y + cardHeight/2);
+        } else {
+            // Draw card back
+            fill(0, 0, 150);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text('?', x + cardWidth/2, y + cardHeight/2);
+        }
+    });
+}
+
+function drawGameInfo() {
+    // Draw game phase
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text(`Phase: ${window.game.gamePhase || 'betting'}`, 20, 20);
+    
+    // Draw round number
+    if (window.game.roundNumber) {
+        text(`Round: ${window.game.roundNumber}`, 20, 40);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.blackjackClient = new BlackjackClient();
