@@ -682,6 +682,13 @@ class WarClient {
             startGameBtn.disabled = false;
             console.log('✅ Start Game button shown and styled orange');
         }
+        
+        // Show game menu button
+        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        if (gameMenuBtn) {
+            gameMenuBtn.style.display = 'inline-block';
+            console.log('✅ Game Menu button shown');
+        }
     }
 
     // Copy room code

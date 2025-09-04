@@ -898,6 +898,13 @@ class PokerClient {
             console.log('✅ Start Game button shown and styled orange');
         }
         
+        // Show game menu button
+        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        if (gameMenuBtn) {
+            gameMenuBtn.style.display = 'inline-block';
+            console.log('✅ Game Menu button shown');
+        }
+        
         // Force button colors with a delay to override any CSS
         setTimeout(() => {
             if (addBotBtn) {
