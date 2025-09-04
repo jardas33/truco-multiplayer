@@ -680,7 +680,123 @@ function showInstructions() {
             instructions = 'Instructions for this game are not available yet.';
     }
     
-    alert(instructions);
+    showCustomInstructionsPopup(instructions);
+}
+
+function showCustomInstructionsPopup(instructions) {
+    // Remove any existing instructions popup
+    const existingPopup = document.getElementById('customInstructionsPopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    // Create popup container
+    const popupContainer = document.createElement('div');
+    popupContainer.id = 'customInstructionsPopup';
+    popupContainer.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+        z-index: 10000;
+        font-family: 'Arial', sans-serif;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 3px solid #FFD700;
+        animation: fadeInScale 0.3s ease-out;
+    `;
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Create title
+    const title = document.createElement('div');
+    title.textContent = '📖 Game Instructions';
+    title.style.cssText = `
+        font-size: 24px;
+        font-weight: bold;
+        color: #FFD700;
+        text-align: center;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    `;
+    
+    // Create content area
+    const content = document.createElement('div');
+    content.style.cssText = `
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-line;
+        margin-bottom: 20px;
+    `;
+    content.textContent = instructions;
+    
+    // Create close button
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Close';
+    closeButton.style.cssText = `
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        display: block;
+        margin: 0 auto;
+    `;
+    
+    // Add hover effect
+    closeButton.addEventListener('mouseenter', () => {
+        closeButton.style.transform = 'scale(1.05)';
+        closeButton.style.boxShadow = '0 8px 20px rgba(0,0,0,0.4)';
+    });
+    closeButton.addEventListener('mouseleave', () => {
+        closeButton.style.transform = 'scale(1)';
+        closeButton.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+    });
+    
+    // Close popup when button is clicked
+    closeButton.addEventListener('click', () => {
+        popupContainer.remove();
+        style.remove();
+    });
+    
+    // Close popup when clicking outside
+    popupContainer.addEventListener('click', (e) => {
+        if (e.target === popupContainer) {
+            popupContainer.remove();
+            style.remove();
+        }
+    });
+    
+    // Assemble popup
+    popupContainer.appendChild(title);
+    popupContainer.appendChild(content);
+    popupContainer.appendChild(closeButton);
+    document.body.appendChild(popupContainer);
 }
 
 function closeInstructions() {
@@ -690,8 +806,39 @@ function closeInstructions() {
 
 function showCardValues() {
     console.log('🃏 Card values button clicked');
-    // For new games, just show an alert since they don't have Values div
-    alert('Card Values:\n\nThis is a placeholder for card values.\n\nEach game will have its own card value system.');
+    
+    const currentGame = window.location.pathname;
+    
+    // Only show card values for Truco game
+    if (currentGame === '/truco' || currentGame === '/') {
+        const cardValues = `TRUCO CARD VALUES:
+
+🃏 CARD HIERARCHY (High to Low):
+
+• MANILHAS (Highest):
+  - 4 of Clubs (Zap)
+  - 7 of Hearts (Copas) 
+  - Ace of Spades (Espadilha)
+  - 7 of Diamonds (Ouros)
+
+• REGULAR CARDS:
+  - King, Queen, Jack, 10, 9, 8, 6, 5, 4, 3, 2
+
+🎯 SPECIAL RULES:
+• Manilhas always beat regular cards
+• Among manilhas, the order is: Zap > Copas > Espadilha > Ouros
+• Among regular cards, higher rank beats lower rank
+• Suit doesn't matter for regular cards, only rank`;
+        
+        showCustomInstructionsPopup(cardValues);
+    } else {
+        // For other games, just show a message that card values are in instructions
+        showCustomInstructionsPopup(`CARD VALUES:
+
+This game doesn't have a separate card values system.
+
+Please check the game instructions for specific card values and rules.`);
+    }
 }
 
 function closeCardValues() {
