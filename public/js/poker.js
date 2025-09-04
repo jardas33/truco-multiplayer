@@ -85,8 +85,17 @@ class PokerGame {
 
     // Post small and big blinds
     postBlinds() {
+        console.log('🎯 Posting blinds - players:', this.players);
+        console.log('🎯 Players length:', this.players?.length);
+        console.log('🎯 Dealer position:', this.dealerPosition);
+        
         const smallBlindPos = (this.dealerPosition + 1) % this.players.length;
         const bigBlindPos = (this.dealerPosition + 2) % this.players.length;
+        
+        console.log('🎯 Small blind position:', smallBlindPos);
+        console.log('🎯 Big blind position:', bigBlindPos);
+        console.log('🎯 Small blind player:', this.players[smallBlindPos]);
+        console.log('🎯 Big blind player:', this.players[bigBlindPos]);
         
         // Post small blind
         this.players[smallBlindPos].chips -= this.smallBlind;
@@ -726,10 +735,19 @@ class PokerClient {
 
     // Start game
     startGame(data = null) {
-        if (data) {
+        console.log('🎮 Starting game with data:', data);
+        console.log('🎮 Current game players:', this.game.players);
+        
+        if (data && data.players) {
+            console.log('🎮 Initializing game with players:', data.players);
             this.game.initialize(data.players);
             this.localPlayerIndex = data.localPlayerIndex;
+        } else {
+            console.log('⚠️ No player data provided, using existing players');
         }
+        
+        console.log('🎮 Final game players before startNewHand:', this.game.players);
+        console.log('🎮 Players length:', this.game.players?.length);
         
         UIUtils.showGame();
         this.game.startNewHand();
