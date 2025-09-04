@@ -194,20 +194,6 @@ class SocketManager {
         });
     }
     
-    static createRoom(gameType) {
-        const socket = window.gameFramework.socket;
-        if (!socket) {
-            console.error('❌ Socket not available for createRoom');
-            return;
-        }
-        console.log('🎮 Creating room for game type:', gameType);
-        socket.emit('createRoom', { gameType: gameType });
-    }
-    
-    static joinRoom(roomCode) {
-        const socket = window.gameFramework.socket;
-        socket.emit('joinRoom', { roomCode: roomCode });
-    }
     
     static leaveRoom() {
         const socket = window.gameFramework.socket;
@@ -466,6 +452,26 @@ class GameFramework {
         if (window.cardBackImage) {
             window.gameFramework.cardBackImage = window.cardBackImage;
         }
+    }
+    
+    static createRoom(gameType) {
+        const socket = window.gameFramework.socket;
+        if (!socket) {
+            console.error('❌ Socket not available for createRoom');
+            return;
+        }
+        console.log('🎮 Creating room for game type:', gameType);
+        socket.emit('createRoom', { gameType: gameType });
+    }
+    
+    static joinRoom(roomCode) {
+        const socket = window.gameFramework.socket;
+        if (!socket) {
+            console.error('❌ Socket not available for joinRoom');
+            return;
+        }
+        console.log('🎮 Joining room:', roomCode);
+        socket.emit('joinRoom', { roomCode: roomCode });
     }
     
     static setupCommonUI() {

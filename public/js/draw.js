@@ -58,8 +58,8 @@ function draw() {
     if (gameState === gameStateEnum.Menu) {
         menuDiv.show();
         gameDiv.hide();
-        instructionsDiv.hide();
-        valuesDiv.hide();
+        if (instructionsDiv) instructionsDiv.hide();
+        if (valuesDiv) valuesDiv.hide();
         if (instructionsCloseButton) {
             instructionsCloseButton.remove();
         }
