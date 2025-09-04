@@ -109,30 +109,35 @@ function setup() {
     backToMainMenuButton.parent(gameDiv);
     backToMainMenuButton.hide();
 
-    trucoButton = createButton("TRUCO");
-    trucoButton.position(width/2 - 95, height/2 + 160); // Moved 5px more to the left
-    trucoButton.mousePressed(truco);
-    trucoButton.parent(gameDiv);
-    trucoButton.style('z-index', '200'); // Ensure it's above everything
-    trucoButton.style('position', 'absolute'); // Force absolute positioning
-    trucoButton.style('font-size', '30px !important'); // 15% smaller font size (35 * 0.85)
-    trucoButton.style('padding', '30px 60px !important'); // 15% smaller padding (35*0.85, 70*0.85)
-    trucoButton.style('background', '#dc3545 !important'); // Force bright red background
-    trucoButton.style('background-color', '#dc3545 !important'); // Force bright red background
-    trucoButton.style('color', 'white !important'); // Force white text
-    trucoButton.style('border', '3px solid #fff !important'); // 15% smaller border thickness (4 * 0.85)
-    trucoButton.style('border-radius', '17px !important'); // 15% smaller rounded corners (20 * 0.85)
-    trucoButton.style('font-weight', 'bold !important'); // Bold text
-    trucoButton.style('box-shadow', '0 13px 26px rgba(0,0,0,0.7) !important'); // 15% smaller shadow (15*0.85, 30*0.85)
-    trucoButton.style('cursor', 'pointer !important'); // Pointer cursor
-    trucoButton.style('transition', 'all 0.3s ease !important'); // Smooth transitions
-    trucoButton.style('transform', 'scale(0.51) !important'); // 15% smaller scale (0.6 * 0.85)
-    trucoButton.hide();
+    // Only create Truco-specific elements for Truco game
+    const currentGame = window.location.pathname;
+    if (currentGame === '/truco' || currentGame === '/') {
+        trucoButton = createButton("TRUCO");
+        trucoButton.position(width/2 - 95, height/2 + 160); // Moved 5px more to the left
+        trucoButton.mousePressed(truco);
+        trucoButton.parent(gameDiv);
+        trucoButton.style('z-index', '200'); // Ensure it's above everything
+        trucoButton.style('position', 'absolute'); // Force absolute positioning
+        trucoButton.style('font-size', '30px !important'); // 15% smaller font size (35 * 0.85)
+        trucoButton.style('padding', '30px 60px !important'); // 15% smaller padding (35*0.85, 70*0.85)
+        trucoButton.style('background', '#dc3545 !important'); // Force bright red background
+        trucoButton.style('background-color', '#dc3545 !important'); // Force bright red background
+        trucoButton.style('color', 'white !important'); // Force white text
+        trucoButton.style('border', '3px solid #fff !important'); // 15% smaller border thickness (4 * 0.85)
+        trucoButton.style('border-radius', '17px !important'); // 15% smaller rounded corners (20 * 0.85)
+        trucoButton.style('font-weight', 'bold !important'); // Bold text
+        trucoButton.style('box-shadow', '0 13px 26px rgba(0,0,0,0.7) !important'); // 15% smaller shadow (15*0.85, 30*0.85)
+        trucoButton.style('cursor', 'pointer !important'); // Pointer cursor
+        trucoButton.style('transition', 'all 0.3s ease !important'); // Smooth transitions
+        trucoButton.style('transform', 'scale(0.51) !important'); // 15% smaller scale (0.6 * 0.85)
+        trucoButton.hide();
+    }
 
-    // Create truco response buttons with proper styling and positioning
-    buttonAcceptTruco = createButton("✅ ACCEPT TRUCO");
-    buttonRejectTruco = createButton("❌ REJECT TRUCO");
-    buttonRaiseTruco = createButton("📈 RAISE TRUCO");
+    // Create truco response buttons with proper styling and positioning (only for Truco game)
+    if (currentGame === '/truco' || currentGame === '/') {
+        buttonAcceptTruco = createButton("✅ ACCEPT TRUCO");
+        buttonRejectTruco = createButton("❌ REJECT TRUCO");
+        buttonRaiseTruco = createButton("📈 RAISE TRUCO");
 
     // Style Accept button (Green)
     buttonAcceptTruco.style('background-color', '#28a745');
@@ -173,15 +178,16 @@ function setup() {
     buttonRaiseTruco.style('position', 'absolute');
     buttonRaiseTruco.style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
 
-    // ✅ OLD TRUCO BUTTON HANDLERS REMOVED - Now handled by new UI system in lobby.js
+        // ✅ OLD TRUCO BUTTON HANDLERS REMOVED - Now handled by new UI system in lobby.js
 
-    buttonAcceptTruco.parent(gameDiv);
-    buttonRejectTruco.parent(gameDiv);
-    buttonRaiseTruco.parent(gameDiv);
+        buttonAcceptTruco.parent(gameDiv);
+        buttonRejectTruco.parent(gameDiv);
+        buttonRaiseTruco.parent(gameDiv);
 
-    buttonAcceptTruco.hide();
-    buttonRejectTruco.hide();
-    buttonRaiseTruco.hide();
+        buttonAcceptTruco.hide();
+        buttonRejectTruco.hide();
+        buttonRaiseTruco.hide();
+    }
 
     // Setup player positions with PERFECT 4-corner layout - FIXED positioning
     const scoringPanelHeight = 150; // Height of the scoring panel at top
