@@ -1060,39 +1060,45 @@ function drawGameState() {
         return;
     }
     
+    // Add frame limiting to prevent flashing
+    if (frameCount % 5 !== 0) {
+        return; // Only draw every 5th frame
+    }
+    
     // Reduced logging to prevent console spam
     if (frameCount % 120 === 0) {
         console.log('Drawing poker game state');
     }
     
-    // Draw background - use a more stable approach
+    // Draw background with card back pattern
     push();
-    
-    // First, clear with a solid background
-    background(0, 80, 0); // Dark green base
     
     // Try to draw card back pattern if available
     if (typeof cardImages !== 'undefined' && cardImages['cardBack'] && cardImages['cardBack'].width > 0) {
-        imageMode(CORNER);
-        const cardWidth = 80;
-        const cardHeight = 112;
-        const spacing = 10;
+        // Clear with dark green first
+        background(0, 80, 0);
         
-        // Draw a subtle tiled pattern
+        imageMode(CORNER);
+        const cardWidth = 100;
+        const cardHeight = 140;
+        const spacing = 15;
+        
+        // Draw a visible tiled pattern
         for (let x = 0; x < width + cardWidth; x += cardWidth + spacing) {
             for (let y = 0; y < height + cardHeight; y += cardHeight + spacing) {
                 push();
                 translate(x, y);
                 // Add slight rotation for texture
-                rotate(sin(x * 0.01) * 0.05);
-                tint(255, 20); // Very transparent
+                rotate(sin(x * 0.01) * 0.03);
+                tint(255, 60); // More visible
                 image(cardImages['cardBack'], 0, 0, cardWidth, cardHeight);
                 pop();
             }
         }
     } else {
-        // Draw a subtle stable pattern if card images aren't available
-        fill(0, 100, 0, 50);
+        // Fallback to solid background with pattern
+        background(0, 100, 0);
+        fill(0, 120, 0, 50);
         noStroke();
         for (let i = 0; i < 30; i++) {
             const x = (i * 80) % width;
@@ -1114,29 +1120,41 @@ function drawGameState() {
 function drawPokerTable() {
     // Draw poker table outline with better styling
     push();
-    stroke(0, 200, 0);
-    strokeWeight(12);
-    noFill();
-    ellipse(width/2, height/2, width * 0.85, height * 0.65);
     
-    // Draw inner table felt with gradient effect
-    fill(0, 120, 0, 150);
+    // Draw table rim (outermost)
+    fill(101, 67, 33); // Darker brown rim
     noStroke();
-    ellipse(width/2, height/2, width * 0.8, height * 0.6);
+    ellipse(width/2, height/2, width * 0.9, height * 0.7);
     
-    // Draw table rim
-    fill(139, 69, 19); // Brown rim
+    // Draw table edge
+    fill(139, 69, 19); // Brown edge
     noStroke();
     ellipse(width/2, height/2, width * 0.88, height * 0.68);
     
-    // Draw felt texture with stable pattern (no random to prevent flashing)
-    fill(0, 100, 0, 80);
+    // Draw main table felt
+    fill(0, 100, 0, 200);
     noStroke();
-    for (let i = 0; i < 15; i++) {
-        const x = width/2 + (i * 50 - 350) % width;
-        const y = height/2 + (i * 30 - 200) % height;
-        ellipse(x, y, 25, 25);
+    ellipse(width/2, height/2, width * 0.85, height * 0.65);
+    
+    // Draw inner table highlight
+    fill(0, 150, 0, 100);
+    noStroke();
+    ellipse(width/2, height/2, width * 0.8, height * 0.6);
+    
+    // Draw subtle felt texture pattern
+    fill(0, 120, 0, 60);
+    noStroke();
+    for (let i = 0; i < 20; i++) {
+        const x = width/2 + (i * 40 - 400) % (width * 0.7);
+        const y = height/2 + (i * 25 - 250) % (height * 0.5);
+        ellipse(x, y, 20, 20);
     }
+    
+    // Draw table center highlight
+    fill(0, 180, 0, 30);
+    noStroke();
+    ellipse(width/2, height/2, width * 0.3, height * 0.2);
+    
     pop();
 }
 
@@ -1249,32 +1267,32 @@ function drawPlayers() {
 }
 
 function drawPlayerCards(x, y, hand, isLocalPlayer) {
-    const cardWidth = 35;
-    const cardHeight = 49;
-    const spacing = 8;
+    const cardWidth = 45;
+    const cardHeight = 63;
+    const spacing = 10;
     
     hand.forEach((card, index) => {
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
-        const cardY = y + 25;
+        const cardY = y + 30;
         
         push();
         
         // Draw card shadow
-        fill(0, 0, 0, 50);
+        fill(0, 0, 0, 80);
         noStroke();
-        rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 4);
+        rect(cardX + 3, cardY + 3, cardWidth, cardHeight, 6);
         
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(2);
-        rect(cardX, cardY, cardWidth, cardHeight, 4);
+        strokeWeight(3);
+        rect(cardX, cardY, cardWidth, cardHeight, 6);
         
         // Draw card content (only show for local player or if revealed)
         if (isLocalPlayer || card.isRevealed) {
             fill(0);
             textAlign(CENTER, CENTER);
-            textSize(9);
+            textSize(11);
             textStyle(BOLD);
             text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
             
