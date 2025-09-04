@@ -451,6 +451,10 @@ class GameFramework {
         this.setupCommonUI();
         
         console.log('✅ Game framework initialized');
+        console.log('🔍 Debug - GameFramework class:', GameFramework);
+        console.log('🔍 Debug - GameFramework.createRoom:', GameFramework.createRoom);
+        console.log('🔍 Debug - window.gameFramework:', window.gameFramework);
+        console.log('🔍 Debug - window.gameFramework.socket:', window.gameFramework?.socket);
     }
     
     static loadCardImages() {

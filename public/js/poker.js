@@ -583,6 +583,13 @@ class PokerClient {
         this.setupSocketListeners();
         
         console.log('✅ Poker client initialized');
+        
+        // Test GameFramework availability immediately after initialization
+        setTimeout(() => {
+            console.log('🔍 Post-init test - GameFramework type:', typeof GameFramework);
+            console.log('🔍 Post-init test - GameFramework.createRoom:', GameFramework?.createRoom);
+            console.log('🔍 Post-init test - window.gameFramework.socket:', window.gameFramework?.socket);
+        }, 100);
     }
 
     // Setup UI event listeners

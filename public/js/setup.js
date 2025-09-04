@@ -294,7 +294,14 @@ function setup() {
     // Create close button for popup
     closeButton = createButton("Close");
     closeButton.parent(popup);
-    closeButton.mousePressed(closePopup);
+    closeButton.mousePressed(() => {
+        if (typeof closePopup === 'function') {
+            closePopup();
+        } else {
+            console.log('❌ Close popup clicked (fallback)');
+            popup.hide();
+        }
+    });
     closeButton.style('margin-top', '15px');
     closeButton.style('padding', '10px 20px');
     closeButton.style('background-color', '#ff4444');
