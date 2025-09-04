@@ -286,6 +286,18 @@
             border: none !important;
             margin-top: 20px;
         }
+
+        #gameMenuBtn {
+            background-color: #2196F3 !important; /* Blue for game menu */
+            color: white !important;
+            border: none !important;
+            background: #2196F3 !important;
+        }
+
+        #gameMenuBtn:hover {
+            background-color: #1976D2 !important;
+            background: #1976D2 !important;
+        }
     </style>
 </head>
 <body>
@@ -331,7 +343,7 @@
           <button id="addBotBtn" style="display: none;">Add Bot</button>
           <button id="removeBotBtn" style="display: none;">Remove Bot</button>
           <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
-          <button id="gameMenuBtn" style="display: none; background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 10px;">Poker Game Menu</button>
+          <button id="gameMenuBtn" onclick="window.location.replace('/');" style="display: none; background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 10px;">Poker Game Menu</button>
 
           <button id="backToMainMenuBtn" style="display: none;">← Back to Poker Menu</button>
           <div id="playerList"></div>
