@@ -1,4 +1,4 @@
-// SHARED GAME FRAMEWORK
+﻿// SHARED GAME FRAMEWORK
 // Common utilities and functions for all card games
 
 // Global game state

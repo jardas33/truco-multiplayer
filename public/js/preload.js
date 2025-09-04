@@ -1,4 +1,4 @@
-// Clean version of preload.js without emoji characters
+// Clean version of preload.js without emoji characters - loads only available 40 cards
 function preload() {
     console.log('Starting image preload...');
     
@@ -48,10 +48,11 @@ function preload() {
 
 function loadAllCardImages(baseUrl) {
     const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+    // Only load available cards: 2-7, J, Q, K, A (40 cards total)
+    const ranks = ['2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king', 'ace'];
     
     let loadedImages = 0;
-    const totalImages = suits.length * ranks.length;
+    const totalImages = suits.length * ranks.length; // 40 cards
     
     console.log('Image preload initiated for', totalImages, 'card images');
     
