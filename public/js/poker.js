@@ -141,7 +141,7 @@ class PokerGame {
     startBettingRound() {
         console.log(`🎯 Starting ${this.gamePhase} betting round`);
         
-        // Reset current bets for this round
+        // Reset current bets for this round (but preserve totalBet)
         this.players.forEach(player => {
             player.currentBet = 0;
         });
@@ -155,7 +155,7 @@ class PokerGame {
         }
         
         this.currentPlayer = startPos % this.players.length;
-        this.currentBet = 0;
+        // Don't reset currentBet to 0 - it should be the amount to call
         
         // Emit betting round started event
         this.emitEvent('bettingRoundStarted', {

@@ -30,6 +30,16 @@ class GoFishGame {
         this.winner = null;
         
         console.log('🐟 Go Fish game initialized with', this.players.length, 'players');
+        
+        // Set game state to Playing
+        if (typeof gameStateEnum !== 'undefined') {
+            gameState = gameStateEnum.Playing;
+            window.gameState = gameStateEnum.Playing;
+        }
+        
+        // Set global game instance
+        window.game = this;
+        
         this.startNewGame();
     }
 

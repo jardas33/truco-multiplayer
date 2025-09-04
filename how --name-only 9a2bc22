@@ -1,0 +1,34 @@
+[33mcommit 9a2bc22dc556e31b51d25e6f86bbc7ed54288bfb[m
+Author: Jardas33 <moreiraquim@gmail.com>
+Date:   Thu Sep 4 02:14:46 2025 -0400
+
+    MAJOR FIX: Complete Poker Game Implementation
+    
+    CRITICAL FIXES - Poker game is now fully playable:
+    
+    1. ADDED comprehensive bot AI for Poker:
+       - handleBotTurn() method for bot decision making
+       - botAction() with hand strength evaluation
+       - evaluateHand() for basic poker hand analysis
+       - Bots now make realistic decisions (fold, call, raise)
+    
+    2. IMPROVED visual feedback:
+       - Enhanced updatePlayerAreas() with real UI updates
+       - Added CSS for player status, bets, and active player highlighting
+       - Players now show chips, current bet, and status (Active/Folded/All In)
+       - Active player highlighting with gold border
+    
+    3. ENHANCED game flow:
+       - Bot AI automatically called on turn changes
+       - Proper turn management with bot integration
+       - Realistic timing delays for bot actions (1-3 seconds)
+    
+    4. FIXED game progression:
+       - Games now properly transition through betting rounds
+       - Bot turns are handled automatically
+       - Better visual feedback throughout the game
+    
+    The Poker game should now be fully functional with working bots, proper visual feedback, and complete game flow. All other games should also benefit from the server-side fixes.
+
+public/js/poker.js
+public/poker.html
