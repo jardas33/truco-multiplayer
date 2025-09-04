@@ -545,6 +545,11 @@ class PokerGame {
         }
     }
 
+    // Get current player
+    getCurrentPlayer() {
+        return this.players[this.currentPlayer];
+    }
+
     // Get game state for client
     getGameState() {
         return {
@@ -1048,14 +1053,43 @@ class PokerClient {
 // POKER RENDERING FUNCTIONS
 function drawGameState() {
     if (!window.game || !window.game.players) {
-        console.log('Poker: No game or players available for rendering');
+        // Reduced logging to prevent console spam
+        if (frameCount % 120 === 0) {
+            console.log('Poker: No game or players available for rendering');
+        }
         return;
     }
     
-    console.log('Drawing poker game state');
+    // Reduced logging to prevent console spam
+    if (frameCount % 120 === 0) {
+        console.log('Drawing poker game state');
+    }
     
-    // Clear canvas with poker table background
-    background(0, 100, 0); // Dark green poker table
+    // Draw background card image if available
+    if (typeof cardImages !== 'undefined' && cardImages['cardBack']) {
+        // Draw tiled background with card back image
+        push();
+        imageMode(CORNER);
+        const cardWidth = 60;
+        const cardHeight = 84;
+        const spacing = 5;
+        
+        for (let x = 0; x < width; x += cardWidth + spacing) {
+            for (let y = 0; y < height; y += cardHeight + spacing) {
+                // Add slight rotation and opacity for texture
+                push();
+                translate(x + cardWidth/2, y + cardHeight/2);
+                rotate(random(-0.1, 0.1));
+                tint(255, 30); // Very transparent
+                image(cardImages['cardBack'], -cardWidth/2, -cardHeight/2, cardWidth, cardHeight);
+                pop();
+            }
+        }
+        pop();
+    } else {
+        // Fallback to dark green poker table
+        background(0, 100, 0);
+    }
     
     // Draw poker table elements
     drawPokerTable();
@@ -1066,16 +1100,32 @@ function drawGameState() {
 }
 
 function drawPokerTable() {
-    // Draw poker table outline
-    stroke(0, 150, 0);
-    strokeWeight(8);
+    // Draw poker table outline with better styling
+    push();
+    stroke(0, 200, 0);
+    strokeWeight(12);
     noFill();
+    ellipse(width/2, height/2, width * 0.85, height * 0.65);
+    
+    // Draw inner table felt with gradient effect
+    fill(0, 120, 0, 150);
+    noStroke();
     ellipse(width/2, height/2, width * 0.8, height * 0.6);
     
-    // Draw table felt texture
-    fill(0, 80, 0, 100);
+    // Draw table rim
+    fill(139, 69, 19); // Brown rim
     noStroke();
-    ellipse(width/2, height/2, width * 0.75, height * 0.55);
+    ellipse(width/2, height/2, width * 0.88, height * 0.68);
+    
+    // Draw felt texture with subtle pattern
+    fill(0, 100, 0, 80);
+    noStroke();
+    for (let i = 0; i < 20; i++) {
+        const x = width/2 + random(-width * 0.3, width * 0.3);
+        const y = height/2 + random(-height * 0.2, height * 0.2);
+        ellipse(x, y, random(20, 40), random(20, 40));
+    }
+    pop();
 }
 
 function drawCommunityCards() {
@@ -1085,15 +1135,11 @@ function drawCommunityCards() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const cardWidth = 60;
-    const cardHeight = 84;
-    const spacing = 15;
+    const cardWidth = 70;
+    const cardHeight = 98;
+    const spacing = 20;
     
-    // Draw community cards in the center
-    fill(255);
-    stroke(0);
-    strokeWeight(2);
-    
+    // Draw community cards in the center with better styling
     const totalWidth = (window.game.communityCards.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -1101,14 +1147,30 @@ function drawCommunityCards() {
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight/2;
         
-        // Draw card background
-        rect(x, y, cardWidth, cardHeight, 5);
+        push();
+        // Draw card shadow
+        fill(0, 0, 0, 50);
+        noStroke();
+        rect(x + 3, y + 3, cardWidth, cardHeight, 8);
         
-        // Draw card content
+        // Draw card background
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(x, y, cardWidth, cardHeight, 8);
+        
+        // Draw card content with better styling
         fill(0);
         textAlign(CENTER, CENTER);
-        textSize(10);
+        textSize(12);
+        textStyle(BOLD);
         text(card.name, x + cardWidth/2, y + cardHeight/2);
+        
+        // Add subtle highlight
+        fill(255, 255, 255, 30);
+        noStroke();
+        rect(x, y, cardWidth, cardHeight/3, 8, 8, 0, 0);
+        pop();
     });
 }
 
@@ -1117,95 +1179,166 @@ function drawPlayers() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radius = Math.min(width, height) * 0.3;
+    const radius = Math.min(width, height) * 0.35;
     
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const x = centerX + cos(angle) * radius;
         const y = centerY + sin(angle) * radius;
         
-        // Draw player area
-        fill(0, 0, 0, 150);
-        stroke(255);
-        strokeWeight(2);
-        ellipse(x, y, 120, 80);
+        push();
         
-        // Draw player name
-        fill(255);
+        // Draw player area with better styling
+        fill(0, 0, 0, 180);
+        stroke(255, 255, 255, 200);
+        strokeWeight(3);
+        ellipse(x, y, 140, 100);
+        
+        // Draw player name with better styling
+        fill(255, 255, 255);
         textAlign(CENTER, CENTER);
-        textSize(12);
-        text(player.name, x, y - 20);
+        textSize(14);
+        textStyle(BOLD);
+        text(player.name, x, y - 25);
         
-        // Draw player chips
-        textSize(10);
-        text('$' + player.chips, x, y);
+        // Draw player chips with better styling
+        fill(255, 215, 0); // Gold color
+        textSize(12);
+        textStyle(BOLD);
+        text('$' + player.chips, x, y - 5);
+        
+        // Draw current bet if any
+        if (player.currentBet > 0) {
+            fill(255, 100, 100);
+            textSize(10);
+            text('Bet: $' + player.currentBet, x, y + 15);
+        }
         
         // Draw player cards
         if (player.hand && player.hand.length > 0) {
             drawPlayerCards(x, y, player.hand, index === window.pokerClient?.localPlayerIndex);
         }
         
-        // Highlight current player
+        // Highlight current player with better effect
         if (index === window.game.currentPlayer) {
             stroke(255, 255, 0);
-            strokeWeight(4);
+            strokeWeight(6);
             noFill();
-            ellipse(x, y, 130, 90);
+            ellipse(x, y, 150, 110);
+            
+            // Add pulsing effect
+            const pulse = sin(millis() * 0.01) * 5;
+            stroke(255, 255, 0, 100);
+            strokeWeight(2);
+            ellipse(x, y, 160 + pulse, 120 + pulse);
         }
+        
+        pop();
     });
 }
 
 function drawPlayerCards(x, y, hand, isLocalPlayer) {
-    const cardWidth = 30;
-    const cardHeight = 42;
-    const spacing = 5;
+    const cardWidth = 35;
+    const cardHeight = 49;
+    const spacing = 8;
     
     hand.forEach((card, index) => {
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
-        const cardY = y + 20;
+        const cardY = y + 25;
+        
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 50);
+        noStroke();
+        rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 4);
         
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(1);
-        rect(cardX, cardY, cardWidth, cardHeight, 3);
+        strokeWeight(2);
+        rect(cardX, cardY, cardWidth, cardHeight, 4);
         
         // Draw card content (only show for local player or if revealed)
         if (isLocalPlayer || card.isRevealed) {
             fill(0);
             textAlign(CENTER, CENTER);
-            textSize(8);
+            textSize(9);
+            textStyle(BOLD);
             text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
+            
+            // Add subtle highlight
+            fill(255, 255, 255, 20);
+            noStroke();
+            rect(cardX, cardY, cardWidth, cardHeight/3, 4, 4, 0, 0);
         } else {
-            // Draw card back
+            // Draw card back with better styling
             fill(0, 0, 150);
             textAlign(CENTER, CENTER);
-            textSize(8);
+            textSize(12);
+            textStyle(BOLD);
             text('?', cardX + cardWidth/2, cardY + cardHeight/2);
+            
+            // Add pattern to card back
+            fill(255, 255, 255, 30);
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 2; j++) {
+                    ellipse(cardX + 8 + i * 8, cardY + 8 + j * 15, 3, 3);
+                }
+            }
         }
+        
+        pop();
     });
 }
 
 function drawPot() {
     if (window.game.pot > 0) {
+        push();
+        
+        // Draw pot background
+        fill(0, 0, 0, 150);
+        stroke(255, 215, 0);
+        strokeWeight(3);
+        ellipse(width/2, height/2 + 100, 120, 60);
+        
+        // Draw pot text
         fill(255, 215, 0); // Gold color
         textAlign(CENTER, CENTER);
+        textSize(18);
+        textStyle(BOLD);
+        text('POT', width/2, height/2 + 90);
+        
         textSize(16);
-        text('Pot: $' + window.game.pot, width/2, height/2 + 100);
+        text('$' + window.game.pot, width/2, height/2 + 110);
+        
+        pop();
     }
 }
 
 function drawGameInfo() {
-    // Draw game phase
-    fill(255);
+    push();
+    
+    // Draw game phase with better styling
+    fill(0, 0, 0, 150);
+    stroke(255, 255, 255);
+    strokeWeight(2);
+    rect(15, 15, 200, 60, 10);
+    
+    fill(255, 255, 255);
     textAlign(LEFT, TOP);
-    textSize(14);
-    text('Phase: ' + (window.game.gamePhase || 'preflop'), 20, 20);
+    textSize(16);
+    textStyle(BOLD);
+    text('Phase: ' + (window.game.gamePhase || 'preflop'), 25, 25);
     
     // Draw current bet
     if (window.game.currentBet > 0) {
-        text('Current Bet: $' + window.game.currentBet, 20, 40);
+        fill(255, 215, 0);
+        textSize(14);
+        text('Current Bet: $' + window.game.currentBet, 25, 45);
     }
+    
+    pop();
     
     // Draw hand rankings on the right
     drawHandRankings();
@@ -1217,19 +1350,40 @@ function drawHandRankings() {
         'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card'
     ];
     
-    const startX = width - 200;
+    const startX = width - 220;
     const startY = 20;
     
+    push();
+    
+    // Draw background
+    fill(0, 0, 0, 150);
+    stroke(255, 255, 0);
+    strokeWeight(2);
+    rect(startX - 10, startY - 10, 210, 200, 10);
+    
+    // Draw title
     fill(255, 255, 0); // Yellow title
     textAlign(LEFT, TOP);
     textSize(16);
+    textStyle(BOLD);
     text('Hand Rankings', startX, startY);
     
-    fill(255);
+    // Draw rankings
+    fill(255, 255, 255);
     textSize(12);
+    textStyle(NORMAL);
     rankings.forEach((ranking, index) => {
-        text(ranking, startX, startY + 25 + index * 15);
+        const y = startY + 25 + index * 15;
+        // Add subtle background for each ranking
+        fill(0, 0, 0, 50);
+        noStroke();
+        rect(startX - 5, y - 10, 200, 12, 3);
+        
+        fill(255, 255, 255);
+        text(ranking, startX, y);
     });
+    
+    pop();
 }
 
 // Initialize when page loads

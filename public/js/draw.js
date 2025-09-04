@@ -13,6 +13,11 @@ function draw() {
         return; // Don't draw anything if canvas is hidden
     }
     
+    // Limit frame rate to prevent excessive drawing
+    if (frameCount % 2 !== 0 && gameState === gameStateEnum.Playing) {
+        return; // Skip every other frame for performance
+    }
+    
     // Fix canvas parenting based on game state
     if (window.gameCanvas) {
         try {
@@ -324,10 +329,10 @@ function draw() {
         instructionsCloseButton.show();
     }
     else if (gameState === gameStateEnum.Playing) {
-        console.log('🎮 Game state is Playing - entering game drawing logic');
-        console.log('  - gameState:', gameState);
-        console.log('  - gameStateEnum.Playing:', gameStateEnum.Playing);
-        console.log('  - window.gameState:', window.gameState);
+        // Reduced logging to prevent console spam
+        if (frameCount % 60 === 0) { // Log only every 60 frames (about once per second)
+            console.log('🎮 Game state is Playing - drawing game state');
+        }
         
         // CRITICAL: Ensure Game div is visible and canvas is properly positioned
         if (gameDiv) {
@@ -355,7 +360,10 @@ function draw() {
         
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
-            console.log('✅ Game is properly initialized, drawing game state');
+            // Reduced logging to prevent console spam
+            if (frameCount % 120 === 0) { // Log only every 120 frames (about every 2 seconds)
+                console.log('✅ Game is properly initialized, drawing game state');
+            }
             // Check if we're in Truco game (which has drawGameState function)
             if (typeof drawGameState === 'function') {
                 drawGameState();
@@ -364,13 +372,13 @@ function draw() {
                 drawBasicGameState();
             }
         } else {
-            // Debug: Log why we're not drawing the game
-            console.log('🔍 Debug - Not drawing game state:');
-            console.log('  - window.game exists:', !!window.game);
-            console.log('  - window.game.players exists:', !!(window.game && window.game.players));
-            console.log('  - players length:', window.game ? window.game.players.length : 'N/A');
-            console.log('  - gameState:', gameState);
-            console.log('  - window.gameState:', window.gameState);
+            // Reduced debug logging
+            if (frameCount % 120 === 0) { // Log only every 120 frames
+                console.log('🔍 Debug - Not drawing game state:');
+                console.log('  - window.game exists:', !!window.game);
+                console.log('  - window.game.players exists:', !!(window.game && window.game.players));
+                console.log('  - players length:', window.game ? window.game.players.length : 'N/A');
+            }
             
             // Draw a basic debug state even if game is not fully initialized
             drawBasicGameState();
