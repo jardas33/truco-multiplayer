@@ -584,8 +584,8 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: Card added. New count: ${room.game.playedCards.length}`);
         console.log(`✅ ${targetPlayer.name} played ${playedCard.name} in room ${socket.roomCode}`);
         
-        // ✅ CRITICAL FIX: Reset roundJustCompleted flag when round winner starts playing
-        if (room.game.roundJustCompleted) {
+        // ✅ CRITICAL FIX: Reset roundJustCompleted flag only when the round winner starts playing
+        if (room.game.roundJustCompleted && room.game.currentPlayer === clientPlayerIndex) {
             console.log(`🔄 Round winner ${targetPlayer.name} started playing - resetting roundJustCompleted flag`);
             room.game.roundJustCompleted = false;
         }
