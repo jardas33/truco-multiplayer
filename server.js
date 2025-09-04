@@ -121,6 +121,9 @@ io.on('connection', (socket) => {
             count: 1
         });
         
+        // Emit players updated event
+        io.to(roomCode).emit('playersUpdated', rooms.get(roomCode).players);
+        
         console.log(`✅ Room ${roomCode} created successfully`);
     });
 
@@ -140,8 +143,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (room.players.length >= 4) {
-            console.log(`❌ Room ${roomCode} is full`);
+        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length >= maxPlayers) {
+            console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayers})`);
             socket.emit('error', 'Room is full');
             return;
         }
@@ -173,6 +177,9 @@ io.on('connection', (socket) => {
             players: room.players,
             count: room.players.length
         });
+        
+        // Emit players updated event
+        io.to(roomCode).emit('playersUpdated', room.players);
     });
 
     // ✅ Handle room leaving
@@ -228,8 +235,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (room.players.length >= 4) {
-            console.log(`❌ Room ${roomCode} is full, cannot add bot`);
+        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length >= maxPlayers) {
+            console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayers}), cannot add bot`);
             socket.emit('error', 'Room is full');
             return;
         }
@@ -253,9 +261,13 @@ io.on('connection', (socket) => {
             players: room.players,
             count: room.players.length
         });
+        
+        // Emit players updated event
+        io.to(roomCode).emit('playersUpdated', room.players);
 
-        if (room.players.length === 4) {
-            console.log(`🎯 Room ${roomCode} is now full with 4 players`);
+        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length === maxPlayers) {
+            console.log(`🎯 Room ${roomCode} is now full with ${room.players.length} players`);
             io.to(roomCode).emit('roomFull');
         }
     });
@@ -288,9 +300,13 @@ io.on('connection', (socket) => {
             players: room.players,
             count: room.players.length
         });
+        
+        // Emit players updated event
+        io.to(roomCode).emit('playersUpdated', room.players);
 
         // If room is no longer full, emit roomNotFull event
-        if (room.players.length < 4) {
+        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length < maxPlayers) {
             io.to(roomCode).emit('roomNotFull');
         }
     });
@@ -314,9 +330,10 @@ io.on('connection', (socket) => {
             
             console.log(`🔍 Room found with ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
             
-            if (room.players.length < 4) {
-                console.log(`❌ Room ${roomCode} needs 4 players, has ${room.players.length}`);
-                socket.emit('error', 'Need 4 players to start the game');
+            const minPlayers = room.gameType === 'truco' ? 4 : 2; // Truco needs 4, other games need at least 2
+            if (room.players.length < minPlayers) {
+                console.log(`❌ Room ${roomCode} needs ${minPlayers} players, has ${room.players.length}`);
+                socket.emit('error', `Need ${minPlayers} players to start the game`);
                 return;
             }
 

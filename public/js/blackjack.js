@@ -591,24 +591,26 @@ class BlackjackClient {
         socket.on('roundComplete', (data) => {
             this.showRoundResults(data);
         });
+        
+        // Error handling
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            UIUtils.showGameMessage(`Error: ${error}`, 'error');
+        });
     }
 
     // Create room
     createRoom() {
-        const socket = window.gameFramework.socket;
-        socket.emit('createRoom', { gameType: 'blackjack' });
+        GameFramework.createRoom('blackjack');
     }
 
     // Join room
     joinRoom() {
-        const roomCode = document.getElementById('roomInput').value.trim();
+        const roomCode = prompt('Enter room code:');
         if (!roomCode) {
-            UIUtils.showGameMessage('Please enter a room code', 'error');
             return;
         }
-        
-        const socket = window.gameFramework.socket;
-        socket.emit('joinRoom', { roomCode: roomCode });
+        GameFramework.joinRoom(roomCode);
     }
 
     // Add bot
