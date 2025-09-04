@@ -324,6 +324,11 @@ function draw() {
         instructionsCloseButton.show();
     }
     else if (gameState === gameStateEnum.Playing) {
+        console.log('🎮 Game state is Playing - entering game drawing logic');
+        console.log('  - gameState:', gameState);
+        console.log('  - gameStateEnum.Playing:', gameStateEnum.Playing);
+        console.log('  - window.gameState:', window.gameState);
+        
         // CRITICAL: Ensure Game div is visible and canvas is properly positioned
         if (gameDiv) {
             gameDiv.style('display', 'block');
@@ -350,6 +355,7 @@ function draw() {
         
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
+            console.log('✅ Game is properly initialized, drawing game state');
             // Check if we're in Truco game (which has drawGameState function)
             if (typeof drawGameState === 'function') {
                 drawGameState();
@@ -357,13 +363,27 @@ function draw() {
                 // For other games (like Poker), draw a basic game state
                 drawBasicGameState();
             }
+        } else {
+            // Debug: Log why we're not drawing the game
+            console.log('🔍 Debug - Not drawing game state:');
+            console.log('  - window.game exists:', !!window.game);
+            console.log('  - window.game.players exists:', !!(window.game && window.game.players));
+            console.log('  - players length:', window.game ? window.game.players.length : 'N/A');
+            console.log('  - gameState:', gameState);
+            console.log('  - window.gameState:', window.gameState);
+            
+            // Draw a basic debug state even if game is not fully initialized
+            drawBasicGameState();
         }
     }
 }
 
 // Basic game state drawing for non-Truco games
 function drawBasicGameState() {
-    if (!window.game) return;
+    console.log('🎨 drawBasicGameState called');
+    console.log('  - window.game exists:', !!window.game);
+    console.log('  - window.game.players exists:', !!(window.game && window.game.players));
+    console.log('  - players length:', window.game ? window.game.players.length : 'N/A');
     
     // Clear the canvas with a dark green background (poker table color)
     background(0, 100, 0);
@@ -376,19 +396,30 @@ function drawBasicGameState() {
     
     // Draw player count
     textSize(16);
-    text(`Players: ${window.game.players ? window.game.players.length : 0}`, width/2, height/2);
-    
-    // Draw pot if it exists
-    if (window.game.pot !== undefined) {
-        text(`Pot: $${window.game.pot}`, width/2, height/2 + 30);
-    }
-    
-    // Draw current player info if available
-    if (window.game.currentPlayerIndex !== undefined) {
-        const currentPlayer = window.game.players[window.game.currentPlayerIndex];
-        if (currentPlayer) {
-            text(`Current Player: ${currentPlayer.name}`, width/2, height/2 + 60);
+    if (window.game && window.game.players) {
+        text(`Players: ${window.game.players.length}`, width/2, height/2);
+        
+        // Draw pot if it exists
+        if (window.game.pot !== undefined) {
+            text(`Pot: $${window.game.pot}`, width/2, height/2 + 30);
         }
+        
+        // Draw current player info if available
+        if (window.game.currentPlayerIndex !== undefined) {
+            const currentPlayer = window.game.players[window.game.currentPlayerIndex];
+            if (currentPlayer) {
+                text(`Current Player: ${currentPlayer.name}`, width/2, height/2 + 60);
+            }
+        }
+        
+        // Draw game phase if available
+        if (window.game.gamePhase) {
+            text(`Phase: ${window.game.gamePhase}`, width/2, height/2 + 90);
+        }
+    } else {
+        // Game not fully initialized yet
+        text("Initializing Game...", width/2, height/2);
+        text("Please wait...", width/2, height/2 + 30);
     }
 }
 
