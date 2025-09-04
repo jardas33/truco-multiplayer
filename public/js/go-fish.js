@@ -656,6 +656,58 @@ class GoFishClient {
             UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
         });
     }
+
+    // Reset client state
+    reset() {
+        console.log('🔄 Resetting Go Fish client state...');
+        this.localPlayerIndex = 0;
+        this.isMyTurn = false;
+        this.canAct = false;
+        this.game = new GoFishGame();
+        console.log('✅ Go Fish client state reset');
+    }
+}
+
+// Fast reset function to go back to game menu without page reload
+function resetToGameMenu() {
+    console.log('🔄 Fast reset to game menu...');
+    
+    // Hide room controls and show create/join buttons
+    const roomControls = document.getElementById('roomControls');
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+    const playerList = document.getElementById('playerList');
+    
+    if (roomControls) {
+        roomControls.style.display = 'none';
+    }
+    
+    if (createRoomBtn) {
+        createRoomBtn.style.display = 'inline-block';
+    }
+    
+    if (joinRoomBtn) {
+        joinRoomBtn.style.display = 'inline-block';
+    }
+    
+    if (roomCodeDisplay) {
+        roomCodeDisplay.style.display = 'none';
+    }
+    
+    if (playerList) {
+        playerList.innerHTML = '';
+    }
+    
+    // Remove room-created class from body
+    document.body.classList.remove('room-created');
+    
+    // Reset any game state
+    if (window.goFishClient) {
+        window.goFishClient.reset();
+    }
+    
+    console.log('✅ Fast reset complete - back to game menu');
 }
 
 // Initialize when page loads
