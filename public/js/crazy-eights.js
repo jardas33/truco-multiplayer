@@ -1,4 +1,4 @@
-// 🎯 CRAZY EIGHTS GAME LOGIC
+// CRAZY EIGHTS GAME LOGIC
 
 class CrazyEightsGame {
     constructor() {
@@ -32,7 +32,7 @@ class CrazyEightsGame {
         this.winner = null;
         this.selectedCard = null;
         
-        console.log('🎯 Crazy Eights game initialized with', this.players.length, 'players');
+        console.log('Crazy Eights game initialized with', this.players.length, 'players');
         
         // Set game state to Playing
         if (typeof gameStateEnum !== 'undefined') {
@@ -48,7 +48,7 @@ class CrazyEightsGame {
 
     // Start a new game
     startNewGame() {
-        console.log('🎯 Starting new Crazy Eights game');
+        console.log('Starting new Crazy Eights game');
         
         // Reset all hands
         this.players.forEach(player => {
@@ -93,7 +93,7 @@ class CrazyEightsGame {
         this.drawPile = [...this.deck];
         this.deck = [];
         
-        console.log(`🃏 Dealt 7 cards to each player, ${this.drawPile.length} cards in draw pile`);
+        console.log(`Dealt 7 cards to each player, ${this.drawPile.length} cards in draw pile`);
     }
 
     // Start the discard pile
@@ -116,7 +116,7 @@ class CrazyEightsGame {
         this.currentSuit = startCard.suit;
         this.currentRank = startCard.rank;
         
-        console.log(`🎯 Started discard pile with ${startCard.name}`);
+        console.log(`Started discard pile with ${startCard.name}`);
     }
 
     // Check if a card can be played

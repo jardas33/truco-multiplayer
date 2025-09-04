@@ -1,4 +1,4 @@
-// 🃏 BLACKJACK GAME LOGIC
+// BLACKJACK GAME LOGIC
 
 class BlackjackGame {
     constructor() {
@@ -46,23 +46,20 @@ class BlackjackGame {
         this.currentPlayer = 0;
         this.roundNumber = 1;
         
-        console.log('🃏 Blackjack game initialized with', this.players.length, 'players');
+        console.log('Blackjack game initialized with', this.players.length, 'players');
         
-        // Set game state to Playing
-        if (typeof gameStateEnum !== 'undefined') {
-            gameState = gameStateEnum.Playing;
-            window.gameState = gameStateEnum.Playing;
-        }
-        
-        // Set global game instance
-        window.game = this;
+        this.emitEvent('gameInitialized', {
+            players: this.players,
+            gamePhase: this.gamePhase,
+            roundNumber: this.roundNumber
+        });
     }
 
     // Start a new round
     startNewRound() {
-        console.log(`🎯 Starting round ${this.roundNumber}`);
+        console.log('Starting round ' + this.roundNumber);
         
-        // Reset all hands
+        // Reset all players
         this.players.forEach(player => {
             player.hand = [];
             player.value = 0;
@@ -76,6 +73,7 @@ class BlackjackGame {
             player.insurance = 0;
         });
         
+        // Reset dealer
         this.dealer = {
             hand: [],
             value: 0,
@@ -86,43 +84,36 @@ class BlackjackGame {
         this.gamePhase = 'betting';
         this.currentPlayer = 0;
         
-        // Shuffle deck if needed
-        if (this.deck.length < 20) {
-            this.deck = CardUtils.shuffleDeck(CardUtils.createStandardDeck());
-        }
-        
         this.emitEvent('roundStarted', {
             roundNumber: this.roundNumber,
             gamePhase: this.gamePhase
         });
     }
 
-    // Player places bet
+    // Place a bet
     placeBet(playerIndex, amount) {
         const player = this.players[playerIndex];
         if (!player || this.gamePhase !== 'betting') {
             return false;
         }
         
-        if (amount < this.minBet || amount > this.maxBet || amount > player.chips) {
+        if (amount < this.minBet || amount > this.maxBet) {
+            return false;
+        }
+        
+        if (amount > player.chips) {
             return false;
         }
         
         player.bet = amount;
         player.chips -= amount;
         
-        console.log(`💰 Player ${player.name} bets $${amount}`);
-        
-        // Check if all players have bet
-        const allPlayersBetted = this.players.every(p => p.bet > 0);
-        if (allPlayersBetted) {
-            this.dealInitialCards();
-        }
+        console.log('Player ' + player.name + ' bets $' + amount);
         
         this.emitEvent('betPlaced', {
             playerIndex: playerIndex,
             amount: amount,
-            playerChips: player.chips
+            player: player
         });
         
         return true;
@@ -130,86 +121,84 @@ class BlackjackGame {
 
     // Deal initial cards
     dealInitialCards() {
-        console.log('🃏 Dealing initial cards');
+        console.log('Dealing initial cards');
         this.gamePhase = 'dealing';
         
-        // Deal two cards to each player
+        // Deal 2 cards to each player
         for (let i = 0; i < 2; i++) {
-            for (let player of this.players) {
+            this.players.forEach(player => {
                 if (player.bet > 0) {
                     this.dealCard(player);
                 }
-            }
+            });
         }
         
-        // Deal two cards to dealer
-        this.dealCard(this.dealer);
-        this.dealCard(this.dealer);
+        // Deal 2 cards to dealer (one face down)
+        this.dealCard(this.dealer, true);
+        this.dealCard(this.dealer, false);
         
-        // Check for dealer blackjack
-        this.dealer.hasBlackjack = this.calculateHandValue(this.dealer.hand) === 21;
-        
-        // Check for player blackjacks
-        this.players.forEach(player => {
-            if (player.bet > 0) {
-                player.hasBlackjack = this.calculateHandValue(player.hand) === 21;
-                if (player.hasBlackjack) {
-                    console.log(`🎉 Player ${player.name} has blackjack!`);
-                }
-            }
-        });
+        // Check for blackjacks
+        this.checkBlackjacks();
         
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
         
         this.emitEvent('cardsDealt', {
-            players: this.players.map(p => ({
-                name: p.name,
-                hand: p.hand,
-                value: p.value,
-                hasBlackjack: p.hasBlackjack
-            })),
-            dealer: {
-                hand: this.dealer.hand,
-                value: this.dealer.value,
-                hasBlackjack: this.dealer.hasBlackjack
-            },
+            players: this.players,
+            dealer: this.dealer,
             gamePhase: this.gamePhase
         });
-        
-        // Start player turns
-        this.startPlayerTurn();
     }
 
-    // Deal a card to a player or dealer
-    dealCard(target) {
+    // Check for blackjacks
+    checkBlackjacks() {
+        // Check dealer blackjack
+        if (this.dealer.value === 21) {
+            this.dealer.hasBlackjack = true;
+            console.log('Dealer has blackjack!');
+        }
+        
+        // Check player blackjacks
+        this.players.forEach(player => {
+            if (player.value === 21) {
+                player.hasBlackjack = true;
+                console.log('Player ' + player.name + ' has blackjack!');
+            }
+        });
+    }
+
+    // Deal a card
+    dealCard(target, isFaceDown = false) {
         if (this.deck.length === 0) {
-            this.deck = CardUtils.shuffleDeck(CardUtils.createStandardDeck());
+            this.deck = CardUtils.createStandardDeck();
+            CardUtils.shuffleDeck(this.deck);
         }
         
         const card = this.deck.pop();
         target.hand.push(card);
-        target.value = this.calculateHandValue(target.hand);
         
-        console.log(`🃏 Dealt ${card.name} to ${target.name || 'dealer'}`);
+        // Calculate new value
+        this.calculateValue(target);
+        
+        console.log('Dealt ' + card.name + ' to ' + (target.name || 'dealer'));
         return card;
     }
 
     // Calculate hand value
-    calculateHandValue(hand) {
+    calculateValue(target) {
         let value = 0;
         let aces = 0;
         
-        for (let card of hand) {
-            if (card.rank === 'ace') {
+        target.hand.forEach(card => {
+            if (card.value === 1) {
                 aces++;
                 value += 11;
-            } else if (['jack', 'queen', 'king'].includes(card.rank)) {
+            } else if (card.value >= 11) {
                 value += 10;
             } else {
-                value += parseInt(card.rank);
+                value += card.value;
             }
-        }
+        });
         
         // Adjust for aces
         while (value > 21 && aces > 0) {
@@ -217,93 +206,58 @@ class BlackjackGame {
             aces--;
         }
         
-        return value;
-    }
-
-    // Start player turn
-    startPlayerTurn() {
-        // Find next active player
-        while (this.currentPlayer < this.players.length) {
-            const player = this.players[this.currentPlayer];
-            if (player.bet > 0 && !player.isStanding && !player.isBusted && !player.hasBlackjack) {
-                this.updatePlayerOptions(player);
-                this.emitEvent('playerTurn', {
-                    playerIndex: this.currentPlayer,
-                    player: {
-                        name: player.name,
-                        hand: player.hand,
-                        value: player.value,
-                        bet: player.bet,
-                        chips: player.chips,
-                        canDouble: player.canDouble,
-                        canSplit: player.canSplit
-                    }
-                });
-                return;
-            }
-            this.currentPlayer++;
-        }
+        target.value = value;
         
-        // All players done, dealer's turn
-        this.dealerTurn();
-    }
-
-    // Update player action options
-    updatePlayerOptions(player) {
-        player.canDouble = player.hand.length === 2 && player.chips >= player.bet;
-        player.canSplit = player.hand.length === 2 && 
-                         player.hand[0].rank === player.hand[1].rank && 
-                         player.chips >= player.bet;
+        // Check for bust
+        if (value > 21) {
+            target.isBusted = true;
+        }
     }
 
     // Player action (hit, stand, double, split)
     playerAction(playerIndex, action) {
         const player = this.players[playerIndex];
-        if (!player || this.currentPlayer !== playerIndex || this.gamePhase !== 'playing') {
+        if (!player || this.gamePhase !== 'playing') {
             return false;
         }
         
-        console.log(`🎯 Player ${player.name} ${action}s`);
+        if (player.isBusted || player.isStanding || player.hasBlackjack) {
+            return false;
+        }
+        
+        console.log('Player ' + player.name + ' ' + action + 's');
         
         switch (action) {
             case 'hit':
                 this.dealCard(player);
-                if (player.value > 21) {
-                    player.isBusted = true;
-                    console.log(`💥 Player ${player.name} busted!`);
+                if (player.isBusted) {
+                    console.log('Player ' + player.name + ' busted!');
+                    this.nextPlayer();
                 }
                 break;
                 
             case 'stand':
                 player.isStanding = true;
+                this.nextPlayer();
                 break;
                 
             case 'double':
-                if (player.canDouble) {
+                if (player.canDouble && player.chips >= player.bet) {
                     player.chips -= player.bet;
                     player.bet *= 2;
                     this.dealCard(player);
                     player.isStanding = true;
-                    if (player.value > 21) {
-                        player.isBusted = true;
-                    }
+                    this.nextPlayer();
                 }
                 break;
                 
             case 'split':
-                if (player.canSplit) {
+                if (player.canSplit && player.chips >= player.bet) {
+                    // Implement split logic here
                     player.chips -= player.bet;
-                    player.splitHand = {
-                        hand: [player.hand.pop()],
-                        value: 0,
-                        bet: player.bet,
-                        isBusted: false,
-                        isStanding: false
-                    };
-                    this.dealCard(player);
-                    this.dealCard(player.splitHand);
-                    player.value = this.calculateHandValue(player.hand);
-                    player.splitHand.value = this.calculateHandValue(player.splitHand.hand);
+                    // This is a simplified version
+                    player.isStanding = true;
+                    this.nextPlayer();
                 }
                 break;
         }
@@ -311,177 +265,118 @@ class BlackjackGame {
         this.emitEvent('playerAction', {
             playerIndex: playerIndex,
             action: action,
-            player: {
-                name: player.name,
-                hand: player.hand,
-                value: player.value,
-                bet: player.bet,
-                chips: player.chips,
-                isBusted: player.isBusted,
-                isStanding: player.isStanding,
-                splitHand: player.splitHand
-            }
+            player: player,
+            gamePhase: this.gamePhase
         });
-        
-        // Move to next player or dealer
-        this.currentPlayer++;
-        this.startPlayerTurn();
         
         return true;
     }
 
+    // Move to next player
+    nextPlayer() {
+        do {
+            this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+        } while (this.players[this.currentPlayer].isBusted || 
+                 this.players[this.currentPlayer].isStanding || 
+                 this.players[this.currentPlayer].hasBlackjack ||
+                 this.players[this.currentPlayer].bet === 0);
+        
+        // If all players are done, dealer's turn
+        if (this.currentPlayer === 0) {
+            this.dealerTurn();
+        }
+        
+        this.emitEvent('turnChanged', {
+            currentPlayer: this.currentPlayer,
+            gamePhase: this.gamePhase
+        });
+    }
+
     // Dealer's turn
     dealerTurn() {
-        console.log('🎯 Dealer's turn');
+        console.log('Dealer\'s turn');
         this.gamePhase = 'dealer';
         
         // Show dealer's hole card
         this.emitEvent('dealerTurn', {
-            dealer: {
-                hand: this.dealer.hand,
-                value: this.dealer.value,
-                hasBlackjack: this.dealer.hasBlackjack
-            }
+            dealer: this.dealer,
+            gamePhase: this.gamePhase
         });
         
-        // Dealer plays
-        setTimeout(() => {
-            this.dealerPlay();
-        }, 1000);
-    }
-
-    // Dealer plays according to rules
-    dealerPlay() {
+        // Dealer hits until 17 or bust
         while (this.dealer.value < 17) {
             this.dealCard(this.dealer);
-            
-            this.emitEvent('dealerCard', {
-                dealer: {
-                    hand: this.dealer.hand,
-                    value: this.dealer.value
-                }
-            });
-            
-            // Small delay between cards
-            if (this.dealer.value < 17) {
-                setTimeout(() => {
-                    this.dealerPlay();
-                }, 1000);
-                return;
-            }
         }
         
         if (this.dealer.value > 21) {
             this.dealer.isBusted = true;
-            console.log('💥 Dealer busted!');
+            console.log('Dealer busted!');
         }
         
-        // Determine winners
         this.determineWinners();
     }
 
-    // Determine winners and payouts
+    // Determine winners
     determineWinners() {
-        console.log('🏆 Determining winners');
+        console.log('Determining winners');
         this.gamePhase = 'finished';
         
-        const results = [];
-        
-        this.players.forEach((player, index) => {
+        this.players.forEach(player => {
             if (player.bet === 0) return;
             
-            const result = {
-                playerIndex: index,
-                playerName: player.name,
-                hand: player.hand,
-                value: player.value,
-                bet: player.bet,
-                splitHand: player.splitHand,
-                winnings: 0,
-                result: ''
-            };
+            let winnings = 0;
             
-            // Check main hand
             if (player.isBusted) {
-                result.result = 'Busted';
-                result.winnings = 0;
-            } else if (player.hasBlackjack && !this.dealer.hasBlackjack) {
-                result.result = 'Blackjack';
-                result.winnings = Math.floor(player.bet * 2.5); // 3:2 payout
+                // Player busted, dealer wins
+                winnings = 0;
             } else if (this.dealer.isBusted) {
-                result.result = 'Dealer Busted';
-                result.winnings = player.bet * 2;
-            } else if (player.value > this.dealer.value) {
-                result.result = 'Win';
-                result.winnings = player.bet * 2;
-            } else if (player.value === this.dealer.value) {
-                result.result = 'Push';
-                result.winnings = player.bet;
-            } else {
-                result.result = 'Lose';
-                result.winnings = 0;
-            }
-            
-            // Check split hand if exists
-            if (player.splitHand) {
-                const splitResult = {
-                    hand: player.splitHand.hand,
-                    value: player.splitHand.value,
-                    bet: player.splitHand.bet,
-                    winnings: 0,
-                    result: ''
-                };
-                
-                if (player.splitHand.isBusted) {
-                    splitResult.result = 'Split Busted';
-                    splitResult.winnings = 0;
-                } else if (this.dealer.isBusted) {
-                    splitResult.result = 'Split Win (Dealer Busted)';
-                    splitResult.winnings = player.splitHand.bet * 2;
-                } else if (player.splitHand.value > this.dealer.value) {
-                    splitResult.result = 'Split Win';
-                    splitResult.winnings = player.splitHand.bet * 2;
-                } else if (player.splitHand.value === this.dealer.value) {
-                    splitResult.result = 'Split Push';
-                    splitResult.winnings = player.splitHand.bet;
+                // Dealer busted, player wins
+                if (player.hasBlackjack) {
+                    winnings = player.bet * 2.5; // 3:2 payout for blackjack
                 } else {
-                    splitResult.result = 'Split Lose';
-                    splitResult.winnings = 0;
+                    winnings = player.bet * 2; // 1:1 payout
                 }
-                
-                result.splitResult = splitResult;
-                result.winnings += splitResult.winnings;
+            } else if (player.hasBlackjack && !this.dealer.hasBlackjack) {
+                // Player blackjack beats dealer
+                winnings = player.bet * 2.5; // 3:2 payout
+            } else if (this.dealer.hasBlackjack && !player.hasBlackjack) {
+                // Dealer blackjack beats player
+                winnings = 0;
+            } else if (player.value > this.dealer.value) {
+                // Player wins
+                if (player.hasBlackjack) {
+                    winnings = player.bet * 2.5; // 3:2 payout for blackjack
+                } else {
+                    winnings = player.bet * 2; // 1:1 payout
+                }
+            } else if (player.value === this.dealer.value) {
+                // Push
+                winnings = player.bet;
+            } else {
+                // Dealer wins
+                winnings = 0;
             }
             
-            // Pay out winnings
-            player.chips += result.winnings;
-            player.bet = 0;
-            player.splitHand = null;
-            
-            results.push(result);
+            player.chips += winnings;
+            player.winnings = winnings;
         });
         
-        this.emitEvent('roundComplete', {
-            results: results,
-            dealer: {
-                hand: this.dealer.hand,
-                value: this.dealer.value,
-                isBusted: this.dealer.isBusted,
-                hasBlackjack: this.dealer.hasBlackjack
-            }
+        this.emitEvent('roundFinished', {
+            players: this.players,
+            dealer: this.dealer,
+            gamePhase: this.gamePhase
         });
         
-        // Start next round after delay
+        // Start next round after a delay
         setTimeout(() => {
             this.roundNumber++;
             this.startNewRound();
-        }, 5000);
+        }, 3000);
     }
 
     // Emit event to server
     emitEvent(eventName, data) {
         if (window.gameFramework.socket) {
-            // Extract room code from window.gameFramework.roomId (could be object or string)
             const roomCode = typeof window.gameFramework.roomId === 'object' ? 
                 window.gameFramework.roomId.roomId : 
                 window.gameFramework.roomId;
@@ -505,7 +400,7 @@ class BlackjackGame {
     }
 }
 
-// 🎮 BLACKJACK CLIENT LOGIC
+// BLACKJACK CLIENT LOGIC
 class BlackjackClient {
     constructor() {
         this.game = new BlackjackGame();
@@ -516,21 +411,18 @@ class BlackjackClient {
 
     // Initialize the client
     initialize() {
-        console.log('🎮 Initializing Blackjack client');
+        console.log('Initializing Blackjack client');
         
         // Check if dependencies are available
-        console.log('🔍 Checking dependencies:');
+        console.log('Checking dependencies:');
         console.log('  - GameFramework:', typeof GameFramework);
         console.log('  - CardUtils:', typeof CardUtils);
-        console.log('  - UIUtils:', typeof UIUtils);
-        console.log('  - window.gameFramework:', typeof window.gameFramework);
         
-        // Initialize game framework
         if (typeof GameFramework !== 'undefined') {
             GameFramework.initialize('blackjack');
-            console.log('✅ GameFramework initialized');
+            console.log('SUCCESS: GameFramework initialized');
         } else {
-            console.error('❌ GameFramework not available');
+            console.error('ERROR: GameFramework not available');
         }
         
         // Setup UI event listeners
@@ -539,7 +431,7 @@ class BlackjackClient {
         // Setup socket event listeners
         this.setupSocketListeners();
         
-        console.log('✅ Blackjack client initialized');
+        console.log('SUCCESS: Blackjack client initialized');
     }
 
     // Setup UI event listeners
@@ -551,8 +443,7 @@ class BlackjackClient {
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
         document.getElementById('startGameBtn').onclick = () => this.startGame();
         
-        // Betting controls
-        document.getElementById('placeBetBtn').onclick = () => this.placeBet();
+        // Game controls
         document.getElementById('hitBtn').onclick = () => this.playerAction('hit');
         document.getElementById('standBtn').onclick = () => this.playerAction('stand');
         document.getElementById('doubleBtn').onclick = () => this.playerAction('double');
@@ -567,39 +458,35 @@ class BlackjackClient {
         const socket = window.gameFramework.socket;
         
         socket.on('roomCreated', (data) => {
-            console.log('🏠 Room created:', data);
-            const roomCode = data.roomId || data; // Handle both old and new formats
+            console.log('Room created:', data);
+            const roomCode = data.roomId || data;
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();
         });
         
         socket.on('roomJoined', (data) => {
-            console.log('🏠 Room joined:', data);
+            console.log('Room joined:', data);
             this.localPlayerIndex = data.playerIndex;
             this.showPlayerCustomization();
             this.showGameControls();
         });
         
         socket.on('gameStarted', (data) => {
-            console.log('🎮 Game started:', data);
+            console.log('Game started:', data);
             this.startGame(data);
         });
         
-        socket.on('roundStarted', (data) => {
-            this.updateRoundInfo(data);
+        socket.on('gameState', (data) => {
+            this.updateGameState(data);
         });
         
         socket.on('betPlaced', (data) => {
-            this.updateBettingState(data);
+            this.updateBetPlaced(data);
         });
         
         socket.on('cardsDealt', (data) => {
             this.updateCardsDealt(data);
-        });
-        
-        socket.on('playerTurn', (data) => {
-            this.updatePlayerTurn(data);
         });
         
         socket.on('playerAction', (data) => {
@@ -610,63 +497,56 @@ class BlackjackClient {
             this.updateDealerTurn(data);
         });
         
-        socket.on('dealerCard', (data) => {
-            this.updateDealerCard(data);
-        });
-        
-        socket.on('roundComplete', (data) => {
-            this.showRoundResults(data);
+        socket.on('roundFinished', (data) => {
+            this.updateRoundFinished(data);
         });
         
         // Error handling
         socket.on('error', (error) => {
             console.error('Socket error:', error);
-            UIUtils.showGameMessage(`Error: ${error}`, 'error');
+            UIUtils.showGameMessage('Error: ' + error, 'error');
         });
     }
 
     // Create room
     createRoom() {
-        console.log('🎮 Create Room button clicked');
-        console.log('🔍 Debug - GameFramework type:', typeof GameFramework);
-        console.log('🔍 Debug - GameFramework object:', GameFramework);
-        console.log('🔍 Debug - GameFramework.createRoom:', GameFramework?.createRoom);
-        console.log('🔍 Debug - window.gameFramework:', window.gameFramework);
-        console.log('🔍 Debug - window.gameFramework.socket:', window.gameFramework?.socket);
+        console.log('Create Room button clicked');
+        console.log('DEBUG: GameFramework type:', typeof GameFramework);
+        console.log('DEBUG: GameFramework object:', GameFramework);
+        console.log('DEBUG: GameFramework.createRoom:', GameFramework?.createRoom);
+        console.log('DEBUG: window.gameFramework:', window.gameFramework);
+        console.log('DEBUG: window.gameFramework.socket:', window.gameFramework?.socket);
         
-        // Try to create room immediately first
         if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
-            console.log('✅ GameFramework and socket available, creating room immediately');
+            console.log('SUCCESS: GameFramework and socket available, creating room immediately');
             GameFramework.createRoom('blackjack');
             return;
         }
         
         // If not available, wait and retry
-        console.log('⏳ GameFramework not ready, waiting...');
+        console.log('WAITING: GameFramework not ready, waiting...');
         let attempts = 0;
         const maxAttempts = 10;
         
         const tryCreateRoom = () => {
             attempts++;
-            console.log(`🔄 Attempt ${attempts}/${maxAttempts} to create room`);
+            console.log('RETRY: Attempt ' + attempts + '/' + maxAttempts + ' to create room');
             console.log('  - GameFramework:', typeof GameFramework);
-            console.log('  - GameFramework.createRoom:', typeof GameFramework?.createRoom);
+            console.log('  - GameFramework.createRoom:', GameFramework?.createRoom);
             console.log('  - window.gameFramework.socket:', window.gameFramework?.socket);
             
             if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
-                console.log('✅ GameFramework and socket now available, creating room');
+                console.log('SUCCESS: GameFramework and socket now available, creating room');
                 GameFramework.createRoom('blackjack');
                 return;
             }
             
             if (attempts < maxAttempts) {
-                setTimeout(tryCreateRoom, 200); // Wait 200ms between attempts
+                setTimeout(tryCreateRoom, 200);
             } else {
-                console.error('❌ GameFramework still not available after maximum attempts');
+                console.error('ERROR: GameFramework still not available after maximum attempts');
                 if (typeof UIUtils !== 'undefined') {
                     UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
-                } else {
-                    alert('Game framework not ready. Please refresh the page.');
                 }
             }
         };
@@ -677,10 +557,9 @@ class BlackjackClient {
     // Join room
     joinRoom() {
         const roomCode = prompt('Enter room code:');
-        if (!roomCode) {
-            return;
+        if (roomCode) {
+            window.gameFramework.socket.emit('joinRoom', { roomCode: roomCode });
         }
-        GameFramework.joinRoom(roomCode);
     }
 
     // Add bot
@@ -697,34 +576,117 @@ class BlackjackClient {
 
     // Start game
     startGame(data = null) {
-        if (data) {
+        console.log('Starting game with data:', data);
+        
+        if (data && data.players) {
             this.game.initialize(data.players);
-            this.localPlayerIndex = data.localPlayerIndex;
+        } else {
+            const roomPlayers = window.gameFramework.players || [];
+            if (roomPlayers && roomPlayers.length > 0) {
+                const gamePlayers = roomPlayers.map(player => ({
+                    name: player.name,
+                    startingChips: 1000,
+                    isBot: player.isBot || false
+                }));
+                this.game.initialize(gamePlayers);
+            } else {
+                console.error('ERROR: No players available to start game');
+                UIUtils.showGameMessage('No players available to start game. Please add players first.', 'error');
+                return;
+            }
         }
         
-        UIUtils.showGame();
+        // Start the game
         this.game.startNewRound();
+        
+        // Update game state
+        if (typeof gameStateEnum !== 'undefined') {
+            gameState = gameStateEnum.Playing;
+            window.gameState = gameStateEnum.Playing;
+        }
+        
+        // Set global game instance
+        window.game = this.game;
+        
+        // Update UI
+        this.updateUI();
     }
 
-    // Place bet
-    placeBet() {
-        const amount = parseInt(document.getElementById('betAmount').value) || 0;
-        if (amount <= 0) {
-            UIUtils.showGameMessage('Please enter a valid bet amount', 'error');
-            return;
-        }
+    // Update game state
+    updateGameState(data) {
+        this.game.players = data.players || this.game.players;
+        this.game.dealer = data.dealer || this.game.dealer;
+        this.game.currentPlayer = data.currentPlayer || this.game.currentPlayer;
+        this.game.gamePhase = data.gamePhase || this.game.gamePhase;
+        this.game.roundNumber = data.roundNumber || this.game.roundNumber;
         
-        const socket = window.gameFramework.socket;
-        socket.emit('placeBet', {
-            roomId: window.gameFramework.roomId,
-            playerIndex: this.localPlayerIndex,
-            amount: amount
-        });
+        this.updateUI();
+    }
+
+    // Update bet placed
+    updateBetPlaced(data) {
+        this.game.players[data.playerIndex] = data.player;
+        this.updateUI();
+    }
+
+    // Update cards dealt
+    updateCardsDealt(data) {
+        this.game.players = data.players;
+        this.game.dealer = data.dealer;
+        this.game.gamePhase = data.gamePhase;
+        
+        this.isMyTurn = (data.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
+                     !this.game.players[this.localPlayerIndex].isStanding && 
+                     !this.game.players[this.localPlayerIndex].hasBlackjack;
+        
+        this.updateUI();
+        this.updateGameControls();
+    }
+
+    // Update player action
+    updatePlayerAction(data) {
+        this.game.players[data.playerIndex] = data.player;
+        this.game.gamePhase = data.gamePhase;
+        
+        this.isMyTurn = (data.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
+                     !this.game.players[this.localPlayerIndex].isStanding && 
+                     !this.game.players[this.localPlayerIndex].hasBlackjack;
+        
+        this.updateUI();
+        this.updateGameControls();
+    }
+
+    // Update dealer turn
+    updateDealerTurn(data) {
+        this.game.dealer = data.dealer;
+        this.game.gamePhase = data.gamePhase;
+        
+        this.isMyTurn = false;
+        this.canAct = false;
+        
+        this.updateUI();
+        this.updateGameControls();
+    }
+
+    // Update round finished
+    updateRoundFinished(data) {
+        this.game.players = data.players;
+        this.game.dealer = data.dealer;
+        this.game.gamePhase = data.gamePhase;
+        
+        this.isMyTurn = false;
+        this.canAct = false;
+        
+        this.updateUI();
+        this.updateGameControls();
     }
 
     // Player action
     playerAction(action) {
-        if (!this.canAct || !this.isMyTurn) {
+        if (!this.canAct) {
+            UIUtils.showGameMessage('It\'s not your turn', 'error');
             return;
         }
         
@@ -734,197 +696,116 @@ class BlackjackClient {
             playerIndex: this.localPlayerIndex,
             action: action
         });
-        
-        this.canAct = false;
-        this.hideBettingControls();
     }
 
-    // Update round info
-    updateRoundInfo(data) {
-        document.getElementById('roundNumber').textContent = data.roundNumber;
-        this.game.gamePhase = data.gamePhase;
-        
-        if (data.gamePhase === 'betting') {
-            this.showBettingArea();
-        } else {
-            this.hideBettingArea();
-        }
+    // Place bet
+    placeBet(amount) {
+        const socket = window.gameFramework.socket;
+        socket.emit('placeBet', {
+            roomId: window.gameFramework.roomId,
+            playerIndex: this.localPlayerIndex,
+            amount: amount
+        });
     }
 
-    // Update betting state
-    updateBettingState(data) {
-        if (data.playerIndex === this.localPlayerIndex) {
-            document.getElementById('playerChips').textContent = data.playerChips;
-            this.hideBettingArea();
-        }
-    }
-
-    // Update cards dealt
-    updateCardsDealt(data) {
-        this.game.players = data.players;
-        this.game.dealer = data.dealer;
-        this.game.gamePhase = data.gamePhase;
-        
-        this.updateUI();
-        this.hideBettingArea();
-    }
-
-    // Update player turn
-    updatePlayerTurn(data) {
-        this.isMyTurn = (data.playerIndex === this.localPlayerIndex);
-        this.canAct = this.isMyTurn;
-        
-        if (this.canAct) {
-            this.showBettingControls(data.player);
-        } else {
-            this.hideBettingControls();
-        }
-        
-        this.updateUI();
-    }
-
-    // Update player action
-    updatePlayerAction(data) {
-        this.game.players[data.playerIndex] = data.player;
-        this.updateUI();
-    }
-
-    // Update dealer turn
-    updateDealerTurn(data) {
-        this.game.dealer = data.dealer;
-        this.updateUI();
-    }
-
-    // Update dealer card
-    updateDealerCard(data) {
-        this.game.dealer = data.dealer;
-        this.updateUI();
-    }
-
-    // Show round results
-    showRoundResults(data) {
-        this.game.gamePhase = 'finished';
-        
-        // Show results for local player
-        const localResult = data.results.find(r => r.playerIndex === this.localPlayerIndex);
-        if (localResult) {
-            let message = `${localResult.result}`;
-            if (localResult.winnings > 0) {
-                message += ` - Won $${localResult.winnings}`;
-            }
-            if (localResult.splitResult) {
-                message += ` | Split: ${localResult.splitResult.result}`;
-            }
-            
-            UIUtils.showGameMessage(message, localResult.winnings > 0 ? 'success' : 'info');
-            
-            // Update chips
-            document.getElementById('playerChips').textContent = this.game.players[this.localPlayerIndex].chips;
-        }
-        
-        this.updateUI();
+    // Copy room code
+    copyRoomCode() {
+        const roomCode = document.getElementById('roomCodeText').textContent;
+        navigator.clipboard.writeText(roomCode).then(() => {
+            UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
+        });
     }
 
     // Update UI
     updateUI() {
+        // Update player areas
+        this.updatePlayerAreas();
+        
         // Update dealer area
         this.updateDealerArea();
         
-        // Update player areas
-        this.updatePlayerAreas();
+        // Update game info
+        this.updateGameInfo();
+    }
+
+    // Update player areas
+    updatePlayerAreas() {
+        const playerList = document.getElementById('playerList');
+        if (playerList) {
+            playerList.innerHTML = '';
+            
+            this.game.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-item';
+                if (index === this.game.currentPlayer) {
+                    playerDiv.classList.add('active');
+                }
+                
+                playerDiv.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-chips">$${player.chips}</div>
+                    <div class="player-bet">Bet: $${player.bet}</div>
+                    <div class="player-value">Value: ${player.value}</div>
+                `;
+                
+                playerList.appendChild(playerDiv);
+            });
+        }
     }
 
     // Update dealer area
     updateDealerArea() {
         const dealerArea = document.getElementById('dealerArea');
-        const dealerCards = document.getElementById('dealerCards');
-        const dealerValue = document.getElementById('dealerValue');
-        
-        dealerCards.innerHTML = '';
-        this.game.dealer.hand.forEach((card, index) => {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'card';
-            if (this.game.gamePhase === 'dealing' && index === 1) {
-                cardDiv.className += ' hidden';
-                cardDiv.textContent = '?';
-            } else {
-                cardDiv.textContent = card.name;
-            }
-            dealerCards.appendChild(cardDiv);
-        });
-        
-        if (this.game.gamePhase === 'dealing') {
-            dealerValue.textContent = this.game.dealer.hand[0].value;
-        } else {
-            dealerValue.textContent = this.game.dealer.value;
-        }
-        
-        // Update dealer area styling
-        dealerArea.className = 'dealer-area';
-        if (this.game.dealer.isBusted) {
-            dealerArea.className += ' busted';
-        } else if (this.game.dealer.hasBlackjack) {
-            dealerArea.className += ' blackjack';
+        if (dealerArea) {
+            dealerArea.innerHTML = `
+                <div class="dealer-name">Dealer</div>
+                <div class="dealer-value">Value: ${this.game.dealer.value}</div>
+            `;
         }
     }
 
-    // Update player areas
-    updatePlayerAreas() {
-        // This would update the visual representation of players
-        // For now, just log the state
-        console.log('Players:', this.game.players.map(p => ({
-            name: p.name,
-            chips: p.chips,
-            hand: p.hand.length,
-            value: p.value,
-            isBusted: p.isBusted,
-            hasBlackjack: p.hasBlackjack
-        })));
+    // Update game info
+    updateGameInfo() {
+        const gameInfo = document.getElementById('gameInfo');
+        if (gameInfo) {
+            gameInfo.innerHTML = `
+                <div>Round: ${this.game.roundNumber}</div>
+                <div>Phase: ${this.game.gamePhase}</div>
+            `;
+        }
     }
 
-    // Show betting area
-    showBettingArea() {
-        document.getElementById('bettingArea').style.display = 'flex';
-    }
-
-    // Hide betting area
-    hideBettingArea() {
-        document.getElementById('bettingArea').style.display = 'none';
-    }
-
-    // Show betting controls
-    showBettingControls(player) {
-        const controls = document.getElementById('bettingControls');
-        controls.style.display = 'flex';
+    // Update game controls
+    updateGameControls() {
+        const hitBtn = document.getElementById('hitBtn');
+        const standBtn = document.getElementById('standBtn');
+        const doubleBtn = document.getElementById('doubleBtn');
+        const splitBtn = document.getElementById('splitBtn');
         
-        // Enable/disable buttons based on player options
-        document.getElementById('doubleBtn').disabled = !player.canDouble;
-        document.getElementById('splitBtn').disabled = !player.canSplit;
-    }
-
-    // Hide betting controls
-    hideBettingControls() {
-        document.getElementById('bettingControls').style.display = 'none';
+        if (hitBtn) hitBtn.style.display = this.canAct ? 'inline-block' : 'none';
+        if (standBtn) standBtn.style.display = this.canAct ? 'inline-block' : 'none';
+        if (doubleBtn) doubleBtn.style.display = (this.canAct && this.game.players[this.localPlayerIndex]?.canDouble) ? 'inline-block' : 'none';
+        if (splitBtn) splitBtn.style.display = (this.canAct && this.game.players[this.localPlayerIndex]?.canSplit) ? 'inline-block' : 'none';
     }
 
     // Show room code
     showRoomCode(roomCode) {
-        console.log('🎯 Showing room code:', roomCode);
+        console.log('Showing room code:', roomCode);
         const roomCodeText = document.getElementById('roomCodeText');
         const roomCodeDisplay = document.getElementById('roomCodeDisplay');
         
         if (roomCodeText) {
             roomCodeText.textContent = roomCode;
-            console.log('✅ Room code text updated');
+            console.log('SUCCESS: Room code text updated');
         } else {
-            console.error('❌ roomCodeText element not found');
+            console.error('ERROR: roomCodeText element not found');
         }
         
         if (roomCodeDisplay) {
             roomCodeDisplay.style.display = 'block';
-            console.log('✅ Room code display shown');
+            console.log('SUCCESS: Room code display shown');
         } else {
-            console.error('❌ roomCodeDisplay element not found');
+            console.error('ERROR: roomCodeDisplay element not found');
         }
     }
 
@@ -936,69 +817,52 @@ class BlackjackClient {
     // Show game controls
     showGameControls() {
         const addBotBtn = document.getElementById('addBotBtn');
-        const removeBotBtn = document.getElementById('removeBotBtn');
-        const startGameBtn = document.getElementById('startGameBtn');
-        
         if (addBotBtn) {
             addBotBtn.style.display = 'inline-block';
-            addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
-            addBotBtn.style.setProperty('color', 'white', 'important');
             addBotBtn.style.setProperty('border', 'none', 'important');
-            console.log('✅ Add Bot button shown and styled green');
+            console.log('SUCCESS: Add Bot button shown and styled green');
         }
         
+        const removeBotBtn = document.getElementById('removeBotBtn');
         if (removeBotBtn) {
             removeBotBtn.style.display = 'inline-block';
-            removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
-            removeBotBtn.style.setProperty('color', 'white', 'important');
             removeBotBtn.style.setProperty('border', 'none', 'important');
-            console.log('✅ Remove Bot button shown and styled red');
+            console.log('SUCCESS: Remove Bot button shown and styled red');
         }
         
+        const startGameBtn = document.getElementById('startGameBtn');
         if (startGameBtn) {
             startGameBtn.style.display = 'inline-block';
-            startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
-            startGameBtn.style.setProperty('color', 'white', 'important');
-            startGameBtn.style.setProperty('border', 'none', 'important');
             startGameBtn.disabled = false;
-            console.log('✅ Start Game button shown and styled orange');
+            console.log('SUCCESS: Start Game button shown and styled orange');
         }
         
-        // Show game menu button
         const gameMenuBtn = document.getElementById('gameMenuBtn');
         if (gameMenuBtn) {
             gameMenuBtn.style.display = 'inline-block';
-            console.log('✅ Game Menu button shown');
+            console.log('SUCCESS: Game Menu button shown');
         }
-    }
-
-    // Copy room code
-    copyRoomCode() {
-        const roomCode = document.getElementById('roomCodeText').textContent;
-        navigator.clipboard.writeText(roomCode).then(() => {
-            UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
-        });
     }
 
     // Reset client state
     reset() {
-        console.log('🔄 Resetting Blackjack client state...');
+        console.log('Resetting Blackjack client state...');
         this.localPlayerIndex = 0;
         this.isMyTurn = false;
         this.canAct = false;
         this.game = new BlackjackGame();
-        console.log('✅ Blackjack client state reset');
+        console.log('SUCCESS: Blackjack client state reset');
     }
 }
 
-// 🎨 BLACKJACK RENDERING FUNCTIONS
+// BLACKJACK RENDERING FUNCTIONS
 function drawGameState() {
     if (!window.game || !window.game.players) {
-        console.log('🎨 Blackjack: No game or players available for rendering');
+        console.log('Blackjack: No game or players available for rendering');
         return;
     }
     
-    console.log('🎨 Drawing blackjack game state');
+    console.log('Drawing blackjack game state');
     
     // Clear canvas with blackjack table background
     background(0, 100, 0); // Dark green table
@@ -1047,7 +911,7 @@ function drawDealerArea() {
     // Draw dealer value
     if (window.game.dealer && window.game.dealer.value !== undefined) {
         textSize(14);
-        text(`Value: ${window.game.dealer.value}`, centerX, dealerY + 50);
+        text('Value: ' + window.game.dealer.value, centerX, dealerY + 50);
     }
 }
 
@@ -1083,11 +947,11 @@ function drawPlayerAreas() {
         
         // Draw player chips
         textSize(12);
-        text(`Chips: $${player.chips}`, playerX + playerWidth/2, playerY - 10);
+        text('Chips: $' + player.chips, playerX + playerWidth/2, playerY - 10);
         
         // Draw player bet
         if (player.bet > 0) {
-            text(`Bet: $${player.bet}`, playerX + playerWidth/2, playerY + 10);
+            text('Bet: $' + player.bet, playerX + playerWidth/2, playerY + 10);
         }
         
         // Draw player cards
@@ -1098,7 +962,7 @@ function drawPlayerAreas() {
         // Draw player value
         if (player.value !== undefined) {
             textSize(12);
-            text(`Value: ${player.value}`, playerX + playerWidth/2, playerY + 50);
+            text('Value: ' + player.value, playerX + playerWidth/2, playerY + 50);
         }
         
         // Draw player status
@@ -1150,11 +1014,11 @@ function drawGameInfo() {
     fill(255);
     textAlign(LEFT, TOP);
     textSize(14);
-    text(`Phase: ${window.game.gamePhase || 'betting'}`, 20, 20);
+    text('Phase: ' + (window.game.gamePhase || 'betting'), 20, 20);
     
     // Draw round number
     if (window.game.roundNumber) {
-        text(`Round: ${window.game.roundNumber}`, 20, 40);
+        text('Round: ' + window.game.roundNumber, 20, 40);
     }
 }
 
