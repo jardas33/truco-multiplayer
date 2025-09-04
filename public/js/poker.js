@@ -164,6 +164,9 @@ class PokerGame {
             currentBet: this.currentBet,
             pot: this.pot
         });
+        
+        // Start bot turn if current player is a bot
+        this.handleBotTurn();
     }
 
     // Player action (fold, call, raise, bet)
@@ -253,6 +256,9 @@ class PokerGame {
             currentBet: this.currentBet,
             pot: this.pot
         });
+        
+        // Handle bot turn if current player is a bot
+        this.handleBotTurn();
     }
 
     // End current betting round
@@ -569,6 +575,77 @@ class PokerGame {
                 ...data
             });
         }
+    }
+
+    // Handle bot turn
+    handleBotTurn() {
+        const currentPlayer = this.players[this.currentPlayer];
+        if (currentPlayer && currentPlayer.isBot) {
+            setTimeout(() => {
+                this.botAction();
+            }, 1000 + Math.random() * 2000); // Random delay 1-3 seconds
+        }
+    }
+
+    // Bot AI decision making
+    botAction() {
+        const player = this.players[this.currentPlayer];
+        if (!player || !player.isBot) return;
+
+        console.log(`🤖 Bot ${player.name} making decision...`);
+
+        // Simple bot AI - can be improved
+        const handStrength = this.evaluateHand(player);
+        const callAmount = this.currentBet - player.currentBet;
+        const potOdds = this.pot / (callAmount + this.pot);
+
+        let action = 'fold';
+        let amount = 0;
+
+        if (handStrength > 0.7) {
+            // Strong hand - raise
+            action = 'raise';
+            amount = Math.min(this.currentBet * 2, player.chips);
+        } else if (handStrength > 0.4 || potOdds > 0.3) {
+            // Decent hand or good pot odds - call
+            action = 'call';
+        } else if (callAmount === 0) {
+            // No bet to call - check
+            action = 'call';
+        } else {
+            // Weak hand - fold
+            action = 'fold';
+        }
+
+        console.log(`🤖 Bot ${player.name} decides to ${action} ${amount > 0 ? '$' + amount : ''}`);
+        this.playerAction(this.currentPlayer, action, amount);
+    }
+
+    // Evaluate hand strength (simplified)
+    evaluateHand(player) {
+        const cards = [...player.hand, ...this.communityCards];
+        if (cards.length < 2) return 0;
+
+        // Simple evaluation based on high cards and pairs
+        let strength = 0;
+        
+        // High card value
+        const highCard = Math.max(...cards.map(c => c.value));
+        strength += highCard / 14 * 0.3;
+
+        // Pair detection
+        const ranks = cards.map(c => c.rank);
+        const rankCounts = {};
+        ranks.forEach(rank => {
+            rankCounts[rank] = (rankCounts[rank] || 0) + 1;
+        });
+
+        const pairs = Object.values(rankCounts).filter(count => count >= 2);
+        if (pairs.length > 0) {
+            strength += pairs.length * 0.2;
+        }
+
+        return Math.min(strength, 1);
     }
 
     // Get game state for client
@@ -947,8 +1024,29 @@ class PokerClient {
 
     // Update player areas
     updatePlayerAreas() {
-        // This would update the visual representation of players
-        // For now, just log the state
+        // Update player list in the UI
+        const playerList = document.getElementById('playerList');
+        if (playerList) {
+            playerList.innerHTML = '';
+            
+            this.game.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-item';
+                if (index === this.game.currentPlayer) {
+                    playerDiv.classList.add('active');
+                }
+                
+                playerDiv.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-chips">$${player.chips}</div>
+                    <div class="player-bet">Bet: $${player.currentBet}</div>
+                    <div class="player-status">${player.isFolded ? 'Folded' : player.isAllIn ? 'All In' : 'Active'}</div>
+                `;
+                
+                playerList.appendChild(playerDiv);
+            });
+        }
+        
         console.log('Players:', this.game.players.map(p => ({
             name: p.name,
             chips: p.chips,
