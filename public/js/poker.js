@@ -89,6 +89,12 @@ class PokerGame {
         console.log('🎯 Players length:', this.players?.length);
         console.log('🎯 Dealer position:', this.dealerPosition);
         
+        // Safety check - ensure we have players
+        if (!this.players || this.players.length === 0) {
+            console.error('❌ Cannot post blinds - no players available');
+            return;
+        }
+        
         const smallBlindPos = (this.dealerPosition + 1) % this.players.length;
         const bigBlindPos = (this.dealerPosition + 2) % this.players.length;
         
@@ -96,6 +102,12 @@ class PokerGame {
         console.log('🎯 Big blind position:', bigBlindPos);
         console.log('🎯 Small blind player:', this.players[smallBlindPos]);
         console.log('🎯 Big blind player:', this.players[bigBlindPos]);
+        
+        // Safety check - ensure players exist at calculated positions
+        if (!this.players[smallBlindPos] || !this.players[bigBlindPos]) {
+            console.error('❌ Cannot post blinds - players not found at calculated positions');
+            return;
+        }
         
         // Post small blind
         this.players[smallBlindPos].chips -= this.smallBlind;
@@ -743,11 +755,45 @@ class PokerClient {
             this.game.initialize(data.players);
             this.localPlayerIndex = data.localPlayerIndex;
         } else {
-            console.log('⚠️ No player data provided, using existing players');
+            console.log('⚠️ No player data provided, using room players');
+            // Get players from the room
+            const roomPlayers = window.gameFramework.players || [];
+            console.log('🎮 Room players:', roomPlayers);
+            
+            if (roomPlayers.length > 0) {
+                // Convert room players to game players
+                const gamePlayers = roomPlayers.map((player, index) => ({
+                    id: player.id,
+                    name: player.name,
+                    isBot: player.isBot,
+                    chips: 1000, // Starting chips
+                    hand: [],
+                    currentBet: 0,
+                    totalBet: 0,
+                    isFolded: false,
+                    isAllIn: false,
+                    handRank: null,
+                    bestHand: null
+                }));
+                
+                console.log('🎮 Converted game players:', gamePlayers);
+                this.game.initialize(gamePlayers);
+                this.localPlayerIndex = 0; // First player is local
+            } else {
+                console.error('❌ No players available to start game');
+                UIUtils.showGameMessage('No players available to start game. Please add players first.', 'error');
+                return;
+            }
         }
         
         console.log('🎮 Final game players before startNewHand:', this.game.players);
         console.log('🎮 Players length:', this.game.players?.length);
+        
+        if (this.game.players.length === 0) {
+            console.error('❌ Cannot start game with 0 players');
+            UIUtils.showGameMessage('Cannot start game with 0 players. Please add players first.', 'error');
+            return;
+        }
         
         UIUtils.showGame();
         this.game.startNewHand();
