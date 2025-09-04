@@ -302,15 +302,42 @@
             display: none !important;
         }
 
-        /* Standardize button colors */
-        #addBotBtn, #removeBotBtn, #startGameBtn {
-            background-color: #4CAF50 !important;
+        /* Standardize button colors to match Truco exactly */
+        #addBotBtn {
+            background-color: #4CAF50 !important; /* Green for add */
             color: white !important;
             border: none !important;
         }
 
-        #addBotBtn:hover, #removeBotBtn:hover, #startGameBtn:hover {
+        #addBotBtn:hover {
             background-color: #45a049 !important;
+        }
+
+        #startGameBtn {
+            background-color: #FF9800 !important; /* Orange for start */
+            color: white !important;
+            border: none !important;
+        }
+
+        #startGameBtn:hover {
+            background-color: #F57C00 !important;
+        }
+
+        #removeBotBtn {
+            background-color: #f44336 !important; /* Red for remove */
+            color: white !important;
+            border: none !important;
+        }
+
+        #removeBotBtn:hover {
+            background-color: #da190b !important;
+        }
+
+        #backToMainMenuBtn {
+            background-color: #2196F3 !important; /* Blue for navigation */
+            color: white !important;
+            border: none !important;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -353,7 +380,7 @@
           <button id="removeBotBtn" style="display: none;">Remove Bot</button>
           <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
 
-          <button id="backToMainMenuBtn" style="display: none;">← Back to Main Menu</button>
+          <button id="backToMainMenuBtn" style="display: none;">← Back to War Menu</button>
           <div id="playerList"></div>
         </div>
     </div>
