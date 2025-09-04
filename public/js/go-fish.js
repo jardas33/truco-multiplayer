@@ -264,8 +264,13 @@ class GoFishGame {
     // Emit event to server
     emitEvent(eventName, data) {
         if (window.gameFramework.socket) {
+            // Extract room code from window.gameFramework.roomId (could be object or string)
+            const roomCode = typeof window.gameFramework.roomId === 'object' ? 
+                window.gameFramework.roomId.roomId : 
+                window.gameFramework.roomId;
+            
             window.gameFramework.socket.emit(eventName, {
-                roomId: window.gameFramework.roomId,
+                roomId: roomCode,
                 ...data
             });
         }
