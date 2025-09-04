@@ -2033,6 +2033,66 @@ function determineRoundWinner(playedCards, room) {
     console.log(`🏆 Round winner determined: ${highestCard.name} with ${highestCard.card} (value: ${highestCard.value})`);
     return highestCard;
     }
+
+    // Handle game-specific events for new games
+    socket.on('playerAction', (data) => {
+        console.log(`🎮 Player action in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            // Broadcast to all players in the room
+            io.to(data.roomId).emit('playerAction', data);
+        }
+    });
+
+    socket.on('bettingRoundStarted', (data) => {
+        console.log(`🎮 Betting round started in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            io.to(data.roomId).emit('bettingRoundStarted', data);
+        }
+    });
+
+    socket.on('communityCards', (data) => {
+        console.log(`🎮 Community cards in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            io.to(data.roomId).emit('communityCards', data);
+        }
+    });
+
+    socket.on('showdown', (data) => {
+        console.log(`🎮 Showdown in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            io.to(data.roomId).emit('showdown', data);
+        }
+    });
+
+    socket.on('gameState', (data) => {
+        console.log(`🎮 Game state update in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            io.to(data.roomId).emit('gameState', data);
+        }
+    });
+
+    // Handle turn changes for all games
+    socket.on('turnChanged', (data) => {
+        console.log(`🎮 Turn changed in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            io.to(data.roomId).emit('turnChanged', data);
+        }
+    });
+
+    // Handle game completion for all games
+    socket.on('gameCompleted', (data) => {
+        console.log(`🎮 Game completed in room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room) {
+            io.to(data.roomId).emit('gameCompleted', data);
+        }
+    });
 }
 
 // ✅ CRITICAL FIX: Function to start a new game after a team wins
@@ -2195,72 +2255,6 @@ function startNewGame(room, winningTeam, roomId) {
         console.error(`❌ Error starting new game:`, error);
     }
 }
-
-    // Handle game-specific events for new games
-    socket.on('playerAction', (data) => {
-        console.log(`🎮 Player action in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            // Broadcast to all players in the room
-            io.to(data.roomId).emit('playerAction', data);
-        }
-    });
-
-    socket.on('bettingRoundStarted', (data) => {
-        console.log(`🎮 Betting round started in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('bettingRoundStarted', data);
-        }
-    });
-
-    socket.on('communityCards', (data) => {
-        console.log(`🎮 Community cards in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('communityCards', data);
-        }
-    });
-
-    socket.on('showdown', (data) => {
-        console.log(`🎮 Showdown in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('showdown', data);
-        }
-    });
-
-    socket.on('gameState', (data) => {
-        console.log(`🎮 Game state update in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('gameState', data);
-        }
-    });
-
-    // Handle turn changes for all games
-    socket.on('turnChanged', (data) => {
-        console.log(`🎮 Turn changed in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('turnChanged', data);
-        }
-    });
-
-    // Handle game completion for all games
-    socket.on('gameCompleted', (data) => {
-        console.log(`🎮 Game completed in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('gameCompleted', data);
-        }
-    });
-
-    // Handle error events
-    socket.on('error', (error) => {
-        console.error(`❌ Socket error from ${socket.id}:`, error);
-    });
-});
 
 // Server startup
 const PORT = process.env.PORT || 3000;
