@@ -374,9 +374,9 @@ class CrazyEightsClient {
     setupSocketListeners() {
         const socket = window.gameFramework.socket;
         
-        socket.on('roomCreated', (data) => {
-            console.log('🏠 Room created:', data);
-            this.showRoomCode(data.roomCode);
+        socket.on('roomCreated', (roomCode) => {
+            console.log('🏠 Room created:', roomCode);
+            this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();
         });
@@ -701,8 +701,23 @@ class CrazyEightsClient {
 
     // Show room code
     showRoomCode(roomCode) {
-        document.getElementById('roomCodeText').textContent = roomCode;
-        document.getElementById('roomCodeDisplay').style.display = 'block';
+        console.log('🎯 Showing room code:', roomCode);
+        const roomCodeText = document.getElementById('roomCodeText');
+        const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+        
+        if (roomCodeText) {
+            roomCodeText.textContent = roomCode;
+            console.log('✅ Room code text updated');
+        } else {
+            console.error('❌ roomCodeText element not found');
+        }
+        
+        if (roomCodeDisplay) {
+            roomCodeDisplay.style.display = 'block';
+            console.log('✅ Room code display shown');
+        } else {
+            console.error('❌ roomCodeDisplay element not found');
+        }
     }
 
     // Show player customization
@@ -712,10 +727,34 @@ class CrazyEightsClient {
 
     // Show game controls
     showGameControls() {
-        document.getElementById('addBotBtn').style.display = 'inline-block';
-        document.getElementById('removeBotBtn').style.display = 'inline-block';
-        document.getElementById('startGameBtn').style.display = 'inline-block';
-        document.getElementById('startGameBtn').disabled = false;
+        const addBotBtn = document.getElementById('addBotBtn');
+        const removeBotBtn = document.getElementById('removeBotBtn');
+        const startGameBtn = document.getElementById('startGameBtn');
+        
+        if (addBotBtn) {
+            addBotBtn.style.display = 'inline-block';
+            addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
+            addBotBtn.style.setProperty('color', 'white', 'important');
+            addBotBtn.style.setProperty('border', 'none', 'important');
+            console.log('✅ Add Bot button shown and styled green');
+        }
+        
+        if (removeBotBtn) {
+            removeBotBtn.style.display = 'inline-block';
+            removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
+            removeBotBtn.style.setProperty('color', 'white', 'important');
+            removeBotBtn.style.setProperty('border', 'none', 'important');
+            console.log('✅ Remove Bot button shown and styled red');
+        }
+        
+        if (startGameBtn) {
+            startGameBtn.style.display = 'inline-block';
+            startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
+            startGameBtn.style.setProperty('color', 'white', 'important');
+            startGameBtn.style.setProperty('border', 'none', 'important');
+            startGameBtn.disabled = false;
+            console.log('✅ Start Game button shown and styled orange');
+        }
     }
 
     // Copy room code
