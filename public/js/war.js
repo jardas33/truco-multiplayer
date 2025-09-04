@@ -361,8 +361,20 @@ class WarClient {
     initialize() {
         console.log('🎮 Initializing War client');
         
+        // Check if dependencies are available
+        console.log('🔍 Checking dependencies:');
+        console.log('  - GameFramework:', typeof GameFramework);
+        console.log('  - CardUtils:', typeof CardUtils);
+        console.log('  - UIUtils:', typeof UIUtils);
+        console.log('  - window.gameFramework:', typeof window.gameFramework);
+        
         // Initialize game framework
-        GameFramework.initialize('war');
+        if (typeof GameFramework !== 'undefined') {
+            GameFramework.initialize('war');
+            console.log('✅ GameFramework initialized');
+        } else {
+            console.error('❌ GameFramework not available');
+        }
         
         // Setup UI event listeners
         this.setupUI();

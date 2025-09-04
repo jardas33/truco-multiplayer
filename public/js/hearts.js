@@ -484,8 +484,20 @@ class HeartsClient {
     initialize() {
         console.log('🎮 Initializing Hearts client');
         
+        // Check if dependencies are available
+        console.log('🔍 Checking dependencies:');
+        console.log('  - GameFramework:', typeof GameFramework);
+        console.log('  - CardUtils:', typeof CardUtils);
+        console.log('  - UIUtils:', typeof UIUtils);
+        console.log('  - window.gameFramework:', typeof window.gameFramework);
+        
         // Initialize game framework
-        GameFramework.initialize('hearts');
+        if (typeof GameFramework !== 'undefined') {
+            GameFramework.initialize('hearts');
+            console.log('✅ GameFramework initialized');
+        } else {
+            console.error('❌ GameFramework not available');
+        }
         
         // Setup UI event listeners
         this.setupUI();
@@ -575,10 +587,15 @@ class HeartsClient {
     // Create room
     createRoom() {
         console.log('🎮 Create Room button clicked');
+        console.log('🔍 Debug - GameFramework type:', typeof GameFramework);
+        console.log('🔍 Debug - GameFramework object:', GameFramework);
+        console.log('🔍 Debug - GameFramework.createRoom:', GameFramework?.createRoom);
+        console.log('🔍 Debug - window.gameFramework:', window.gameFramework);
+        console.log('🔍 Debug - window.gameFramework.socket:', window.gameFramework?.socket);
         
         // Try to create room immediately first
-        if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-            console.log('✅ GameFramework available, creating room immediately');
+        if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
+            console.log('✅ GameFramework and socket available, creating room immediately');
             GameFramework.createRoom('hearts');
             return;
         }
@@ -591,9 +608,12 @@ class HeartsClient {
         const tryCreateRoom = () => {
             attempts++;
             console.log(`🔄 Attempt ${attempts}/${maxAttempts} to create room`);
+            console.log('  - GameFramework:', typeof GameFramework);
+            console.log('  - GameFramework.createRoom:', typeof GameFramework?.createRoom);
+            console.log('  - window.gameFramework.socket:', window.gameFramework?.socket);
             
-            if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-                console.log('✅ GameFramework now available, creating room');
+            if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
+                console.log('✅ GameFramework and socket now available, creating room');
                 GameFramework.createRoom('hearts');
                 return;
             }
@@ -602,7 +622,11 @@ class HeartsClient {
                 setTimeout(tryCreateRoom, 200); // Wait 200ms between attempts
             } else {
                 console.error('❌ GameFramework still not available after maximum attempts');
-                UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+                } else {
+                    alert('Game framework not ready. Please refresh the page.');
+                }
             }
         };
         
