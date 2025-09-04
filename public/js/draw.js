@@ -13,16 +13,18 @@ function draw() {
         return; // Don't draw anything if canvas is hidden
     }
     
-    // Add global frame limiting to prevent excessive drawing and flashing
-    if (!window.lastDrawTime) {
-        window.lastDrawTime = 0;
+    // Add frame limiting only when game is playing to prevent flashing
+    if (gameState === gameStateEnum.Playing) {
+        if (!window.lastDrawTime) {
+            window.lastDrawTime = 0;
+        }
+        
+        const drawTime = millis();
+        if (drawTime - window.lastDrawTime < 100) { // Only draw every 100ms (10 FPS) when playing
+            return;
+        }
+        window.lastDrawTime = drawTime;
     }
-    
-    const currentTime = millis();
-    if (currentTime - window.lastDrawTime < 100) { // Only draw every 100ms (10 FPS)
-        return;
-    }
-    window.lastDrawTime = currentTime;
     
     // Fix canvas parenting based on game state
     if (window.gameCanvas) {
@@ -55,29 +57,50 @@ function draw() {
         }
     }
     
-    // Draw background for all states
-    push();
-    imageMode(CORNER);
-    if (backgroundImage) {
-        image(backgroundImage, 0, 0, width, height);
+    // Draw background for all states (only when needed)
+    if (gameState === gameStateEnum.Menu) {
+        // For menu, only draw background if it hasn't been drawn recently
+        if (!window.menuBackgroundDrawn || frameCount % 60 === 0) {
+            push();
+            imageMode(CORNER);
+            if (backgroundImage) {
+                image(backgroundImage, 0, 0, width, height);
+            } else {
+                // Fallback background if image not loaded
+                background(0, 100, 0); // Dark green
+            }
+            pop();
+            window.menuBackgroundDrawn = true;
+        }
     } else {
-        // Fallback background if image not loaded
-        background(0, 100, 0); // Dark green
+        // For other states, draw background normally
+        push();
+        imageMode(CORNER);
+        if (backgroundImage) {
+            image(backgroundImage, 0, 0, width, height);
+        } else {
+            // Fallback background if image not loaded
+            background(0, 100, 0); // Dark green
+        }
+        pop();
     }
-    pop();
     
     if (gameState === gameStateEnum.Menu) {
-        menuDiv.show();
-        gameDiv.hide();
-        if (instructionsDiv) instructionsDiv.hide();
-        if (valuesDiv) valuesDiv.hide();
-        if (instructionsCloseButton) {
-            instructionsCloseButton.remove();
-        }
-        // Remove any existing instructions box
-        const existingBox = document.querySelector('.instructions-box');
-        if (existingBox) {
-            existingBox.remove();
+        // Only update menu display if it hasn't been updated recently
+        if (!window.menuDisplayUpdated || frameCount % 30 === 0) {
+            menuDiv.show();
+            gameDiv.hide();
+            if (instructionsDiv) instructionsDiv.hide();
+            if (valuesDiv) valuesDiv.hide();
+            if (instructionsCloseButton) {
+                instructionsCloseButton.remove();
+            }
+            // Remove any existing instructions box
+            const existingBox = document.querySelector('.instructions-box');
+            if (existingBox) {
+                existingBox.remove();
+            }
+            window.menuDisplayUpdated = true;
         }
     }
     else if (gameState === gameStateEnum.Instructions) {
