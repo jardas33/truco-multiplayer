@@ -36,14 +36,22 @@ function setup() {
     console.log('Div containers initialized');
 
     // Ensure proper initial state
-    menuDiv.class('active');
-    menuDiv.style('display', 'block'); // Force menu to be visible
-    gameDiv.removeClass('active');
-    gameDiv.style('display', 'none');
-    instructionsDiv.removeClass('active');
-    instructionsDiv.style('display', 'none');
-    valuesDiv.removeClass('active');
-    valuesDiv.style('display', 'none');
+    if (menuDiv) {
+        menuDiv.class('active');
+        menuDiv.style('display', 'block'); // Force menu to be visible
+    }
+    if (gameDiv) {
+        gameDiv.removeClass('active');
+        gameDiv.style('display', 'none');
+    }
+    if (instructionsDiv) {
+        instructionsDiv.removeClass('active');
+        instructionsDiv.style('display', 'none');
+    }
+    if (valuesDiv) {
+        valuesDiv.removeClass('active');
+        valuesDiv.style('display', 'none');
+    }
     console.log('Menu div made visible, others hidden');
 
     // Ensure the room controls (HTML buttons) are visible above the canvas
@@ -207,27 +215,31 @@ function setup() {
     console.log('Player positions initialized');
 
     // Create close buttons for popups
-    instructionsCloseButton = createButton("Close");
-    instructionsCloseButton.mousePressed(closeInstructions);
-    instructionsCloseButton.parent(instructionsDiv);
-    instructionsCloseButton.style("position", "absolute");
-    instructionsCloseButton.style("bottom", "10px");
-    instructionsCloseButton.style("left", "50%");
-    instructionsCloseButton.style("transform", "translateX(-50%)");
-    instructionsCloseButton.style("z-index", "30"); // Above everything
-    instructionsCloseButton.style("display", "block"); // Ensure it's visible
-    instructionsCloseButton.show(); // Make sure p5.js shows it
+    if (instructionsDiv) {
+        instructionsCloseButton = createButton("Close");
+        instructionsCloseButton.mousePressed(closeInstructions);
+        instructionsCloseButton.parent(instructionsDiv);
+        instructionsCloseButton.style("position", "absolute");
+        instructionsCloseButton.style("bottom", "10px");
+        instructionsCloseButton.style("left", "50%");
+        instructionsCloseButton.style("transform", "translateX(-50%)");
+        instructionsCloseButton.style("z-index", "30"); // Above everything
+        instructionsCloseButton.style("display", "block"); // Ensure it's visible
+        instructionsCloseButton.show(); // Make sure p5.js shows it
+    }
 
-    cardValuesCloseButton = createButton("Close");
-    cardValuesCloseButton.mousePressed(closeCardValues);
-    cardValuesCloseButton.parent(valuesDiv);
-    cardValuesCloseButton.style("position", "absolute");
-    cardValuesCloseButton.style("bottom", "10px");
-    cardValuesCloseButton.style("left", "50%");
-    cardValuesCloseButton.style("transform", "translateX(-50%)");
-    cardValuesCloseButton.style("z-index", "30"); // Above everything
-    cardValuesCloseButton.style("display", "block"); // Ensure it's visible
-    cardValuesCloseButton.show(); // Make sure p5.js shows it
+    if (valuesDiv) {
+        cardValuesCloseButton = createButton("Close");
+        cardValuesCloseButton.mousePressed(closeCardValues);
+        cardValuesCloseButton.parent(valuesDiv);
+        cardValuesCloseButton.style("position", "absolute");
+        cardValuesCloseButton.style("bottom", "10px");
+        cardValuesCloseButton.style("left", "50%");
+        cardValuesCloseButton.style("transform", "translateX(-50%)");
+        cardValuesCloseButton.style("z-index", "30"); // Above everything
+        cardValuesCloseButton.style("display", "block"); // Ensure it's visible
+        cardValuesCloseButton.show(); // Make sure p5.js shows it
+    }
 
     // Create popup elements for Truco notifications
     popup = createDiv();

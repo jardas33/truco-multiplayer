@@ -601,6 +601,11 @@ class BlackjackClient {
 
     // Create room
     createRoom() {
+        if (typeof GameFramework === 'undefined' || !GameFramework.createRoom) {
+            console.error('❌ GameFramework not available or createRoom method missing');
+            UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+            return;
+        }
         GameFramework.createRoom('blackjack');
     }
 
