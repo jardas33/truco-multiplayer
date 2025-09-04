@@ -374,8 +374,9 @@ class CrazyEightsClient {
     setupSocketListeners() {
         const socket = window.gameFramework.socket;
         
-        socket.on('roomCreated', (roomCode) => {
-            console.log('🏠 Room created:', roomCode);
+        socket.on('roomCreated', (data) => {
+            console.log('🏠 Room created:', data);
+            const roomCode = data.roomId || data; // Handle both old and new formats
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();

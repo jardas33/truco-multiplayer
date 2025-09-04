@@ -111,7 +111,11 @@ io.on('connection', (socket) => {
         console.log(`🔍 Socket joined room: ${roomCode}`);
         console.log(`🔍 Socket room code set to: ${socket.roomCode}`);
 
-        socket.emit('roomCreated', roomCode);
+        socket.emit('roomCreated', {
+            roomId: roomCode,
+            playerId: socket.id,
+            isHost: true
+        });
         io.to(roomCode).emit('playerJoined', {
             players: rooms.get(roomCode).players,
             count: 1
@@ -158,7 +162,11 @@ io.on('connection', (socket) => {
         console.log(`🔍 Socket room code set to: ${socket.roomCode}`);
 
         // ✅ CRITICAL FIX: Emit roomJoined event to the joining player
-        socket.emit('roomJoined', roomCode);
+        socket.emit('roomJoined', {
+            roomId: roomCode,
+            playerId: socket.id,
+            isHost: room.players[0].id === socket.id
+        });
 
         // ✅ Emit playerJoined event to all players in the room
         io.to(roomCode).emit('playerJoined', {
@@ -208,7 +216,8 @@ io.on('connection', (socket) => {
     });
 
     // Handle adding bots
-    socket.on('addBot', (roomCode) => {
+    socket.on('addBot', (data) => {
+        const roomCode = data.roomId || data; // Handle both old and new formats
         console.log(`🤖 Adding bot to room: ${roomCode}`);
         
         const room = rooms.get(roomCode);
@@ -252,7 +261,8 @@ io.on('connection', (socket) => {
     });
 
     // ✅ Handle bot removal
-    socket.on('removeBot', (roomCode) => {
+    socket.on('removeBot', (data) => {
+        const roomCode = data.roomId || data; // Handle both old and new formats
         console.log(`🤖 Removing bot from room: ${roomCode}`);
         
         const room = rooms.get(roomCode);

@@ -159,9 +159,9 @@ class SocketManager {
         
         socket.on('roomJoined', (data) => {
             console.log('🏠 Joined room:', data);
-            window.gameFramework.roomId = data.roomId;
-            window.gameFramework.playerId = data.playerId;
-            window.gameFramework.isHost = data.isHost;
+            window.gameFramework.roomId = data.roomId || data; // Handle both old and new formats
+            window.gameFramework.playerId = data.playerId || socket.id;
+            window.gameFramework.isHost = data.isHost || false;
         });
         
         socket.on('playersUpdated', (players) => {
