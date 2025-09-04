@@ -601,15 +601,39 @@ class BlackjackClient {
 
     // Create room
     createRoom() {
-        // Wait a bit for GameFramework to be fully loaded
-        setTimeout(() => {
-            if (typeof GameFramework === 'undefined' || !GameFramework.createRoom) {
-                console.error('❌ GameFramework not available or createRoom method missing');
-                UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+        console.log('🎮 Create Room button clicked');
+        
+        // Try to create room immediately first
+        if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
+            console.log('✅ GameFramework available, creating room immediately');
+            GameFramework.createRoom('blackjack');
+            return;
+        }
+        
+        // If not available, wait and retry
+        console.log('⏳ GameFramework not ready, waiting...');
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const tryCreateRoom = () => {
+            attempts++;
+            console.log(`🔄 Attempt ${attempts}/${maxAttempts} to create room`);
+            
+            if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
+                console.log('✅ GameFramework now available, creating room');
+                GameFramework.createRoom('blackjack');
                 return;
             }
-            GameFramework.createRoom('blackjack');
-        }, 100);
+            
+            if (attempts < maxAttempts) {
+                setTimeout(tryCreateRoom, 200); // Wait 200ms between attempts
+            } else {
+                console.error('❌ GameFramework still not available after maximum attempts');
+                UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+            }
+        };
+        
+        setTimeout(tryCreateRoom, 100);
     }
 
     // Join room

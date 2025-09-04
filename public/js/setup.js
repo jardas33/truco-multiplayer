@@ -110,7 +110,6 @@ function setup() {
     backToMainMenuButton.hide();
 
     // Only create Truco-specific elements for Truco game
-    const currentGame = window.location.pathname;
     if (currentGame === '/truco' || currentGame === '/') {
         trucoButton = createButton("TRUCO");
         trucoButton.position(width/2 - 95, height/2 + 160); // Moved 5px more to the left
