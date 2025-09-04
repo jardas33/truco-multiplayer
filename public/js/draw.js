@@ -13,9 +13,12 @@ function draw() {
         return; // Don't draw anything if canvas is hidden
     }
     
-    // Limit frame rate to prevent excessive drawing
-    if (frameCount % 2 !== 0 && gameState === gameStateEnum.Playing) {
-        return; // Skip every other frame for performance
+    // Limit frame rate to prevent excessive drawing and flashing
+    if (gameState === gameStateEnum.Playing) {
+        // Only draw every 3rd frame to reduce flashing
+        if (frameCount % 3 !== 0) {
+            return;
+        }
     }
     
     // Fix canvas parenting based on game state

@@ -1065,31 +1065,43 @@ function drawGameState() {
         console.log('Drawing poker game state');
     }
     
-    // Draw background card image if available
-    if (typeof cardImages !== 'undefined' && cardImages['cardBack']) {
-        // Draw tiled background with card back image
-        push();
+    // Draw background - use a more stable approach
+    push();
+    
+    // First, clear with a solid background
+    background(0, 80, 0); // Dark green base
+    
+    // Try to draw card back pattern if available
+    if (typeof cardImages !== 'undefined' && cardImages['cardBack'] && cardImages['cardBack'].width > 0) {
         imageMode(CORNER);
-        const cardWidth = 60;
-        const cardHeight = 84;
-        const spacing = 5;
+        const cardWidth = 80;
+        const cardHeight = 112;
+        const spacing = 10;
         
-        for (let x = 0; x < width; x += cardWidth + spacing) {
-            for (let y = 0; y < height; y += cardHeight + spacing) {
-                // Add slight rotation and opacity for texture
+        // Draw a subtle tiled pattern
+        for (let x = 0; x < width + cardWidth; x += cardWidth + spacing) {
+            for (let y = 0; y < height + cardHeight; y += cardHeight + spacing) {
                 push();
-                translate(x + cardWidth/2, y + cardHeight/2);
-                rotate(random(-0.1, 0.1));
-                tint(255, 30); // Very transparent
-                image(cardImages['cardBack'], -cardWidth/2, -cardHeight/2, cardWidth, cardHeight);
+                translate(x, y);
+                // Add slight rotation for texture
+                rotate(sin(x * 0.01) * 0.05);
+                tint(255, 20); // Very transparent
+                image(cardImages['cardBack'], 0, 0, cardWidth, cardHeight);
                 pop();
             }
         }
-        pop();
     } else {
-        // Fallback to dark green poker table
-        background(0, 100, 0);
+        // Draw a subtle stable pattern if card images aren't available
+        fill(0, 100, 0, 50);
+        noStroke();
+        for (let i = 0; i < 30; i++) {
+            const x = (i * 80) % width;
+            const y = (i * 60) % height;
+            ellipse(x, y, 30, 30);
+        }
     }
+    
+    pop();
     
     // Draw poker table elements
     drawPokerTable();
@@ -1117,13 +1129,13 @@ function drawPokerTable() {
     noStroke();
     ellipse(width/2, height/2, width * 0.88, height * 0.68);
     
-    // Draw felt texture with subtle pattern
+    // Draw felt texture with stable pattern (no random to prevent flashing)
     fill(0, 100, 0, 80);
     noStroke();
-    for (let i = 0; i < 20; i++) {
-        const x = width/2 + random(-width * 0.3, width * 0.3);
-        const y = height/2 + random(-height * 0.2, height * 0.2);
-        ellipse(x, y, random(20, 40), random(20, 40));
+    for (let i = 0; i < 15; i++) {
+        const x = width/2 + (i * 50 - 350) % width;
+        const y = height/2 + (i * 30 - 200) % height;
+        ellipse(x, y, 25, 25);
     }
     pop();
 }
@@ -1219,18 +1231,17 @@ function drawPlayers() {
             drawPlayerCards(x, y, player.hand, index === window.pokerClient?.localPlayerIndex);
         }
         
-        // Highlight current player with better effect
+        // Highlight current player with stable effect
         if (index === window.game.currentPlayer) {
             stroke(255, 255, 0);
             strokeWeight(6);
             noFill();
             ellipse(x, y, 150, 110);
             
-            // Add pulsing effect
-            const pulse = sin(millis() * 0.01) * 5;
-            stroke(255, 255, 0, 100);
+            // Add subtle static highlight (no pulsing to prevent flashing)
+            stroke(255, 255, 0, 80);
             strokeWeight(2);
-            ellipse(x, y, 160 + pulse, 120 + pulse);
+            ellipse(x, y, 160, 120);
         }
         
         pop();
