@@ -17,7 +17,8 @@
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #4A148C, #7B1FA2);
+            background: url('images/background.jpg') center center fixed;
+            background-size: cover;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
         }
@@ -354,6 +355,23 @@
         .suit-diamonds { background: #2196F3; color: white; }
         .suit-clubs { background: #4CAF50; color: white; }
         .suit-spades { background: #333; color: white; }
+
+        /* Button hiding logic when room is created */
+        .room-created #createRoomBtn,
+        .room-created #joinRoomBtn {
+            display: none !important;
+        }
+
+        /* Standardize button colors */
+        #addBotBtn, #removeBotBtn, #startGameBtn {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        #addBotBtn:hover, #removeBotBtn:hover, #startGameBtn:hover {
+            background-color: #45a049 !important;
+        }
     </style>
 </head>
 <body>
@@ -451,5 +469,30 @@
     <script src="js/preload.js"></script>
     <script src="js/game-framework.js"></script>
     <script src="js/crazy-eights.js"></script>
+    
+    <script>
+        // Add room-created class when room is created to hide Create/Join buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listen for room creation events
+            const createBtn = document.getElementById('createRoomBtn');
+            const joinBtn = document.getElementById('joinRoomBtn');
+            
+            if (createBtn) {
+                createBtn.addEventListener('click', function() {
+                    setTimeout(() => {
+                        document.body.classList.add('room-created');
+                    }, 100);
+                });
+            }
+            
+            if (joinBtn) {
+                joinBtn.addEventListener('click', function() {
+                    setTimeout(() => {
+                        document.body.classList.add('room-created');
+                    }, 100);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
