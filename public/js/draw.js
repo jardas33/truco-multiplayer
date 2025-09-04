@@ -13,13 +13,16 @@ function draw() {
         return; // Don't draw anything if canvas is hidden
     }
     
-    // Limit frame rate to prevent excessive drawing and flashing
-    if (gameState === gameStateEnum.Playing) {
-        // Only draw every 3rd frame to reduce flashing
-        if (frameCount % 3 !== 0) {
-            return;
-        }
+    // Add global frame limiting to prevent excessive drawing and flashing
+    if (!window.lastDrawTime) {
+        window.lastDrawTime = 0;
     }
+    
+    const currentTime = millis();
+    if (currentTime - window.lastDrawTime < 100) { // Only draw every 100ms (10 FPS)
+        return;
+    }
+    window.lastDrawTime = currentTime;
     
     // Fix canvas parenting based on game state
     if (window.gameCanvas) {
@@ -333,7 +336,7 @@ function draw() {
     }
     else if (gameState === gameStateEnum.Playing) {
         // Reduced logging to prevent console spam
-        if (frameCount % 60 === 0) { // Log only every 60 frames (about once per second)
+        if (frameCount % 300 === 0) { // Log only every 300 frames (about once every 5 seconds)
             console.log('🎮 Game state is Playing - drawing game state');
         }
         
@@ -364,7 +367,7 @@ function draw() {
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
             // Reduced logging to prevent console spam
-            if (frameCount % 120 === 0) { // Log only every 120 frames (about every 2 seconds)
+            if (frameCount % 600 === 0) { // Log only every 600 frames (about every 10 seconds)
                 console.log('✅ Game is properly initialized, drawing game state');
             }
             // Check if we're in Truco game (which has drawGameState function)
@@ -376,7 +379,7 @@ function draw() {
             }
         } else {
             // Reduced debug logging
-            if (frameCount % 120 === 0) { // Log only every 120 frames
+            if (frameCount % 600 === 0) { // Log only every 600 frames
                 console.log('🔍 Debug - Not drawing game state:');
                 console.log('  - window.game exists:', !!window.game);
                 console.log('  - window.game.players exists:', !!(window.game && window.game.players));

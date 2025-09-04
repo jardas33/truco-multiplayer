@@ -1060,13 +1060,10 @@ function drawGameState() {
         return;
     }
     
-    // Add frame limiting to prevent flashing
-    if (frameCount % 5 !== 0) {
-        return; // Only draw every 5th frame
-    }
+    // Frame limiting is handled globally in draw.js
     
     // Reduced logging to prevent console spam
-    if (frameCount % 120 === 0) {
+    if (frameCount % 600 === 0) {
         console.log('Drawing poker game state');
     }
     
