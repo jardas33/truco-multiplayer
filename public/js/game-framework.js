@@ -487,6 +487,29 @@ class GameFramework {
 
 // Export for use in other files
 window.CardUtils = CardUtils;
+// 🎮 MISSING FUNCTIONS FOR NEW GAMES
+function showInstructions() {
+    console.log('📖 Instructions button clicked');
+    // For new games, just show an alert since they don't have Instructions div
+    alert('Instructions:\n\nThis is a placeholder for game instructions.\n\nEach game will have its own specific rules and instructions.');
+}
+
+function closeInstructions() {
+    console.log('❌ Close instructions clicked');
+    // For new games, this is handled by the alert
+}
+
+function showCardValues() {
+    console.log('🃏 Card values button clicked');
+    // For new games, just show an alert since they don't have Values div
+    alert('Card Values:\n\nThis is a placeholder for card values.\n\nEach game will have its own card value system.');
+}
+
+function closeCardValues() {
+    console.log('❌ Close card values clicked');
+    // For new games, this is handled by the alert
+}
+
 window.PlayerManager = PlayerManager;
 window.SocketManager = SocketManager;
 window.UIUtils = UIUtils;
