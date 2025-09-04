@@ -9,6 +9,12 @@ console.log('🚨 CRITICAL: lobby.js is executing at:', new Date().toISOString()
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚨 CRITICAL: DOMContentLoaded event fired, initializing lobby');
     console.log('DOM loaded, initializing game...');
+    
+    // Initialize game framework for Truco
+    if (typeof GameFramework !== 'undefined') {
+        GameFramework.initialize('truco');
+    }
+    
     // Wait for p5.js to be ready
     setTimeout(initGame, 100);
 });

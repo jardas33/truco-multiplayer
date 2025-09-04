@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Go Fish</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lobby-fixes.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0066CC, #004499);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #Menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .game-title {
+            color: #FFD700;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .room-controls {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .room-controls input, .room-controls button {
+            margin: 8px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .room-controls input {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+
+        .room-controls button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .room-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .room-controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #playerList {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .player-item {
+            background: rgba(255,255,255,0.1);
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-name {
+            font-weight: bold;
+        }
+
+        .player-pairs {
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .bot-indicator {
+            color: #4CAF50;
+        }
+
+        /* Game UI */
+        #Game {
+            display: none;
+        }
+
+        .go-fish-table {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: radial-gradient(circle, #0066CC, #004499);
+        }
+
+        .player-area {
+            position: absolute;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .player-area.active {
+            border-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+
+        .hand-cards {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 40px;
+            height: 56px;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .card.selected {
+            transform: translateY(-10px);
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255,215,0,0.8);
+        }
+
+        .fish-pond {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .game-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .game-info h3 {
+            margin: 0 0 10px 0;
+            color: #FFD700;
+        }
+
+        .game-info div {
+            margin: 5px 0;
+        }
+
+        .scores {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .scores h3 {
+            margin: 0 0 10px 0;
+            color: #FFD700;
+        }
+
+        .scores table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .scores td {
+            padding: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .action-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .action-controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ask-button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .go-fish-button {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .action-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .action-controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .player-selector {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .player-selector select {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: white;
+            color: #333;
+        }
+
+        .player-selector button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="Menu">
+        <h1 class="game-title">🐟 Go Fish</h1>
+        <div class="room-controls">
+            <input type="text" id="roomInput" placeholder="Room Code" />
+            <button id="createRoomBtn">Create Room</button>
+            <button id="joinRoomBtn">Join Room</button>
+            
+            <div id="roomCodeDisplay" style="display: none; margin: 15px 0;">
+                <div style="color: white; margin-bottom: 10px;">Room Code:</div>
+                <div id="roomCodeText" style="background-color: #FFD700; color: black; font-family: monospace; font-size: 18px; padding: 8px 12px; border-radius: 4px; font-weight: bold; display: inline-block;"></div>
+                <button id="copyRoomCodeBtn" style="margin-left: 10px; background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">📋 Copy</button>
+            </div>
+            
+            <div id="playerCustomization" style="display: none; margin: 15px 0; padding: 15px; border: 2px solid #4CAF50; border-radius: 6px; background-color: rgba(76, 175, 80, 0.1);">
+                <h4 style="margin: 0 0 10px 0; color: #4CAF50;">🎯 Customize Your Player</h4>
+                <div style="margin: 8px 0;">
+                    <label for="nicknameInput" style="color: white;">Nickname:</label>
+                    <input type="text" id="nicknameInput" maxlength="12" placeholder="Enter nickname" style="margin-left: 8px; padding: 4px; border: 1px solid #ccc; border-radius: 3px;">
+                    <button id="changeNicknameBtn" style="margin-left: 6px; padding: 4px 8px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Change</button>
+                </div>
+            </div>
+            
+            <button id="addBotBtn" style="display: none;">Add Bot</button>
+            <button id="removeBotBtn" style="display: none;">Remove Bot</button>
+            <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
+            
+            <div id="playerList"></div>
+        </div>
+    </div>
+
+    <div id="Game">
+        <div class="go-fish-table">
+            <div class="game-info">
+                <h3>Game Info</h3>
+                <div>Current Player: <span id="currentPlayerName">-</span></div>
+                <div>Cards in Pond: <span id="pondCount">0</span></div>
+                <div>Your Pairs: <span id="playerPairs">0</span></div>
+            </div>
+            
+            <div class="scores">
+                <h3>Pairs</h3>
+                <table id="scoresTable">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Pairs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoresBody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="fish-pond" id="fishPond">
+                🐟<br>Go Fish!<br><span id="pondCards">0</span>
+            </div>
+            
+            <div class="player-selector" id="playerSelector" style="display: none;">
+                <label style="color: white;">Ask player:</label>
+                <select id="targetPlayerSelect">
+                    <!-- Options will be populated dynamically -->
+                </select>
+                <label style="color: white;">for rank:</label>
+                <select id="rankSelect">
+                    <!-- Options will be populated dynamically -->
+                </select>
+                <button id="askBtn">Ask</button>
+            </div>
+            
+            <div class="action-controls" id="actionControls" style="display: none;">
+                <button id="goFishBtn" class="go-fish-button">Go Fish!</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/variables.js"></script>
+    <script src="js/preload.js"></script>
+    <script src="js/game-framework.js"></script>
+    <script src="js/go-fish.js"></script>
+</body>
+</html>

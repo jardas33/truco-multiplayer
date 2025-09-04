@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Card Games Collection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lobby-fixes.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #mainMenu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .game-title {
+            color: #FFD700;
+            font-size: 3.5em;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            color: #ffffff;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            width: 90%;
+            padding: 20px;
+        }
+
+        .game-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #FFD700;
+            box-shadow: 0 12px 40px rgba(255,215,0,0.3);
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05));
+        }
+
+        .game-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .game-name {
+            color: #ffffff;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .game-description {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9em;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .game-players {
+            color: #FFD700;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .game-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status-new {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-popular {
+            background: #FF9800;
+            color: white;
+        }
+
+        .status-classic {
+            background: #9C27B0;
+            color: white;
+        }
+
+        /* Floating card animations */
+        .floating-card {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .floating-card:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-card:nth-child(2) { top: 20%; right: 15%; animation-delay: 1s; }
+        .floating-card:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 2s; }
+        .floating-card:nth-child(4) { bottom: 15%; right: 25%; animation-delay: 3s; }
+        .floating-card:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
+        .floating-card:nth-child(6) { top: 60%; right: 10%; animation-delay: 5s; }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .game-title { font-size: 2.5em; }
+            .games-grid { grid-template-columns: 1fr; }
+            .game-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="mainMenu">
+        <!-- Floating card decorations -->
+        <div class="floating-card">🃏</div>
+        <div class="floating-card">♠️</div>
+        <div class="floating-card">♥️</div>
+        <div class="floating-card">♦️</div>
+        <div class="floating-card">♣️</div>
+        <div class="floating-card">🃏</div>
+
+        <h1 class="game-title">🎮 Card Games Collection</h1>
+        <p class="game-subtitle">Choose your favorite multiplayer card game</p>
+
+        <div class="games-grid">
+            <!-- TRUCO -->
+            <div class="game-card" onclick="selectGame('truco')">
+                <span class="game-icon">🃏</span>
+                <div class="game-name">TRUCO</div>
+                <div class="game-description">Classic Brazilian trick-taking game with bluffing and strategy. Call Truco to raise the stakes!</div>
+                <div class="game-players">2-4 Players</div>
+                <div class="game-status status-classic">CLASSIC</div>
+            </div>
+
+            <!-- TEXAS HOLD'EM POKER -->
+            <div class="game-card" onclick="selectGame('poker')">
+                <span class="game-icon">♠️</span>
+                <div class="game-name">TEXAS HOLD'EM</div>
+                <div class="game-description">The world's most popular poker variant. Bet, bluff, and build the best 5-card hand!</div>
+                <div class="game-players">2-8 Players</div>
+                <div class="game-status status-popular">POPULAR</div>
+            </div>
+
+            <!-- BLACKJACK -->
+            <div class="game-card" onclick="selectGame('blackjack')">
+                <span class="game-icon">🃏</span>
+                <div class="game-name">BLACKJACK</div>
+                <div class="game-description">Beat the dealer by getting as close to 21 as possible without going over. Hit, stand, double down!</div>
+                <div class="game-players">1-7 Players</div>
+                <div class="game-status status-classic">CLASSIC</div>
+            </div>
+
+            <!-- HEARTS -->
+            <div class="game-card" onclick="selectGame('hearts')">
+                <span class="game-icon">♥️</span>
+                <div class="game-name">HEARTS</div>
+                <div class="game-description">Avoid hearts and the Queen of Spades! A strategic trick-taking game for 4 players.</div>
+                <div class="game-players">4 Players</div>
+                <div class="game-status status-classic">CLASSIC</div>
+            </div>
+
+            <!-- SPADES -->
+            <div class="game-card" onclick="selectGame('spades')">
+                <span class="game-icon">♠️</span>
+                <div class="game-name">SPADES</div>
+                <div class="game-description">Partnership trick-taking game with bidding. Work with your partner to meet your bid!</div>
+                <div class="game-players">4 Players</div>
+                <div class="game-status status-popular">POPULAR</div>
+            </div>
+
+            <!-- EUCHRE -->
+            <div class="game-card" onclick="selectGame('euchre')">
+                <span class="game-icon">🃏</span>
+                <div class="game-name">EUCHRE</div>
+                <div class="game-description">Fast-paced partnership game with trump selection. Popular in the Midwest!</div>
+                <div class="game-players">4 Players</div>
+                <div class="game-status status-classic">CLASSIC</div>
+            </div>
+
+            <!-- GIN RUMMY -->
+            <div class="game-card" onclick="selectGame('gin-rummy')">
+                <span class="game-icon">🃏</span>
+                <div class="game-name">GIN RUMMY</div>
+                <div class="game-description">Form melds and reduce deadwood. A classic two-player game that's easy to learn!</div>
+                <div class="game-players">2-4 Players</div>
+                <div class="game-status status-classic">CLASSIC</div>
+            </div>
+
+            <!-- GO FISH -->
+            <div class="game-card" onclick="selectGame('go-fish')">
+                <span class="game-icon">🐟</span>
+                <div class="game-name">GO FISH</div>
+                <div class="game-description">Collect matching pairs by asking other players for cards. Perfect for families!</div>
+                <div class="game-players">2-6 Players</div>
+                <div class="game-status status-new">FAMILY</div>
+            </div>
+
+            <!-- WAR -->
+            <div class="game-card" onclick="selectGame('war')">
+                <span class="game-icon">⚔️</span>
+                <div class="game-name">WAR</div>
+                <div class="game-description">Simple and exciting! Compare cards and battle to win the deck. Great for beginners!</div>
+                <div class="game-players">2-4 Players</div>
+                <div class="game-status status-new">SIMPLE</div>
+            </div>
+
+            <!-- CRAZY EIGHTS -->
+            <div class="game-card" onclick="selectGame('crazy-eights')">
+                <span class="game-icon">🎯</span>
+                <div class="game-name">CRAZY EIGHTS</div>
+                <div class="game-description">Match suits or ranks, play eights as wild cards. First to empty your hand wins!</div>
+                <div class="game-players">2-7 Players</div>
+                <div class="game-status status-new">FUN</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game selection function
+        function selectGame(gameType) {
+            console.log(`🎮 Selected game: ${gameType}`);
+            
+            // Store selected game type
+            localStorage.setItem('selectedGame', gameType);
+            
+            // Navigate to the appropriate game
+            switch(gameType) {
+                case 'truco':
+                    window.location.href = 'index.html';
+                    break;
+                case 'poker':
+                    window.location.href = 'poker.html';
+                    break;
+                case 'blackjack':
+                    window.location.href = 'blackjack.html';
+                    break;
+                case 'hearts':
+                    window.location.href = 'hearts.html';
+                    break;
+                case 'spades':
+                    window.location.href = 'spades.html';
+                    break;
+                case 'euchre':
+                    window.location.href = 'euchre.html';
+                    break;
+                case 'gin-rummy':
+                    window.location.href = 'gin-rummy.html';
+                    break;
+                case 'go-fish':
+                    window.location.href = 'go-fish.html';
+                    break;
+                case 'war':
+                    window.location.href = 'war.html';
+                    break;
+                case 'crazy-eights':
+                    window.location.href = 'crazy-eights.html';
+                    break;
+                default:
+                    console.error('Unknown game type:', gameType);
+            }
+        }
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameCards = document.querySelectorAll('.game-card');
+            
+            gameCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

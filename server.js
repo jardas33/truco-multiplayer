@@ -20,8 +20,13 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Basic route
+// Basic route - redirect to main menu
 app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/main-menu.html');
+});
+
+// Truco game route
+app.get('/truco', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
@@ -33,8 +38,11 @@ io.on('connection', (socket) => {
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
     
     // Handle room creation
-    socket.on('createRoom', (roomCode) => {
-        console.log(`🔍 CREATEROOM EVENT RECEIVED! Room: ${roomCode}`);
+    socket.on('createRoom', (data) => {
+        let roomCode = data.roomCode || data;
+        const gameType = data.gameType || 'truco';
+        
+        console.log(`🔍 CREATEROOM EVENT RECEIVED! Room: ${roomCode}, Game: ${gameType}`);
         // ✅ INPUT VALIDATION: Ensure room code is valid
         if (roomCode && typeof roomCode === 'string') {
             roomCode = roomCode.trim().toUpperCase();
@@ -58,6 +66,7 @@ io.on('connection', (socket) => {
         console.log(`🏠 Creating room: ${roomCode} for user: ${socket.id}`);
         
         rooms.set(roomCode, {
+            gameType: gameType,
             players: [{
                 id: socket.id,
                 name: `Player 1`,
@@ -86,7 +95,8 @@ io.on('connection', (socket) => {
     });
 
     // Handle room joining
-    socket.on('joinRoom', (roomCode) => {
+    socket.on('joinRoom', (data) => {
+        const roomCode = data.roomCode || data;
         console.log(`🔍 JOINROOM EVENT RECEIVED! Room: ${roomCode}`);
         const room = rooms.get(roomCode);
         
