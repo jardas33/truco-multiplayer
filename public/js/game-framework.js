@@ -157,6 +157,13 @@ class SocketManager {
             console.error('🚨 Socket error:', error);
         });
         
+        socket.on('roomCreated', (data) => {
+            console.log('🏠 Room created:', data);
+            window.gameFramework.roomId = data.roomId || data; // Handle both old and new formats
+            window.gameFramework.playerId = data.playerId || socket.id;
+            window.gameFramework.isHost = data.isHost || false;
+        });
+        
         socket.on('roomJoined', (data) => {
             console.log('🏠 Joined room:', data);
             window.gameFramework.roomId = data.roomId || data; // Handle both old and new formats
