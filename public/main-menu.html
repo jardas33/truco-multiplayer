@@ -10,29 +10,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/game-stats.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            background: url('images/background.jpg') center center fixed;
+            background-size: cover;
             font-family: 'Arial', sans-serif;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         #mainMenu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: relative;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             z-index: 1000;
+            padding: 40px 20px;
         }
 
         .game-title {
@@ -54,10 +53,10 @@
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            width: 90%;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 1400px;
+            width: 95%;
             padding: 20px;
         }
 
@@ -149,69 +148,15 @@
         .floating-card:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
         .floating-card:nth-child(6) { top: 60%; right: 10%; animation-delay: 5s; }
 
-        /* Statistics Display */
-        .stats-display {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .stats-summary {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 15px;
-        }
-
-        .stat-item {
-            text-align: center;
-            color: white;
-        }
-
-        .stat-value {
-            display: block;
-            font-size: 2em;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .stat-label {
-            display: block;
-            font-size: 0.9em;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-
-        .stats-button {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .stats-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-        }
-
         /* Responsive design */
+        @media (max-width: 1200px) {
+            .games-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
         @media (max-width: 768px) {
             .game-title { font-size: 2.5em; }
             .games-grid { grid-template-columns: 1fr; }
             .game-card { padding: 20px; }
-            .stats-summary { gap: 20px; }
-            .stat-value { font-size: 1.5em; }
         }
     </style>
 </head>
@@ -228,25 +173,6 @@
         <h1 class="game-title">🎮 Card Games Collection</h1>
         <p class="game-subtitle">Choose your favorite multiplayer card game</p>
         
-        <!-- Statistics Display -->
-        <div id="statsDisplay" class="stats-display">
-            <div class="stats-summary">
-                <div class="stat-item">
-                    <span class="stat-value" id="totalGames">0</span>
-                    <span class="stat-label">Games Played</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="winRate">0%</span>
-                    <span class="stat-label">Win Rate</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="achievements">0</span>
-                    <span class="stat-label">Achievements</span>
-                </div>
-            </div>
-            <button id="viewStatsBtn" class="stats-button" onclick="showDetailedStats()">View Detailed Stats</button>
-        </div>
-
         <div class="games-grid">
             <!-- TRUCO -->
             <div class="game-card" onclick="selectGame('truco')">
@@ -283,7 +209,6 @@
                 <div class="game-players">4 Players</div>
                 <div class="game-status status-classic">CLASSIC</div>
             </div>
-
 
             <!-- GO FISH -->
             <div class="game-card" onclick="selectGame('go-fish')">
@@ -363,258 +288,7 @@
                     this.style.transform = 'translateY(0) scale(1)';
                 });
             });
-
-            // Load and display statistics
-            loadStats();
         });
-
-        // Load and display statistics
-        function loadStats() {
-            const stats = window.gameStats.getOverallStats();
-            document.getElementById('totalGames').textContent = stats.totalGames;
-            document.getElementById('winRate').textContent = stats.winRate + '%';
-            document.getElementById('achievements').textContent = stats.achievements;
-        }
-
-        // Show detailed statistics modal
-        function showDetailedStats() {
-            const stats = window.gameStats.getOverallStats();
-            const sessionStats = window.gameStats.getSessionStats();
-            
-            const modal = document.createElement('div');
-            modal.className = 'stats-modal';
-            modal.innerHTML = `
-                <div class="stats-modal-content">
-                    <div class="stats-modal-header">
-                        <h2>📊 Your Game Statistics</h2>
-                        <button class="close-btn" onclick="closeStatsModal()">&times;</button>
-                    </div>
-                    <div class="stats-modal-body">
-                        <div class="stats-section">
-                            <h3>Overall Performance</h3>
-                            <div class="stats-grid">
-                                <div class="stat-card">
-                                    <div class="stat-number">${stats.totalGames}</div>
-                                    <div class="stat-text">Total Games</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-number">${stats.totalWins}</div>
-                                    <div class="stat-text">Wins</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-number">${stats.winRate}%</div>
-                                    <div class="stat-text">Win Rate</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-number">${stats.totalScore}</div>
-                                    <div class="stat-text">Total Score</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="stats-section">
-                            <h3>Current Session</h3>
-                            <div class="stats-grid">
-                                <div class="stat-card">
-                                    <div class="stat-number">${sessionStats.duration}</div>
-                                    <div class="stat-text">Session Time</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-number">${sessionStats.gamesPlayed}</div>
-                                    <div class="stat-text">Games Played</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-number">${sessionStats.wins}</div>
-                                    <div class="stat-text">Session Wins</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-number">${sessionStats.winRate}%</div>
-                                    <div class="stat-text">Session Win Rate</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="stats-section">
-                            <h3>Game Breakdown</h3>
-                            <div class="game-stats-list">
-                                ${getGameStatsHTML()}
-                            </div>
-                        </div>
-                        
-                        <div class="stats-actions">
-                            <button class="reset-stats-btn" onclick="resetStats()">Reset All Stats</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Add modal styles
-            const style = document.createElement('style');
-            style.textContent = `
-                .stats-modal {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.8);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 10000;
-                }
-                .stats-modal-content {
-                    background: linear-gradient(135deg, #1e3c72, #2a5298);
-                    border-radius: 15px;
-                    padding: 0;
-                    max-width: 800px;
-                    width: 90%;
-                    max-height: 80vh;
-                    overflow-y: auto;
-                    color: white;
-                }
-                .stats-modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 20px;
-                    border-bottom: 1px solid rgba(255,255,255,0.2);
-                }
-                .stats-modal-header h2 {
-                    margin: 0;
-                    color: #FFD700;
-                }
-                .close-btn {
-                    background: none;
-                    border: none;
-                    color: white;
-                    font-size: 24px;
-                    cursor: pointer;
-                    padding: 0;
-                    width: 30px;
-                    height: 30px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .stats-modal-body {
-                    padding: 20px;
-                }
-                .stats-section {
-                    margin-bottom: 30px;
-                }
-                .stats-section h3 {
-                    color: #FFD700;
-                    margin-bottom: 15px;
-                    border-bottom: 2px solid #FFD700;
-                    padding-bottom: 5px;
-                }
-                .stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 15px;
-                }
-                .stat-card {
-                    background: rgba(255,255,255,0.1);
-                    border-radius: 10px;
-                    padding: 15px;
-                    text-align: center;
-                    border: 1px solid rgba(255,255,255,0.2);
-                }
-                .stat-number {
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: #FFD700;
-                    margin-bottom: 5px;
-                }
-                .stat-text {
-                    font-size: 12px;
-                    opacity: 0.8;
-                }
-                .game-stats-list {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 10px;
-                }
-                .game-stat-item {
-                    background: rgba(255,255,255,0.1);
-                    border-radius: 8px;
-                    padding: 10px;
-                    border: 1px solid rgba(255,255,255,0.2);
-                }
-                .game-stat-name {
-                    font-weight: bold;
-                    color: #FFD700;
-                    margin-bottom: 5px;
-                }
-                .game-stat-details {
-                    font-size: 12px;
-                    opacity: 0.8;
-                }
-                .stats-actions {
-                    text-align: center;
-                    margin-top: 20px;
-                }
-                .reset-stats-btn {
-                    background: #dc3545;
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 14px;
-                }
-                .reset-stats-btn:hover {
-                    background: #c82333;
-                }
-            `;
-            document.head.appendChild(style);
-            
-            document.body.appendChild(modal);
-        }
-
-        // Get game statistics HTML
-        function getGameStatsHTML() {
-            const games = ['truco', 'poker', 'blackjack', 'hearts', 'go-fish', 'war', 'crazy-eights'];
-            const gameNames = {
-                'truco': 'Truco',
-                'poker': 'Texas Hold\'em',
-                'blackjack': 'Blackjack',
-                'hearts': 'Hearts',
-                'go-fish': 'Go Fish',
-                'war': 'War',
-                'crazy-eights': 'Crazy Eights'
-            };
-            
-            return games.map(game => {
-                const stats = window.gameStats.getGameStats(game);
-                const winRate = stats.played > 0 ? (stats.won / stats.played * 100).toFixed(1) : 0;
-                return `
-                    <div class="game-stat-item">
-                        <div class="game-stat-name">${gameNames[game]}</div>
-                        <div class="game-stat-details">
-                            Played: ${stats.played} | Won: ${stats.won} | Win Rate: ${winRate}%<br>
-                            Best Score: ${stats.bestScore}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Close statistics modal
-        function closeStatsModal() {
-            const modal = document.querySelector('.stats-modal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // Reset statistics
-        function resetStats() {
-            window.gameStats.resetStats();
-            loadStats();
-            closeStatsModal();
-        }
     </script>
 </body>
 </html>
