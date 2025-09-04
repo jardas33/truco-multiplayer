@@ -103,8 +103,8 @@ class PlayerManager {
         
         if (availableNames.length === 0) return null;
         
-        const botName = botName || availableNames[0];
-        const newBot = this.createPlayer(`bot_${Date.now()}`, botName, true);
+        const selectedBotName = botName || availableNames[0];
+        const newBot = this.createPlayer(`bot_${Date.now()}`, selectedBotName, true);
         players.push(newBot);
         return newBot;
     }
