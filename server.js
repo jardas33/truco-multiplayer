@@ -143,9 +143,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
-        if (room.players.length >= maxPlayers) {
-            console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayers})`);
+        const maxPlayersJoin = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length >= maxPlayersJoin) {
+            console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersJoin})`);
             socket.emit('error', 'Room is full');
             return;
         }
@@ -235,9 +235,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
-        if (room.players.length >= maxPlayers) {
-            console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayers}), cannot add bot`);
+        const maxPlayersAddBot = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length >= maxPlayersAddBot) {
+            console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersAddBot}), cannot add bot`);
             socket.emit('error', 'Room is full');
             return;
         }
@@ -265,8 +265,8 @@ io.on('connection', (socket) => {
         // Emit players updated event
         io.to(roomCode).emit('playersUpdated', room.players);
 
-        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
-        if (room.players.length === maxPlayers) {
+        const maxPlayersFull = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length === maxPlayersFull) {
             console.log(`🎯 Room ${roomCode} is now full with ${room.players.length} players`);
             io.to(roomCode).emit('roomFull');
         }
@@ -305,8 +305,8 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('playersUpdated', room.players);
 
         // If room is no longer full, emit roomNotFull event
-        const maxPlayers = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
-        if (room.players.length < maxPlayers) {
+        const maxPlayersNotFull = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        if (room.players.length < maxPlayersNotFull) {
             io.to(roomCode).emit('roomNotFull');
         }
     });
