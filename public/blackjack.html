@@ -330,39 +330,51 @@
 </head>
 <body>
     <div id="Menu">
-        <button id="backToMainMenu" onclick="console.log('🔙 Back to Main Menu clicked'); window.location.replace('/');" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer; font-size: 14px;">
+        <div id="roomControls" class="room-controls">
+          <!-- Back to Main Menu Button -->
+          <button id="backToMainMenu" onclick="console.log('🔙 Back to Main Menu clicked'); window.location.replace('/');" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer; font-size: 14px;">
             ← Back to Main Menu
-        </button>
-        <h1 class="game-title">🃏 Blackjack</h1>
-        <div class="room-controls">
-            <input type="text" id="roomInput" placeholder="Room Code" />
-            <button id="createRoomBtn">Create Room</button>
-            <button id="joinRoomBtn">Join Room</button>
+          </button>
+          
+          <input type="text" id="roomInput" placeholder="Room Code" />
+          <button id="createRoomBtn">Create Room</button>
+          <button id="joinRoomBtn">Join Room</button>
+          
+          <!-- Room Code Display with Copy Button Next to Yellow Box -->
+                <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
+                  <div style="margin: 5px 0; font-size: 16px; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <div id="roomCodeText" style="background-color: #FFD700; color: black; font-family: monospace; font-size: 18px; padding: 8px 12px; border-radius: 4px; font-weight: bold;"></div>
+                    <button id="copyRoomCodeBtn" style="background-color: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">
+                      📋 Copy
+                    </button>
+                  </div>
+                  <div id="copySuccessMessage" style="display: none; color: #4CAF50; margin-top: 5px; font-weight: bold; font-size: 12px;">✅ Room code copied to clipboard!</div>
+                </div>
+          
+          <!-- Player Customization Section -->
+          <div id="playerCustomization" style="margin: 10px 0; padding: 10px; border: 2px solid #4CAF50; border-radius: 6px; background-color: rgba(76, 175, 80, 0.1); display: none;">
+            <h4 style="margin: 0 0 8px 0; font-size: 16px;">🎯 Customize Your Player</h4>
             
-            <div id="roomCodeDisplay" style="display: none; margin: 15px 0;">
-                <div style="color: white; margin-bottom: 10px;">Room Code:</div>
-                <div id="roomCodeText" style="background-color: #FFD700; color: black; font-family: monospace; font-size: 18px; padding: 8px 12px; border-radius: 4px; font-weight: bold; display: inline-block;"></div>
-                <button id="copyRoomCodeBtn" style="margin-left: 10px; background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">📋 Copy</button>
+            <!-- Nickname Change -->
+            <div style="margin: 6px 0;">
+              <label for="nicknameInput" style="font-size: 14px;">Nickname (max 12 chars):</label>
+              <input type="text" id="nicknameInput" maxlength="12" placeholder="Enter nickname" style="margin-left: 8px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px;">
+              <button id="changeNicknameBtn" style="margin-left: 6px; padding: 4px 8px; background-color: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 13px;">Change</button>
             </div>
             
-            <div id="playerCustomization" style="display: none; margin: 15px 0; padding: 15px; border: 2px solid #4CAF50; border-radius: 6px; background-color: rgba(76, 175, 80, 0.1);">
-                <h4 style="margin: 0 0 10px 0; color: #4CAF50;">🎯 Customize Your Player</h4>
-                <div style="margin: 8px 0;">
-                    <label for="nicknameInput" style="color: white;">Nickname:</label>
-                    <input type="text" id="nicknameInput" maxlength="12" placeholder="Enter nickname" style="margin-left: 8px; padding: 4px; border: 1px solid #ccc; border-radius: 3px;">
-                    <button id="changeNicknameBtn" style="margin-left: 6px; padding: 4px 8px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Change</button>
-                </div>
-                <div style="margin: 8px 0;">
-                    <label style="color: white;">Starting Chips:</label>
-                    <input type="number" id="startingChips" value="1000" min="100" max="10000" style="margin-left: 8px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; width: 80px;">
-                </div>
+            <!-- Starting Chips -->
+            <div style="margin: 6px 0;">
+              <label style="font-size: 14px;">Starting Chips:</label>
+              <input type="number" id="startingChips" value="1000" min="100" max="10000" style="margin-left: 8px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; width: 80px; font-size: 13px;">
             </div>
-            
-            <button id="addBotBtn" style="display: none;">Add Bot</button>
-            <button id="removeBotBtn" style="display: none;">Remove Bot</button>
-            <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
-            
-            <div id="playerList"></div>
+          </div>
+          
+          <button id="addBotBtn" style="display: none;">Add Bot</button>
+          <button id="removeBotBtn" style="display: none;">Remove Bot</button>
+          <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
+
+          <button id="backToMainMenuBtn" style="display: none;">← Back to Main Menu</button>
+          <div id="playerList"></div>
         </div>
     </div>
 
