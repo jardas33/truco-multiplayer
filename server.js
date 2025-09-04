@@ -6,9 +6,6 @@ const io = require('socket.io')(http);
 // Store active rooms
 const rooms = new Map();
 
-// Middleware
-app.use(express.static('public'));
-
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
     res.status(200).json({
@@ -22,11 +19,13 @@ app.get('/health', (req, res) => {
 
 // Basic route - redirect to main menu
 app.get('/', (req, res) => {
+    console.log('🏠 ROOT ROUTE: Serving main-menu.html');
     res.sendFile(__dirname + '/public/main-menu.html');
 });
 
 // Game routes
 app.get('/truco', (req, res) => {
+    console.log('🎯 TRUCO ROUTE: Serving index.html');
     res.sendFile(__dirname + '/public/index.html');
 });
 
@@ -53,6 +52,9 @@ app.get('/war', (req, res) => {
 app.get('/crazy-eights', (req, res) => {
     res.sendFile(__dirname + '/public/crazy-eights.html');
 });
+
+// Static file serving (after custom routes to avoid conflicts)
+app.use(express.static('public'));
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
