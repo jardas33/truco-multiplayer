@@ -490,8 +490,182 @@ window.CardUtils = CardUtils;
 // 🎮 MISSING FUNCTIONS FOR NEW GAMES
 function showInstructions() {
     console.log('📖 Instructions button clicked');
-    // For new games, just show an alert since they don't have Instructions div
-    alert('Instructions:\n\nThis is a placeholder for game instructions.\n\nEach game will have its own specific rules and instructions.');
+    
+    const currentGame = window.location.pathname;
+    let instructions = '';
+    
+    switch(currentGame) {
+        case '/truco':
+        case '/':
+            instructions = `TRUCO GAME RULES:
+
+🎯 OBJECTIVE: Be the first team to win 12 games (1 set)
+
+🃏 CARD VALUES (High to Low):
+• Manilhas: 4 of Clubs, 7 of Hearts, Ace of Spades, 7 of Diamonds
+• Regular cards: King, Queen, Jack, 10, 9, 8, 6, 5, 4, 3, 2
+
+⚔️ GAMEPLAY:
+• 4 players (2 teams of 2)
+• Each player gets 3 cards
+• Players take turns playing cards
+• Highest card wins the trick
+• Team that wins 2 tricks wins the game
+
+🔥 TRUCO CALLS:
+• "Truco" = 3 games, "6" = 6 games, "9" = 9 games, "12" = 12 games
+• Opposing team can accept, raise, or reject
+• If rejected, calling team wins the current value`;
+            break;
+            
+        case '/poker':
+            instructions = `TEXAS HOLD'EM POKER RULES:
+
+🎯 OBJECTIVE: Win chips by having the best hand or making others fold
+
+🃏 HAND RANKINGS (High to Low):
+• Royal Flush: A-K-Q-J-10 of same suit
+• Straight Flush: 5 consecutive cards of same suit
+• Four of a Kind: 4 cards of same rank
+• Full House: 3 of a kind + pair
+• Flush: 5 cards of same suit
+• Straight: 5 consecutive cards
+• Three of a Kind: 3 cards of same rank
+• Two Pair: 2 different pairs
+• One Pair: 2 cards of same rank
+• High Card: Highest single card
+
+⚔️ GAMEPLAY:
+• Each player gets 2 hole cards
+• 5 community cards are dealt face up
+• Betting rounds: Pre-flop, Flop, Turn, River
+• Make best 5-card hand from 7 available cards`;
+            break;
+            
+        case '/blackjack':
+            instructions = `BLACKJACK RULES:
+
+🎯 OBJECTIVE: Get as close to 21 as possible without going over
+
+🃏 CARD VALUES:
+• Aces = 1 or 11 (your choice)
+• Face cards (J, Q, K) = 10
+• Number cards = face value
+
+⚔️ GAMEPLAY:
+• Dealer gives 2 cards to each player
+• Players can Hit (take another card) or Stand (keep current hand)
+• Dealer must hit on 16 or less, stand on 17 or more
+• Closest to 21 without going over wins
+• Blackjack (21 with 2 cards) beats other 21s
+
+🎲 SPECIAL ACTIONS:
+• Double Down: Double your bet, take exactly 1 more card
+• Split: If you have 2 cards of same rank, split into 2 hands
+• Insurance: Bet half your wager if dealer shows Ace`;
+            break;
+            
+        case '/hearts':
+            instructions = `HEARTS GAME RULES:
+
+🎯 OBJECTIVE: Have the lowest score when someone reaches 100 points
+
+🃏 CARD VALUES:
+• Hearts = 1 point each
+• Queen of Spades = 13 points
+• All other cards = 0 points
+
+⚔️ GAMEPLAY:
+• 4 players, 13 cards each
+• Pass 3 cards to left before each hand
+• Player with 2 of Clubs starts
+• Must follow suit if possible
+• Highest card of led suit wins trick
+• Winner leads next trick
+
+🚫 SPECIAL RULES:
+• Can't lead Hearts until Hearts are "broken"
+• Can't play Queen of Spades or Hearts on first trick
+• "Shooting the Moon" = Take all Hearts + Queen of Spades = 0 points for you, +26 for others`;
+            break;
+            
+        case '/go-fish':
+            instructions = `GO FISH RULES:
+
+🎯 OBJECTIVE: Collect the most sets of 4 matching cards
+
+🃏 CARD VALUES:
+• All cards have equal value
+• Sets are 4 cards of same rank (e.g., 4 Kings)
+
+⚔️ GAMEPLAY:
+• 2-6 players, 7 cards each (5 if 5+ players)
+• On your turn, ask any player for cards of a specific rank
+• If they have any, they must give you all cards of that rank
+• If they don't have any, say "Go Fish!" and draw from deck
+• If you get the 4th card of a set, place the set down
+• Game ends when someone runs out of cards
+
+🏆 WINNING:
+• Count your completed sets
+• Player with most sets wins`;
+            break;
+            
+        case '/war':
+            instructions = `WAR CARD GAME RULES:
+
+🎯 OBJECTIVE: Win all the cards in the deck
+
+🃏 CARD VALUES:
+• Ace = High, King, Queen, Jack, 10, 9, 8, 7, 6, 5, 4, 3, 2 = Low
+
+⚔️ GAMEPLAY:
+• 2 players, each gets half the deck
+• Both players flip top card simultaneously
+• Higher card wins both cards
+• If cards are equal, it's WAR!
+
+⚔️ WAR RULES:
+• Each player places 3 cards face down
+• Then flip 1 card face up
+• Higher card wins all 8 cards
+• If still tied, repeat war process
+
+🏆 WINNING:
+• Player who gets all 52 cards wins`;
+            break;
+            
+        case '/crazy-eights':
+            instructions = `CRAZY EIGHTS RULES:
+
+🎯 OBJECTIVE: Be the first player to get rid of all your cards
+
+🃏 CARD VALUES:
+• 8s are wild (can be played on any card)
+• All other cards must match suit or rank
+
+⚔️ GAMEPLAY:
+• 2-7 players, 7 cards each (5 if 5+ players)
+• One card face up as discard pile
+• Play a card that matches suit or rank of top card
+• 8s can be played anytime (choose new suit)
+• If you can't play, draw from deck until you can
+
+🎯 SPECIAL CARDS:
+• 8 = Wild (choose new suit)
+• 2 = Next player draws 2 cards
+• Jack = Skip next player's turn
+• Ace = Reverse play direction
+
+🏆 WINNING:
+• First player to empty their hand wins`;
+            break;
+            
+        default:
+            instructions = 'Instructions for this game are not available yet.';
+    }
+    
+    alert(instructions);
 }
 
 function closeInstructions() {

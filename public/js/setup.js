@@ -81,21 +81,25 @@ function setup() {
     instructionsButton.style('border-radius', '5px'); // Ensure consistent border radius
     instructionsButton.show();
 
-    cardValuesButton = createButton("Card Values");
-    cardValuesButton.position(20, 70); // Position right under Instructions button with proper spacing
-    cardValuesButton.mousePressed(showCardValues);
-    cardValuesButton.parent('Menu');
-    cardValuesButton.style('z-index', '100'); // Higher z-index
-    cardValuesButton.style('position', 'absolute'); // Force absolute positioning
-    cardValuesButton.style('padding', '10px 20px'); // Ensure consistent padding
-    cardValuesButton.style('margin', '5px'); // Ensure consistent margin
-    cardValuesButton.style('border', '2px solid #fff'); // Ensure consistent border
-    cardValuesButton.style('background-color', 'rgba(0, 0, 0, 0.7)'); // Ensure consistent background
-    cardValuesButton.style('color', 'white'); // Ensure consistent text color
-    cardValuesButton.style('font-weight', 'bold'); // Ensure consistent font weight
-    cardValuesButton.style('border-radius', '5px'); // Ensure consistent border radius
-    cardValuesButton.style('text-align', 'center'); // Ensure consistent text alignment
-    cardValuesButton.show();
+    // Only show Card Values button for Truco game
+    const currentGame = window.location.pathname;
+    if (currentGame === '/truco' || currentGame === '/') {
+        cardValuesButton = createButton("Card Values");
+        cardValuesButton.position(20, 70); // Position right under Instructions button with proper spacing
+        cardValuesButton.mousePressed(showCardValues);
+        cardValuesButton.parent('Menu');
+        cardValuesButton.style('z-index', '100'); // Higher z-index
+        cardValuesButton.style('position', 'absolute'); // Force absolute positioning
+        cardValuesButton.style('padding', '10px 20px'); // Ensure consistent padding
+        cardValuesButton.style('margin', '5px'); // Ensure consistent margin
+        cardValuesButton.style('border', '2px solid #fff'); // Ensure consistent border
+        cardValuesButton.style('background-color', 'rgba(0, 0, 0, 0.7)'); // Ensure consistent background
+        cardValuesButton.style('color', 'white'); // Ensure consistent text color
+        cardValuesButton.style('font-weight', 'bold'); // Ensure consistent font weight
+        cardValuesButton.style('border-radius', '5px'); // Ensure consistent border radius
+        cardValuesButton.style('text-align', 'center'); // Ensure consistent text alignment
+        cardValuesButton.show();
+    }
     console.log('Buttons created with proper z-index and made visible');
     
     // Create game UI buttons

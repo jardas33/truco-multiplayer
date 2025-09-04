@@ -320,10 +320,18 @@ io.on('connection', (socket) => {
             console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
             console.log(`🔍 Event handler executing...`);
             
-            const room = rooms.get(roomCode);
+            // Handle both string and object formats
+            let actualRoomCode = roomCode;
+            if (typeof roomCode === 'object' && roomCode.roomId) {
+                actualRoomCode = roomCode.roomId;
+                console.log(`🔍 Extracted room code from object: ${actualRoomCode}`);
+            }
+            
+            const room = rooms.get(actualRoomCode);
             if (!room) {
-                console.log(`❌ Room ${roomCode} not found for game start`);
+                console.log(`❌ Room ${actualRoomCode} not found for game start`);
                 console.log(`🔍 Room not found - checking if socket is in any room`);
+                console.log(`🔍 All available rooms:`, Array.from(rooms.entries()));
                 socket.emit('error', 'Room not found');
                 return;
             }
