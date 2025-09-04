@@ -350,7 +350,44 @@ function draw() {
         
         // Only draw game state if game is properly initialized
         if (window.game && window.game.players && window.game.players.length > 0) {
-            drawGameState();
+            // Check if we're in Truco game (which has drawGameState function)
+            if (typeof drawGameState === 'function') {
+                drawGameState();
+            } else {
+                // For other games (like Poker), draw a basic game state
+                drawBasicGameState();
+            }
+        }
+    }
+}
+
+// Basic game state drawing for non-Truco games
+function drawBasicGameState() {
+    if (!window.game) return;
+    
+    // Clear the canvas with a dark green background (poker table color)
+    background(0, 100, 0);
+    
+    // Draw a simple game state message
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    text("Game in Progress", width/2, height/2 - 50);
+    
+    // Draw player count
+    textSize(16);
+    text(`Players: ${window.game.players ? window.game.players.length : 0}`, width/2, height/2);
+    
+    // Draw pot if it exists
+    if (window.game.pot !== undefined) {
+        text(`Pot: $${window.game.pot}`, width/2, height/2 + 30);
+    }
+    
+    // Draw current player info if available
+    if (window.game.currentPlayerIndex !== undefined) {
+        const currentPlayer = window.game.players[window.game.currentPlayerIndex];
+        if (currentPlayer) {
+            text(`Current Player: ${currentPlayer.name}`, width/2, height/2 + 60);
         }
     }
 }
