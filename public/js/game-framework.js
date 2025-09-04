@@ -126,7 +126,7 @@ class PlayerManager {
     }
 }
 
-// 🌐 SOCKET COMMUNICATION
+// SOCKET COMMUNICATION
 class SocketManager {
     static initialize(gameType) {
         if (window.gameFramework.socket) {
@@ -146,26 +146,26 @@ class SocketManager {
         const socket = window.gameFramework.socket;
         
         socket.on('connect', () => {
-            console.log('🔗 Connected to server');
+            console.log('Connected to server');
         });
         
         socket.on('disconnect', () => {
-            console.log('❌ Disconnected from server');
+            console.log('ERROR: Disconnected from server');
         });
         
         socket.on('error', (error) => {
-            console.error('🚨 Socket error:', error);
+            console.error('WARNING: Socket error:', error);
         });
         
         socket.on('roomCreated', (data) => {
-            console.log('🏠 Room created:', data);
+            console.log('Room created:', data);
             window.gameFramework.roomId = data.roomId || data; // Handle both old and new formats
             window.gameFramework.playerId = data.playerId || socket.id;
             window.gameFramework.isHost = data.isHost || false;
         });
         
         socket.on('roomJoined', (data) => {
-            console.log('🏠 Joined room:', data);
+            console.log('Joined room:', data);
             window.gameFramework.roomId = data.roomId || data; // Handle both old and new formats
             window.gameFramework.playerId = data.playerId || socket.id;
             window.gameFramework.isHost = data.isHost || false;
@@ -188,7 +188,7 @@ class SocketManager {
             playerDiv.innerHTML = `
                 <span class="player-name">${player.name}</span>
                 <span class="player-team">${player.team || 'No Team'}</span>
-                ${player.isBot ? '<span class="bot-indicator">🤖</span>' : ''}
+                ${player.isBot ? '<span class="bot-indicator">BOT</span>' : ''}
             `;
             playerList.appendChild(playerDiv);
         });
@@ -203,7 +203,7 @@ class SocketManager {
     }
 }
 
-// 🎨 UI UTILITIES
+// UI UTILITIES
 class UIUtils {
     static showElement(id) {
         const element = document.getElementById(id);
@@ -279,11 +279,11 @@ class UIUtils {
     }
 }
 
-// 🎮 GAME STATE MANAGEMENT
+// GAME STATE MANAGEMENT
 class GameStateManager {
     static setState(state) {
         window.gameFramework.gameState = state;
-        console.log(`🎮 Game state changed to: ${state}`);
+        console.log(`Game state changed to: ${state}`);
     }
     
     static getState() {
@@ -303,7 +303,7 @@ class GameStateManager {
     }
 }
 
-// 🃏 CARD RENDERING
+// CARD RENDERING
 class CardRenderer {
     static drawCard(x, y, width, height, card, isFaceUp = true) {
         if (!card) return;
@@ -358,7 +358,7 @@ class CardRenderer {
     }
 }
 
-// 🎯 GAME SPECIFIC UTILITIES
+// GAME SPECIFIC UTILITIES
 class GameUtils {
     static getRandomElement(array) {
         return array[Math.floor(Math.random() * array.length)];
@@ -419,10 +419,10 @@ class NavigationManager {
     }
 }
 
-// 🎮 INITIALIZATION
+// INITIALIZATION
 class GameFramework {
     static initialize(gameType) {
-        console.log(`🎮 Initializing game framework for: ${gameType}`);
+        console.log(`Initializing game framework for: ${gameType}`);
         
         // Initialize socket
         SocketManager.initialize(gameType);
@@ -436,11 +436,11 @@ class GameFramework {
         // Setup common UI
         this.setupCommonUI();
         
-        console.log('✅ Game framework initialized');
-        console.log('🔍 Debug - GameFramework class:', GameFramework);
-        console.log('🔍 Debug - GameFramework.createRoom:', GameFramework.createRoom);
-        console.log('🔍 Debug - window.gameFramework:', window.gameFramework);
-        console.log('🔍 Debug - window.gameFramework.socket:', window.gameFramework?.socket);
+        console.log('SUCCESS: Game framework initialized');
+        console.log('DEBUG: GameFramework class:', GameFramework);
+        console.log('DEBUG: GameFramework.createRoom:', GameFramework.createRoom);
+        console.log('DEBUG: window.gameFramework:', window.gameFramework);
+        console.log('DEBUG: window.gameFramework.socket:', window.gameFramework?.socket);
     }
     
     static loadCardImages() {

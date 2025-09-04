@@ -3,10 +3,10 @@ function setup() {
     
     // CRITICAL: Ensure card images are loaded before proceeding
     if (typeof preload === 'function') {
-        console.log('🖼️ Calling preload function to load card images...');
+        console.log('Calling preload function to load card images...');
         preload();
     } else {
-        console.error('❌ Preload function not found! Card images may not load properly.');
+        console.error('ERROR: Preload function not found! Card images may not load properly.');
     }
     
     // Set frame rate to prevent excessive rendering
@@ -134,9 +134,9 @@ function setup() {
 
     // Create truco response buttons with proper styling and positioning (only for Truco game)
     if (currentGame === '/truco' || currentGame === '/') {
-        buttonAcceptTruco = createButton("✅ ACCEPT TRUCO");
-        buttonRejectTruco = createButton("❌ REJECT TRUCO");
-        buttonRaiseTruco = createButton("📈 RAISE TRUCO");
+        buttonAcceptTruco = createButton("ACCEPT TRUCO");
+        buttonRejectTruco = createButton("REJECT TRUCO");
+        buttonRaiseTruco = createButton("RAISE TRUCO");
 
     // Style Accept button (Green)
     buttonAcceptTruco.style('background-color', '#28a745');
@@ -177,7 +177,7 @@ function setup() {
     buttonRaiseTruco.style('position', 'absolute');
     buttonRaiseTruco.style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)');
 
-        // ✅ OLD TRUCO BUTTON HANDLERS REMOVED - Now handled by new UI system in lobby.js
+        // OLD TRUCO BUTTON HANDLERS REMOVED - Now handled by new UI system in lobby.js
 
         buttonAcceptTruco.parent(gameDiv);
         buttonRejectTruco.parent(gameDiv);
@@ -298,7 +298,7 @@ function setup() {
         if (typeof closePopup === 'function') {
             closePopup();
         } else {
-            console.log('❌ Close popup clicked (fallback)');
+            console.log('ERROR: Close popup clicked (fallback)');
             popup.hide();
         }
     });
