@@ -1,4 +1,4 @@
-// 🎮 SHARED GAME FRAMEWORK
+// SHARED GAME FRAMEWORK
 // Common utilities and functions for all card games
 
 // Global game state
@@ -14,7 +14,7 @@ window.gameFramework = {
     cardBackImage: null
 };
 
-// 🃏 CARD UTILITIES
+// CARD UTILITIES
 class CardUtils {
     static createStandardDeck() {
         const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -80,7 +80,7 @@ class CardUtils {
     }
 }
 
-// 🎯 PLAYER MANAGEMENT
+// PLAYER MANAGEMENT
 class PlayerManager {
     static createPlayer(id, name, isBot = false, team = null) {
         return {
@@ -859,3 +859,4 @@ window.CardRenderer = CardRenderer;
 window.GameUtils = GameUtils;
 window.NavigationManager = NavigationManager;
 window.GameFramework = GameFramework;
+
