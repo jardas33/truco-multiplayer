@@ -719,14 +719,21 @@ function setupSocketListeners() {
         // If it's a bot's turn to respond, trigger bot response
         if (data.responsePlayerIndex !== undefined) {
             const responsePlayer = window.game.players[data.responsePlayerIndex];
+            const localPlayerIndex = window.localPlayerIndex;
+            
             if (responsePlayer && responsePlayer.isBot) {
                 console.log(`🤖 Bot ${responsePlayer.name} needs to respond to raised Truco`);
                 setTimeout(() => {
                     responsePlayer.botRespondTruco();
                 }, 1500);
             } else if (responsePlayer && !responsePlayer.isBot) {
-                console.log(`👤 Human player ${responsePlayer.name} can respond to raised Truco`);
-                showTrucoResponseButtons();
+                // Human response - only show response buttons to the specific player who needs to respond
+                if (localPlayerIndex === data.responsePlayerIndex) {
+                    console.log(`👤 Human player ${responsePlayer.name} (local player) can respond to raised Truco`);
+                    showTrucoResponseButtons();
+                } else {
+                    console.log(`👤 Human player ${responsePlayer.name} needs to respond, but this is not the local player`);
+                }
             }
         }
         });
