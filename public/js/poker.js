@@ -660,8 +660,12 @@ class PokerClient {
         console.log('🎮 Create Room button clicked');
         
         // Try to create room immediately first
-        if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-            console.log('✅ GameFramework available, creating room immediately');
+        console.log('🔍 Debug - GameFramework type:', typeof GameFramework);
+        console.log('🔍 Debug - GameFramework object:', GameFramework);
+        console.log('🔍 Debug - GameFramework.createRoom:', GameFramework?.createRoom);
+        
+        if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
+            console.log('✅ GameFramework and socket available, creating room immediately');
             GameFramework.createRoom('poker');
             return;
         }
@@ -675,8 +679,8 @@ class PokerClient {
             attempts++;
             console.log(`🔄 Attempt ${attempts}/${maxAttempts} to create room`);
             
-            if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-                console.log('✅ GameFramework now available, creating room');
+            if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
+                console.log('✅ GameFramework and socket now available, creating room');
                 GameFramework.createRoom('poker');
                 return;
             }

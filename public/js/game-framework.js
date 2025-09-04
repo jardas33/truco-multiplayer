@@ -196,6 +196,11 @@ class SocketManager {
     
     static createRoom(gameType) {
         const socket = window.gameFramework.socket;
+        if (!socket) {
+            console.error('❌ Socket not available for createRoom');
+            return;
+        }
+        console.log('🎮 Creating room for game type:', gameType);
         socket.emit('createRoom', { gameType: gameType });
     }
     
@@ -681,6 +686,11 @@ function showCardValues() {
 
 function closeCardValues() {
     console.log('❌ Close card values clicked');
+    // For new games, this is handled by the alert
+}
+
+function closePopup() {
+    console.log('❌ Close popup clicked');
     // For new games, this is handled by the alert
 }
 
