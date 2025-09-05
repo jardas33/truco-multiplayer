@@ -464,11 +464,20 @@ class GoFishClient {
 
     // Join room
     joinRoom() {
-        const roomCode = prompt('Enter room code:');
+        const roomCodeInput = document.getElementById('roomCodeInput');
+        const roomCode = roomCodeInput ? roomCodeInput.value.trim() : '';
+        
         if (!roomCode) {
+            alert('Please enter a room code');
             return;
         }
-        GameFramework.joinRoom(roomCode);
+        
+        if (typeof GameFramework !== 'undefined' && GameFramework.joinRoom) {
+            GameFramework.joinRoom(roomCode);
+        } else {
+            console.error('GameFramework.joinRoom not available');
+            alert('Game framework not ready. Please refresh the page.');
+        }
     }
 
     // Add bot
@@ -504,6 +513,12 @@ class GoFishClient {
         // Set global game instance
         window.game = this.game;
         
+        // Set game state to Playing
+        if (typeof gameStateEnum !== 'undefined') {
+            gameState = gameStateEnum.Playing;
+            window.gameState = gameStateEnum.Playing;
+        }
+        
         // Update UI
         this.updateUI();
         
@@ -516,6 +531,11 @@ class GoFishClient {
             const menuDiv = document.getElementById('Menu');
             if (gameDiv) gameDiv.style.display = 'block';
             if (menuDiv) menuDiv.style.display = 'none';
+        }
+        
+        // Start the p5.js draw loop
+        if (typeof loop === 'function') {
+            loop();
         }
         
         console.log('🎮 Go Fish: Game started successfully');
@@ -1576,4 +1596,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();
     window.goFishClient.initialize();
     
+    // Start a test game after a short delay to ensure everything is loaded
+    setTimeout(() => {
+        console.log('Starting test Go Fish game...');
+        window.goFishClient.startGame();
+    }, 1000);
 });
