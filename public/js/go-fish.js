@@ -514,39 +514,69 @@ class GoFishClient {
     }
 
     // Ask for cards
-    askForCards() {
+    askForCards(targetPlayerIndex, rank) {
         if (!this.canAct || !this.isMyTurn) {
+            console.log('❌ Cannot ask for cards - not my turn or cannot act');
             return;
         }
-        
-        const targetPlayerIndex = parseInt(document.getElementById('targetPlayerSelect').value);
-        const rank = document.getElementById('rankSelect').value;
         
         if (!targetPlayerIndex || !rank) {
-            UIUtils.showGameMessage('Please select a player and rank', 'error');
+            console.log('❌ Missing target player or rank');
             return;
         }
         
-        const socket = window.gameFramework.socket;
-        socket.emit('askForCards', {
-            roomId: window.gameFramework.roomId,
-            playerIndex: this.localPlayerIndex,
-            targetPlayerIndex: targetPlayerIndex,
-            rank: rank
-        });
+        console.log(`🎯 Asking ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`);
+        
+        // Use the game's askForCards method
+        const success = this.game.askForCards(this.localPlayerIndex, targetPlayerIndex, rank);
+        
+        if (success) {
+            console.log('✅ Successfully asked for cards');
+            addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`, 'info');
+            this.updateUI();
+        } else {
+            console.log('❌ Failed to ask for cards');
+            addGameMessage('Failed to ask for cards', 'error');
+        }
+        
+        // Emit to server if connected
+        if (window.gameFramework && window.gameFramework.socket) {
+            const socket = window.gameFramework.socket;
+            socket.emit('askForCards', {
+                roomId: window.gameFramework.roomId,
+                playerIndex: this.localPlayerIndex,
+                targetPlayerIndex: targetPlayerIndex,
+                rank: rank
+            });
+        }
     }
 
     // Go fish
     goFish() {
         if (!this.canAct || !this.isMyTurn) {
+            console.log('❌ Cannot go fish - not my turn or cannot act');
             return;
         }
         
-        const socket = window.gameFramework.socket;
-        socket.emit('goFish', {
-            roomId: window.gameFramework.roomId,
-            playerIndex: this.localPlayerIndex
-        });
+        console.log('🐟 Going fishing!');
+        
+        // Use the game's goFish method
+        this.game.goFish(this.game.players[this.localPlayerIndex]);
+        
+        // Show message
+        addGameMessage('🐟 Going fishing!', 'info');
+        
+        // Update UI
+        this.updateUI();
+        
+        // Emit to server if connected
+        if (window.gameFramework && window.gameFramework.socket) {
+            const socket = window.gameFramework.socket;
+            socket.emit('goFish', {
+                roomId: window.gameFramework.roomId,
+                playerIndex: this.localPlayerIndex
+            });
+        }
     }
 
     // Update cards given
@@ -802,12 +832,18 @@ function drawGameState() {
         ellipse(random(width), random(height), random(20, 80), random(10, 30));
     }
     
+    // Reset cursor
+    cursor(ARROW);
+    
     // Draw game elements
     drawGoFishTable();
     drawPlayers();
     drawPond();
     drawGameInfo();
     drawScores();
+    drawGameControls();
+    drawActionButtons();
+    drawGameMessages();
 }
 
 function drawGoFishTable() {
@@ -1165,6 +1201,250 @@ function drawScores() {
     });
 }
 
+function drawGameControls() {
+    if (!window.game || window.game.gameOver) return;
+    
+    const controlsY = height - 80;
+    const controlsX = width / 2;
+    
+    // Draw controls background
+    fill(0, 0, 0, 180);
+    stroke(255, 215, 0);
+    strokeWeight(2);
+    rect(controlsX - 200, controlsY - 30, 400, 60, 10);
+    
+    // Draw current player info
+    if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
+        const currentPlayer = window.game.players[window.game.currentPlayer];
+        fill(255, 215, 0);
+        textAlign(CENTER, CENTER);
+        textSize(16);
+        textStyle(BOLD);
+        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 10);
+        
+        // Draw available actions
+        fill(255);
+        textSize(12);
+        textStyle(NORMAL);
+        text('Ask for cards or Go Fish!', controlsX, controlsY + 10);
+    }
+}
+
+function drawActionButtons() {
+    if (!window.game || window.game.gameOver) return;
+    
+    const buttonY = height - 40;
+    const buttonX = width / 2;
+    const buttonWidth = 120;
+    const buttonHeight = 35;
+    
+    // Ask for cards button
+    if (window.game.players && window.game.players[window.game.currentPlayer] && 
+        window.game.players[window.game.currentPlayer].hand.length > 0) {
+        
+        // Check if mouse is hovering over button
+        const isHovering = mouseX >= buttonX - buttonWidth - 10 && mouseX <= buttonX - 10 &&
+                          mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
+        
+        // Change cursor
+        if (isHovering) {
+            cursor(HAND);
+        }
+        
+        // Draw button shadow
+        fill(0, 0, 0, 100);
+        noStroke();
+        rect(buttonX - buttonWidth - 10 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
+        
+        // Draw button with hover effect
+        fill(isHovering ? 69, 160, 73 : 76, 175, 80);
+        stroke(255);
+        strokeWeight(2);
+        rect(buttonX - buttonWidth - 10, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
+        
+        // Draw button text
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        textStyle(BOLD);
+        text('Ask for Cards', buttonX - buttonWidth/2 - 10, buttonY);
+    }
+    
+    // Go Fish button
+    // Check if mouse is hovering over button
+    const isHoveringFish = mouseX >= buttonX + 10 && mouseX <= buttonX + 10 + buttonWidth &&
+                          mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
+    
+    // Change cursor
+    if (isHoveringFish) {
+        cursor(HAND);
+    }
+    
+    // Draw button shadow
+    fill(0, 0, 0, 100);
+    noStroke();
+    rect(buttonX + 10 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
+    
+    // Draw button with hover effect
+    fill(isHoveringFish ? 25, 118, 210 : 33, 150, 243);
+    stroke(255);
+    strokeWeight(2);
+    rect(buttonX + 10, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
+    
+    // Draw button text
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    textStyle(BOLD);
+    text('🐟 Go Fish!', buttonX + buttonWidth/2 + 10, buttonY);
+}
+
+function drawGameMessages() {
+    if (!window.gameMessages) return;
+    
+    const messageY = height * 0.4;
+    const messageX = width / 2;
+    
+    window.gameMessages.forEach((message, index) => {
+        const alpha = map(message.life, 0, 120, 0, 255);
+        const y = messageY + index * 25;
+        
+        // Draw message background
+        fill(0, 0, 0, alpha * 0.7);
+        noStroke();
+        rect(messageX - 150, y - 10, 300, 20, 10);
+        
+        // Draw message text
+        fill(255, 255, 255, alpha);
+        textAlign(CENTER, CENTER);
+        textSize(14);
+        textStyle(BOLD);
+        text(message.text, messageX, y);
+        
+        // Decrease life
+        message.life--;
+    });
+    
+    // Remove expired messages
+    window.gameMessages = window.gameMessages.filter(message => message.life > 0);
+}
+
+function addGameMessage(text, type = 'info') {
+    if (!window.gameMessages) window.gameMessages = [];
+    
+    const colors = {
+        'info': [255, 255, 255],
+        'success': [76, 175, 80],
+        'error': [244, 67, 54],
+        'warning': [255, 152, 0]
+    };
+    
+    window.gameMessages.push({
+        text: text,
+        type: type,
+        life: 120, // 2 seconds at 60fps
+        color: colors[type] || colors['info']
+    });
+}
+
+// Mouse interaction for Go Fish
+function mousePressed() {
+    if (!window.game || window.game.gameOver) return;
+    
+    const buttonY = height - 40;
+    const buttonX = width / 2;
+    const buttonWidth = 120;
+    const buttonHeight = 35;
+    
+    // Check if Ask for Cards button was clicked
+    if (mouseX >= buttonX - buttonWidth - 10 && mouseX <= buttonX - 10 &&
+        mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
+        console.log('🎯 Ask for Cards button clicked');
+        // TODO: Implement ask for cards logic
+        showAskForCardsDialog();
+    }
+    
+    // Check if Go Fish button was clicked
+    if (mouseX >= buttonX + 10 && mouseX <= buttonX + 10 + buttonWidth &&
+        mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
+        console.log('🐟 Go Fish button clicked');
+        // TODO: Implement go fish logic
+        if (window.goFishClient) {
+            window.goFishClient.goFish();
+        }
+    }
+}
+
+function showAskForCardsDialog() {
+    if (!window.game || !window.game.players) return;
+    
+    const currentPlayer = window.game.players[window.game.currentPlayer];
+    if (!currentPlayer || currentPlayer.hand.length === 0) return;
+    
+    // Get available ranks for current player
+    const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
+    if (availableRanks.length === 0) return;
+    
+    // Get available target players
+    const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
+    if (availableTargets.length === 0) return;
+    
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #FFD700;
+        z-index: 10000;
+        text-align: center;
+        min-width: 300px;
+    `;
+    
+    dialog.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #FFD700;">Ask for Cards</h3>
+        <div style="margin: 10px 0;">
+            <label style="display: block; margin-bottom: 5px;">Ask player:</label>
+            <select id="targetPlayerSelect" style="width: 100%; padding: 5px; margin-bottom: 10px;">
+                ${availableTargets.map(target => `<option value="${target.index}">${target.name}</option>`).join('')}
+            </select>
+        </div>
+        <div style="margin: 10px 0;">
+            <label style="display: block; margin-bottom: 5px;">for rank:</label>
+            <select id="rankSelect" style="width: 100%; padding: 5px; margin-bottom: 15px;">
+                ${availableRanks.map(rank => `<option value="${rank}">${rank}</option>`).join('')}
+            </select>
+        </div>
+        <div>
+            <button id="askButton" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">Ask</button>
+            <button id="cancelButton" style="background: #f44336; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">Cancel</button>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Add event listeners
+    document.getElementById('askButton').onclick = function() {
+        const targetPlayerIndex = parseInt(document.getElementById('targetPlayerSelect').value);
+        const rank = document.getElementById('rankSelect').value;
+        
+        if (window.goFishClient) {
+            window.goFishClient.askForCards(targetPlayerIndex, rank);
+        }
+        
+        document.body.removeChild(dialog);
+    };
+    
+    document.getElementById('cancelButton').onclick = function() {
+        document.body.removeChild(dialog);
+    };
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();
@@ -1185,4 +1465,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🧪 Auto-starting Go Fish game for testing');
         window.goFishClient.startGame();
     }, 2000);
+    
+    // Add restart button
+    const restartButton = document.createElement('button');
+    restartButton.textContent = 'Restart Game';
+    restartButton.style.cssText = 'position: fixed; top: 10px; right: 150px; z-index: 9999; background: #ff9800; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;';
+    restartButton.onclick = function() {
+        console.log('🔄 Restarting Go Fish game');
+        window.goFishClient.startGame();
+    };
+    document.body.appendChild(restartButton);
 });
