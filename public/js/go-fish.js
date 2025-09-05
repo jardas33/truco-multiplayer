@@ -1976,8 +1976,19 @@ function validateLayoutSpacing() {
 
 function drawModernScorePanel() {
     const dims = getResponsiveDimensions();
-    const panelWidth = dims.isSmallScreen ? 200 : 220; // Increased width
-    const panelHeight = dims.isSmallScreen ? 200 : 220; // Increased height for overall scores
+    
+    // Calculate dynamic size based on number of players
+    const playerCount = window.game && window.game.players ? window.game.players.length : 3;
+    const baseHeight = 120; // Base height for title and current turn
+    const playerSectionHeight = 25; // Height per player for current scores
+    const overallSectionHeight = 40; // Height for "Overall Wins" header
+    const overallPlayerHeight = 20; // Height per player for overall wins
+    const padding = 20; // Extra padding
+    
+    const calculatedHeight = baseHeight + (playerCount * playerSectionHeight) + overallSectionHeight + (playerCount * overallPlayerHeight) + padding;
+    
+    const panelWidth = dims.isSmallScreen ? 240 : 260; // Increased width significantly
+    const panelHeight = Math.max(calculatedHeight, dims.isSmallScreen ? 250 : 280); // Dynamic height with minimum
     const panelX = width - panelWidth - 20; // Bottom right with margin
     const panelY = height - panelHeight - 40; // Moved higher with more margin
     
@@ -2004,34 +2015,43 @@ function drawModernScorePanel() {
     
     // Player scores
     if (window.game && window.game.players) {
-        let yOffset = 85; // Slightly more space from title
+        let yOffset = 80; // Optimized spacing from title
+        
+        // Current game scores header
+        fill(255, 255, 255);
+        textSize(12);
+        textStyle(BOLD);
+        text('Current Game:', panelX + 15, panelY + yOffset);
+        yOffset += 20;
+        
         window.game.players.forEach((player, index) => {
             const isCurrentPlayer = index === window.game.currentPlayer;
             const textColor = isCurrentPlayer ? color(255, 215, 0) : color(255, 255, 255);
             
             fill(textColor);
-            textSize(14);
+            textSize(12);
+            textStyle(NORMAL);
             text(`${player.name}: ${player.pairs || 0} pairs`, panelX + 15, panelY + yOffset);
-            yOffset += 22; // Slightly tighter spacing
+            yOffset += 18; // Optimized spacing
         });
         
         // Overall scores section
-        yOffset += 15; // More spacing between sections
+        yOffset += 12; // Spacing between sections
         fill(255, 215, 0);
-        textSize(13);
+        textSize(12);
         textStyle(BOLD);
         text('Overall Wins:', panelX + 15, panelY + yOffset);
-        yOffset += 22;
+        yOffset += 18;
         
         window.game.players.forEach((player, index) => {
             const isCurrentPlayer = index === window.game.currentPlayer;
             const textColor = isCurrentPlayer ? color(255, 215, 0) : color(200, 200, 200);
             
             fill(textColor);
-            textSize(12);
+            textSize(11);
             textStyle(NORMAL);
             text(`${player.name}: ${player.overallWins || 0}`, panelX + 15, panelY + yOffset);
-            yOffset += 20; // Consistent spacing
+            yOffset += 16; // Optimized spacing
         });
     }
 }
