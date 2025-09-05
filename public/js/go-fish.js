@@ -723,15 +723,15 @@ class GoFishClient {
         const success = this.game.askForCards(this.localPlayerIndex, targetPlayerIndex, rank);
         
         if (success) {
-            console.log('✅ Successfully asked for cards');
+            console.log('✅ Successfully asked for cards - got cards from target player');
             addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`, 'info');
             this.updateUI();
             // Player gets another turn, so don't call endTurn()
         } else {
-            console.log('❌ Ask failed - target player said "Go Fish!"');
+            console.log('✅ Ask completed - target player said "Go Fish!" and game handled it');
             addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s but got "Go Fish!"`, 'warning');
             this.updateUI();
-            // Game will handle turn progression internally (goFish method)
+            // Game already handled the Go Fish internally, no need to do anything else
         }
         
         // Emit to server if connected
