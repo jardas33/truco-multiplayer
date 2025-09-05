@@ -1407,18 +1407,18 @@ function drawModernFishPond() {
     const centerX = width / 2;
     const pondY = height * 0.45; // Moved up slightly to avoid opponent cards
     
-    // Draw pond container
+    // Draw pond container - MADE BIGGER
     fill(0, 0, 0, 200);
     stroke(100, 150, 200);
     strokeWeight(3);
-    rect(centerX - 120, pondY - 60, 240, 120, 15);
+    rect(centerX - 140, pondY - 70, 280, 150, 15); // Increased from 240x120 to 280x150
     
     // Draw fish icon
     fill(100, 200, 255);
     textAlign(CENTER, CENTER);
     textSize(32);
     noStroke();
-    text('🐟', centerX, pondY - 20);
+    text('🐟', centerX, pondY - 25);
     
     // Draw pond label
     fill(255, 255, 255);
@@ -1429,7 +1429,7 @@ function drawModernFishPond() {
     const cardWidth = 30;
     const cardHeight = 42;
     const stackX = centerX - 40;
-    const stackY = pondY + 10; // Moved up more to make room for text
+    const stackY = pondY + 20; // More space from label
     
     // Draw card stack
     for (let i = 0; i < 3; i++) {
@@ -1449,8 +1449,7 @@ function drawModernFishPond() {
     
     // Calculate where cards end (last card with offset)
     const lastCardBottom = stackY + cardHeight + (2 * 2); // stackY + cardHeight + max offsetY
-    const boxBottom = pondY + 60; // Bottom of the pond container
-    const textY = Math.min(lastCardBottom + 6, boxBottom - 8); // 6px spacing, but stay 8px from box bottom
+    const textY = lastCardBottom + 15; // 15px spacing below cards - plenty of room now
     
     // Draw card count
     fill(255, 255, 255);
