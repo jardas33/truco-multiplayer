@@ -1968,38 +1968,28 @@ function mousePressed() {
         showFullGameHistory();
     }
     
-    // Check if Game Menu button was clicked
-    const menuButtonSize = 50;
-    const menuX = 20;
+    // Check if menu buttons were clicked (top center)
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const buttonSpacing = 20;
+    const totalWidth = (buttonWidth * 2) + buttonSpacing;
+    const menuX = (width - totalWidth) / 2; // Center horizontally
     const menuY = 20;
     
-    if (mouseX >= menuX && mouseX <= menuX + menuButtonSize &&
-        mouseY >= menuY && mouseY <= menuY + menuButtonSize) {
-        console.log('🎮 Game Menu button clicked');
-        // Menu panel appears on hover, no action needed here
-        return;
-    }
+    const backButtonX = menuX;
+    const restartButtonX = menuX + buttonWidth + buttonSpacing;
     
-    // Check if Back to Main Menu button was clicked (when menu is open)
-    const menuPanelWidth = 200;
-    const menuPanelHeight = 120;
-    const menuPanelX = menuX + menuButtonSize + 10;
-    const menuPanelY = menuY;
-    const backButtonY = menuPanelY + 45;
-    const backButtonHeight = 30;
-    
-    if (mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
-        mouseY >= backButtonY && mouseY <= backButtonY + backButtonHeight) {
+    // Check if Back to Main Menu button was clicked
+    if (mouseX >= backButtonX && mouseX <= backButtonX + buttonWidth &&
+        mouseY >= menuY && mouseY <= menuY + buttonHeight) {
         console.log('🔙 Back to Main Menu clicked');
         window.location.href = '/';
         return;
     }
     
     // Check if Restart Game button was clicked
-    const restartButtonY = menuPanelY + 85;
-    
-    if (mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
-        mouseY >= restartButtonY && mouseY <= restartButtonY + backButtonHeight) {
+    if (mouseX >= restartButtonX && mouseX <= restartButtonX + buttonWidth &&
+        mouseY >= menuY && mouseY <= menuY + buttonHeight) {
         console.log('🔄 Restart Game clicked');
         if (window.goFishClient) {
             window.goFishClient.reset();
@@ -2217,78 +2207,47 @@ function drawGameMenu() {
     // Only show menu during gameplay
     if (!window.game || !window.game.players || window.game.players.length === 0) return;
     
-    // Menu button in top-left corner
-    const menuButtonSize = 50;
-    const menuX = 20;
+    // Menu buttons in top center
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const buttonSpacing = 20;
+    const totalWidth = (buttonWidth * 2) + buttonSpacing;
+    const menuX = (width - totalWidth) / 2; // Center horizontally
     const menuY = 20;
     
-    // Check if mouse is hovering over menu button
-    const isHoveringMenu = mouseX >= menuX && mouseX <= menuX + menuButtonSize &&
-                          mouseY >= menuY && mouseY <= menuY + menuButtonSize;
+    // Check if mouse is hovering over buttons
+    const backButtonX = menuX;
+    const restartButtonX = menuX + buttonWidth + buttonSpacing;
     
-    // Draw menu button
-    fill(isHoveringMenu ? 60 : 40, 60, 80, 200);
+    const isHoveringBack = mouseX >= backButtonX && mouseX <= backButtonX + buttonWidth &&
+                          mouseY >= menuY && mouseY <= menuY + buttonHeight;
+    
+    const isHoveringRestart = mouseX >= restartButtonX && mouseX <= restartButtonX + buttonWidth &&
+                             mouseY >= menuY && mouseY <= menuY + buttonHeight;
+    
+    // Draw Back to Main Menu button
+    fill(isHoveringBack ? 50 : 30, 100, 150, 200);
     stroke(100, 150, 200);
     strokeWeight(2);
-    rect(menuX, menuY, menuButtonSize, menuButtonSize, 8);
+    rect(backButtonX, menuY, buttonWidth, buttonHeight, 8);
     
-    // Draw menu icon (hamburger menu)
     fill(255, 255, 255);
     noStroke();
     textAlign(CENTER, CENTER);
-    textSize(20);
-    text('☰', menuX + menuButtonSize/2, menuY + menuButtonSize/2);
+    textSize(14);
+    text('← Back to Main Menu', backButtonX + buttonWidth/2, menuY + buttonHeight/2);
     
-    // Draw menu panel if hovering
-    if (isHoveringMenu) {
-        const menuPanelWidth = 200;
-        const menuPanelHeight = 120;
-        const menuPanelX = menuX + menuButtonSize + 10;
-        const menuPanelY = menuY;
-        
-        // Panel background
-        fill(0, 0, 0, 220);
-        stroke(100, 150, 200);
-        strokeWeight(2);
-        rect(menuPanelX, menuPanelY, menuPanelWidth, menuPanelHeight, 10);
-        
-        // Menu title
-        fill(255, 215, 0);
-        textAlign(LEFT, CENTER);
-        textSize(16);
-        text('🎮 Game Menu', menuPanelX + 15, menuPanelY + 25);
-        
-        // Back to Main Menu button
-        const backButtonY = menuPanelY + 45;
-        const backButtonHeight = 30;
-        const isHoveringBack = mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
-                              mouseY >= backButtonY && mouseY <= backButtonY + backButtonHeight;
-        
-        fill(isHoveringBack ? 50 : 30, 100, 150);
-        stroke(100, 150, 200);
-        strokeWeight(1);
-        rect(menuPanelX + 10, backButtonY, menuPanelWidth - 20, backButtonHeight, 5);
-        
-        fill(255, 255, 255);
-        textAlign(CENTER, CENTER);
-        textSize(12);
-        text('← Back to Main Menu', menuPanelX + menuPanelWidth/2, backButtonY + backButtonHeight/2);
-        
-        // Restart Game button
-        const restartButtonY = menuPanelY + 85;
-        const isHoveringRestart = mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
-                                 mouseY >= restartButtonY && mouseY <= restartButtonY + backButtonHeight;
-        
-        fill(isHoveringRestart ? 50 : 30, 100, 150);
-        stroke(100, 150, 200);
-        strokeWeight(1);
-        rect(menuPanelX + 10, restartButtonY, menuPanelWidth - 20, backButtonHeight, 5);
-        
-        fill(255, 255, 255);
-        textAlign(CENTER, CENTER);
-        textSize(12);
-        text('🔄 Restart Game', menuPanelX + menuPanelWidth/2, restartButtonY + backButtonHeight/2);
-    }
+    // Draw Restart Game button
+    fill(isHoveringRestart ? 50 : 30, 100, 150, 200);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(restartButtonX, menuY, buttonWidth, buttonHeight, 8);
+    
+    fill(255, 255, 255);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(14);
+    text('🔄 Restart Game', restartButtonX + buttonWidth/2, menuY + buttonHeight/2);
 }
 
 // Initialize when page loads
