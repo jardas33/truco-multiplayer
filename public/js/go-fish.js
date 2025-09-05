@@ -355,24 +355,16 @@ class GoFishClient {
 
     // Setup UI event listeners
     setupUI() {
-        console.log('Setting up UI event listeners for Go Fish');
-        
         // Room controls
         const createBtn = document.getElementById('createRoomBtn');
         const joinBtn = document.getElementById('joinRoomBtn');
         
         if (createBtn) {
-            console.log('Create Room button found, setting up click handler');
             createBtn.onclick = () => this.createRoom();
-        } else {
-            console.error('Create Room button not found!');
         }
         
         if (joinBtn) {
-            console.log('Join Room button found, setting up click handler');
             joinBtn.onclick = () => this.joinRoom();
-        } else {
-            console.error('Join Room button not found!');
         }
         
         document.getElementById('addBotBtn').onclick = () => this.addBot();
@@ -436,31 +428,21 @@ class GoFishClient {
 
     // Create room
     createRoom() {
-        console.log('Create Room button clicked');
-        console.log('Debug info:');
-        console.log('  - GameFramework available:', typeof GameFramework !== 'undefined');
-        console.log('  - GameFramework.createRoom available:', (typeof GameFramework !== 'undefined' && GameFramework.createRoom));
-        console.log('  - window.gameFramework available:', typeof window.gameFramework !== 'undefined');
-        console.log('  - window.gameFramework.socket available:', (typeof window.gameFramework !== 'undefined' && window.gameFramework.socket));
         
         // Try to create room immediately first
         if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-            console.log('GameFramework available, creating room immediately');
             GameFramework.createRoom('go-fish');
             return;
         }
         
         // If not available, wait and retry
-        console.log('GameFramework not ready, waiting...');
         let attempts = 0;
         const maxAttempts = 10;
         
         const tryCreateRoom = () => {
             attempts++;
-            console.log(`Attempt ${attempts}/${maxAttempts} to create room`);
             
             if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-                console.log('GameFramework now available, creating room');
                 GameFramework.createRoom('go-fish');
                 return;
             }
@@ -1594,29 +1576,4 @@ document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();
     window.goFishClient.initialize();
     
-    // Add test button for debugging
-    const testButton = document.createElement('button');
-    testButton.textContent = 'Test Start Game';
-    testButton.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: #ff6b6b; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;';
-    testButton.onclick = function() {
-        console.log('🧪 Test: Starting Go Fish game manually');
-        window.goFishClient.startGame();
-    };
-    document.body.appendChild(testButton);
-    
-    // Auto-start game after 2 seconds for testing
-    setTimeout(() => {
-        console.log('🧪 Auto-starting Go Fish game for testing');
-        window.goFishClient.startGame();
-    }, 2000);
-    
-    // Add restart button
-    const restartButton = document.createElement('button');
-    restartButton.textContent = 'Restart Game';
-    restartButton.style.cssText = 'position: fixed; top: 10px; right: 150px; z-index: 9999; background: #ff9800; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;';
-    restartButton.onclick = function() {
-        console.log('🔄 Restarting Go Fish game');
-        window.goFishClient.startGame();
-    };
-    document.body.appendChild(restartButton);
 });

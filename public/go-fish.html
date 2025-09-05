@@ -400,10 +400,6 @@
           <button id="createRoomBtn">Create Room</button>
           <button id="joinRoomBtn">Join Room</button>
           
-          <!-- Debug button -->
-          <button id="debugBtn" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin: 5px; cursor: pointer; font-size: 14px;">
-            🐛 Debug Info
-          </button>
           
           <!-- Room Code Display with Copy Button Next to Yellow Box -->
                 <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
@@ -499,67 +495,21 @@
             
             if (createBtn) {
                 createBtn.addEventListener('click', function() {
-                    console.log('Create Room button clicked - adding room-created class');
                     setTimeout(() => {
                         document.body.classList.add('room-created');
-                        console.log('room-created class added to body');
                     }, 100);
                 });
             }
             
             if (joinBtn) {
                 joinBtn.addEventListener('click', function() {
-                    console.log('Join Room button clicked - adding room-created class');
                     setTimeout(() => {
                         document.body.classList.add('room-created');
-                        console.log('room-created class added to body');
                     }, 100);
                 });
             }
             
-            // Debug: Check if buttons are visible
-            console.log('Create Room button element:', createBtn);
-            console.log('Join Room button element:', joinBtn);
-            console.log('Body classes:', document.body.className);
             
-            // Check button visibility
-            if (createBtn) {
-                console.log('Create Room button computed style:', window.getComputedStyle(createBtn).display);
-                console.log('Create Room button visibility:', window.getComputedStyle(createBtn).visibility);
-            }
-            if (joinBtn) {
-                console.log('Join Room button computed style:', window.getComputedStyle(joinBtn).display);
-                console.log('Join Room button visibility:', window.getComputedStyle(joinBtn).visibility);
-            }
-            
-            // Debug button functionality
-            const debugBtn = document.getElementById('debugBtn');
-            if (debugBtn) {
-                debugBtn.onclick = function() {
-                    console.log('🐛 DEBUG INFO:');
-                    console.log('  - Create Room button:', createBtn);
-                    console.log('  - Join Room button:', joinBtn);
-                    console.log('  - Body classes:', document.body.className);
-                    console.log('  - GameFramework available:', typeof GameFramework !== 'undefined');
-                    console.log('  - window.gameFramework available:', typeof window.gameFramework !== 'undefined');
-                    
-                    if (createBtn) {
-                        const createStyle = window.getComputedStyle(createBtn);
-                        console.log('  - Create button display:', createStyle.display);
-                        console.log('  - Create button visibility:', createStyle.visibility);
-                        console.log('  - Create button opacity:', createStyle.opacity);
-                    }
-                    
-                    if (joinBtn) {
-                        const joinStyle = window.getComputedStyle(joinBtn);
-                        console.log('  - Join button display:', joinStyle.display);
-                        console.log('  - Join button visibility:', joinStyle.visibility);
-                        console.log('  - Join button opacity:', joinStyle.opacity);
-                    }
-                    
-                    alert('Debug info logged to console. Check the browser console for details.');
-                };
-            }
         });
     </script>
 </body>
