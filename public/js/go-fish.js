@@ -1263,7 +1263,9 @@ function drawMainPlayerHand() {
         
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(12);
+        textSize(14);
+        textStyle(BOLD);
+        noStroke();
         text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
         
         // Go Fish button
@@ -1278,7 +1280,9 @@ function drawMainPlayerHand() {
         
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(12);
+        textSize(14);
+        textStyle(BOLD);
+        noStroke();
         text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
     }
 }
@@ -1446,7 +1450,7 @@ function drawModernFishPond() {
     // Draw card count
     fill(255, 255, 255);
         textSize(14);
-    text(`${window.game.pond ? window.game.pond.length : 0} cards`, centerX + 20, pondY + 55);
+    text(`${window.game.pond ? window.game.pond.length : 0} cards`, centerX + 20, pondY + 65);
 }
 
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
