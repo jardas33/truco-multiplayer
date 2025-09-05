@@ -1009,7 +1009,7 @@ function drawGameState() {
         if (window.pondImage) {
             image(window.pondImage, 0, 0, width, height);
         } else {
-        background(0, 50, 100);
+            background(0, 50, 100);
         }
         fill(255);
         textAlign(CENTER, CENTER);
@@ -1026,7 +1026,7 @@ function drawGameState() {
         image(window.pondImage, 0, 0, width, height);
     } else {
         // Fallback to solid color if pond image not loaded
-    background(0, 50, 100); // Dark blue ocean
+        background(0, 50, 100); // Dark blue ocean
     }
     
     // Reset cursor
