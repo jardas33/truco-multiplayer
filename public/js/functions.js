@@ -208,6 +208,12 @@ function showInstructions() {
     // Move canvas to Instructions div
     instructionsDiv.appendChild(canvas);
     console.log('📖 Canvas moved to Instructions div');
+    
+    // Start the draw loop to display content
+    if (typeof loop === 'function') {
+      loop();
+      console.log('📖 Draw loop started for Instructions');
+    }
   } else {
     console.error('📖 Missing canvas or Instructions div');
   }
@@ -256,6 +262,12 @@ function showCardValues() {
     // Move canvas to Values div
     valuesDiv.appendChild(canvas);
     console.log('🃏 Canvas moved to Values div');
+    
+    // Start the draw loop to display content
+    if (typeof loop === 'function') {
+      loop();
+      console.log('🃏 Draw loop started for Card Values');
+    }
   } else {
     console.error('🃏 Missing canvas or Values div');
   }

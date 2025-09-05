@@ -280,10 +280,12 @@ function draw() {
         }
         
         // Create and position close button
-        if (!instructionsCloseButton) {
-            instructionsCloseButton = createButton('Close');
-            instructionsCloseButton.class('close-button');
-            instructionsCloseButton.mousePressed(() => {
+        if (cardValuesCloseButton) {
+            cardValuesCloseButton.remove();
+        }
+        cardValuesCloseButton = createButton('Close');
+        cardValuesCloseButton.class('close-button');
+        cardValuesCloseButton.mousePressed(() => {
                 // ✅ Return to previous state (game or menu)
                 if (previousGameState === gameStateEnum.Playing) {
                     // Return to game
@@ -320,13 +322,22 @@ function draw() {
                         menuDiv.appendChild(canvas);
                     }
                 }
-                instructionsCloseButton.hide();
+                cardValuesCloseButton.hide();
                 loop();
             });
         }
         
-        instructionsCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
-        instructionsCloseButton.show();
+        cardValuesCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
+        cardValuesCloseButton.style('background-color', '#dc3545');
+        cardValuesCloseButton.style('color', 'white');
+        cardValuesCloseButton.style('border', '2px solid #fff');
+        cardValuesCloseButton.style('border-radius', '5px');
+        cardValuesCloseButton.style('padding', '10px 20px');
+        cardValuesCloseButton.style('font-size', '16px');
+        cardValuesCloseButton.style('font-weight', 'bold');
+        cardValuesCloseButton.style('cursor', 'pointer');
+        cardValuesCloseButton.style('z-index', '1001');
+        cardValuesCloseButton.show();
     }
     else if (gameState === gameStateEnum.Playing) {
         // Reduced logging to prevent console spam
