@@ -1969,27 +1969,27 @@ function mousePressed() {
     }
     
     // Check if menu buttons were clicked (top center)
-    const buttonWidth = 120;
-    const buttonHeight = 40;
-    const buttonSpacing = 20;
-    const totalWidth = (buttonWidth * 2) + buttonSpacing;
+    const menuButtonWidth = 120;
+    const menuButtonHeight = 40;
+    const menuButtonSpacing = 20;
+    const totalWidth = (menuButtonWidth * 2) + menuButtonSpacing;
     const menuX = (width - totalWidth) / 2; // Center horizontally
     const menuY = 20;
     
     const backButtonX = menuX;
-    const restartButtonX = menuX + buttonWidth + buttonSpacing;
+    const restartButtonX = menuX + menuButtonWidth + menuButtonSpacing;
     
     // Check if Back to Main Menu button was clicked
-    if (mouseX >= backButtonX && mouseX <= backButtonX + buttonWidth &&
-        mouseY >= menuY && mouseY <= menuY + buttonHeight) {
+    if (mouseX >= backButtonX && mouseX <= backButtonX + menuButtonWidth &&
+        mouseY >= menuY && mouseY <= menuY + menuButtonHeight) {
         console.log('🔙 Back to Main Menu clicked');
         window.location.href = '/';
         return;
     }
     
     // Check if Back to Go Fish Menu button was clicked
-    if (mouseX >= restartButtonX && mouseX <= restartButtonX + buttonWidth &&
-        mouseY >= menuY && mouseY <= menuY + buttonHeight) {
+    if (mouseX >= restartButtonX && mouseX <= restartButtonX + menuButtonWidth &&
+        mouseY >= menuY && mouseY <= menuY + menuButtonHeight) {
         console.log('🐟 Back to Go Fish Menu clicked');
         window.location.href = '/go-fish.html';
         return;
@@ -2205,46 +2205,46 @@ function drawGameMenu() {
     if (!window.game || !window.game.players || window.game.players.length === 0) return;
     
     // Menu buttons in top center
-    const buttonWidth = 120;
-    const buttonHeight = 40;
-    const buttonSpacing = 20;
-    const totalWidth = (buttonWidth * 2) + buttonSpacing;
+    const menuButtonWidth = 120;
+    const menuButtonHeight = 40;
+    const menuButtonSpacing = 20;
+    const totalWidth = (menuButtonWidth * 2) + menuButtonSpacing;
     const menuX = (width - totalWidth) / 2; // Center horizontally
     const menuY = 20;
     
     // Check if mouse is hovering over buttons
     const backButtonX = menuX;
-    const restartButtonX = menuX + buttonWidth + buttonSpacing;
+    const restartButtonX = menuX + menuButtonWidth + menuButtonSpacing;
     
-    const isHoveringBack = mouseX >= backButtonX && mouseX <= backButtonX + buttonWidth &&
-                          mouseY >= menuY && mouseY <= menuY + buttonHeight;
+    const isHoveringBack = mouseX >= backButtonX && mouseX <= backButtonX + menuButtonWidth &&
+                          mouseY >= menuY && mouseY <= menuY + menuButtonHeight;
     
-    const isHoveringRestart = mouseX >= restartButtonX && mouseX <= restartButtonX + buttonWidth &&
-                             mouseY >= menuY && mouseY <= menuY + buttonHeight;
+    const isHoveringRestart = mouseX >= restartButtonX && mouseX <= restartButtonX + menuButtonWidth &&
+                             mouseY >= menuY && mouseY <= menuY + menuButtonHeight;
     
     // Draw Back to Main Menu button
     fill(isHoveringBack ? 50 : 30, 100, 150, 200);
     stroke(100, 150, 200);
     strokeWeight(2);
-    rect(backButtonX, menuY, buttonWidth, buttonHeight, 8);
+    rect(backButtonX, menuY, menuButtonWidth, menuButtonHeight, 8);
     
     fill(255, 255, 255);
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(14);
-    text('← Back to Main Menu', backButtonX + buttonWidth/2, menuY + buttonHeight/2);
+    text('← Back to Main Menu', backButtonX + menuButtonWidth/2, menuY + menuButtonHeight/2);
     
     // Draw Back to Go Fish Menu button
     fill(isHoveringRestart ? 50 : 30, 100, 150, 200);
     stroke(100, 150, 200);
     strokeWeight(2);
-    rect(restartButtonX, menuY, buttonWidth, buttonHeight, 8);
+    rect(restartButtonX, menuY, menuButtonWidth, menuButtonHeight, 8);
     
     fill(255, 255, 255);
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(14);
-    text('🐟 Go Fish Menu', restartButtonX + buttonWidth/2, menuY + buttonHeight/2);
+    text('🐟 Go Fish Menu', restartButtonX + menuButtonWidth/2, menuY + menuButtonHeight/2);
 }
 
 // Initialize when page loads
