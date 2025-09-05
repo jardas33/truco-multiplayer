@@ -931,7 +931,7 @@ function drawGoFishTable() {
 function drawPlayers() {
     if (!window.game.players) return;
     
-    const playerY = height * 0.15;
+    const playerY = height * 0.25; // Moved down to avoid overlaps
     const playerWidth = 500; // Increased by 250%
     const playerHeight = 250; // Increased by 250%
     const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
@@ -979,12 +979,12 @@ function drawPlayers() {
         
         // Draw player cards (improved representation)
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 60, player.hand, 69, 97, index === 0);
+            drawPlayerCards(playerX + playerWidth/2, playerY + 100, player.hand, 69, 97, index === 0);
         } else {
             // Show empty hand indicator
             fill(255, 255, 255, 100);
             textSize(10);
-            text('No cards', playerX + playerWidth/2, playerY + 60);
+            text('No cards', playerX + playerWidth/2, playerY + 100);
         }
     });
 }
@@ -1065,7 +1065,7 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
 
 function drawPond() {
     const centerX = width / 2;
-    const pondY = height * 0.65;
+    const pondY = height * 0.55; // Moved up to avoid overlaps
     
     // Draw pond shadow
     fill(0, 0, 0, 100);
@@ -1099,13 +1099,13 @@ function drawPond() {
     
     // Draw cards in pond - moved lower to avoid text overlap
     if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 20, window.game.pond, 58, 81, false);
+        drawCards(centerX, pondY + 40, window.game.pond, 58, 81, false);
         
         // Show pond count - removed animation for stability
         fill(255);
         textSize(18); // Increased for larger pond
         noStroke();
-        text(`${window.game.pond.length} cards`, centerX, pondY + 70);
+        text(`${window.game.pond.length} cards`, centerX, pondY + 90);
     } else {
         fill(255, 255, 255, 150);
         textSize(14);
@@ -1255,7 +1255,7 @@ function drawScores() {
     if (!window.game.players) return;
     
     const scoresX = width - 200;
-    const scoresY = height - 170;
+    const scoresY = height - 200; // Moved up to avoid button overlap
     const scoresWidth = 180;
     const scoresHeight = 150;
     
@@ -1300,14 +1300,14 @@ function drawScores() {
 function drawGameControls() {
     if (!window.game || window.game.gameOver) return;
     
-    const controlsY = height - 80;
+    const controlsY = height - 120; // Moved up to avoid button overlap
     const controlsX = width / 2;
     
     // Draw controls background
     fill(0, 0, 0, 180);
     stroke(255, 215, 0);
     strokeWeight(2);
-    rect(controlsX - 200, controlsY - 30, 400, 60, 10);
+    rect(controlsX - 250, controlsY - 40, 500, 80, 10);
     
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
@@ -1328,7 +1328,7 @@ function drawGameControls() {
 function drawActionButtons() {
     if (!window.game || window.game.gameOver) return;
     
-    const buttonY = height - 40;
+    const buttonY = height - 60; // Moved up to avoid bottom edge
     const buttonX = width / 2;
     const buttonWidth = 120;
     const buttonHeight = 35;
@@ -1513,7 +1513,7 @@ function drawConfetti() {
 function mousePressed() {
     if (!window.game || window.game.gameOver) return;
     
-    const buttonY = height - 40;
+    const buttonY = height - 60; // Moved up to match drawActionButtons
     const buttonX = width / 2;
     const buttonWidth = 120;
     const buttonHeight = 35;
