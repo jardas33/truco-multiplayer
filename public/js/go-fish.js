@@ -20,6 +20,7 @@ class GoFishGame {
             ...player,
             hand: [],
             pairs: 0,
+            overallWins: player.overallWins || 0, // Initialize overall wins
             position: index
         }));
         
@@ -255,6 +256,10 @@ class GoFishGame {
         this.winner = this.players.reduce((max, player) => 
             player.pairs > max.pairs ? player : max
         );
+        
+        // Increment overall wins for the winner
+        this.winner.overallWins = (this.winner.overallWins || 0) + 1;
+        console.log(`🏆 ${this.winner.name} wins! Total wins: ${this.winner.overallWins}`);
         
         this.emitEvent('gameOver', {
             winner: {
@@ -1001,7 +1006,7 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
-    const handY = height - 80; // Moved up to avoid control panel overlap
+    const handY = height - 90; // Moved up slightly more for better positioning
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
@@ -1877,8 +1882,8 @@ function validateLayoutSpacing() {
 
 function drawModernScorePanel() {
     const dims = getResponsiveDimensions();
-    const panelWidth = dims.isSmallScreen ? 160 : 180;
-    const panelHeight = dims.isSmallScreen ? 120 : 140;
+    const panelWidth = dims.isSmallScreen ? 180 : 200;
+    const panelHeight = dims.isSmallScreen ? 160 : 180; // Increased height for overall scores
     const panelX = width - panelWidth - 20; // Bottom right with margin
     const panelY = height - panelHeight - 20; // Bottom right with margin
     
@@ -1914,6 +1919,25 @@ function drawModernScorePanel() {
             textSize(14);
             text(`${player.name}: ${player.pairs || 0} pairs`, panelX + 15, panelY + yOffset);
             yOffset += 25;
+        });
+        
+        // Overall scores section
+        yOffset += 10; // Add some spacing
+        fill(255, 215, 0);
+        textSize(12);
+        textStyle(BOLD);
+        text('Overall Wins:', panelX + 15, panelY + yOffset);
+        yOffset += 20;
+        
+        window.game.players.forEach((player, index) => {
+            const isCurrentPlayer = index === window.game.currentPlayer;
+            const textColor = isCurrentPlayer ? color(255, 215, 0) : color(200, 200, 200);
+            
+            fill(textColor);
+            textSize(12);
+            textStyle(NORMAL);
+            text(`${player.name}: ${player.overallWins || 0}`, panelX + 15, panelY + yOffset);
+            yOffset += 18;
         });
     }
 }
