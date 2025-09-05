@@ -309,21 +309,48 @@ class CardRenderer {
     static drawCard(x, y, width, height, card, isFaceUp = true) {
         if (!card) return;
         
-        if (isFaceUp && card.image) {
-            image(card.image, x, y, width, height);
-        } else {
-            // Draw card back
-            const cardBack = CardUtils.getCardBackImage();
-            if (cardBack) {
-                image(cardBack, x, y, width, height);
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 80);
+        noStroke();
+        rect(x + 3, y + 3, width, height, 8);
+        
+        // Draw card background
+        fill(255);
+        stroke(0);
+        strokeWeight(2);
+        rect(x, y, width, height, 8);
+        
+        if (isFaceUp && card.name) {
+            // Try to draw actual card image with proper name mapping
+            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], x, y, width, height);
             } else {
-                // Fallback rectangle
-                fill(50, 50, 150);
-                stroke(255);
-                strokeWeight(2);
-                rect(x, y, width, height, 5);
+                // Fallback to text if image not available
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(12);
+                textStyle(BOLD);
+                text(card.name, x + width/2, y + height/2);
+            }
+        } else {
+            // Draw card back image
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, x, y, width, height);
+            } else {
+                // Fallback to colored rectangle
+                fill(0, 0, 150);
+                textAlign(CENTER, CENTER);
+                textSize(12);
+                textStyle(BOLD);
+                text('?', x + width/2, y + height/2);
             }
         }
+        
+        pop();
     }
     
     static drawHand(hand, x, y, cardWidth, cardHeight, spacing = 10) {

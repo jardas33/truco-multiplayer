@@ -1001,21 +1001,27 @@ function windowResized() {
     // Draw left player's cards
     if (players.length > 1) {
         for (let i = 0; i < 3; i++) {
-            image(backCardImage, 20, 200 + i * 30, cardWidth, cardHeight);
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, 20, 200 + i * 30, cardWidth, cardHeight);
+            }
         }
     }
     
     // Draw top player's cards
     if (players.length > 2) {
         for (let i = 0; i < 3; i++) {
-            image(backCardImage, width/2 - 90 + i * 30, 20, cardWidth, cardHeight);
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, width/2 - 90 + i * 30, 20, cardWidth, cardHeight);
+            }
         }
     }
     
     // Draw right player's cards
     if (players.length > 3) {
         for (let i = 0; i < 3; i++) {
-            image(backCardImage, width - 80, 200 + i * 30, cardWidth, cardHeight);
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, width - 80, 200 + i * 30, cardWidth, cardHeight);
+            }
         }
     }
   }

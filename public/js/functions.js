@@ -491,17 +491,17 @@ function drawGameState() {
                 
                 if (player.isBot || !isLocalPlayer) {
                     // Bot cards OR other players' cards - show card backs
-                    fill(0, 0, 150);
-                    stroke(255, 255, 255);
+                    fill(255);
+                    stroke(0);
                     strokeWeight(2);
                     rect(cardX, cardY, cardWidth, cardHeight, 5); // Rounded corners
                     
                     // Draw card back image if available
-                    if (backCardImage) {
-                        image(backCardImage, cardX, cardY, cardWidth, cardHeight);
+                    if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                        image(window.cardBackImage, cardX, cardY, cardWidth, cardHeight);
                     } else {
                         // Fallback text
-                        fill(255, 255, 255); // White text on dark cards
+                        fill(0, 0, 150);
                         textSize(12);
                         if (player.isBot) {
                             text('BOT', cardX + cardWidth/2, cardY + cardHeight/2);
@@ -511,20 +511,22 @@ function drawGameState() {
                     }
                 } else {
                     // Local player's own cards - show actual card images
-                    if (currentCard && currentCard.image) {
-                        // Draw the actual card image
-                        image(currentCard.image, cardX, cardY, cardWidth, cardHeight);
-                    } else {
-                        // Fallback to colored rectangle with card name
-                        fill(255, 255, 255); // White background
-                        stroke(0, 0, 0);
-                        strokeWeight(2);
-                        rect(cardX, cardY, cardWidth, cardHeight, 5);
+                    if (currentCard && currentCard.name) {
+                        // Try to draw actual card image with proper name mapping
+                        const imageName = currentCard.name.toLowerCase().replace(/\s+/g, '_');
                         
-                        // Draw card name
-                        fill(0, 0, 0); // Black text on white cards
-                        textSize(10);
-                        if (currentCard && currentCard.name) {
+                        if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                            image(cardImages[imageName], cardX, cardY, cardWidth, cardHeight);
+                        } else {
+                            // Fallback to colored rectangle with card name
+                            fill(255, 255, 255); // White background
+                            stroke(0, 0, 0);
+                            strokeWeight(2);
+                            rect(cardX, cardY, cardWidth, cardHeight, 5);
+                            
+                            // Draw card name
+                            fill(0, 0, 0); // Black text on white cards
+                            textSize(10);
                             // Split long card names
                             const words = currentCard.name.split(' ');
                             if (words.length >= 2) {
