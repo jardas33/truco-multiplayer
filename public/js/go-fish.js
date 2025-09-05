@@ -913,104 +913,175 @@ function drawGameState() {
     // Reset cursor
     cursor(ARROW);
     
-    // Draw game elements
-    drawGoFishTable();
-    drawPlayers();
-    drawPond();
-    // drawGameInfo(); // Removed - redundant info
-    drawScores();
-    drawGameControls();
-    drawActionButtons();
+    // Draw modern game elements
+    drawModernTable();
+    drawOpponentHands();
+    drawMainPlayerHand();
+    drawModernFishPond();
+    drawModernScorePanel();
+    drawModernControlPanel();
     drawGameMessages();
 }
 
-function drawGoFishTable() {
-    // Draw table shadow
-    fill(0, 0, 0, 50);
-    noStroke();
-    rect(55, 55, width - 100, height - 100, 20);
-    
-    // Draw table outline with gradient effect
-    stroke(0, 150, 200);
-    strokeWeight(6);
-    noFill();
-    rect(50, 50, width - 100, height - 100, 20);
-    
-    // Draw table surface with gradient
-    for (let i = 0; i < height - 120; i += 2) {
-        const alpha = map(i, 0, height - 120, 120, 80);
-        fill(0, 80, 120, alpha);
+function drawModernTable() {
+    // Modern gradient background
+    for (let y = 0; y < height; y++) {
+        const inter = map(y, 0, height, 0, 1);
+        const c1 = color(15, 25, 45);  // Dark blue
+        const c2 = color(25, 35, 55);  // Lighter blue
+        const c = lerpColor(c1, c2, inter);
+        fill(c);
         noStroke();
-        rect(60, 60 + i, width - 120, 2, 15);
+        rect(0, y, width, 1);
     }
     
-    // Add table texture
-    for (let i = 0; i < 100; i++) {
-        fill(0, 120, 160, 30);
+    // Add subtle pattern overlay
+    for (let i = 0; i < 200; i++) {
+        const x = random(width);
+        const y = random(height);
+        const size = random(0.5, 2);
+        fill(255, 255, 255, 8);
         noStroke();
-        ellipse(random(60, width - 60), random(60, height - 60), random(5, 15), random(5, 15));
+        ellipse(x, y, size, size);
     }
 }
 
-function drawPlayers() {
-    if (!window.game.players) return;
+function drawOpponentHands() {
+    if (!window.game.players || window.game.players.length < 3) return;
     
-    const playerY = height * 0.15; // Moved back up to original position
-    const playerWidth = 500; // Increased by 250%
-    const playerHeight = 250; // Increased by 250%
-    const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
+    const cardWidth = 40;
+    const cardHeight = 56;
+    const spacing = 8;
     
-    window.game.players.forEach((player, index) => {
-        const playerX = spacing + index * (playerWidth + spacing);
+    // Bot 1 (top left)
+    const bot1X = 50;
+    const bot1Y = 50;
+    drawOpponentHand(bot1X, bot1Y, window.game.players[1], cardWidth, cardHeight, spacing);
+    
+    // Bot 2 (top right)
+    const bot2X = width - 200;
+    const bot2Y = 50;
+    drawOpponentHand(bot2X, bot2Y, window.game.players[2], cardWidth, cardHeight, spacing);
+}
+
+function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
+    // Draw player info panel
+    fill(0, 0, 0, 200);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(x, y, 150, 80, 8);
+    
+    // Player name
+    fill(255, 255, 255);
+    textAlign(LEFT, CENTER);
+    textSize(14);
+    noStroke();
+    text(player.name, x + 10, y + 20);
+    
+    // Card count
+    fill(200, 200, 200);
+    textSize(12);
+    text(`Cards: ${player.hand.length}`, x + 10, y + 40);
+    
+    // Pairs count
+    fill(255, 215, 0);
+    textSize(12);
+    text(`Pairs: ${player.pairs || 0}`, x + 10, y + 60);
+    
+    // Draw card backs
+    const maxCards = Math.min(player.hand.length, 5);
+    for (let i = 0; i < maxCards; i++) {
+        const cardX = x + i * (cardWidth + spacing);
+        const cardY = y + 90;
         
-        // Draw player area shadow
-        fill(0, 0, 0, 80);
+        // Card shadow
+        fill(0, 0, 0, 100);
         noStroke();
-        rect(playerX + 3, playerY - 37, playerWidth, playerHeight, 12);
+        rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 4);
         
-        // Draw player area background
-        fill(0, 0, 0, 180);
-        stroke(255, 255, 255, 200);
-        strokeWeight(2);
-        rect(playerX, playerY - 40, playerWidth, playerHeight, 10);
+        // Card back
+        fill(50, 50, 100);
+        stroke(100, 100, 150);
+        strokeWeight(1);
+        rect(cardX, cardY, cardWidth, cardHeight, 4);
         
-        // Highlight current player with golden glow
-        if (index === window.game.currentPlayer) {
-            stroke(255, 215, 0);
-            strokeWeight(4);
-            noFill();
-            rect(playerX - 5, playerY - 45, playerWidth + 10, playerHeight + 10, 15);
-            
-            // Add glow effect
-            fill(255, 215, 0, 30);
-            noStroke();
-            rect(playerX - 8, playerY - 48, playerWidth + 16, playerHeight + 16, 18);
-        }
-        
-        // Draw player name with better styling
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(18); // Increased for larger boxes
+        // Card back pattern
+        fill(100, 100, 150);
         noStroke();
-        text(player.name, playerX + playerWidth/2, playerY - 25);
+        rect(cardX + 5, cardY + 5, cardWidth - 10, cardHeight - 10, 2);
+    }
+}
+
+function drawMainPlayerHand() {
+    if (!window.game.players || !window.game.players[0]) return;
+    
+    const player = window.game.players[0];
+    const handY = height - 120;
+    const cardWidth = 60;
+    const cardHeight = 84;
+    const spacing = 15;
+    
+    // Draw hand background
+    fill(0, 0, 0, 150);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(50, handY - 20, width - 100, 100, 10);
+    
+    // Draw player info
+    fill(255, 255, 255);
+    textAlign(LEFT, CENTER);
+    textSize(16);
+    noStroke();
+    text(`Your Hand (${player.hand.length} cards)`, 70, handY - 5);
+    
+    // Draw cards with hover effects
+    const totalWidth = (player.hand.length - 1) * (cardWidth + spacing);
+    const startX = (width - totalWidth) / 2;
+    
+    player.hand.forEach((card, index) => {
+        const cardX = startX + index * (cardWidth + spacing);
+        const cardY = handY + 10;
         
-        // Draw cards count
-        textSize(16); // Increased for larger boxes
-        text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY - 5);
+        // Check for hover
+        const isHovered = mouseX >= cardX && mouseX <= cardX + cardWidth && 
+                         mouseY >= cardY && mouseY <= cardY + cardHeight;
         
-        // Draw pairs count
-        text(`Pairs: ${player.pairs || 0}`, playerX + playerWidth/2, playerY + 15);
-        
-        // Draw player cards (improved representation)
-        if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 100, player.hand, 69, 97, index === 0);
+        // Hover effect
+        if (isHovered) {
+            cursor(HAND);
+            // Lift card slightly
+            const hoverY = cardY - 10;
+            drawCard(cardX, hoverY, card, cardWidth, cardHeight, true);
         } else {
-            // Show empty hand indicator
-            fill(255, 255, 255, 100);
-            textSize(10);
-            text('No cards', playerX + playerWidth/2, playerY + 100);
+            drawCard(cardX, cardY, card, cardWidth, cardHeight, true);
         }
     });
+}
+
+function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
+    // Card shadow
+    fill(0, 0, 0, 100);
+    noStroke();
+    rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+    
+    // Card background
+    fill(255, 255, 255);
+    stroke(0, 0, 0);
+    strokeWeight(1);
+    rect(x, y, cardWidth, cardHeight, 6);
+    
+    if (isLocalPlayer && card) {
+        // Draw card content
+        fill(0, 0, 0);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        noStroke();
+        text(card.rank, x + cardWidth/2, y + cardHeight/2 - 5);
+        
+        // Draw suit
+        textSize(10);
+        text(card.suit, x + cardWidth/2, y + cardHeight/2 + 8);
+    }
 }
 
 function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocalPlayer = false) {
@@ -1087,55 +1158,54 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
     }
 }
 
-function drawPond() {
+function drawModernFishPond() {
     const centerX = width / 2;
-    const pondY = height * 0.55; // Moved up to avoid overlaps
+    const pondY = height / 2;
     
-    // Draw pond shadow
-    fill(0, 0, 0, 100);
-    noStroke();
-    rect(centerX - 252, pondY - 85, 505, 170, 12);
-    
-    // Draw pond area with gradient
-    fill(0, 0, 0, 180);
-    stroke(255, 255, 255, 200);
+    // Draw pond container
+    fill(0, 0, 0, 200);
+    stroke(100, 150, 200);
     strokeWeight(3);
-    rect(centerX - 250, pondY - 82, 500, 165, 10);
+    rect(centerX - 120, pondY - 60, 240, 120, 15);
     
-    // Add animated pond texture
-    const time = millis() * 0.001;
-    for (let i = 0; i < 20; i++) {
-        const x = centerX - 225 + (i * 22) + sin(time + i) * 12;
-        const y = pondY - 57 + cos(time + i * 0.5) * 28;
-        const size = 10 + sin(time + i) * 5;
-        
-        fill(0, 100, 150, 40);
-        noStroke();
-        ellipse(x, y, size, size * 0.6);
-    }
-    
-    // Draw pond label with better styling - moved higher
-    fill(255, 215, 0);
+    // Draw fish icon
+    fill(100, 200, 255);
     textAlign(CENTER, CENTER);
-    textSize(24); // Increased for larger pond
+    textSize(32);
     noStroke();
-    text('🐟 Fish Pond', centerX, pondY - 40);
+    text('🐟', centerX, pondY - 20);
     
-    // Draw cards in pond - moved lower to avoid text overlap
-    if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 40, window.game.pond, 58, 81, false);
+    // Draw pond label
+    fill(255, 255, 255);
+    textSize(16);
+    text('Fish Pond', centerX, pondY + 5);
+    
+    // Draw stacked cards icon
+    const cardWidth = 30;
+    const cardHeight = 42;
+    const stackX = centerX - 40;
+    const stackY = pondY + 20;
+    
+    // Draw card stack
+    for (let i = 0; i < 3; i++) {
+        const offsetX = i * 2;
+        const offsetY = i * 2;
         
-        // Show pond count - removed animation for stability
-        fill(255);
-        textSize(18); // Increased for larger pond
+        fill(255, 255, 255);
+        stroke(0, 0, 0);
+        strokeWeight(1);
+        rect(stackX + offsetX, stackY + offsetY, cardWidth, cardHeight, 3);
+        
+        // Card back pattern
+        fill(50, 50, 100);
         noStroke();
-        text(`${window.game.pond.length} cards`, centerX, pondY + 90);
-    } else {
-        fill(255, 255, 255, 150);
-        textSize(14);
-        textStyle(NORMAL);
-        text('Pond is empty', centerX, pondY + 20);
+        rect(stackX + offsetX + 3, stackY + offsetY + 3, cardWidth - 6, cardHeight - 6, 2);
     }
+    
+    // Draw card count
+    fill(255, 255, 255);
+    textSize(14);
+    text(`${window.game.pond ? window.game.pond.length : 0} cards`, centerX + 20, pondY + 35);
 }
 
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
@@ -1586,57 +1656,26 @@ function drawConfetti() {
 function mousePressed() {
     if (!window.game || window.game.gameOver) return;
     
-    const buttonY = height - 50; // Adjusted for bigger control box
-    const buttonX = 200; // Moved to left side to match control box
-    const buttonWidth = 100;
-    const buttonHeight = 30;
-    
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
-        const controlsY = height - 140;
-        const controlsX = 280; // Updated to match new position
-        
-        // Check if target player dropdown was clicked
-        if (mouseX >= controlsX - 100 && mouseX <= controlsX + 20 && 
-            mouseY >= controlsY - 5 && mouseY <= controlsY + 20) {
-            console.log('🎯 Target player dropdown clicked');
-            const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
-            if (availableTargets.length > 0) {
-                window.goFishClient.currentTargetIndex = (window.goFishClient.currentTargetIndex + 1) % availableTargets.length;
-                console.log('Selected target:', availableTargets[window.goFishClient.currentTargetIndex].name);
-            }
-        }
-        
-        // Check if rank dropdown was clicked
-        if (mouseX >= controlsX - 100 && mouseX <= controlsX - 20 && 
-            mouseY >= controlsY + 25 && mouseY <= controlsY + 50) {
-            console.log('🎯 Rank dropdown clicked');
-            const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
-            if (availableRanks.length > 0) {
-                window.goFishClient.currentRankIndex = (window.goFishClient.currentRankIndex + 1) % availableRanks.length;
-                console.log('Selected rank:', availableRanks[window.goFishClient.currentRankIndex]);
-            }
-        }
+        const panelX = 50;
+        const panelY = height - 150;
+        const buttonY = panelY + 50;
+        const buttonWidth = 80;
+        const buttonHeight = 30;
         
         // Check if Ask button was clicked
-        const askButtonX = buttonX - 120;
-        if (mouseX >= askButtonX - buttonWidth/2 && mouseX <= askButtonX + buttonWidth/2 &&
-            mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
+        const askX = panelX + 15;
+        if (mouseX >= askX && mouseX <= askX + buttonWidth &&
+            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🎯 Ask button clicked');
-            // Use selected values instead of dialog
-            const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
-            const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
-            if (availableTargets.length > 0 && availableRanks.length > 0) {
-                const targetIndex = availableTargets[window.goFishClient.currentTargetIndex].index;
-                const rank = availableRanks[window.goFishClient.currentRankIndex];
-                window.goFishClient.askForCards(targetIndex, rank);
-            }
+            showAskForCardsDialog();
         }
         
         // Check if Go Fish button was clicked
-        const goFishButtonX = buttonX + 120;
-        if (mouseX >= goFishButtonX - buttonWidth/2 && mouseX <= goFishButtonX + buttonWidth/2 &&
-            mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
+        const goFishX = panelX + 110;
+        if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🐟 Go Fish button clicked');
             if (window.goFishClient) {
                 window.goFishClient.goFish();
@@ -1720,3 +1759,101 @@ document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();
     window.goFishClient.initialize();
 });
+
+// Modern UI Functions
+function drawModernScorePanel() {
+    const panelX = width - 200;
+    const panelY = 50;
+    
+    // Draw score panel background
+    fill(0, 0, 0, 200);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(panelX, panelY, 180, 200, 10);
+    
+    // Panel title
+    fill(255, 215, 0);
+    textAlign(LEFT, CENTER);
+    textSize(18);
+    noStroke();
+    text('🏆 Scores', panelX + 15, panelY + 25);
+    
+    // Current turn indicator
+    if (window.game && window.game.currentPlayer !== undefined) {
+        const currentPlayer = window.game.players[window.game.currentPlayer];
+        fill(100, 200, 255);
+        textSize(14);
+        text(`Current Turn: ${currentPlayer.name}`, panelX + 15, panelY + 50);
+    }
+    
+    // Player scores
+    if (window.game && window.game.players) {
+        let yOffset = 80;
+        window.game.players.forEach((player, index) => {
+            const isCurrentPlayer = index === window.game.currentPlayer;
+            const textColor = isCurrentPlayer ? color(255, 215, 0) : color(255, 255, 255);
+            
+            fill(textColor);
+            textSize(14);
+            text(`${player.name}: ${player.pairs || 0} pairs`, panelX + 15, panelY + yOffset);
+            yOffset += 25;
+        });
+    }
+}
+
+function drawModernControlPanel() {
+    if (!window.game || window.game.gameOver) return;
+    
+    const panelX = 50;
+    const panelY = height - 150;
+    
+    // Draw control panel background
+    fill(0, 0, 0, 200);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(panelX, panelY, 300, 100, 10);
+    
+    // Current player info
+    if (window.game.currentPlayer === 0) {
+        fill(255, 255, 255);
+        textAlign(LEFT, CENTER);
+        textSize(16);
+        noStroke();
+        text('Your Turn', panelX + 15, panelY + 20);
+        
+        // Action buttons
+        const buttonY = panelY + 50;
+        const buttonWidth = 80;
+        const buttonHeight = 30;
+        
+        // Ask button
+        const askX = panelX + 15;
+        const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
+                             mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        
+        fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
+        stroke(255);
+        strokeWeight(1);
+        rect(askX, buttonY, buttonWidth, buttonHeight, 5);
+        
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
+        
+        // Go Fish button
+        const goFishX = panelX + 110;
+        const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+                                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        
+        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
+        stroke(255);
+        strokeWeight(1);
+        rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
+        
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
+    }
+}
