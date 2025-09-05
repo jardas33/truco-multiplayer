@@ -921,6 +921,11 @@ function drawGameState() {
     drawModernScorePanel();
     drawModernControlPanel();
     drawGameMessages();
+    
+    // Validate layout spacing (only in development)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        validateLayoutSpacing();
+    }
 }
 
 function drawModernTable() {
@@ -953,14 +958,14 @@ function drawOpponentHands() {
     const cardHeight = 56;
     const spacing = 8;
     
-    // Bot 1 (top left)
+    // Bot 1 (top left) - moved down to avoid score panel
     const bot1X = 50;
-    const bot1Y = 50;
+    const bot1Y = 80;
     drawOpponentHand(bot1X, bot1Y, window.game.players[1], cardWidth, cardHeight, spacing);
     
-    // Bot 2 (top right)
-    const bot2X = width - 200;
-    const bot2Y = 50;
+    // Bot 2 (top right) - moved down and left to avoid score panel
+    const bot2X = width - 250;
+    const bot2Y = 80;
     drawOpponentHand(bot2X, bot2Y, window.game.players[2], cardWidth, cardHeight, spacing);
 }
 
@@ -1016,7 +1021,7 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
-    const handY = height - 120;
+    const handY = height - 80; // Moved up to avoid control panel overlap
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
@@ -1160,7 +1165,7 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
 
 function drawModernFishPond() {
     const centerX = width / 2;
-    const pondY = height / 2;
+    const pondY = height * 0.45; // Moved up slightly to avoid opponent cards
     
     // Draw pond container
     fill(0, 0, 0, 200);
@@ -1659,7 +1664,7 @@ function mousePressed() {
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
         const panelX = 50;
-        const panelY = height - 150;
+        const panelY = height - 200; // Updated to match new control panel position
         const buttonY = panelY + 50;
         const buttonWidth = 80;
         const buttonHeight = 30;
@@ -1761,15 +1766,60 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Modern UI Functions
+function getResponsiveDimensions() {
+    const minWidth = 800;
+    const minHeight = 600;
+    
+    // Ensure minimum dimensions
+    const canvasWidth = Math.max(width, minWidth);
+    const canvasHeight = Math.max(height, minHeight);
+    
+    return {
+        width: canvasWidth,
+        height: canvasHeight,
+        isSmallScreen: width < 1000 || height < 700,
+        scale: Math.min(width / 1000, height / 700, 1)
+    };
+}
+
+function validateLayoutSpacing() {
+    // Define safe zones for each component
+    const zones = {
+        opponent1: { x: 50, y: 80, width: 150, height: 170 }, // 80 + 80 + 10 margin
+        opponent2: { x: width - 250, y: 80, width: 150, height: 170 },
+        scorePanel: { x: width - 200, y: 50, width: 180, height: 200 },
+        fishPond: { x: width/2 - 120, y: height * 0.45 - 60, width: 240, height: 120 },
+        mainHand: { x: 50, y: height - 80 - 20, width: width - 100, height: 100 },
+        controlPanel: { x: 50, y: height - 200, width: 300, height: 100 }
+    };
+    
+    // Check for overlaps
+    const components = Object.keys(zones);
+    for (let i = 0; i < components.length; i++) {
+        for (let j = i + 1; j < components.length; j++) {
+            const a = zones[components[i]];
+            const b = zones[components[j]];
+            
+            if (a.x < b.x + b.width && a.x + a.width > b.x &&
+                a.y < b.y + b.height && a.y + a.height > b.y) {
+                console.warn(`Layout overlap detected: ${components[i]} and ${components[j]}`);
+            }
+        }
+    }
+}
+
 function drawModernScorePanel() {
+    const dims = getResponsiveDimensions();
     const panelX = width - 200;
     const panelY = 50;
+    const panelWidth = dims.isSmallScreen ? 160 : 180;
+    const panelHeight = dims.isSmallScreen ? 180 : 200;
     
     // Draw score panel background
     fill(0, 0, 0, 200);
     stroke(100, 150, 200);
     strokeWeight(2);
-    rect(panelX, panelY, 180, 200, 10);
+    rect(panelX, panelY, panelWidth, panelHeight, 10);
     
     // Panel title
     fill(255, 215, 0);
@@ -1805,7 +1855,7 @@ function drawModernControlPanel() {
     if (!window.game || window.game.gameOver) return;
     
     const panelX = 50;
-    const panelY = height - 150;
+    const panelY = height - 200; // Moved up to avoid main player hand overlap
     
     // Draw control panel background
     fill(0, 0, 0, 200);
