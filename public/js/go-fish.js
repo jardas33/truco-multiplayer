@@ -971,7 +971,7 @@ function drawPlayers() {
         
         // Draw player cards (improved representation)
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 120, 168, index === 0);
+            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 69, 97, index === 0);
         } else {
             // Show empty hand indicator
             fill(255, 255, 255, 100);
@@ -1091,7 +1091,7 @@ function drawPond() {
     
     // Draw cards in pond - moved lower to avoid text overlap
     if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 20, window.game.pond, 100, 140, false);
+        drawCards(centerX, pondY + 20, window.game.pond, 58, 81, false);
         
         // Show pond count - removed animation for stability
         fill(255);
