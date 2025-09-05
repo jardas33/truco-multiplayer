@@ -588,35 +588,44 @@ function drawGameState() {
             const centerX = width / 2 - (window.playedCards.length * cardWidth) / 2 + index * cardWidth;
             const centerY = height / 2 - cardHeight / 2;
             
-            // Draw played card as proper card image if available, otherwise fallback
-            if (playedCard.card.image) {
-                image(playedCard.card.image, centerX, centerY, cardWidth, cardHeight);
-            } else if (playedCard.card.name && window.getCardImageWithFallback) {
-                // Try to get card image using the helper function
-                const cardImage = window.getCardImageWithFallback(playedCard.card.name);
-                if (cardImage) {
-                    image(cardImage, centerX, centerY, cardWidth, cardHeight);
+            // Draw played card as proper card image using the global cardImages system
+            if (playedCard.card.name) {
+                // Try to draw actual card image with proper name mapping
+                const imageName = playedCard.card.name.toLowerCase().replace(/\s+/g, '_');
+                
+                if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                    // Draw card shadow
+                    fill(0, 0, 0, 80);
+                    noStroke();
+                    rect(centerX + 3, centerY + 3, cardWidth, cardHeight, 8);
+                    
+                    // Draw card background
+                    fill(255);
+                    stroke(0);
+                    strokeWeight(2);
+                    rect(centerX, centerY, cardWidth, cardHeight, 8);
+                    
+                    // Draw the actual card image
+                    image(cardImages[imageName], centerX, centerY, cardWidth, cardHeight);
                 } else {
-                    // Fallback to colored rectangle
-                    fill(200, 200, 200); // Light gray
+                    // Fallback to colored rectangle with better styling
+                    fill(255, 255, 255); // White background
                     stroke(0, 0, 0);
                     strokeWeight(2);
-                    rect(centerX, centerY, cardWidth, cardHeight, 5);
+                    rect(centerX, centerY, cardWidth, cardHeight, 8);
                     
                     // Draw card name
                     fill(0, 0, 0);
-                    textSize(14);
+                    textSize(12);
                     textAlign(CENTER, CENTER);
-                    if (playedCard.card.name) {
-                        text(playedCard.card.name, centerX + cardWidth/2, centerY + cardHeight/2);
-                    }
+                    text(playedCard.card.name, centerX + cardWidth/2, centerY + cardHeight/2);
                 }
             } else {
                 // Fallback to colored rectangle
                 fill(200, 200, 200); // Light gray
                 stroke(0, 0, 0);
                 strokeWeight(2);
-                rect(centerX, centerY, cardWidth, cardHeight, 5);
+                rect(centerX, centerY, cardWidth, cardHeight, 8);
                 
                 // Draw card name
                 fill(0, 0, 0);

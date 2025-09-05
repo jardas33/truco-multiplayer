@@ -68,7 +68,14 @@ function setup() {
     // Create p5.js buttons with proper z-index and identical styling
     instructionsButton = createButton("Instructions");
     instructionsButton.position(20, 20);
-    instructionsButton.mousePressed(showInstructions);
+    instructionsButton.mousePressed(() => {
+        console.log('📖 Instructions button clicked');
+        if (typeof showInstructions === 'function') {
+            showInstructions();
+        } else {
+            console.error('showInstructions function not found');
+        }
+    });
     instructionsButton.parent('Menu');
     instructionsButton.style('z-index', '100'); // Higher z-index
     instructionsButton.style('position', 'absolute'); // Force absolute positioning
@@ -87,7 +94,14 @@ function setup() {
     if (currentGame === '/truco' || currentGame === '/') {
         cardValuesButton = createButton("Card Values");
         cardValuesButton.position(20, 70); // Position right under Instructions button with proper spacing
-        cardValuesButton.mousePressed(showCardValues);
+        cardValuesButton.mousePressed(() => {
+            console.log('🃏 Card Values button clicked');
+            if (typeof showCardValues === 'function') {
+                showCardValues();
+            } else {
+                console.error('showCardValues function not found');
+            }
+        });
         cardValuesButton.parent('Menu');
         cardValuesButton.style('z-index', '100'); // Higher z-index
         cardValuesButton.style('position', 'absolute'); // Force absolute positioning
