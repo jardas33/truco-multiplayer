@@ -868,10 +868,8 @@ class GoFishClient {
 
 // 🎨 GO FISH RENDERING FUNCTIONS
 function drawGameState() {
-    // Load card images if not already loaded
-    if (Object.keys(cardImages).length === 0) {
-        loadCardImages();
-    }
+    // Card images are loaded globally by preload.js
+    // No need to check or load them here
     
     if (!window.game || !window.game.players) {
         console.log('🎨 Go Fish: No game or players available for rendering');
@@ -1070,8 +1068,8 @@ function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
     if (isLocalPlayer && card) {
         // Draw card image if available
         const imageKey = getCardImageKey(card);
-        if (cardImages[imageKey]) {
-            image(cardImages[imageKey], x + 2, y + 2, cardWidth - 4, cardHeight - 4);
+        if (window.cardImages && window.cardImages[imageKey]) {
+            image(window.cardImages[imageKey], x + 2, y + 2, cardWidth - 4, cardHeight - 4);
         } else {
             // Fallback to text if image not loaded
             fill(0, 0, 0);
@@ -1085,8 +1083,8 @@ function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
         }
     } else {
         // Draw card back for opponent cards
-        if (cardBackImage) {
-            image(cardBackImage, x + 2, y + 2, cardWidth - 4, cardHeight - 4);
+        if (window.cardBackImage) {
+            image(window.cardBackImage, x + 2, y + 2, cardWidth - 4, cardHeight - 4);
         } else {
             // Fallback card back pattern
             fill(50, 50, 100);
@@ -1128,8 +1126,8 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
         if (isLocalPlayer) {
             // Show actual card for local player
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
-            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
-                image(cardImages[imageName], x, floatY, cardWidth, cardHeight);
+            if (typeof window.cardImages !== 'undefined' && window.cardImages[imageName] && window.cardImages[imageName].width > 0) {
+                image(window.cardImages[imageName], x, floatY, cardWidth, cardHeight);
             } else {
                 // Fallback to text
                 fill(0);
@@ -1248,8 +1246,8 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
         if (showCards && cards[i].name) {
             // Try to draw actual card image with proper name mapping
             const imageName = cards[i].name.toLowerCase().replace(/\s+/g, '_');
-            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
-                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+            if (typeof window.cardImages !== 'undefined' && window.cardImages[imageName] && window.cardImages[imageName].width > 0) {
+                image(window.cardImages[imageName], x, y, cardWidth, cardHeight);
             } else {
                 // Fallback to text if image not available
                 fill(0);
@@ -1776,24 +1774,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Modern UI Functions
-let cardImages = {};
-let cardBackImage = null;
+// cardImages and cardBackImage are loaded globally by preload.js
 
 function loadCardImages() {
-    // Load card back image
-    cardBackImage = loadImage('Images/cardBack.jpg');
-    
-    // Load all card images
-    const suits = ['clubs', 'diamonds', 'hearts', 'spades'];
-    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
-    
-    suits.forEach(suit => {
-        ranks.forEach(rank => {
-            const filename = `${rank}_of_${suit}.png`;
-            const key = `${rank}_${suit}`;
-            cardImages[key] = loadImage(`Images/${filename}`);
-        });
-    });
+    // Card images are already loaded globally by preload.js
+    // This function is kept for compatibility but doesn't need to do anything
+    console.log('Card images are already loaded globally by preload.js');
 }
 
 function getCardImageKey(card) {
