@@ -1184,8 +1184,8 @@ function drawPlayers() {
     const centerX = width/2;
     const centerY = height/2;
     // Use elliptical positioning to match the table shape
-    const radiusX = width * 0.35;  // Horizontal radius
-    const radiusY = height * 0.25; // Vertical radius (smaller for oval shape)
+    const radiusX = width * 0.4;  // Horizontal radius - increased for better spacing
+    const radiusY = height * 0.3; // Vertical radius - increased for better spacing
     
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
@@ -1432,8 +1432,19 @@ function drawGameInfo() {
     
     pop();
     
-    // Draw hand rankings on the right
-    drawHandRankings();
+    // Draw hand rankings button
+    push();
+    fill(0, 150, 0);
+    stroke(255, 255, 0);
+    strokeWeight(2);
+    rect(width - 200, 20, 180, 40, 8);
+    
+    fill(255, 255, 0);
+    textAlign(CENTER, CENTER);
+    textSize(14);
+    textStyle(BOLD);
+    text('Hand Rankings', width - 110, 40);
+    pop();
 }
 
 function drawChips() {
@@ -1441,20 +1452,20 @@ function drawChips() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radiusX = width * 0.35;
-    const radiusY = height * 0.25;
+    const radiusX = width * 0.4; // Increased radius for better spacing
+    const radiusY = height * 0.3; // Increased radius for better spacing
     
-    // Draw chips for each player - positioned further from cards
+    // Draw chips for each player - positioned much further from cards
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const x = centerX + cos(angle) * radiusX;
         const y = centerY + sin(angle) * radiusY;
         
-        // Position chips further from player cards (below and to the side)
-        const chipOffsetX = cos(angle) * 80; // Move chips further out
-        const chipOffsetY = sin(angle) * 80; // Move chips further out
+        // Position chips much further from player cards
+        const chipOffsetX = cos(angle) * 120; // Move chips much further out
+        const chipOffsetY = sin(angle) * 120; // Move chips much further out
         const chipX = x + chipOffsetX;
-        const chipY = y + chipOffsetY + 40; // Move chips down from player area
+        const chipY = y + chipOffsetY + 60; // Move chips further down from player area
         
         // Draw chip stack based on player's chips
         drawChipStack(chipX, chipY, player.chips, player.currentBet);
@@ -1482,58 +1493,58 @@ function drawChipStack(x, y, totalChips, currentBet) {
     chipValues.forEach((value, index) => {
         const chipCount = Math.floor(remainingChips / value);
         if (chipCount > 0) {
-            const maxChipsToShow = Math.min(chipCount, 8); // Limit visual chips to 8 per value
+            const maxChipsToShow = Math.min(chipCount, 6); // Limit visual chips to 6 per value
             
             for (let i = 0; i < maxChipsToShow; i++) {
-                const chipX = x + (i % 4) * 8 - 12; // Spread chips wider
-                const chipY = y - stackHeight - i * 3; // More vertical spacing
+                const chipX = x + (i % 3) * 15 - 15; // Spread chips wider
+                const chipY = y - stackHeight - i * 4; // More vertical spacing
                 
                 // Draw chip shadow
-                fill(0, 0, 0, 100);
+                fill(0, 0, 0, 150);
                 noStroke();
-                ellipse(chipX + 2, chipY + 2, 20, 12);
+                ellipse(chipX + 3, chipY + 3, 30, 18);
                 
                 // Draw chip
                 fill(chipColors[index][0], chipColors[index][1], chipColors[index][2]);
                 stroke(0);
-                strokeWeight(2);
-                ellipse(chipX, chipY, 20, 12);
+                strokeWeight(3);
+                ellipse(chipX, chipY, 30, 18);
                 
                 // Draw chip value
                 fill(255);
                 textAlign(CENTER, CENTER);
-                textSize(8);
+                textSize(10);
                 textStyle(BOLD);
                 text(value, chipX, chipY);
             }
             
             remainingChips -= chipCount * value;
-            stackHeight += maxChipsToShow * 3 + 5;
+            stackHeight += maxChipsToShow * 4 + 8;
         }
     });
     
     // Draw current bet chips separately
     if (currentBet > 0) {
-        const betChips = Math.min(currentBet, 4); // Show up to 4 bet chips
+        const betChips = Math.min(currentBet, 3); // Show up to 3 bet chips
         for (let i = 0; i < betChips; i++) {
-            const chipX = x + i * 10 - 15;
-            const chipY = y + 25;
+            const chipX = x + i * 18 - 18;
+            const chipY = y + 35;
             
             // Draw bet chip shadow
-            fill(0, 0, 0, 100);
+            fill(0, 0, 0, 150);
             noStroke();
-            ellipse(chipX + 2, chipY + 2, 18, 10);
+            ellipse(chipX + 3, chipY + 3, 28, 16);
             
             // Draw bet chip (different color)
             fill(255, 0, 255); // Magenta for bet chips
             stroke(255);
-            strokeWeight(2);
-            ellipse(chipX, chipY, 18, 10);
+            strokeWeight(3);
+            ellipse(chipX, chipY, 28, 16);
             
             // Draw bet indicator
             fill(255);
             textAlign(CENTER, CENTER);
-            textSize(7);
+            textSize(9);
             textStyle(BOLD);
             text('B', chipX, chipY);
         }
@@ -1542,65 +1553,115 @@ function drawChipStack(x, y, totalChips, currentBet) {
     pop();
 }
 
-function drawHandRankings() {
-    const rankings = [
-        'Royal Flush', 'Straight Flush', 'Four of a Kind', 'Full House',
-        'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card'
-    ];
+// Hand rankings popup functions
+function showHandRankingsPopup() {
+    // Create popup background
+    const popup = document.createElement('div');
+    popup.id = 'handRankingsPopup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `;
     
-    const startX = width - 220;
-    const startY = 20;
+    // Create popup content
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        text-align: center;
+        border: 3px solid #4CAF50;
+    `;
     
-    push();
+    content.innerHTML = `
+        <h2 style="margin-top: 0; color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🃏 Poker Hand Rankings</h2>
+        <div style="text-align: left; line-height: 1.6;">
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">1. Royal Flush</strong><br>
+                A, K, Q, J, 10 all of the same suit. The highest possible hand.
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">2. Straight Flush</strong><br>
+                Five cards in sequence, all of the same suit (e.g., 5, 6, 7, 8, 9 of hearts).
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">3. Four of a Kind</strong><br>
+                Four cards of the same rank (e.g., four 7s).
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">4. Full House</strong><br>
+                Three of a kind plus a pair (e.g., three 8s and two 4s).
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">5. Flush</strong><br>
+                Five cards of the same suit, not in sequence.
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">6. Straight</strong><br>
+                Five cards in sequence, not all of the same suit.
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">7. Three of a Kind</strong><br>
+                Three cards of the same rank (e.g., three 9s).
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">8. Two Pair</strong><br>
+                Two different pairs (e.g., two 6s and two 3s).
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">9. One Pair</strong><br>
+                Two cards of the same rank (e.g., two 5s).
+            </div>
+            <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <strong style="color: #FFD700;">10. High Card</strong><br>
+                The highest card when no other hand is made.
+            </div>
+        </div>
+        <button onclick="closeHandRankingsPopup()" style="
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        ">Close</button>
+    `;
     
-    // Draw background
-    fill(0, 0, 0, 150);
-    stroke(255, 255, 0);
-    strokeWeight(2);
-    rect(startX - 10, startY - 10, 210, 200, 10);
-    
-    // Draw title with shadow and outline
-    textAlign(LEFT, TOP);
-    textSize(18); // Increased from 16
-    textStyle(BOLD);
-    
-    // Shadow for title
-    fill(0, 0, 0, 200);
-    stroke(0, 0, 0, 200);
-    strokeWeight(2);
-    text('Hand Rankings', startX + 2, startY + 2);
-    
-    // Main title text
-    fill(255, 255, 0); // Yellow title
-    stroke(0, 0, 0, 100);
-    strokeWeight(1);
-    text('Hand Rankings', startX, startY);
-    
-    // Draw rankings with improved text
-    textSize(14); // Increased from 12
-    textStyle(NORMAL);
-    rankings.forEach((ranking, index) => {
-        const y = startY + 25 + index * 16; // Increased spacing
-        
-        // Add subtle background for each ranking
-        fill(0, 0, 0, 80); // Darker background
-        noStroke();
-        rect(startX - 5, y - 10, 200, 14, 3); // Slightly taller
-        
-        // Shadow for each ranking
-        fill(0, 0, 0, 200);
-        stroke(0, 0, 0, 200);
-        strokeWeight(1);
-        text(ranking, startX + 1, y + 1);
-        
-        // Main text
-        fill(255, 255, 255);
-        stroke(0, 0, 0, 50);
-        strokeWeight(0.5);
-        text(ranking, startX, y);
-    });
-    
-    pop();
+    popup.appendChild(content);
+    document.body.appendChild(popup);
+}
+
+function closeHandRankingsPopup() {
+    const popup = document.getElementById('handRankingsPopup');
+    if (popup) {
+        popup.remove();
+    }
+}
+
+// Mouse click handling
+function mousePressed() {
+    // Check if hand rankings button was clicked
+    if (mouseX >= width - 200 && mouseX <= width - 20 && 
+        mouseY >= 20 && mouseY <= 60) {
+        showHandRankingsPopup();
+    }
 }
 
 // Initialize when page loads
