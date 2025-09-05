@@ -25,6 +25,11 @@ function draw() {
         if (!isLooping()) {
             loop();
         }
+    } else if (gameState === gameStateEnum.Instructions || gameState === gameStateEnum.CardValues) {
+        // For Instructions and Card Values, ensure loop is running to draw content
+        if (!isLooping()) {
+            loop();
+        }
     }
     
     // Fix canvas parenting based on game state
