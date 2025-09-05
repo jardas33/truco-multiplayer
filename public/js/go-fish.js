@@ -284,13 +284,13 @@ class GoFishGame {
     getAvailableTargets(playerIndex) {
         return this.players
             .map((player, index) => ({ player, index }))
-            .filter(({ index }) => index !== playerIndex && player.hand.length > 0)
+            .filter(({ player, index }) => index !== playerIndex && player.hand.length > 0)
             .map(({ player, index }) => ({ name: player.name, index }));
     }
 
     // Emit event to server
     emitEvent(eventName, data) {
-        if (window.gameFramework.socket) {
+        if (window.gameFramework && window.gameFramework.socket && window.gameFramework.roomId) {
             // Extract room code from window.gameFramework.roomId (could be object or string)
             const roomCode = typeof window.gameFramework.roomId === 'object' ? 
                 window.gameFramework.roomId.roomId : 
@@ -300,6 +300,8 @@ class GoFishGame {
                 roomId: roomCode,
                 ...data
             });
+        } else {
+            console.log(`📡 Event ${eventName} not emitted - no room or socket available`);
         }
     }
 
