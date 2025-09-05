@@ -906,9 +906,9 @@ function drawBattlefield() {
 }
 
 function drawBattleCards(centerX, centerY, cards) {
-    const cardWidth = 50;
-    const cardHeight = 70;
-    const spacing = 20;
+    const cardWidth = 70; // Increased from 50
+    const cardHeight = 98; // Increased from 70 (maintaining aspect ratio)
+    const spacing = 25; // Increased spacing
     const totalWidth = (cards.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -916,19 +916,36 @@ function drawBattleCards(centerX, centerY, cards) {
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 80);
+        noStroke();
+        rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+        
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(2);
-        rect(x, y, cardWidth, cardHeight, 5);
+        strokeWeight(3);
+        rect(x, y, cardWidth, cardHeight, 6);
         
         // Draw card content
         if (card.name) {
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            text(card.name, x + cardWidth/2, y + cardHeight/2);
+            // Try to draw actual card image with proper name mapping
+            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to text if image not available
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(12); // Increased for bigger cards
+                textStyle(BOLD);
+                text(card.name, x + cardWidth/2, y + cardHeight/2);
+            }
         }
+        
+        pop();
     });
 }
 

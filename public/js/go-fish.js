@@ -859,7 +859,7 @@ function drawPond() {
     
     // Draw cards in pond
     if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 10, window.game.pond, 40, 56, false);
+        drawCards(centerX, pondY + 10, window.game.pond, 60, 84, false);
     } else {
         textSize(12);
         text('No cards in pond', centerX, pondY + 10);
@@ -869,7 +869,7 @@ function drawPond() {
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
     if (!cards || cards.length === 0) return;
     
-    const spacing = 10;
+    const spacing = 15; // Increased spacing
     const maxVisible = Math.min(cards.length, 5);
     const totalWidth = (maxVisible - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
@@ -878,33 +878,55 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
         const x = startX + i * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 80);
+        noStroke();
+        rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+        
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(2);
-        rect(x, y, cardWidth, cardHeight, 5);
+        strokeWeight(3);
+        rect(x, y, cardWidth, cardHeight, 6);
         
         if (showCards && cards[i].name) {
-            // Draw card content
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            text(cards[i].name, x + cardWidth/2, y + cardHeight/2);
+            // Try to draw actual card image with proper name mapping
+            const imageName = cards[i].name.toLowerCase().replace(/\s+/g, '_');
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to text if image not available
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(12); // Increased for bigger cards
+                textStyle(BOLD);
+                text(cards[i].name, x + cardWidth/2, y + cardHeight/2);
+            }
         } else {
-            // Draw card back
-            fill(0, 0, 150);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            text('?', x + cardWidth/2, y + cardHeight/2);
+            // Draw card back image
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to colored rectangle
+                fill(0, 0, 150);
+                textAlign(CENTER, CENTER);
+                textSize(12); // Increased for bigger cards
+                textStyle(BOLD);
+                text('?', x + cardWidth/2, y + cardHeight/2);
+            }
         }
+        
+        pop();
     }
     
     // Show count if more than 5 cards
     if (cards.length > 5) {
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(12);
-        text(`+${cards.length - 5}`, centerX, centerY + 40);
+        textSize(14); // Increased for bigger cards
+        text(`+${cards.length - 5}`, centerX, centerY + 50);
     }
 }
 

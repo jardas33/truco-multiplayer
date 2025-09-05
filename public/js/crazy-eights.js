@@ -935,7 +935,7 @@ function drawDiscardPile() {
     // Draw top card
     if (window.game.discardPile && window.game.discardPile.length > 0) {
         const topCard = window.game.discardPile[window.game.discardPile.length - 1];
-        drawCard(centerX, discardY + 10, topCard, 60, 84, true);
+        drawCard(centerX, discardY + 10, topCard, 80, 123, true);
     } else {
         textSize(12);
         text('No cards discarded', centerX, discardY + 10);
@@ -964,7 +964,7 @@ function drawDrawPile() {
         text(`${window.game.drawPile.length} cards`, centerX, drawY + 10);
         
         // Draw card back representation
-        drawCard(centerX, drawY + 30, null, 40, 56, false);
+        drawCard(centerX, drawY + 30, null, 60, 84, false);
     } else {
         textSize(12);
         text('No cards left', centerX, drawY + 10);
@@ -975,25 +975,47 @@ function drawCard(centerX, centerY, card, cardWidth, cardHeight, showCard) {
     const x = centerX - cardWidth / 2;
     const y = centerY - cardHeight / 2;
     
+    push();
+    
+    // Draw card shadow
+    fill(0, 0, 0, 80);
+    noStroke();
+    rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+    
     // Draw card
     fill(255);
     stroke(0);
-    strokeWeight(2);
-    rect(x, y, cardWidth, cardHeight, 5);
+    strokeWeight(3);
+    rect(x, y, cardWidth, cardHeight, 6);
     
     if (showCard && card && card.name) {
-        // Draw card content
-        fill(0);
-        textAlign(CENTER, CENTER);
-        textSize(8);
-        text(card.name, centerX, centerY);
+        // Try to draw actual card image with proper name mapping
+        const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+        if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+            image(cardImages[imageName], x, y, cardWidth, cardHeight);
+        } else {
+            // Fallback to text if image not available
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(12); // Increased for bigger cards
+            textStyle(BOLD);
+            text(card.name, centerX, centerY);
+        }
     } else {
-        // Draw card back
-        fill(0, 0, 150);
-        textAlign(CENTER, CENTER);
-        textSize(8);
-        text('?', centerX, centerY);
+        // Draw card back image
+        if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+            image(window.cardBackImage, x, y, cardWidth, cardHeight);
+        } else {
+            // Fallback to colored rectangle
+            fill(0, 0, 150);
+            textAlign(CENTER, CENTER);
+            textSize(12); // Increased for bigger cards
+            textStyle(BOLD);
+            text('?', centerX, centerY);
+        }
     }
+    
+    pop();
 }
 
 function drawGameInfo() {

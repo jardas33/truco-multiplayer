@@ -871,6 +871,7 @@ function drawGameState() {
     drawBlackjackTable();
     drawDealerArea();
     drawPlayerAreas();
+    drawChips();
     drawGameInfo();
 }
 
@@ -905,7 +906,7 @@ function drawDealerArea() {
     
     // Draw dealer cards
     if (window.game.dealer && window.game.dealer.hand) {
-        drawCards(centerX, dealerY + 10, window.game.dealer.hand, 60, 84, true);
+        drawCards(centerX, dealerY + 10, window.game.dealer.hand, 80, 123, true);
     }
     
     // Draw dealer value
@@ -956,7 +957,7 @@ function drawPlayerAreas() {
         
         // Draw player cards
         if (player.hand && player.hand.length > 0) {
-            drawCards(playerX + playerWidth/2, playerY + 30, player.hand, 40, 56, true);
+            drawCards(playerX + playerWidth/2, playerY + 30, player.hand, 60, 84, true);
         }
         
         // Draw player value
@@ -979,7 +980,7 @@ function drawPlayerAreas() {
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
     if (!cards || cards.length === 0) return;
     
-    const spacing = 10;
+    const spacing = 15; // Increased spacing for bigger cards
     const totalWidth = (cards.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -987,26 +988,130 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 80);
+        noStroke();
+        rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+        
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(2);
-        rect(x, y, cardWidth, cardHeight, 5);
+        strokeWeight(3);
+        rect(x, y, cardWidth, cardHeight, 6);
         
         if (showCards && card.name) {
-            // Draw card content
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            text(card.name, x + cardWidth/2, y + cardHeight/2);
+            // Try to draw actual card image with proper name mapping
+            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to text if image not available
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(12); // Increased for bigger cards
+                textStyle(BOLD);
+                text(card.name, x + cardWidth/2, y + cardHeight/2);
+            }
         } else {
-            // Draw card back
-            fill(0, 0, 150);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            text('?', x + cardWidth/2, y + cardHeight/2);
+            // Draw card back image
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to colored rectangle
+                fill(0, 0, 150);
+                textAlign(CENTER, CENTER);
+                textSize(12); // Increased for bigger cards
+                textStyle(BOLD);
+                text('?', x + cardWidth/2, y + cardHeight/2);
+            }
+        }
+        
+        pop();
+    });
+}
+
+function drawChips() {
+    if (!window.game.players) return;
+    
+    // Draw chips for each player
+    window.game.players.forEach((player, index) => {
+        const playerX = 100 + index * 200;
+        const playerY = height * 0.7;
+        
+        // Draw chip stack based on player's chips
+        drawChipStack(playerX, playerY + 80, player.chips || 1000, player.bet || 0);
+    });
+}
+
+function drawChipStack(x, y, totalChips, currentBet) {
+    push();
+    
+    // Calculate chip distribution
+    const chipValues = [100, 50, 25, 10, 5, 1];
+    const chipColors = [
+        [255, 0, 0],    // Red for 100
+        [0, 0, 255],    // Blue for 50
+        [0, 255, 0],    // Green for 25
+        [255, 255, 0],  // Yellow for 10
+        [255, 165, 0],  // Orange for 5
+        [255, 255, 255] // White for 1
+    ];
+    
+    let remainingChips = totalChips;
+    let stackHeight = 0;
+    
+    // Draw chips from highest to lowest value
+    chipValues.forEach((value, index) => {
+        const chipCount = Math.floor(remainingChips / value);
+        if (chipCount > 0) {
+            const maxChipsToShow = Math.min(chipCount, 8); // Limit visual chips to 8 per value
+            
+            for (let i = 0; i < maxChipsToShow; i++) {
+                const chipX = x + (i % 4) * 3 - 4; // Spread chips in a small area
+                const chipY = y - stackHeight - i * 2;
+                
+                // Draw chip
+                fill(chipColors[index][0], chipColors[index][1], chipColors[index][2]);
+                stroke(0);
+                strokeWeight(1);
+                ellipse(chipX, chipY, 10, 6);
+                
+                // Draw chip value
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(5);
+                text(value, chipX, chipY);
+            }
+            
+            remainingChips -= chipCount * value;
+            stackHeight += maxChipsToShow * 2 + 2;
         }
     });
+    
+    // Draw current bet chips separately
+    if (currentBet > 0) {
+        const betChips = Math.min(currentBet, 4); // Show up to 4 bet chips
+        for (let i = 0; i < betChips; i++) {
+            const chipX = x + i * 4 - 6;
+            const chipY = y + 15;
+            
+            // Draw bet chip (different color)
+            fill(255, 0, 255); // Magenta for bet chips
+            stroke(255);
+            strokeWeight(2);
+            ellipse(chipX, chipY, 8, 5);
+            
+            // Draw bet indicator
+            fill(255);
+            textAlign(CENTER, CENTER);
+            textSize(4);
+            text('B', chipX, chipY);
+        }
+    }
+    
+    pop();
 }
 
 function drawGameInfo() {

@@ -1018,9 +1018,9 @@ function drawTrick() {
 }
 
 function drawTrickCards(centerX, centerY, cards) {
-    const cardWidth = 40;
-    const cardHeight = 56;
-    const spacing = 10;
+    const cardWidth = 60; // Increased from 40
+    const cardHeight = 84; // Increased from 56 (maintaining aspect ratio)
+    const spacing = 15; // Increased spacing
     const totalWidth = (cards.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -1028,19 +1028,36 @@ function drawTrickCards(centerX, centerY, cards) {
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 80);
+        noStroke();
+        rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+        
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(2);
-        rect(x, y, cardWidth, cardHeight, 5);
+        strokeWeight(3);
+        rect(x, y, cardWidth, cardHeight, 6);
         
         // Draw card content
         if (cardData.card && cardData.card.name) {
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            text(cardData.card.name, x + cardWidth/2, y + cardHeight/2);
+            // Try to draw actual card image with proper name mapping
+            const imageName = cardData.card.name.toLowerCase().replace(/\s+/g, '_');
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to text if image not available
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(12); // Increased for bigger cards
+                textStyle(BOLD);
+                text(cardData.card.name, x + cardWidth/2, y + cardHeight/2);
+            }
         }
+        
+        pop();
     });
 }
 
