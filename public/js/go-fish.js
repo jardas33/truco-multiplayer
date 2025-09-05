@@ -958,12 +958,11 @@ function drawPlayers() {
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(18); // Increased for larger boxes
-        textStyle(BOLD);
+        noStroke();
         text(player.name, playerX + playerWidth/2, playerY - 25);
         
         // Draw cards count
         textSize(16); // Increased for larger boxes
-        textStyle(NORMAL);
         text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY - 5);
         
         // Draw pairs count
@@ -1020,7 +1019,7 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
                 fill(0);
                 textAlign(CENTER, CENTER);
                 textSize(8);
-                textStyle(BOLD);
+                noStroke();
                 text(card.name, x + cardWidth/2, floatY + cardHeight/2);
             }
         } else {
@@ -1037,7 +1036,7 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
                 fill(255);
                 textAlign(CENTER, CENTER);
                 textSize(10);
-                textStyle(BOLD);
+                noStroke();
                 text('?', x + cardWidth/2, floatY + cardHeight/2);
             }
         }
@@ -1086,7 +1085,7 @@ function drawPond() {
     fill(255, 215, 0);
     textAlign(CENTER, CENTER);
     textSize(24); // Increased for larger pond
-    textStyle(BOLD);
+    noStroke();
     text('🐟 Fish Pond', centerX, pondY - 40);
     
     // Draw cards in pond - moved lower to avoid text overlap
@@ -1096,7 +1095,7 @@ function drawPond() {
         // Show pond count - removed animation for stability
         fill(255);
         textSize(18); // Increased for larger pond
-        textStyle(BOLD);
+        noStroke();
         text(`${window.game.pond.length} cards`, centerX, pondY + 140);
     } else {
         fill(255, 255, 255, 150);
@@ -1198,14 +1197,13 @@ function drawGameInfo() {
     fill(255);
     textAlign(LEFT, TOP);
     textSize(14);
-    textStyle(BOLD);
+    noStroke();
     text(`Phase: ${window.game.gamePhase || 'playing'}`, boxX + 10, boxY + 10);
     
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
         const currentPlayer = window.game.players[window.game.currentPlayer];
         textSize(12);
-        textStyle(NORMAL);
         text(`Current Player: ${currentPlayer.name}`, boxX + 10, boxY + 30);
     }
     
@@ -1267,13 +1265,12 @@ function drawScores() {
     fill(255, 215, 0);
     textAlign(CENTER, CENTER);
     textSize(16);
-    textStyle(BOLD);
+    noStroke();
     text('🏆 Pairs', scoresX + scoresWidth/2, scoresY + 20);
     
     // Draw player scores
     fill(255);
     textSize(12);
-    textStyle(NORMAL);
     textAlign(LEFT, CENTER);
     
     let yOffset = 45;
@@ -1282,10 +1279,8 @@ function drawScores() {
         
         if (isCurrentPlayer) {
             fill(255, 215, 0);
-            textStyle(BOLD);
         } else {
             fill(255);
-            textStyle(NORMAL);
         }
         
         text(`${player.name}: ${player.pairs || 0}`, scoresX + 10, scoresY + yOffset);
@@ -1311,13 +1306,12 @@ function drawGameControls() {
         fill(255, 215, 0);
         textAlign(CENTER, CENTER);
         textSize(16);
-        textStyle(BOLD);
+        noStroke();
         text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 10);
         
         // Draw available actions
         fill(255);
         textSize(12);
-        textStyle(NORMAL);
         text('Ask for cards or Go Fish!', controlsX, controlsY + 10);
     }
 }
@@ -1358,7 +1352,7 @@ function drawActionButtons() {
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(12);
-        textStyle(BOLD);
+        noStroke();
         text('Ask for Cards', buttonX - buttonWidth/2 - 10, buttonY);
     }
     
@@ -1387,7 +1381,7 @@ function drawActionButtons() {
     fill(255);
     textAlign(CENTER, CENTER);
     textSize(12);
-    textStyle(BOLD);
+    noStroke();
     text('🐟 Go Fish!', buttonX + buttonWidth/2 + 10, buttonY);
 }
 
