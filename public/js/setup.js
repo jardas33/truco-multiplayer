@@ -79,6 +79,7 @@ function setup() {
     instructionsButton.style('color', 'white'); // Ensure consistent text color
     instructionsButton.style('font-weight', 'bold'); // Ensure consistent font weight
     instructionsButton.style('border-radius', '5px'); // Ensure consistent border radius
+    instructionsButton.style('text-align', 'center'); // Ensure consistent text alignment
     instructionsButton.show();
 
     // Only show Card Values button for Truco game

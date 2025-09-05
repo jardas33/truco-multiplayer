@@ -2331,8 +2331,9 @@ function changeNickname() {
     }
     
     // Emit nickname change to server
+    const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
     socket.emit('changeNickname', {
-        roomCode: window.roomId,
+        roomCode: roomCode,
         nickname: newNickname
     });
     
@@ -2367,8 +2368,9 @@ function selectTeam(team) {
     }
     
     // Emit team selection to server
+    const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
     socket.emit('selectTeam', {
-        roomCode: window.roomId,
+        roomCode: roomCode,
         team: team
     });
 }
