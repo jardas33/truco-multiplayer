@@ -1407,18 +1407,18 @@ function drawModernFishPond() {
     const centerX = width / 2;
     const pondY = height * 0.45; // Moved up slightly to avoid opponent cards
     
-    // Draw pond container - MADE BIGGER
+    // Draw pond container - INCREASED BY 20%
     fill(0, 0, 0, 200);
     stroke(100, 150, 200);
     strokeWeight(3);
-    rect(centerX - 140, pondY - 70, 280, 150, 15); // Increased from 240x120 to 280x150
+    rect(centerX - 168, pondY - 84, 336, 180, 15); // 20% increase: 280x150 → 336x180
     
     // Draw fish icon
     fill(100, 200, 255);
     textAlign(CENTER, CENTER);
     textSize(32);
     noStroke();
-    text('🐟', centerX, pondY - 25);
+    text('🐟', centerX, pondY - 30);
     
     // Draw pond label
     fill(255, 255, 255);
@@ -1428,8 +1428,8 @@ function drawModernFishPond() {
     // Draw stacked cards icon
     const cardWidth = 30;
     const cardHeight = 42;
-    const stackX = centerX - 40;
-    const stackY = pondY + 20; // More space from label
+    const stackX = centerX - 60; // Moved left to make room for text on right
+    const stackY = pondY + 20;
     
     // Draw card stack
     for (let i = 0; i < 3; i++) {
@@ -1447,15 +1447,14 @@ function drawModernFishPond() {
         rect(stackX + offsetX + 3, stackY + offsetY + 3, cardWidth - 6, cardHeight - 6, 2);
     }
     
-    // Calculate where cards end (last card with offset)
-    const lastCardBottom = stackY + cardHeight + (2 * 2); // stackY + cardHeight + max offsetY
-    const textY = lastCardBottom + 15; // 15px spacing below cards - plenty of room now
+    // Draw card count text NEXT TO the cards (on the right side)
+    const textX = stackX + cardWidth + 15; // 15px spacing from cards
+    const textY = stackY + (cardHeight / 2); // Vertically centered with cards
     
-    // Draw card count
     fill(255, 255, 255);
     textSize(14);
-    textAlign(CENTER, CENTER);
-    text(`${window.game.pond ? window.game.pond.length : 0} cards`, centerX, textY);
+    textAlign(LEFT, CENTER);
+    text(`${window.game.pond ? window.game.pond.length : 0} cards`, textX, textY);
 }
 
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
