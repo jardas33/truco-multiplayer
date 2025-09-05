@@ -40,7 +40,8 @@ class GoFishGame {
             hand: [],
             pairs: 0,
             overallWins: player.overallWins || 0, // Initialize overall wins
-            position: index
+            position: index,
+            isBot: player.name.toLowerCase().includes('bot') || player.isBot || false // Detect bots by name or explicit property
         }));
         
         this.deck = CardUtils.createStandardDeck();
@@ -662,9 +663,9 @@ class GoFishClient {
         } else {
             // Initialize with default players for testing
             const defaultPlayers = [
-                { name: 'Player 1', hand: [], pairs: 0 },
-                { name: 'Bot 1', hand: [], pairs: 0 },
-                { name: 'Bot 2', hand: [], pairs: 0 }
+                { name: 'Player 1', hand: [], pairs: 0, isBot: false },
+                { name: 'Bot 1', hand: [], pairs: 0, isBot: true },
+                { name: 'Bot 2', hand: [], pairs: 0, isBot: true }
             ];
             this.game.initialize(defaultPlayers);
             this.localPlayerIndex = 0;
