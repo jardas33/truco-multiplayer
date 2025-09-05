@@ -1948,10 +1948,10 @@ function mousePressed() {
     const panelX = 20;
     const panelY = height - panelHeight - 40;
     
-    const buttonWidth = 100;
-    const buttonHeight = 25;
-    const buttonX = panelX + panelWidth - buttonWidth - 15;
-    const buttonY = panelY + 15;
+    const buttonWidth = 80;
+    const buttonHeight = 20;
+    const buttonX = panelX + panelWidth - buttonWidth - 10;
+    const buttonY = panelY + 35;
     
     if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
         mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
@@ -2342,10 +2342,10 @@ function drawGameHistoryPanel() {
     text('📜 Game History', panelX + 15, panelY + 25);
     
     // View Full History button
-    const buttonWidth = 100;
-    const buttonHeight = 25;
-    const buttonX = panelX + panelWidth - buttonWidth - 15;
-    const buttonY = panelY + 15;
+    const buttonWidth = 80;
+    const buttonHeight = 20;
+    const buttonX = panelX + panelWidth - buttonWidth - 10;
+    const buttonY = panelY + 35; // Move below title
     
     // Button background
     fill(50, 100, 150);
@@ -2356,13 +2356,13 @@ function drawGameHistoryPanel() {
     // Button text
     fill(255, 255, 255);
     textAlign(CENTER, CENTER);
-    textSize(10);
+    textSize(9);
     text('View Full', buttonX + buttonWidth/2, buttonY + buttonHeight/2);
     
     // Draw history entries
     if (window.game && window.game.gameHistory) {
-        let yOffset = 50;
-        const maxEntries = Math.floor((panelHeight - 80) / 16); // Calculate how many entries fit
+        let yOffset = 65; // Start below button
+        const maxEntries = Math.floor((panelHeight - 100) / 16); // Calculate how many entries fit (account for button)
         
         // Display history in reverse order (newest first)
         const historyToShow = window.game.gameHistory.slice(0, maxEntries);
