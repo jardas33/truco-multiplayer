@@ -355,9 +355,26 @@ class GoFishClient {
 
     // Setup UI event listeners
     setupUI() {
+        console.log('Setting up UI event listeners for Go Fish');
+        
         // Room controls
-        document.getElementById('createRoomBtn').onclick = () => this.createRoom();
-        document.getElementById('joinRoomBtn').onclick = () => this.joinRoom();
+        const createBtn = document.getElementById('createRoomBtn');
+        const joinBtn = document.getElementById('joinRoomBtn');
+        
+        if (createBtn) {
+            console.log('Create Room button found, setting up click handler');
+            createBtn.onclick = () => this.createRoom();
+        } else {
+            console.error('Create Room button not found!');
+        }
+        
+        if (joinBtn) {
+            console.log('Join Room button found, setting up click handler');
+            joinBtn.onclick = () => this.joinRoom();
+        } else {
+            console.error('Join Room button not found!');
+        }
+        
         document.getElementById('addBotBtn').onclick = () => this.addBot();
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
         document.getElementById('startGameBtn').onclick = () => this.startGame();
@@ -419,26 +436,31 @@ class GoFishClient {
 
     // Create room
     createRoom() {
-        console.log('🎮 Create Room button clicked');
+        console.log('Create Room button clicked');
+        console.log('Debug info:');
+        console.log('  - GameFramework available:', typeof GameFramework !== 'undefined');
+        console.log('  - GameFramework.createRoom available:', (typeof GameFramework !== 'undefined' && GameFramework.createRoom));
+        console.log('  - window.gameFramework available:', typeof window.gameFramework !== 'undefined');
+        console.log('  - window.gameFramework.socket available:', (typeof window.gameFramework !== 'undefined' && window.gameFramework.socket));
         
         // Try to create room immediately first
         if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-            console.log('✅ GameFramework available, creating room immediately');
+            console.log('GameFramework available, creating room immediately');
             GameFramework.createRoom('go-fish');
             return;
         }
         
         // If not available, wait and retry
-        console.log('⏳ GameFramework not ready, waiting...');
+        console.log('GameFramework not ready, waiting...');
         let attempts = 0;
         const maxAttempts = 10;
         
         const tryCreateRoom = () => {
             attempts++;
-            console.log(`🔄 Attempt ${attempts}/${maxAttempts} to create room`);
+            console.log(`Attempt ${attempts}/${maxAttempts} to create room`);
             
             if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-                console.log('✅ GameFramework now available, creating room');
+                console.log('GameFramework now available, creating room');
                 GameFramework.createRoom('go-fish');
                 return;
             }
@@ -446,8 +468,12 @@ class GoFishClient {
             if (attempts < maxAttempts) {
                 setTimeout(tryCreateRoom, 200); // Wait 200ms between attempts
             } else {
-                console.error('❌ GameFramework still not available after maximum attempts');
-                UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+                console.error('GameFramework still not available after maximum attempts');
+                if (typeof UIUtils !== 'undefined' && UIUtils.showGameMessage) {
+                    UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+                } else {
+                    alert('Game framework not ready. Please refresh the page.');
+                }
             }
         };
         
