@@ -2043,11 +2043,15 @@ function setupButtonListeners() {
 
     // ✅ Player Customization Buttons
     const changeNicknameBtn = document.getElementById('changeNicknameBtn');
+    console.log('Change Nickname button found:', !!changeNicknameBtn);
     if (changeNicknameBtn) {
         changeNicknameBtn.onclick = () => {
             console.log('Change Nickname clicked');
             changeNickname();
         };
+        console.log('✅ Change Nickname button listener set up');
+    } else {
+        console.error('❌ Change Nickname button not found!');
     }
 
     const team1Btn = document.getElementById('team1Btn');
@@ -2291,13 +2295,22 @@ function hideRoomControls() {
 
 // ✅ Player Customization Functions
 function changeNickname() {
+    console.log('🔄 changeNickname function called');
+    
     const nicknameInput = document.getElementById('nicknameInput');
+    console.log('Nickname input found:', !!nicknameInput);
+    console.log('Socket available:', !!socket);
+    console.log('Room ID available:', !!window.roomId);
+    
     if (!nicknameInput || !socket || !window.roomId) {
         console.error('Cannot change nickname - missing elements or not in room');
+        alert('Cannot change nickname - please make sure you are in a room');
         return;
     }
     
     const newNickname = nicknameInput.value.trim();
+    console.log('New nickname:', newNickname);
+    
     if (newNickname.length === 0) {
         alert('Please enter a nickname');
         return;
@@ -2366,11 +2379,62 @@ function showPlayerCustomization() {
     if (playerCustomization) {
         playerCustomization.style.display = 'block';
         console.log('✅ Player customization panel shown');
+        
+        // ✅ CRITICAL FIX: Re-setup button listeners when panel is shown
+        // This ensures buttons work even if they weren't available during initial setup
+        setupCustomizationButtons();
+    }
+}
+
+// ✅ New function to set up customization buttons specifically
+function setupCustomizationButtons() {
+    console.log('Setting up customization buttons...');
+    
+    // ✅ Player Customization Buttons
+    const changeNicknameBtn = document.getElementById('changeNicknameBtn');
+    console.log('Change Nickname button found:', !!changeNicknameBtn);
+    if (changeNicknameBtn) {
+        // Remove any existing listeners
+        changeNicknameBtn.onclick = null;
+        changeNicknameBtn.onclick = () => {
+            console.log('Change Nickname clicked');
+            changeNickname();
+        };
+        console.log('✅ Change Nickname button listener set up');
+    } else {
+        console.error('❌ Change Nickname button not found!');
+    }
+
+    const team1Btn = document.getElementById('team1Btn');
+    if (team1Btn) {
+        team1Btn.onclick = null;
+        team1Btn.onclick = () => {
+            console.log('Team 1 (Alfa) clicked');
+            selectTeam('team1');
+        };
+        console.log('✅ Team 1 button listener set up');
+    }
+
+    const team2Btn = document.getElementById('team2Btn');
+    if (team2Btn) {
+        team2Btn.onclick = null;
+        team2Btn.onclick = () => {
+            console.log('Team 2 (Beta) clicked');
+            selectTeam('team2');
+        };
+        console.log('✅ Team 2 button listener set up');
     }
 }
 
 // Initialize when the document is ready
 document.addEventListener('DOMContentLoaded', initGame);
+
+// ✅ Additional fallback: Set up customization buttons after a short delay
+// This ensures buttons work even if they're added dynamically
+setTimeout(() => {
+    console.log('Setting up customization buttons as fallback...');
+    setupCustomizationButtons();
+}, 1000);
 
 // ✅ Add reconnection UI functions
 function showReconnectionUI() {
