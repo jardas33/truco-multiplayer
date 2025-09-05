@@ -69,9 +69,10 @@ class GoFishGame {
         
         // Create fresh deck and shuffle
         this.deck = CardUtils.createStandardDeck();
-        this.deck = CardUtils.shuffleDeck(this.deck);
+        console.log('🃏 Deck created, cards:', this.deck.length);
         
-        console.log('🃏 Deck created and shuffled, cards:', this.deck.length);
+        this.deck = CardUtils.shuffleDeck(this.deck);
+        console.log('🃏 Deck shuffled, cards:', this.deck.length);
         
         // Deal cards
         this.dealCards();
@@ -98,10 +99,17 @@ class GoFishGame {
         // Deal 5 cards to each player (or 7 if 2 players)
         const cardsPerPlayer = this.players.length === 2 ? 7 : 5;
         
+        console.log(`🃏 Starting to deal ${cardsPerPlayer} cards to ${this.players.length} players`);
+        console.log(`🃏 Deck has ${this.deck.length} cards before dealing`);
+        
         for (let i = 0; i < cardsPerPlayer; i++) {
             for (let player of this.players) {
                 if (this.deck.length > 0) {
-                    player.hand.push(this.deck.pop());
+                    const card = this.deck.pop();
+                    player.hand.push(card);
+                    console.log(`🃏 Dealt ${card.name} to ${player.name} (hand size: ${player.hand.length})`);
+                } else {
+                    console.error(`❌ Deck empty! Cannot deal card ${i+1} to ${player.name}`);
                 }
             }
         }
@@ -111,6 +119,7 @@ class GoFishGame {
         this.deck = [];
         
         console.log(`🃏 Dealt ${cardsPerPlayer} cards to each player, ${this.pond.length} cards in pond`);
+        console.log(`🃏 Final hand sizes:`, this.players.map(p => `${p.name}: ${p.hand.length} cards`));
     }
 
     // Check for pairs in a player's hand
@@ -1736,16 +1745,16 @@ function mousePressed() {
         if (mouseX >= askX && mouseX <= askX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🎯 Ask button clicked');
-            showAskForCardsDialog();
-        }
-        
-        // Check if Go Fish button was clicked
+        showAskForCardsDialog();
+    }
+    
+    // Check if Go Fish button was clicked
         const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
         if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
-            console.log('🐟 Go Fish button clicked');
-            if (window.goFishClient) {
-                window.goFishClient.goFish();
+        console.log('🐟 Go Fish button clicked');
+        if (window.goFishClient) {
+            window.goFishClient.goFish();
             }
         }
     }
