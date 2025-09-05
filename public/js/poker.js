@@ -1137,9 +1137,9 @@ function drawCommunityCards() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const cardWidth = 70;
-    const cardHeight = 98;
-    const spacing = 20;
+    const cardWidth = 90;  // Increased from 70
+    const cardHeight = 126; // Increased from 98 (maintaining aspect ratio)
+    const spacing = 25;    // Increased from 20
     
     // Draw community cards in the center with better styling
     const totalWidth = (window.game.communityCards.length - 1) * (cardWidth + spacing);
@@ -1200,45 +1200,68 @@ function drawPlayers() {
         
         // Draw player name with better styling and shadow
         push();
-        fill(0, 0, 0, 150); // Shadow
         textAlign(CENTER, CENTER);
-        textSize(16);
+        textSize(18); // Increased from 16
         textStyle(BOLD);
-        text(player.name, x + 2, y - 25 + 2);
         
-        fill(255, 255, 255); // Main text
+        // Draw shadow with thicker stroke for stability
+        fill(0, 0, 0, 200); // Darker shadow
+        stroke(0, 0, 0, 200);
+        strokeWeight(2);
+        text(player.name, x + 3, y - 25 + 3);
+        
+        // Main text with outline for stability
+        fill(255, 255, 255);
+        stroke(0, 0, 0, 100);
+        strokeWeight(1);
         text(player.name, x, y - 25);
         pop();
         
         // Draw player chips with better styling and shadow
         push();
-        fill(0, 0, 0, 150); // Shadow
         textAlign(CENTER, CENTER);
-        textSize(14);
+        textSize(16); // Increased from 14
         textStyle(BOLD);
-        text('$' + player.chips, x + 2, y - 5 + 2);
         
+        // Draw shadow with thicker stroke for stability
+        fill(0, 0, 0, 200); // Darker shadow
+        stroke(0, 0, 0, 200);
+        strokeWeight(2);
+        text('$' + player.chips, x + 3, y - 5 + 3);
+        
+        // Main text with outline for stability
         fill(255, 215, 0); // Gold color
+        stroke(0, 0, 0, 100);
+        strokeWeight(1);
         text('$' + player.chips, x, y - 5);
         pop();
         
         // Draw current bet if any
         if (player.currentBet > 0) {
             push();
-            fill(0, 0, 0, 150); // Shadow
             textAlign(CENTER, CENTER);
-            textSize(12);
+            textSize(14); // Increased from 12
             textStyle(BOLD);
-            text('Bet: $' + player.currentBet, x + 2, y + 15 + 2);
             
+            // Draw shadow with thicker stroke for stability
+            fill(0, 0, 0, 200); // Darker shadow
+            stroke(0, 0, 0, 200);
+            strokeWeight(2);
+            text('Bet: $' + player.currentBet, x + 3, y + 15 + 3);
+            
+            // Main text with outline for stability
             fill(255, 100, 100);
+            stroke(0, 0, 0, 100);
+            strokeWeight(1);
             text('Bet: $' + player.currentBet, x, y + 15);
             pop();
         }
         
         // Draw player cards
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(x, y, player.hand, index === window.pokerClient?.localPlayerIndex);
+            // Show card images for Player 1 (index 0) or if it's the local player
+            const shouldShowCardImages = index === 0 || index === window.pokerClient?.localPlayerIndex || player.hand.some(card => card.isRevealed);
+            drawPlayerCards(x, y, player.hand, shouldShowCardImages);
         }
         
         // Highlight current player with stable effect
@@ -1259,9 +1282,9 @@ function drawPlayers() {
 }
 
 function drawPlayerCards(x, y, hand, isLocalPlayer) {
-    const cardWidth = 45;
-    const cardHeight = 63;
-    const spacing = 10;
+    const cardWidth = 60;  // Increased from 45
+    const cardHeight = 84; // Increased from 63 (maintaining aspect ratio)
+    const spacing = 12;    // Increased from 10
     
     hand.forEach((card, index) => {
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
@@ -1331,19 +1354,32 @@ function drawPot() {
         
         // Draw pot text with shadow
         textAlign(CENTER, CENTER);
-        textSize(18);
+        textSize(20); // Increased from 18
         textStyle(BOLD);
         
-        // Shadow
-        fill(0, 0, 0, 150);
-        text('POT', width/2 + 2, height/2 + 90 + 2);
-        text('$' + window.game.pot, width/2 + 2, height/2 + 110 + 2);
+        // Shadow with thicker stroke for stability
+        fill(0, 0, 0, 200);
+        stroke(0, 0, 0, 200);
+        strokeWeight(2);
+        text('POT', width/2 + 3, height/2 + 90 + 3);
         
-        // Main text
+        // Main text with outline for stability
         fill(255, 215, 0); // Gold color
+        stroke(0, 0, 0, 100);
+        strokeWeight(1);
         text('POT', width/2, height/2 + 90);
         
-        textSize(16);
+        textSize(18); // Increased from 16
+        // Shadow for amount
+        fill(0, 0, 0, 200);
+        stroke(0, 0, 0, 200);
+        strokeWeight(2);
+        text('$' + window.game.pot, width/2 + 3, height/2 + 110 + 3);
+        
+        // Main text for amount
+        fill(255, 215, 0);
+        stroke(0, 0, 0, 100);
+        strokeWeight(1);
         text('$' + window.game.pot, width/2, height/2 + 110);
         
         pop();
@@ -1359,16 +1395,34 @@ function drawGameInfo() {
     strokeWeight(2);
     rect(15, 15, 200, 60, 10);
     
-    fill(255, 255, 255);
     textAlign(LEFT, TOP);
-    textSize(16);
+    textSize(18); // Increased from 16
     textStyle(BOLD);
+    
+    // Draw phase with shadow and outline
+    fill(0, 0, 0, 200);
+    stroke(0, 0, 0, 200);
+    strokeWeight(2);
+    text('Phase: ' + (window.game.gamePhase || 'preflop'), 27, 27);
+    
+    fill(255, 255, 255);
+    stroke(0, 0, 0, 100);
+    strokeWeight(1);
     text('Phase: ' + (window.game.gamePhase || 'preflop'), 25, 25);
     
     // Draw current bet
     if (window.game.currentBet > 0) {
+        textSize(16); // Increased from 14
+        
+        // Shadow for bet text
+        fill(0, 0, 0, 200);
+        stroke(0, 0, 0, 200);
+        strokeWeight(2);
+        text('Current Bet: $' + window.game.currentBet, 27, 47);
+        
         fill(255, 215, 0);
-        textSize(14);
+        stroke(0, 0, 0, 100);
+        strokeWeight(1);
         text('Current Bet: $' + window.game.currentBet, 25, 45);
     }
     
@@ -1395,25 +1449,44 @@ function drawHandRankings() {
     strokeWeight(2);
     rect(startX - 10, startY - 10, 210, 200, 10);
     
-    // Draw title
-    fill(255, 255, 0); // Yellow title
+    // Draw title with shadow and outline
     textAlign(LEFT, TOP);
-    textSize(16);
+    textSize(18); // Increased from 16
     textStyle(BOLD);
+    
+    // Shadow for title
+    fill(0, 0, 0, 200);
+    stroke(0, 0, 0, 200);
+    strokeWeight(2);
+    text('Hand Rankings', startX + 2, startY + 2);
+    
+    // Main title text
+    fill(255, 255, 0); // Yellow title
+    stroke(0, 0, 0, 100);
+    strokeWeight(1);
     text('Hand Rankings', startX, startY);
     
-    // Draw rankings
-    fill(255, 255, 255);
-    textSize(12);
+    // Draw rankings with improved text
+    textSize(14); // Increased from 12
     textStyle(NORMAL);
     rankings.forEach((ranking, index) => {
-        const y = startY + 25 + index * 15;
-        // Add subtle background for each ranking
-        fill(0, 0, 0, 50);
-        noStroke();
-        rect(startX - 5, y - 10, 200, 12, 3);
+        const y = startY + 25 + index * 16; // Increased spacing
         
+        // Add subtle background for each ranking
+        fill(0, 0, 0, 80); // Darker background
+        noStroke();
+        rect(startX - 5, y - 10, 200, 14, 3); // Slightly taller
+        
+        // Shadow for each ranking
+        fill(0, 0, 0, 200);
+        stroke(0, 0, 0, 200);
+        strokeWeight(1);
+        text(ranking, startX + 1, y + 1);
+        
+        // Main text
         fill(255, 255, 255);
+        stroke(0, 0, 0, 50);
+        strokeWeight(0.5);
         text(ranking, startX, y);
     });
     
