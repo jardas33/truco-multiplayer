@@ -69,23 +69,15 @@ class GoFishGame {
         
         // Create fresh deck and shuffle
         this.deck = CardUtils.createStandardDeck();
-        console.log('🃏 Deck created, cards:', this.deck.length);
-        
         this.deck = CardUtils.shuffleDeck(this.deck);
-        console.log('🃏 Deck shuffled, cards:', this.deck.length);
         
         // Deal cards
         this.dealCards();
-        
-        console.log('🃏 Cards dealt. Player hands:', this.players.map(p => ({ name: p.name, cards: p.hand.length })));
-        console.log('🃏 Pond cards:', this.pond.length);
         
         // Check for initial pairs
         this.players.forEach(player => {
             this.checkForPairs(player);
         });
-        
-        console.log('🎯 Initial pairs found:', this.players.map(p => ({ name: p.name, pairs: p.pairs })));
         
         this.emitEvent('gameStarted', {
             players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
@@ -99,15 +91,11 @@ class GoFishGame {
         // Deal 5 cards to each player (or 7 if 2 players)
         const cardsPerPlayer = this.players.length === 2 ? 7 : 5;
         
-        console.log(`🃏 Starting to deal ${cardsPerPlayer} cards to ${this.players.length} players`);
-        console.log(`🃏 Deck has ${this.deck.length} cards before dealing`);
-        
         for (let i = 0; i < cardsPerPlayer; i++) {
             for (let player of this.players) {
                 if (this.deck.length > 0) {
                     const card = this.deck.pop();
                     player.hand.push(card);
-                    console.log(`🃏 Dealt ${card.name} to ${player.name} (hand size: ${player.hand.length})`);
                 } else {
                     console.error(`❌ Deck empty! Cannot deal card ${i+1} to ${player.name}`);
                 }
@@ -117,9 +105,6 @@ class GoFishGame {
         // Remaining cards go to pond
         this.pond = [...this.deck];
         this.deck = [];
-        
-        console.log(`🃏 Dealt ${cardsPerPlayer} cards to each player, ${this.pond.length} cards in pond`);
-        console.log(`🃏 Final hand sizes:`, this.players.map(p => `${p.name}: ${p.hand.length} cards`));
     }
 
     // Check for pairs in a player's hand
@@ -881,7 +866,6 @@ function drawGameState() {
     // No need to check or load them here
     
     if (!window.game || !window.game.players) {
-        console.log('🎨 Go Fish: No game or players available for rendering');
         // Draw a waiting screen
         background(0, 50, 100);
         fill(255);
@@ -1019,6 +1003,11 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
+    
+    // Debug: Log player's actual cards
+    if (player.hand && player.hand.length > 0) {
+        console.log('Player hand:', player.hand.map(card => `${card.rank} of ${card.suit}`));
+    }
     const handY = height - 80; // Moved up to avoid control panel overlap
     const cardWidth = 60;
     const cardHeight = 84;
@@ -1122,7 +1111,6 @@ function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
     if (isLocalPlayer && card) {
         // Draw card image if available
         const imageKey = getCardImageKey(card);
-        console.log('Looking for card image:', imageKey, 'Available:', window.cardImages ? Object.keys(window.cardImages).length : 0);
         
         if (window.cardImages && window.cardImages[imageKey]) {
             image(window.cardImages[imageKey], x + 2, y + 2, cardWidth - 4, cardHeight - 4);
