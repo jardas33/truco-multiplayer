@@ -113,7 +113,7 @@ class GoFishGame {
         // If it's a bot's turn, make them play after a short delay
         const currentPlayer = this.players[this.currentPlayer];
         if (currentPlayer.isBot) {
-            setTimeout(() => this.botPlay(), 2000); // 2 second delay for game start
+            setTimeout(() => this.botPlay(), 3000); // 3 second delay for game start
         }
     }
 
@@ -172,7 +172,7 @@ class GoFishGame {
                 this.addToHistory(`🎯 ${player.name} found ${pairs} pair(s) of ${rank}s!`, 'success');
                 
                 // Show pair found message
-                this.showGameMessage(`${player.name} found ${pairs} pair(s) of ${rank}s!`, 1500);
+                this.showGameMessage(`${player.name} found ${pairs} pair(s) of ${rank}s!`, 2000);
             }
         });
     }
@@ -207,7 +207,7 @@ class GoFishGame {
             this.addToHistory(`✅ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s and got ${requestedCards.length} card(s)`, 'success');
             
             // Show success message
-            this.showGameMessage(`${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 2000);
+            this.showGameMessage(`${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 2500);
             
             // Check for new pairs
             this.checkForPairs(askingPlayer);
@@ -226,7 +226,7 @@ class GoFishGame {
         } else {
             // Target player doesn't have the cards - Go Fish!
             this.addToHistory(`❌ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s but got "Go Fish!"`, 'warning');
-            this.showGameMessage(`${targetPlayer.name} says "Go Fish!"`, 1500);
+            this.showGameMessage(`${targetPlayer.name} says "Go Fish!"`, 2000);
             this.goFish(askingPlayer);
             return false;
         }
@@ -238,7 +238,7 @@ class GoFishGame {
         
         if (this.pond.length === 0) {
             console.log('🐟 Pond is empty!');
-            this.showGameMessage('Pond is empty! Game continues...', 1500);
+            this.showGameMessage('Pond is empty! Game continues...', 2000);
             this.endTurn();
             return;
         }
@@ -253,7 +253,7 @@ class GoFishGame {
         this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
         
         // Show what was drawn
-        this.showGameMessage(`${player.name} drew ${drawnCard.name}`, 1500);
+        this.showGameMessage(`${player.name} drew ${drawnCard.name}`, 2000);
         
         // Check for pairs
         const pairsBefore = player.pairs;
@@ -276,7 +276,7 @@ class GoFishGame {
         } else {
             console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
             // No pairs found, end turn
-            this.endTurn();
+        this.endTurn();
         }
     }
 
@@ -313,8 +313,8 @@ class GoFishGame {
         // If it's a bot's turn, make them play after a delay
         const currentPlayer = this.players[this.currentPlayer];
         if (currentPlayer.isBot) {
-            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 1.5 seconds`);
-            setTimeout(() => this.botPlay(), 1500); // 1.5 second delay for bot thinking
+            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 3 seconds`);
+            setTimeout(() => this.botPlay(), 3000); // 3 second delay for bot thinking
         } else {
             console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
         }
@@ -358,7 +358,7 @@ class GoFishGame {
             setTimeout(() => {
                 console.log(`🤖 ${bot.name} continuing their turn...`);
                 this.botPlay();
-            }, 1000); // 1 second delay for bot thinking
+            }, 2000); // 2 second delay for bot thinking
         } else {
             console.log(`🤖 ${bot.name} ask failed - Go Fish scenario handled by game`);
         }
@@ -876,16 +876,16 @@ class GoFishClient {
     updateScores() {
         const scoresBody = document.getElementById('scoresBody');
         if (scoresBody) {
-            scoresBody.innerHTML = '';
-            
-            this.game.players.forEach(player => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${player.name}</td>
-                    <td>${player.pairs}</td>
-                `;
-                scoresBody.appendChild(row);
-            });
+        scoresBody.innerHTML = '';
+        
+        this.game.players.forEach(player => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${player.name}</td>
+                <td>${player.pairs}</td>
+            `;
+            scoresBody.appendChild(row);
+        });
         }
     }
 
@@ -1069,7 +1069,7 @@ function drawGameState() {
             image(window.pondImage, 0, 0, width, height);
         } else {
             console.log('🐟 Pond image not available for waiting screen, using solid background');
-            background(0, 50, 100);
+        background(0, 50, 100);
         }
         fill(255);
         textAlign(CENTER, CENTER);
@@ -1088,7 +1088,7 @@ function drawGameState() {
     } else {
         console.log('🐟 Pond image not available, using solid background');
         // Fallback to solid color if pond image not loaded
-        background(0, 50, 100); // Dark blue ocean
+    background(0, 50, 100); // Dark blue ocean
     }
     
     // Reset cursor
@@ -1120,7 +1120,7 @@ function drawModernTable() {
             const c2 = color(25, 35, 55);  // Lighter blue
             const c = lerpColor(c1, c2, inter);
             fill(c);
-            noStroke();
+        noStroke();
             rect(0, y, width, 1);
         }
     }
@@ -1132,8 +1132,8 @@ function drawModernTable() {
             const y = random(height);
             const size = random(0.5, 1.5);
             fill(255, 255, 255, 5); // More subtle overlay
-            noStroke();
-            ellipse(x, y, size, size);
+        noStroke();
+        ellipse(x, y, size, size);
         }
     }
 }
