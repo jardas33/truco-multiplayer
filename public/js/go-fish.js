@@ -923,8 +923,8 @@ function drawPlayers() {
     if (!window.game.players) return;
     
     const playerY = height * 0.15;
-    const playerWidth = 500; // Increased width by 250%
-    const playerHeight = 350; // Increased height by 250%
+    const playerWidth = 200; // Match Truco game sizing
+    const playerHeight = 100; // Match Truco game sizing
     const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
     
     window.game.players.forEach((player, index) => {
@@ -957,12 +957,12 @@ function drawPlayers() {
         // Draw player name with better styling
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(16); // Increased font size
+        textSize(14); // Match Truco game font size
         textStyle(BOLD);
         text(player.name, playerX + playerWidth/2, playerY - 25);
         
         // Draw cards count
-        textSize(14); // Increased font size
+        textSize(12); // Match Truco game font size
         textStyle(NORMAL);
         text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY - 5);
         
@@ -971,7 +971,7 @@ function drawPlayers() {
         
         // Draw player cards (improved representation)
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 120, 168, index === 0);
+            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 60, 84, index === 0);
         } else {
             // Show empty hand indicator
             fill(255, 255, 255, 100);
@@ -1062,20 +1062,20 @@ function drawPond() {
     // Draw pond shadow
     fill(0, 0, 0, 100);
     noStroke();
-    rect(centerX - 505, pondY - 130, 1010, 260, 12);
+    rect(centerX - 202, pondY - 52, 404, 104, 12);
     
     // Draw pond area with gradient
     fill(0, 0, 0, 180);
     stroke(255, 255, 255, 200);
     strokeWeight(3);
-    rect(centerX - 500, pondY - 125, 1000, 250, 10);
+    rect(centerX - 200, pondY - 50, 400, 100, 10);
     
     // Add animated pond texture
     const time = millis() * 0.001;
     for (let i = 0; i < 20; i++) {
-        const x = centerX - 450 + (i * 45) + sin(time + i) * 25;
-        const y = pondY - 75 + cos(time + i * 0.5) * 37;
-        const size = 20 + sin(time + i) * 10;
+        const x = centerX - 180 + (i * 18) + sin(time + i) * 10;
+        const y = pondY - 30 + cos(time + i * 0.5) * 15;
+        const size = 8 + sin(time + i) * 4;
         
         fill(0, 100, 150, 40);
         noStroke();
@@ -1091,13 +1091,13 @@ function drawPond() {
     
     // Draw cards in pond - moved lower to avoid text overlap
     if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 20, window.game.pond, 150, 210, false);
+        drawCards(centerX, pondY + 20, window.game.pond, 50, 70, false);
         
         // Show pond count - removed animation for stability
         fill(255);
         textSize(14);
         textStyle(BOLD);
-        text(`${window.game.pond.length} cards`, centerX, pondY + 140);
+        text(`${window.game.pond.length} cards`, centerX, pondY + 55);
     } else {
         fill(255, 255, 255, 150);
         textSize(14);
