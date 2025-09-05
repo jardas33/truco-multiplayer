@@ -922,7 +922,6 @@ function drawGameState() {
     drawMainPlayerHand();
     drawModernFishPond();
     drawModernScorePanel();
-    drawModernControlPanel();
     drawGameMessages();
     
     // Validate layout spacing (only in development)
@@ -1015,12 +1014,13 @@ function drawMainPlayerHand() {
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
+    const buttonAreaWidth = 200; // Space for buttons on the right
     
-    // Draw hand background
+    // Draw hand background - adjusted to leave space for buttons
     fill(0, 0, 0, 150);
     stroke(100, 150, 200);
     strokeWeight(2);
-    rect(50, handY - 20, width - 100, 100, 10);
+    rect(50, handY - 20, width - 100 - buttonAreaWidth, 100, 10);
     
     // Draw player info
     fill(255, 255, 255);
@@ -1029,9 +1029,9 @@ function drawMainPlayerHand() {
     noStroke();
     text(`Your Hand (${player.hand.length} cards)`, 70, handY - 5);
     
-    // Draw cards with hover effects
+    // Draw cards with hover effects - moved more to the left
     const totalWidth = (player.hand.length - 1) * (cardWidth + spacing);
-    const startX = (width - totalWidth) / 2;
+    const startX = 70; // Moved more to the left
     
     player.hand.forEach((card, index) => {
         const cardX = startX + index * (cardWidth + spacing);
@@ -1051,6 +1051,45 @@ function drawMainPlayerHand() {
             drawCard(cardX, cardY, card, cardWidth, cardHeight, true);
         }
     });
+    
+    // Draw action buttons to the right of the cards
+    if (window.game.currentPlayer === 0) {
+        const buttonX = width - buttonAreaWidth + 20;
+        const buttonY = handY + 20;
+        const buttonWidth = 70;
+        const buttonHeight = 30;
+        const buttonSpacing = 20;
+        
+        // Ask button
+        const askX = buttonX;
+        const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
+                             mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        
+        fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
+        stroke(255);
+        strokeWeight(1);
+        rect(askX, buttonY, buttonWidth, buttonHeight, 5);
+        
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
+        
+        // Go Fish button
+        const goFishX = buttonX + buttonWidth + buttonSpacing;
+        const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+                                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        
+        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
+        stroke(255);
+        strokeWeight(1);
+        rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
+        
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
+    }
 }
 
 function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
@@ -1068,6 +1107,8 @@ function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
     if (isLocalPlayer && card) {
         // Draw card image if available
         const imageKey = getCardImageKey(card);
+        console.log('Looking for card image:', imageKey, 'Available:', window.cardImages ? Object.keys(window.cardImages).length : 0);
+        
         if (window.cardImages && window.cardImages[imageKey]) {
             image(window.cardImages[imageKey], x + 2, y + 2, cardWidth - 4, cardHeight - 4);
         } else {
@@ -1668,17 +1709,16 @@ function mousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
-        const panelWidth = 200;
-        const panelHeight = 60;
-        const panelX = (width - panelWidth) / 2;
-        const panelY = height - 100;
-        const buttonY = panelY + 15;
+        const handY = height - 80;
+        const buttonAreaWidth = 200;
+        const buttonX = width - buttonAreaWidth + 20;
+        const buttonY = handY + 20;
         const buttonWidth = 70;
         const buttonHeight = 30;
         const buttonSpacing = 20;
         
         // Check if Ask button was clicked
-        const askX = panelX + 15;
+        const askX = buttonX;
         if (mouseX >= askX && mouseX <= askX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🎯 Ask button clicked');
@@ -1686,7 +1726,7 @@ function mousePressed() {
         }
         
         // Check if Go Fish button was clicked
-        const goFishX = panelX + 15 + buttonWidth + buttonSpacing;
+        const goFishX = buttonX + buttonWidth + buttonSpacing;
         if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🐟 Go Fish button clicked');
@@ -1786,7 +1826,7 @@ function getCardImageKey(card) {
     if (!card) return null;
     const rank = card.rank.toLowerCase();
     const suit = card.suit.toLowerCase();
-    return `${rank}_${suit}`;
+    return `${rank}_of_${suit}`;
 }
 
 function getResponsiveDimensions() {
