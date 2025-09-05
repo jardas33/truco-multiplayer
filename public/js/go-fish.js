@@ -1930,8 +1930,33 @@ function mousePressed() {
         console.log('🐟 Go Fish button clicked');
         if (window.goFishClient) {
             window.goFishClient.goFish();
-            }
         }
+        }
+    }
+    
+    // Check if View Full History button was clicked
+    const dims = getResponsiveDimensions();
+    const playerCount = window.game && window.game.players ? window.game.players.length : 3;
+    const baseHeight = 120;
+    const playerSectionHeight = 25;
+    const overallSectionHeight = 40;
+    const overallPlayerHeight = 20;
+    const padding = 20;
+    const calculatedHeight = baseHeight + (playerCount * playerSectionHeight) + overallSectionHeight + (playerCount * overallPlayerHeight) + padding;
+    const panelWidth = dims.isSmallScreen ? 240 : 260;
+    const panelHeight = Math.max(calculatedHeight, dims.isSmallScreen ? 250 : 280);
+    const panelX = 20;
+    const panelY = height - panelHeight - 40;
+    
+    const buttonWidth = 100;
+    const buttonHeight = 25;
+    const buttonX = panelX + panelWidth - buttonWidth - 15;
+    const buttonY = panelY + 15;
+    
+    if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
+        mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+        console.log('📜 View Full History button clicked');
+        showFullGameHistory();
     }
 }
 
@@ -2002,6 +2027,140 @@ function showAskForCardsDialog() {
     
     document.getElementById('cancelButton').onclick = function() {
         document.body.removeChild(dialog);
+    };
+}
+
+function showFullGameHistory() {
+    if (!window.game || !window.game.gameHistory) {
+        alert('No game history available');
+        return;
+    }
+    
+    // Create modal dialog
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `;
+    
+    // Create dialog content
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        background: rgba(0, 0, 0, 0.95);
+        border: 2px solid #ff8c00;
+        border-radius: 15px;
+        padding: 20px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        font-family: Arial, sans-serif;
+    `;
+    
+    // Title
+    const title = document.createElement('h2');
+    title.textContent = '📜 Full Game History';
+    title.style.cssText = `
+        color: #ff8c00;
+        margin: 0 0 20px 0;
+        text-align: center;
+        font-size: 24px;
+    `;
+    dialog.appendChild(title);
+    
+    // History container
+    const historyContainer = document.createElement('div');
+    historyContainer.style.cssText = `
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+    `;
+    
+    // Add all history entries
+    window.game.gameHistory.forEach((entry, index) => {
+        const entryDiv = document.createElement('div');
+        entryDiv.style.cssText = `
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            border-left: 3px solid;
+        `;
+        
+        // Set color based on entry type
+        switch (entry.type) {
+            case 'success':
+                entryDiv.style.color = '#64ff64';
+                entryDiv.style.borderLeftColor = '#64ff64';
+                entryDiv.style.backgroundColor = 'rgba(100, 255, 100, 0.1)';
+                break;
+            case 'warning':
+                entryDiv.style.color = '#ffb84d';
+                entryDiv.style.borderLeftColor = '#ffb84d';
+                entryDiv.style.backgroundColor = 'rgba(255, 184, 77, 0.1)';
+                break;
+            case 'error':
+                entryDiv.style.color = '#ff6464';
+                entryDiv.style.borderLeftColor = '#ff6464';
+                entryDiv.style.backgroundColor = 'rgba(255, 100, 100, 0.1)';
+                break;
+            default:
+                entryDiv.style.color = '#ffffff';
+                entryDiv.style.borderLeftColor = '#64b8ff';
+                entryDiv.style.backgroundColor = 'rgba(100, 184, 255, 0.1)';
+                break;
+        }
+        
+        // Add timestamp and message
+        const timestamp = entry.timestamp || 'Unknown time';
+        entryDiv.innerHTML = `
+            <div style="font-size: 11px; color: #888; margin-bottom: 2px;">${timestamp}</div>
+            <div>${entry.message}</div>
+        `;
+        
+        historyContainer.appendChild(entryDiv);
+    });
+    
+    dialog.appendChild(historyContainer);
+    
+    // Close button
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Close';
+    closeButton.style.cssText = `
+        background: #ff8c00;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 15px;
+        width: 100%;
+    `;
+    
+    closeButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    
+    dialog.appendChild(closeButton);
+    modal.appendChild(dialog);
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
     };
 }
 
@@ -2181,6 +2340,24 @@ function drawGameHistoryPanel() {
     textSize(18);
     noStroke();
     text('📜 Game History', panelX + 15, panelY + 25);
+    
+    // View Full History button
+    const buttonWidth = 100;
+    const buttonHeight = 25;
+    const buttonX = panelX + panelWidth - buttonWidth - 15;
+    const buttonY = panelY + 15;
+    
+    // Button background
+    fill(50, 100, 150);
+    stroke(100, 150, 200);
+    strokeWeight(1);
+    rect(buttonX, buttonY, buttonWidth, buttonHeight, 5);
+    
+    // Button text
+    fill(255, 255, 255);
+    textAlign(CENTER, CENTER);
+    textSize(10);
+    text('View Full', buttonX + buttonWidth/2, buttonY + buttonHeight/2);
     
     // Draw history entries
     if (window.game && window.game.gameHistory) {
