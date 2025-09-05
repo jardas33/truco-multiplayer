@@ -1086,6 +1086,7 @@ function drawGameState() {
     drawCommunityCards();
     drawPlayers();
     drawPot();
+    drawChips();
     drawGameInfo();
 }
 
@@ -1137,9 +1138,9 @@ function drawCommunityCards() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const cardWidth = 90;  // Increased from 70
-    const cardHeight = 126; // Increased from 98 (maintaining aspect ratio)
-    const spacing = 25;    // Increased from 20
+    const cardWidth = 100;  // Increased to match truco style
+    const cardHeight = 140; // Increased to match truco style (maintaining aspect ratio)
+    const spacing = 30;    // Increased spacing for bigger cards
     
     // Draw community cards in the center with better styling
     const totalWidth = (window.game.communityCards.length - 1) * (cardWidth + spacing);
@@ -1162,13 +1163,14 @@ function drawCommunityCards() {
         rect(x, y, cardWidth, cardHeight, 8);
         
         // Draw card content with actual card image
-        if (typeof cardImages !== 'undefined' && cardImages[card.name] && cardImages[card.name].width > 0) {
-            image(cardImages[card.name], x, y, cardWidth, cardHeight);
+        const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+        if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+            image(cardImages[imageName], x, y, cardWidth, cardHeight);
         } else {
             // Fallback to text if image not available
             fill(0);
             textAlign(CENTER, CENTER);
-            textSize(12);
+            textSize(16); // Increased for bigger cards
             textStyle(BOLD);
             text(card.name, x + cardWidth/2, y + cardHeight/2);
         }
@@ -1282,9 +1284,9 @@ function drawPlayers() {
 }
 
 function drawPlayerCards(x, y, hand, isLocalPlayer) {
-    const cardWidth = 60;  // Increased from 45
-    const cardHeight = 84; // Increased from 63 (maintaining aspect ratio)
-    const spacing = 12;    // Increased from 10
+    const cardWidth = 80;  // Increased to match truco style
+    const cardHeight = 123; // Increased to match truco style (maintaining aspect ratio)
+    const spacing = 15;    // Increased spacing for bigger cards
     
     hand.forEach((card, index) => {
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
@@ -1305,14 +1307,15 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
         
         // Draw card content (only show for local player or if revealed)
         if (isLocalPlayer || card.isRevealed) {
-            // Try to draw actual card image
-            if (typeof cardImages !== 'undefined' && cardImages[card.name] && cardImages[card.name].width > 0) {
-                image(cardImages[card.name], cardX, cardY, cardWidth, cardHeight);
+            // Try to draw actual card image with proper name mapping
+            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], cardX, cardY, cardWidth, cardHeight);
             } else {
                 // Fallback to text if image not available
                 fill(0);
                 textAlign(CENTER, CENTER);
-                textSize(11);
+                textSize(14); // Increased for bigger cards
                 textStyle(BOLD);
                 text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
             }
@@ -1324,7 +1327,7 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
                 // Fallback to colored rectangle
                 fill(0, 0, 150);
                 textAlign(CENTER, CENTER);
-                textSize(12);
+                textSize(14); // Increased for bigger cards
                 textStyle(BOLD);
                 text('?', cardX + cardWidth/2, cardY + cardHeight/2);
             }
@@ -1430,6 +1433,94 @@ function drawGameInfo() {
     
     // Draw hand rankings on the right
     drawHandRankings();
+}
+
+function drawChips() {
+    if (!window.game.players) return;
+    
+    const centerX = width/2;
+    const centerY = height/2;
+    const radiusX = width * 0.35;
+    const radiusY = height * 0.25;
+    
+    // Draw chips for each player
+    window.game.players.forEach((player, index) => {
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const x = centerX + cos(angle) * radiusX;
+        const y = centerY + sin(angle) * radiusY;
+        
+        // Draw chip stack based on player's chips
+        drawChipStack(x, y + 60, player.chips, player.currentBet);
+    });
+}
+
+function drawChipStack(x, y, totalChips, currentBet) {
+    push();
+    
+    // Calculate chip distribution
+    const chipValues = [100, 50, 25, 10, 5, 1];
+    const chipColors = [
+        [255, 0, 0],    // Red for 100
+        [0, 0, 255],    // Blue for 50
+        [0, 255, 0],    // Green for 25
+        [255, 255, 0],  // Yellow for 10
+        [255, 165, 0],  // Orange for 5
+        [255, 255, 255] // White for 1
+    ];
+    
+    let remainingChips = totalChips;
+    let stackHeight = 0;
+    
+    // Draw chips from highest to lowest value
+    chipValues.forEach((value, index) => {
+        const chipCount = Math.floor(remainingChips / value);
+        if (chipCount > 0) {
+            const maxChipsToShow = Math.min(chipCount, 10); // Limit visual chips to 10 per value
+            
+            for (let i = 0; i < maxChipsToShow; i++) {
+                const chipX = x + (i % 5) * 3 - 6; // Spread chips in a small area
+                const chipY = y - stackHeight - i * 2;
+                
+                // Draw chip
+                fill(chipColors[index][0], chipColors[index][1], chipColors[index][2]);
+                stroke(0);
+                strokeWeight(1);
+                ellipse(chipX, chipY, 12, 8);
+                
+                // Draw chip value
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(6);
+                text(value, chipX, chipY);
+            }
+            
+            remainingChips -= chipCount * value;
+            stackHeight += maxChipsToShow * 2 + 2;
+        }
+    });
+    
+    // Draw current bet chips separately
+    if (currentBet > 0) {
+        const betChips = Math.min(currentBet, 5); // Show up to 5 bet chips
+        for (let i = 0; i < betChips; i++) {
+            const chipX = x + i * 4 - 8;
+            const chipY = y + 20;
+            
+            // Draw bet chip (different color)
+            fill(255, 0, 255); // Magenta for bet chips
+            stroke(255);
+            strokeWeight(2);
+            ellipse(chipX, chipY, 10, 6);
+            
+            // Draw bet indicator
+            fill(255);
+            textAlign(CENTER, CENTER);
+            textSize(5);
+            text('B', chipX, chipY);
+        }
+    }
+    
+    pop();
 }
 
 function drawHandRankings() {
