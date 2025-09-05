@@ -142,6 +142,42 @@
         <button id="gameBackToMenuBtn" style="display: none; position: absolute; top: 200px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
           🏠 Back to Menu
         </button>
+
+        <!-- ✅ Poker Betting Controls -->
+        <div id="bettingControls" style="display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #2c3e50, #34495e); padding: 20px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: 2px solid #3498db;">
+          <div style="text-align: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #FFD700; font-size: 18px;">🎯 Your Turn</h3>
+          </div>
+          
+          <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;">
+            <!-- Bet Amount Input -->
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <label style="color: #ecf0f1; font-size: 14px; margin-bottom: 5px;">Bet Amount:</label>
+              <input type="number" id="betAmount" min="0" step="1" value="0" style="width: 80px; padding: 8px; border: 2px solid #3498db; border-radius: 5px; text-align: center; font-size: 16px; font-weight: bold; background: #ecf0f1; color: #2c3e50;">
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 8px;">
+              <button id="foldBtn" style="padding: 10px 16px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                🚫 Fold
+              </button>
+              <button id="callBtn" style="padding: 10px 16px; background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                ✅ Call
+              </button>
+              <button id="raiseBtn" style="padding: 10px 16px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                📈 Raise
+              </button>
+              <button id="allInBtn" style="padding: 10px 16px; background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                🎯 All In
+              </button>
+            </div>
+          </div>
+          
+          <!-- Current Bet Info -->
+          <div id="currentBetInfo" style="text-align: center; margin-top: 10px; color: #ecf0f1; font-size: 14px;">
+            <!-- Current bet information will be displayed here -->
+          </div>
+        </div>
         
         <!-- ✅ Round History Button (Below TRUCO - Left) -->
         <button id="roundHistoryBtn" style="display: none; position: absolute; bottom: 80px; left: 50%; transform: translateX(-150px); z-index: 1000; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">

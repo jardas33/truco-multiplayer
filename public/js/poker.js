@@ -138,6 +138,11 @@ class PokerGame {
             }
         }
         console.log('Hole cards dealt');
+        
+        // Play card dealing sound
+        if (window.pokerClient) {
+            window.pokerClient.playCardSound();
+        }
     }
 
     // Start a betting round
@@ -571,11 +576,14 @@ class PokerClient {
         this.localPlayerIndex = 0;
         this.isMyTurn = false;
         this.canAct = false;
+        this.soundEnabled = true;
+        this.audioContext = null;
     }
 
     // Initialize the client
     initialize() {
         console.log('Initializing Poker client');
+        this.initAudio();
         
         // Initialize game framework
         GameFramework.initialize('poker');
@@ -590,9 +598,6 @@ class PokerClient {
         
         // Test GameFramework availability immediately after initialization
         setTimeout(() => {
-            console.log('DEBUG: Post-init test - GameFramework type:', typeof GameFramework);
-            console.log('DEBUG: Post-init test - GameFramework.createRoom:', GameFramework?.createRoom);
-            console.log('DEBUG: Post-init test - window.gameFramework.socket:', window.gameFramework?.socket);
         }, 100);
     }
 
@@ -671,9 +676,6 @@ class PokerClient {
         console.log('Create Room button clicked');
         
         // Try to create room immediately first
-        console.log('DEBUG: GameFramework type:', typeof GameFramework);
-        console.log('DEBUG: GameFramework object:', GameFramework);
-        console.log('DEBUG: GameFramework.createRoom:', GameFramework?.createRoom);
         
         if (typeof GameFramework !== 'undefined' && GameFramework.createRoom && window.gameFramework?.socket) {
             console.log('SUCCESS: GameFramework and socket available, creating room immediately');
@@ -959,12 +961,195 @@ class PokerClient {
 
     // Show betting controls
     showBettingControls() {
-        document.getElementById('bettingControls').style.display = 'flex';
+        const bettingControls = document.getElementById('bettingControls');
+        if (bettingControls) {
+            bettingControls.style.display = 'flex';
+            this.setupBettingControls();
+        }
     }
 
     // Hide betting controls
     hideBettingControls() {
-        document.getElementById('bettingControls').style.display = 'none';
+        const bettingControls = document.getElementById('bettingControls');
+        if (bettingControls) {
+            bettingControls.style.display = 'none';
+        }
+    }
+
+    // Setup betting controls event listeners
+    setupBettingControls() {
+        const foldBtn = document.getElementById('foldBtn');
+        const callBtn = document.getElementById('callBtn');
+        const raiseBtn = document.getElementById('raiseBtn');
+        const allInBtn = document.getElementById('allInBtn');
+        const betAmountInput = document.getElementById('betAmount');
+        const currentBetInfo = document.getElementById('currentBetInfo');
+
+        if (foldBtn) {
+            foldBtn.onclick = () => this.fold();
+        }
+
+        if (callBtn) {
+            callBtn.onclick = () => this.call();
+        }
+
+        if (raiseBtn) {
+            raiseBtn.onclick = () => this.raise();
+        }
+
+        if (allInBtn) {
+            allInBtn.onclick = () => this.allIn();
+        }
+
+        if (betAmountInput) {
+            betAmountInput.oninput = () => this.updateBetAmount();
+        }
+
+        // Update current bet info
+        if (currentBetInfo && this.game) {
+            const callAmount = this.game.currentBet - (this.game.players[0]?.currentBet || 0);
+            currentBetInfo.innerHTML = `
+                <div>Current Bet: $${this.game.currentBet || 0}</div>
+                <div>To Call: $${Math.max(0, callAmount)}</div>
+                <div>Your Chips: $${this.game.players[0]?.chips || 0}</div>
+            `;
+        }
+    }
+
+    // Betting actions
+    fold() {
+        console.log('Player folded');
+        this.playFoldSound();
+        this.socket.emit('playerAction', {
+            action: 'fold',
+            roomId: this.roomId
+        });
+        this.hideBettingControls();
+    }
+
+    call() {
+        const callAmount = this.game.currentBet - (this.game.players[0]?.currentBet || 0);
+        console.log('Player called:', callAmount);
+        this.playBetSound();
+        this.socket.emit('playerAction', {
+            action: 'call',
+            amount: callAmount,
+            roomId: this.roomId
+        });
+        this.hideBettingControls();
+    }
+
+    raise() {
+        const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
+        const minRaise = this.game.currentBet * 2;
+        const raiseAmount = Math.max(minRaise, betAmount);
+        
+        console.log('Player raised:', raiseAmount);
+        this.playBetSound();
+        this.socket.emit('playerAction', {
+            action: 'raise',
+            amount: raiseAmount,
+            roomId: this.roomId
+        });
+        this.hideBettingControls();
+    }
+
+    allIn() {
+        const allInAmount = this.game.players[0]?.chips || 0;
+        console.log('Player went all in:', allInAmount);
+        this.playWinSound();
+        this.socket.emit('playerAction', {
+            action: 'allIn',
+            amount: allInAmount,
+            roomId: this.roomId
+        });
+        this.hideBettingControls();
+    }
+
+    updateBetAmount() {
+        const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
+        const minRaise = this.game.currentBet * 2;
+        const maxBet = this.game.players[0]?.chips || 0;
+        
+        // Update button states based on bet amount
+        const callBtn = document.getElementById('callBtn');
+        const raiseBtn = document.getElementById('raiseBtn');
+        
+        if (callBtn) {
+            const callAmount = this.game.currentBet - (this.game.players[0]?.currentBet || 0);
+            callBtn.textContent = callAmount > 0 ? `✅ Call $${callAmount}` : '✅ Check';
+        }
+        
+        if (raiseBtn) {
+            raiseBtn.textContent = betAmount >= minRaise ? `📈 Raise $${betAmount}` : `📈 Raise $${minRaise}`;
+        }
+    }
+
+    // Sound system
+    initAudio() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Web Audio API not supported');
+            this.soundEnabled = false;
+        }
+    }
+
+    playSound(type, frequency = 440, duration = 0.1) {
+        if (!this.soundEnabled || !this.audioContext) return;
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        // Set frequency and wave type based on sound type
+        switch (type) {
+            case 'card':
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                oscillator.type = 'sine';
+                break;
+            case 'bet':
+                oscillator.frequency.setValueAtTime(frequency * 1.5, this.audioContext.currentTime);
+                oscillator.type = 'square';
+                break;
+            case 'win':
+                oscillator.frequency.setValueAtTime(frequency * 2, this.audioContext.currentTime);
+                oscillator.type = 'sawtooth';
+                break;
+            case 'fold':
+                oscillator.frequency.setValueAtTime(frequency * 0.5, this.audioContext.currentTime);
+                oscillator.type = 'triangle';
+                break;
+            default:
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                oscillator.type = 'sine';
+        }
+
+        // Set volume envelope
+        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+
+    playCardSound() {
+        this.playSound('card', 440, 0.1);
+    }
+
+    playBetSound() {
+        this.playSound('bet', 550, 0.15);
+    }
+
+    playWinSound() {
+        this.playSound('win', 660, 0.3);
+    }
+
+    playFoldSound() {
+        this.playSound('fold', 220, 0.2);
     }
 
     // Show room code
@@ -1093,15 +1278,15 @@ function drawGameState() {
 function drawPokerTable() {
     const centerX = width/2;
     const centerY = height/2;
-    const tableWidth = width * 0.75;
-    const tableHeight = height * 0.55;
+    const tableWidth = width * 0.8;
+    const tableHeight = height * 0.6;
     
     push();
     
     // Draw table shadow (more realistic)
-    fill(0, 0, 0, 40);
+    fill(0, 0, 0, 60);
     noStroke();
-    ellipse(centerX + 8, centerY + 8, tableWidth + 16, tableHeight + 16);
+    ellipse(centerX + 12, centerY + 12, tableWidth + 24, tableHeight + 24);
     
     // Draw table rim (outermost)
     fill(101, 67, 33);
@@ -1111,22 +1296,31 @@ function drawPokerTable() {
     // Draw table edge
     fill(139, 69, 19);
     noStroke();
-    ellipse(centerX, centerY, tableWidth - 25, tableHeight - 20);
+    ellipse(centerX, centerY, tableWidth - 30, tableHeight - 25);
     
-    // Draw main table felt
-    fill(0, 120, 0);
-    noStroke();
-    ellipse(centerX, centerY, tableWidth - 50, tableHeight - 40);
+    // Draw main table felt with gradient
+    for (let i = 0; i < (tableWidth - 60) / 2; i += 2) {
+        const alpha = map(i, 0, (tableWidth - 60) / 2, 255, 200);
+        fill(0, 120, 0, alpha);
+        noStroke();
+        ellipse(centerX, centerY, tableWidth - 60 - i * 2, tableHeight - 50 - i * 2);
+    }
     
     // Draw subtle felt texture
-    fill(0, 100, 0, 30);
+    fill(0, 100, 0, 40);
     noStroke();
-    for (let i = 0; i < 15; i++) {
-        const angle = (TWO_PI / 15) * i;
-        const x = centerX + cos(angle) * (tableWidth * 0.2);
-        const y = centerY + sin(angle) * (tableHeight * 0.2);
-        ellipse(x, y, 12, 12);
+    for (let i = 0; i < 20; i++) {
+        const angle = (TWO_PI / 20) * i;
+        const x = centerX + cos(angle) * (tableWidth * 0.15);
+        const y = centerY + sin(angle) * (tableHeight * 0.15);
+        ellipse(x, y, 8, 8);
     }
+    
+    // Draw table center area for community cards
+    fill(0, 100, 0, 100);
+    stroke(255, 255, 255, 100);
+    strokeWeight(2);
+    ellipse(centerX, centerY, 200, 120);
     
     pop();
 }
@@ -1138,9 +1332,9 @@ function drawCommunityCards() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const cardWidth = 100;  // Increased to match truco style
-    const cardHeight = 140; // Increased to match truco style (maintaining aspect ratio)
-    const spacing = 30;    // Increased spacing for bigger cards
+    const cardWidth = 80;   // Optimized size for better layout
+    const cardHeight = 112; // Maintain aspect ratio
+    const spacing = 20;     // Better spacing
     
     // Draw community cards in the center with better styling
     const totalWidth = (window.game.communityCards.length - 1) * (cardWidth + spacing);
@@ -1150,31 +1344,19 @@ function drawCommunityCards() {
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight/2;
         
-        push();
-        // Draw card shadow
-        fill(0, 0, 0, 50);
-        noStroke();
-        rect(x + 3, y + 3, cardWidth, cardHeight, 8);
+        // Add subtle floating animation
+        const time = millis() * 0.001;
+        const floatOffset = sin(time + index * 0.5) * 2;
+        const finalY = y + floatOffset;
         
-        // Draw card background
-        fill(255);
-        stroke(0);
-        strokeWeight(2);
-        rect(x, y, cardWidth, cardHeight, 8);
-        
-        // Draw card content with actual card image
-        const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
-        if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
-            image(cardImages[imageName], x, y, cardWidth, cardHeight);
-        } else {
-            // Fallback to text if image not available
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(16); // Increased for bigger cards
-            textStyle(BOLD);
-            text(card.name, x + cardWidth/2, y + cardHeight/2);
-        }
-        pop();
+        // Use enhanced CardRenderer with options for community cards
+        CardRenderer.drawCard(x, finalY, cardWidth, cardHeight, card, true, {
+            shadowOffset: 4,
+            shadowOpacity: 80,
+            borderWidth: 3,
+            cornerRadius: 10,
+            highlight: false
+        });
     });
 }
 
@@ -1183,8 +1365,8 @@ function drawPlayers() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radiusX = width * 0.28;  // Better positioning
-    const radiusY = height * 0.22; // Better positioning
+    const radiusX = width * 0.32;  // Increased radius for better spacing
+    const radiusY = height * 0.25; // Increased radius for better spacing
     
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
@@ -1193,13 +1375,18 @@ function drawPlayers() {
         
         push();
         
+        // Draw player area shadow
+        fill(0, 0, 0, 100);
+        noStroke();
+        rect(x - 85, y - 55, 170, 110, 12);
+        
         // Draw player area background
-        fill(0, 0, 0, 220);
-        stroke(255, 255, 255);
-        strokeWeight(2);
+        fill(0, 0, 0, 240);
+        stroke(255, 255, 255, 200);
+        strokeWeight(3);
         rect(x - 80, y - 50, 160, 100, 10);
         
-        // Draw player name
+        // Draw player name with better styling
         textAlign(CENTER, CENTER);
         textSize(16);
         textStyle(BOLD);
@@ -1222,19 +1409,28 @@ function drawPlayers() {
             text('Bet: $' + player.currentBet, x, y + 15);
         }
         
-        // Draw player cards
+        // Draw player cards in a better position
         if (player.hand && player.hand.length > 0) {
             const shouldShowCardImages = index === 0 || index === window.pokerClient?.localPlayerIndex || player.hand.some(card => card.isRevealed);
-            const cardY = y + 40; // Position cards below player info
+            const cardY = y + 35; // Position cards below player info
             drawPlayerCards(x, cardY, player.hand, shouldShowCardImages);
         }
         
-        // Highlight current player
+        // Highlight current player with better styling and animation
         if (index === window.game.currentPlayer) {
+            const time = millis() * 0.003;
+            const pulseAlpha = 50 + sin(time) * 20;
+            const glowSize = 5 + sin(time * 2) * 2;
+            
             stroke(255, 255, 0);
-            strokeWeight(4);
+            strokeWeight(glowSize);
             noFill();
             rect(x - 85, y - 55, 170, 110, 12);
+            
+            // Add animated glow effect
+            fill(255, 255, 0, pulseAlpha);
+            noStroke();
+            rect(x - 90, y - 60, 180, 120, 15);
         }
         
         pop();
@@ -1242,91 +1438,72 @@ function drawPlayers() {
 }
 
 function drawPlayerCards(x, y, hand, isLocalPlayer) {
-    const cardWidth = 70;
-    const cardHeight = 98;
-    const spacing = 12;
+    const cardWidth = 60;   // Smaller cards for better layout
+    const cardHeight = 84;  // Maintain aspect ratio
+    const spacing = 8;      // Tighter spacing
     
     hand.forEach((card, index) => {
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
         const cardY = y;
         
-        push();
+        // Add subtle floating animation for player cards
+        const time = millis() * 0.001;
+        const floatOffset = sin(time + index * 0.3) * 1;
+        const finalY = cardY + floatOffset;
         
-        // Draw card shadow
-        fill(0, 0, 0, 100);
-        noStroke();
-        rect(cardX + 3, cardY + 3, cardWidth, cardHeight, 8);
-        
-        // Draw card
-        fill(255);
-        stroke(0);
-        strokeWeight(2);
-        rect(cardX, cardY, cardWidth, cardHeight, 8);
-        
-        // Draw card content (only show for local player or if revealed)
-        if (isLocalPlayer || card.isRevealed) {
-            // Try to draw actual card image with proper name mapping
-            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
-            
-            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
-                image(cardImages[imageName], cardX, cardY, cardWidth, cardHeight);
-            } else {
-                // Fallback to text if image not available
-                fill(0);
-                textAlign(CENTER, CENTER);
-                textSize(12);
-                textStyle(BOLD);
-                text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
-            }
-        } else {
-            // Draw card back image
-            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
-                image(window.cardBackImage, cardX, cardY, cardWidth, cardHeight);
-            } else {
-                // Fallback to colored rectangle
-                fill(0, 0, 150);
-                textAlign(CENTER, CENTER);
-                textSize(12);
-                textStyle(BOLD);
-                text('?', cardX + cardWidth/2, cardY + cardHeight/2);
-            }
-        }
-        
-        pop();
+        // Use enhanced CardRenderer with options
+        CardRenderer.drawCard(cardX, finalY, cardWidth, cardHeight, card, isLocalPlayer || card.isRevealed, {
+            shadowOffset: 4,
+            shadowOpacity: 120,
+            borderWidth: 2,
+            cornerRadius: 8,
+            highlight: false
+        });
     });
 }
 
 function drawPot() {
     const centerX = width/2;
-    const centerY = height/2;
+    const centerY = height/2 - 100; // Move pot up to avoid overlapping with community cards
     
     push();
     
-    // Draw pot shadow
-    fill(0, 0, 0, 60);
-    noStroke();
-    ellipse(centerX + 3, centerY + 3, 140, 80);
+    // Add subtle pulsing animation to the pot
+    const time = millis() * 0.002;
+    const pulseScale = 1 + sin(time) * 0.05;
+    const potWidth = 160 * pulseScale;
+    const potHeight = 90 * pulseScale;
     
-    // Draw pot background
+    // Draw pot shadow
+    fill(0, 0, 0, 80);
+    noStroke();
+    ellipse(centerX + 4, centerY + 4, potWidth, potHeight);
+    
+    // Draw pot background with gradient
     fill(255, 215, 0);
     stroke(255, 165, 0);
-    strokeWeight(4);
-    ellipse(centerX, centerY, 140, 80);
+    strokeWeight(5);
+    ellipse(centerX, centerY, potWidth, potHeight);
     
-    // Draw pot text with shadow
+    // Draw pot inner circle
+    fill(255, 255, 0);
+    noStroke();
+    ellipse(centerX, centerY, 140 * pulseScale, 70 * pulseScale);
+    
+    // Draw pot text with better styling
     textAlign(CENTER, CENTER);
-    textSize(20);
+    textSize(24);
     textStyle(BOLD);
     
     // Shadow
-    fill(0, 0, 0, 150);
-    text('POT', centerX + 2, centerY - 10);
-    text('$' + (window.game.pot || 0), centerX + 2, centerY + 15);
+    fill(0, 0, 0, 200);
+    text('POT', centerX + 2, centerY - 15);
+    text('$' + (window.game.pot || 0), centerX + 2, centerY + 10);
     
     // Main text
     fill(0);
-    text('POT', centerX, centerY - 10);
-    text('$' + (window.game.pot || 0), centerX, centerY + 15);
+    text('POT', centerX, centerY - 15);
+    text('$' + (window.game.pot || 0), centerX, centerY + 10);
     
     pop();
 }
@@ -1393,8 +1570,8 @@ function drawChips() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radiusX = width * 0.28; // Match player positioning
-    const radiusY = height * 0.22; // Match player positioning
+    const radiusX = width * 0.32; // Match player positioning
+    const radiusY = height * 0.25; // Match player positioning
     
     // Draw chips for each player - positioned in dedicated areas
     window.game.players.forEach((player, index) => {
@@ -1403,10 +1580,10 @@ function drawChips() {
         const y = centerY + sin(angle) * radiusY;
         
         // Position chips in dedicated areas around each player
-        const chipOffsetX = cos(angle) * 100; // Move chips further out
-        const chipOffsetY = sin(angle) * 100; // Move chips further out
+        const chipOffsetX = cos(angle) * 120; // Move chips further out
+        const chipOffsetY = sin(angle) * 120; // Move chips further out
         const chipX = x + chipOffsetX;
-        const chipY = y + chipOffsetY + 60; // Position below player area
+        const chipY = y + chipOffsetY + 80; // Position below player area
         
         // Draw chip stack based on player's chips
         drawChipStack(chipX, chipY, player.chips, player.currentBet);
@@ -1416,11 +1593,18 @@ function drawChips() {
 function drawChipStack(x, y, totalChips, currentBet) {
     push();
     
-    // Draw chip area background
-    fill(0, 0, 0, 120);
-    stroke(255, 255, 255, 150);
-    strokeWeight(2);
-    rect(x - 60, y - 35, 120, 70, 10);
+    // Draw chip area background with better styling
+    fill(0, 0, 0, 150);
+    stroke(255, 255, 255, 200);
+    strokeWeight(3);
+    rect(x - 70, y - 40, 140, 80, 12);
+    
+    // Draw chip area title
+    fill(255, 215, 0);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    textStyle(BOLD);
+    text('Chips', x, y - 25);
     
     // Calculate chip distribution
     const chipValues = [100, 50, 25, 10, 5, 1];
@@ -1440,62 +1624,69 @@ function drawChipStack(x, y, totalChips, currentBet) {
     chipValues.forEach((value, index) => {
         const chipCount = Math.floor(remainingChips / value);
         if (chipCount > 0) {
-            const maxChipsToShow = Math.min(chipCount, 3); // Limit visual chips to 3 per value
+            const maxChipsToShow = Math.min(chipCount, 4); // Show up to 4 chips per value
             
             for (let i = 0; i < maxChipsToShow; i++) {
-                const chipX = x + (i % 3) * 18 - 18; // Spread chips in 3 columns
-                const chipY = y - stackHeight - i * 4; // Vertical spacing
+                const chipX = x + (i % 2) * 25 - 12; // Spread chips in 2 columns
+                const chipY = y - stackHeight - i * 3; // Vertical spacing
                 
                 // Draw chip shadow
-                fill(0, 0, 0, 80);
+                fill(0, 0, 0, 100);
                 noStroke();
-                ellipse(chipX + 2, chipY + 2, 28, 16);
+                ellipse(chipX + 2, chipY + 2, 24, 14);
                 
                 // Draw chip
                 fill(chipColors[index][0], chipColors[index][1], chipColors[index][2]);
                 stroke(0);
                 strokeWeight(2);
-                ellipse(chipX, chipY, 28, 16);
+                ellipse(chipX, chipY, 24, 14);
                 
                 // Draw chip value
                 fill(255);
                 textAlign(CENTER, CENTER);
-                textSize(9);
+                textSize(8);
                 textStyle(BOLD);
                 text(value, chipX, chipY);
             }
             
             remainingChips -= chipCount * value;
-            stackHeight += maxChipsToShow * 4 + 8;
+            stackHeight += maxChipsToShow * 3 + 6;
         }
     });
     
     // Draw current bet chips separately
     if (currentBet > 0) {
-        const betChips = Math.min(currentBet, 3); // Show up to 3 bet chips
+        const betChips = Math.min(currentBet, 4); // Show up to 4 bet chips
         for (let i = 0; i < betChips; i++) {
-            const chipX = x + i * 20 - 20;
-            const chipY = y + 25;
+            const chipX = x + (i % 2) * 25 - 12;
+            const chipY = y + 20;
             
             // Draw bet chip shadow
-            fill(0, 0, 0, 80);
+            fill(0, 0, 0, 100);
             noStroke();
-            ellipse(chipX + 2, chipY + 2, 26, 14);
+            ellipse(chipX + 2, chipY + 2, 22, 12);
             
             // Draw bet chip (different color)
             fill(255, 0, 255); // Magenta for bet chips
             stroke(255);
             strokeWeight(2);
-            ellipse(chipX, chipY, 26, 14);
+            ellipse(chipX, chipY, 22, 12);
             
             // Draw bet indicator
             fill(255);
             textAlign(CENTER, CENTER);
-            textSize(8);
+            textSize(7);
             textStyle(BOLD);
             text('B', chipX, chipY);
         }
     }
+    
+    // Draw total chips text
+    fill(255, 255, 255);
+    textAlign(CENTER, CENTER);
+    textSize(10);
+    textStyle(BOLD);
+    text('$' + totalChips, x, y + 35);
     
     pop();
 }

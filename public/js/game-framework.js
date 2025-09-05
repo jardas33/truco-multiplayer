@@ -306,46 +306,82 @@ class GameStateManager {
 
 // CARD RENDERING
 class CardRenderer {
-    static drawCard(x, y, width, height, card, isFaceUp = true) {
+    static drawCard(x, y, width, height, card, isFaceUp = true, options = {}) {
         if (!card) return;
+        
+        const {
+            shadowOffset = 4,
+            shadowOpacity = 100,
+            borderWidth = 2,
+            cornerRadius = 8,
+            highlight = false
+        } = options;
         
         push();
         
-        // Draw card shadow
-        fill(0, 0, 0, 80);
+        // Draw card shadow with enhanced depth
+        fill(0, 0, 0, shadowOpacity);
         noStroke();
-        rect(x + 3, y + 3, width, height, 8);
+        rect(x + shadowOffset, y + shadowOffset, width, height, cornerRadius);
         
-        // Draw card background
+        // Draw card background with gradient effect
         fill(255);
         stroke(0);
-        strokeWeight(2);
-        rect(x, y, width, height, 8);
+        strokeWeight(borderWidth);
+        rect(x, y, width, height, cornerRadius);
+        
+        // Add highlight effect if specified
+        if (highlight) {
+            fill(255, 255, 0, 30);
+            noStroke();
+            rect(x, y, width, height, cornerRadius);
+        }
         
         if (isFaceUp && card.name) {
             // Try to draw actual card image with proper name mapping
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
             
             if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                // Draw image with proper scaling and centering
+                imageMode(CORNER);
                 image(cardImages[imageName], x, y, width, height);
             } else {
-                // Fallback to text if image not available
+                // Enhanced fallback to text with better styling
                 fill(0);
                 textAlign(CENTER, CENTER);
-                textSize(12);
+                textSize(Math.max(10, width * 0.15));
                 textStyle(BOLD);
+                
+                // Draw text with shadow
+                fill(0, 0, 0, 150);
+                text(card.name, x + width/2 + 1, y + height/2 + 1);
+                fill(0);
                 text(card.name, x + width/2, y + height/2);
             }
         } else {
-            // Draw card back image
+            // Draw card back image with enhanced styling
             if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                imageMode(CORNER);
                 image(window.cardBackImage, x, y, width, height);
             } else {
-                // Fallback to colored rectangle
+                // Enhanced fallback with pattern
                 fill(0, 0, 150);
+                stroke(255, 255, 255);
+                strokeWeight(1);
+                rect(x, y, width, height, cornerRadius);
+                
+                // Draw pattern
+                fill(255, 255, 255, 100);
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        ellipse(x + width/4 + i * width/4, y + height/4 + j * height/4, 4, 4);
+                    }
+                }
+                
                 textAlign(CENTER, CENTER);
-                textSize(12);
+                textSize(Math.max(12, width * 0.2));
                 textStyle(BOLD);
+                fill(255);
                 text('?', x + width/2, y + height/2);
             }
         }
