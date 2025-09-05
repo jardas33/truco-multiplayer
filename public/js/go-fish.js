@@ -1334,7 +1334,7 @@ function drawActionButtons() {
         rect(buttonX - buttonWidth - 10 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
         
         // Draw button with hover effect
-        fill(isHovering ? 69, 160, 73 : 76, 175, 80);
+        fill(isHovering ? 69 : 76, isHovering ? 160 : 175, isHovering ? 73 : 80);
         stroke(255);
         strokeWeight(2);
         rect(buttonX - buttonWidth - 10, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
@@ -1363,7 +1363,7 @@ function drawActionButtons() {
     rect(buttonX + 10 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
     
     // Draw button with hover effect
-    fill(isHoveringFish ? 25, 118, 210 : 33, 150, 243);
+    fill(isHoveringFish ? 25 : 33, isHoveringFish ? 118 : 150, isHoveringFish ? 210 : 243);
     stroke(255);
     strokeWeight(2);
     rect(buttonX + 10, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
