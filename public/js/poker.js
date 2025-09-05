@@ -1093,15 +1093,15 @@ function drawGameState() {
 function drawPokerTable() {
     const centerX = width/2;
     const centerY = height/2;
-    const tableWidth = width * 0.7;
-    const tableHeight = height * 0.5;
+    const tableWidth = width * 0.75;
+    const tableHeight = height * 0.55;
     
     push();
     
-    // Draw table shadow
-    fill(0, 0, 0, 60);
+    // Draw table shadow (more realistic)
+    fill(0, 0, 0, 40);
     noStroke();
-    ellipse(centerX + 6, centerY + 6, tableWidth + 12, tableHeight + 12);
+    ellipse(centerX + 8, centerY + 8, tableWidth + 16, tableHeight + 16);
     
     // Draw table rim (outermost)
     fill(101, 67, 33);
@@ -1111,31 +1111,22 @@ function drawPokerTable() {
     // Draw table edge
     fill(139, 69, 19);
     noStroke();
-    ellipse(centerX, centerY, tableWidth - 20, tableHeight - 15);
+    ellipse(centerX, centerY, tableWidth - 25, tableHeight - 20);
     
     // Draw main table felt
-    fill(0, 100, 0);
+    fill(0, 120, 0);
     noStroke();
-    ellipse(centerX, centerY, tableWidth - 40, tableHeight - 30);
+    ellipse(centerX, centerY, tableWidth - 50, tableHeight - 40);
     
-    // Draw inner table highlight
-    fill(0, 150, 0, 80);
+    // Draw subtle felt texture
+    fill(0, 100, 0, 30);
     noStroke();
-    ellipse(centerX, centerY, tableWidth - 60, tableHeight - 45);
-    
-    // Draw pot area
-    fill(255, 215, 0, 200);
-    stroke(255, 165, 0);
-    strokeWeight(3);
-    ellipse(centerX, centerY, 120, 70);
-    
-    // Draw pot text
-    fill(0);
-    textAlign(CENTER, CENTER);
-    textSize(18);
-    textStyle(BOLD);
-    text('POT', centerX, centerY - 8);
-    text('$' + (window.game.pot || 0), centerX, centerY + 12);
+    for (let i = 0; i < 15; i++) {
+        const angle = (TWO_PI / 15) * i;
+        const x = centerX + cos(angle) * (tableWidth * 0.2);
+        const y = centerY + sin(angle) * (tableHeight * 0.2);
+        ellipse(x, y, 12, 12);
+    }
     
     pop();
 }
@@ -1192,9 +1183,8 @@ function drawPlayers() {
     
     const centerX = width/2;
     const centerY = height/2;
-    // Better positioning around the table
-    const radiusX = width * 0.32;  // Closer to table edge
-    const radiusY = height * 0.25; // Closer to table edge
+    const radiusX = width * 0.28;  // Better positioning
+    const radiusY = height * 0.22; // Better positioning
     
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
@@ -1203,72 +1193,48 @@ function drawPlayers() {
         
         push();
         
-        // Draw player name background
-        fill(0, 0, 0, 200);
+        // Draw player area background
+        fill(0, 0, 0, 220);
         stroke(255, 255, 255);
         strokeWeight(2);
-        rect(x - 60, y - 40, 120, 30, 8);
+        rect(x - 80, y - 50, 160, 100, 10);
         
         // Draw player name
         textAlign(CENTER, CENTER);
         textSize(16);
         textStyle(BOLD);
         fill(255, 255, 255);
-        text(player.name, x, y - 25);
-        
-        // Draw chips background
-        fill(0, 0, 0, 200);
-        stroke(255, 215, 0);
-        strokeWeight(2);
-        rect(x - 60, y - 5, 120, 25, 8);
+        text(player.name, x, y - 30);
         
         // Draw player chips
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
         fill(255, 215, 0);
-        text('$' + player.chips, x, y + 8);
+        text('$' + player.chips, x, y - 5);
         
         // Draw current bet if any
         if (player.currentBet > 0) {
-            push();
             textAlign(CENTER, CENTER);
-            textSize(14); // Increased from 12
+            textSize(12);
             textStyle(BOLD);
-            
-            // Draw shadow with thicker stroke for stability
-            fill(0, 0, 0, 200); // Darker shadow
-            stroke(0, 0, 0, 200);
-            strokeWeight(2);
-            text('Bet: $' + player.currentBet, x + 3, y + 15 + 3);
-            
-            // Main text with outline for stability
             fill(255, 100, 100);
-            stroke(0, 0, 0, 100);
-            strokeWeight(1);
             text('Bet: $' + player.currentBet, x, y + 15);
-            pop();
         }
         
-        // Draw player cards with better positioning
+        // Draw player cards
         if (player.hand && player.hand.length > 0) {
-            // Show card images for Player 1 (index 0) or if it's the local player
             const shouldShowCardImages = index === 0 || index === window.pokerClient?.localPlayerIndex || player.hand.some(card => card.isRevealed);
-            const cardY = y + 50; // Position cards below player info
+            const cardY = y + 40; // Position cards below player info
             drawPlayerCards(x, cardY, player.hand, shouldShowCardImages);
         }
         
-        // Highlight current player with stable effect
+        // Highlight current player
         if (index === window.game.currentPlayer) {
             stroke(255, 255, 0);
-            strokeWeight(6);
+            strokeWeight(4);
             noFill();
-            ellipse(x, y, 150, 110);
-            
-            // Add subtle static highlight (no pulsing to prevent flashing)
-            stroke(255, 255, 0, 80);
-            strokeWeight(2);
-            ellipse(x, y, 160, 120);
+            rect(x - 85, y - 55, 170, 110, 12);
         }
         
         pop();
@@ -1276,26 +1242,26 @@ function drawPlayers() {
 }
 
 function drawPlayerCards(x, y, hand, isLocalPlayer) {
-    const cardWidth = 80;  // Increased to match truco style
-    const cardHeight = 123; // Increased to match truco style (maintaining aspect ratio)
-    const spacing = 15;    // Increased spacing for bigger cards
+    const cardWidth = 70;
+    const cardHeight = 98;
+    const spacing = 12;
     
     hand.forEach((card, index) => {
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
-        const cardY = y + 30;
+        const cardY = y;
         
         push();
         
         // Draw card shadow
-        fill(0, 0, 0, 80);
+        fill(0, 0, 0, 100);
         noStroke();
-        rect(cardX + 3, cardY + 3, cardWidth, cardHeight, 6);
+        rect(cardX + 3, cardY + 3, cardWidth, cardHeight, 8);
         
         // Draw card
         fill(255);
         stroke(0);
-        strokeWeight(3);
-        rect(cardX, cardY, cardWidth, cardHeight, 6);
+        strokeWeight(2);
+        rect(cardX, cardY, cardWidth, cardHeight, 8);
         
         // Draw card content (only show for local player or if revealed)
         if (isLocalPlayer || card.isRevealed) {
@@ -1308,7 +1274,7 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
                 // Fallback to text if image not available
                 fill(0);
                 textAlign(CENTER, CENTER);
-                textSize(14); // Increased for bigger cards
+                textSize(12);
                 textStyle(BOLD);
                 text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
             }
@@ -1320,17 +1286,9 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
                 // Fallback to colored rectangle
                 fill(0, 0, 150);
                 textAlign(CENTER, CENTER);
-                textSize(14); // Increased for bigger cards
+                textSize(12);
                 textStyle(BOLD);
                 text('?', cardX + cardWidth/2, cardY + cardHeight/2);
-            }
-        }
-        
-        // Add pattern to card back
-        fill(255, 255, 255, 30);
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 2; j++) {
-                ellipse(cardX + 8 + i * 8, cardY + 8 + j * 15, 3, 3);
             }
         }
         
@@ -1339,47 +1297,38 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
 }
 
 function drawPot() {
-    if (window.game.pot > 0) {
-        push();
-        
-        // Draw pot background
-        fill(0, 0, 0, 150);
-        stroke(255, 215, 0);
-        strokeWeight(3);
-        ellipse(width/2, height/2 + 100, 120, 60);
-        
-        // Draw pot text with shadow
-        textAlign(CENTER, CENTER);
-        textSize(20); // Increased from 18
-        textStyle(BOLD);
-        
-        // Shadow with thicker stroke for stability
-        fill(0, 0, 0, 200);
-        stroke(0, 0, 0, 200);
-        strokeWeight(2);
-        text('POT', width/2 + 3, height/2 + 90 + 3);
-        
-        // Main text with outline for stability
-        fill(255, 215, 0); // Gold color
-        stroke(0, 0, 0, 100);
-        strokeWeight(1);
-        text('POT', width/2, height/2 + 90);
-        
-        textSize(18); // Increased from 16
-        // Shadow for amount
-        fill(0, 0, 0, 200);
-        stroke(0, 0, 0, 200);
-        strokeWeight(2);
-        text('$' + window.game.pot, width/2 + 3, height/2 + 110 + 3);
-        
-        // Main text for amount
-        fill(255, 215, 0);
-        stroke(0, 0, 0, 100);
-        strokeWeight(1);
-        text('$' + window.game.pot, width/2, height/2 + 110);
-        
-        pop();
-    }
+    const centerX = width/2;
+    const centerY = height/2;
+    
+    push();
+    
+    // Draw pot shadow
+    fill(0, 0, 0, 60);
+    noStroke();
+    ellipse(centerX + 3, centerY + 3, 140, 80);
+    
+    // Draw pot background
+    fill(255, 215, 0);
+    stroke(255, 165, 0);
+    strokeWeight(4);
+    ellipse(centerX, centerY, 140, 80);
+    
+    // Draw pot text with shadow
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    textStyle(BOLD);
+    
+    // Shadow
+    fill(0, 0, 0, 150);
+    text('POT', centerX + 2, centerY - 10);
+    text('$' + (window.game.pot || 0), centerX + 2, centerY + 15);
+    
+    // Main text
+    fill(0);
+    text('POT', centerX, centerY - 10);
+    text('$' + (window.game.pot || 0), centerX, centerY + 15);
+    
+    pop();
 }
 
 function drawGameInfo() {
@@ -1444,8 +1393,8 @@ function drawChips() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radiusX = width * 0.32; // Match player positioning
-    const radiusY = height * 0.25; // Match player positioning
+    const radiusX = width * 0.28; // Match player positioning
+    const radiusY = height * 0.22; // Match player positioning
     
     // Draw chips for each player - positioned in dedicated areas
     window.game.players.forEach((player, index) => {
@@ -1454,10 +1403,10 @@ function drawChips() {
         const y = centerY + sin(angle) * radiusY;
         
         // Position chips in dedicated areas around each player
-        const chipOffsetX = cos(angle) * 80; // Move chips to dedicated area
-        const chipOffsetY = sin(angle) * 80; // Move chips to dedicated area
+        const chipOffsetX = cos(angle) * 100; // Move chips further out
+        const chipOffsetY = sin(angle) * 100; // Move chips further out
         const chipX = x + chipOffsetX;
-        const chipY = y + chipOffsetY + 80; // Position below player area
+        const chipY = y + chipOffsetY + 60; // Position below player area
         
         // Draw chip stack based on player's chips
         drawChipStack(chipX, chipY, player.chips, player.currentBet);
@@ -1468,10 +1417,10 @@ function drawChipStack(x, y, totalChips, currentBet) {
     push();
     
     // Draw chip area background
-    fill(0, 0, 0, 100);
-    stroke(255, 255, 255, 100);
-    strokeWeight(1);
-    rect(x - 50, y - 30, 100, 60, 8);
+    fill(0, 0, 0, 120);
+    stroke(255, 255, 255, 150);
+    strokeWeight(2);
+    rect(x - 60, y - 35, 120, 70, 10);
     
     // Calculate chip distribution
     const chipValues = [100, 50, 25, 10, 5, 1];
@@ -1491,58 +1440,58 @@ function drawChipStack(x, y, totalChips, currentBet) {
     chipValues.forEach((value, index) => {
         const chipCount = Math.floor(remainingChips / value);
         if (chipCount > 0) {
-            const maxChipsToShow = Math.min(chipCount, 4); // Limit visual chips to 4 per value
+            const maxChipsToShow = Math.min(chipCount, 3); // Limit visual chips to 3 per value
             
             for (let i = 0; i < maxChipsToShow; i++) {
-                const chipX = x + (i % 2) * 20 - 20; // Spread chips in 2 columns
-                const chipY = y - stackHeight - i * 3; // Vertical spacing
+                const chipX = x + (i % 3) * 18 - 18; // Spread chips in 3 columns
+                const chipY = y - stackHeight - i * 4; // Vertical spacing
                 
                 // Draw chip shadow
-                fill(0, 0, 0, 100);
+                fill(0, 0, 0, 80);
                 noStroke();
-                ellipse(chipX + 2, chipY + 2, 24, 14);
+                ellipse(chipX + 2, chipY + 2, 28, 16);
                 
                 // Draw chip
                 fill(chipColors[index][0], chipColors[index][1], chipColors[index][2]);
                 stroke(0);
                 strokeWeight(2);
-                ellipse(chipX, chipY, 24, 14);
+                ellipse(chipX, chipY, 28, 16);
                 
                 // Draw chip value
                 fill(255);
                 textAlign(CENTER, CENTER);
-                textSize(8);
+                textSize(9);
                 textStyle(BOLD);
                 text(value, chipX, chipY);
             }
             
             remainingChips -= chipCount * value;
-            stackHeight += maxChipsToShow * 3 + 5;
+            stackHeight += maxChipsToShow * 4 + 8;
         }
     });
     
     // Draw current bet chips separately
     if (currentBet > 0) {
-        const betChips = Math.min(currentBet, 2); // Show up to 2 bet chips
+        const betChips = Math.min(currentBet, 3); // Show up to 3 bet chips
         for (let i = 0; i < betChips; i++) {
-            const chipX = x + i * 15 - 7;
-            const chipY = y + 20;
+            const chipX = x + i * 20 - 20;
+            const chipY = y + 25;
             
             // Draw bet chip shadow
-            fill(0, 0, 0, 100);
+            fill(0, 0, 0, 80);
             noStroke();
-            ellipse(chipX + 2, chipY + 2, 22, 12);
+            ellipse(chipX + 2, chipY + 2, 26, 14);
             
             // Draw bet chip (different color)
             fill(255, 0, 255); // Magenta for bet chips
             stroke(255);
             strokeWeight(2);
-            ellipse(chipX, chipY, 22, 12);
+            ellipse(chipX, chipY, 26, 14);
             
             // Draw bet indicator
             fill(255);
             textAlign(CENTER, CENTER);
-            textSize(7);
+            textSize(8);
             textStyle(BOLD);
             text('B', chipX, chipY);
         }
