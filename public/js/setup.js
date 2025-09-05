@@ -70,7 +70,10 @@ function setup() {
     instructionsButton.position(20, 20);
     instructionsButton.mousePressed(() => {
         console.log('📖 Instructions button clicked');
-        if (typeof showInstructions === 'function') {
+        // Call the correct showInstructions function from functions.js
+        if (typeof window.showInstructions === 'function') {
+            window.showInstructions();
+        } else if (typeof showInstructions === 'function') {
             showInstructions();
         } else {
             console.error('showInstructions function not found');
@@ -82,11 +85,14 @@ function setup() {
     instructionsButton.style('padding', '10px 20px'); // Ensure consistent padding
     instructionsButton.style('margin', '5px'); // Ensure consistent margin
     instructionsButton.style('border', '2px solid #fff'); // Ensure consistent border
-    instructionsButton.style('background-color', 'rgba(0, 0, 0, 0.7)'); // Ensure consistent background
-    instructionsButton.style('color', 'white'); // Ensure consistent text color
+    instructionsButton.style('background-color', 'rgba(0, 0, 0, 0.7) !important'); // Ensure consistent background
+    instructionsButton.style('color', 'white !important'); // Ensure consistent text color
     instructionsButton.style('font-weight', 'bold'); // Ensure consistent font weight
     instructionsButton.style('border-radius', '5px'); // Ensure consistent border radius
     instructionsButton.style('text-align', 'center'); // Ensure consistent text alignment
+    instructionsButton.style('font-size', '14px !important'); // Ensure consistent font size
+    instructionsButton.style('width', 'auto !important'); // Ensure auto width
+    instructionsButton.style('height', 'auto !important'); // Ensure auto height
     instructionsButton.show();
 
     // Only show Card Values button for Truco game
@@ -96,7 +102,10 @@ function setup() {
         cardValuesButton.position(20, 70); // Position right under Instructions button with proper spacing
         cardValuesButton.mousePressed(() => {
             console.log('🃏 Card Values button clicked');
-            if (typeof showCardValues === 'function') {
+            // Call the correct showCardValues function from functions.js
+            if (typeof window.showCardValues === 'function') {
+                window.showCardValues();
+            } else if (typeof showCardValues === 'function') {
                 showCardValues();
             } else {
                 console.error('showCardValues function not found');

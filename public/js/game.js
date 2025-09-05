@@ -512,10 +512,18 @@ function createDeck() {
           
           this.startRoundPlayer = this.currentPlayerIndex;
           
+          // CRITICAL FIX: Reset all players to inactive before activating the next player
+          this.players.forEach(player => {
+            player.isActive = false;
+            player.hand.forEach(card => card.isClickable = false);
+          });
+          
           // Safety check to ensure valid player index
           if (this.currentPlayerIndex >= 0 && this.currentPlayerIndex < this.players.length) {
             this.players[this.currentPlayerIndex].isActive = true;
             this.players[this.currentPlayerIndex].hand.forEach(card => card.isClickable = true);
+            
+            console.log(`🎯 DRAW FIX: Activated player ${this.currentPlayerIndex} (${this.players[this.currentPlayerIndex].name}) for next round`);
             
             if (this.players[this.currentPlayerIndex].isBot) {
               setTimeout(() => this.players[this.currentPlayerIndex].botPlay(), timeBots);
@@ -526,6 +534,10 @@ function createDeck() {
             this.currentPlayerIndex = 0;
             this.players[0].isActive = true;
             this.players[0].hand.forEach(card => card.isClickable = true);
+            
+            if (this.players[0].isBot) {
+              setTimeout(() => this.players[0].botPlay(), timeBots);
+            }
           }
         }, timeEndRound);
       }
