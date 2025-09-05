@@ -1882,10 +1882,10 @@ function validateLayoutSpacing() {
 
 function drawModernScorePanel() {
     const dims = getResponsiveDimensions();
-    const panelWidth = dims.isSmallScreen ? 180 : 200;
-    const panelHeight = dims.isSmallScreen ? 160 : 180; // Increased height for overall scores
+    const panelWidth = dims.isSmallScreen ? 200 : 220; // Increased width
+    const panelHeight = dims.isSmallScreen ? 200 : 220; // Increased height for overall scores
     const panelX = width - panelWidth - 20; // Bottom right with margin
-    const panelY = height - panelHeight - 20; // Bottom right with margin
+    const panelY = height - panelHeight - 40; // Moved higher with more margin
     
     // Draw score panel background
     fill(0, 0, 0, 200);
@@ -1910,7 +1910,7 @@ function drawModernScorePanel() {
     
     // Player scores
     if (window.game && window.game.players) {
-        let yOffset = 80;
+        let yOffset = 85; // Slightly more space from title
         window.game.players.forEach((player, index) => {
             const isCurrentPlayer = index === window.game.currentPlayer;
             const textColor = isCurrentPlayer ? color(255, 215, 0) : color(255, 255, 255);
@@ -1918,16 +1918,16 @@ function drawModernScorePanel() {
             fill(textColor);
             textSize(14);
             text(`${player.name}: ${player.pairs || 0} pairs`, panelX + 15, panelY + yOffset);
-            yOffset += 25;
+            yOffset += 22; // Slightly tighter spacing
         });
         
         // Overall scores section
-        yOffset += 10; // Add some spacing
+        yOffset += 15; // More spacing between sections
         fill(255, 215, 0);
-        textSize(12);
+        textSize(13);
         textStyle(BOLD);
         text('Overall Wins:', panelX + 15, panelY + yOffset);
-        yOffset += 20;
+        yOffset += 22;
         
         window.game.players.forEach((player, index) => {
             const isCurrentPlayer = index === window.game.currentPlayer;
@@ -1937,7 +1937,7 @@ function drawModernScorePanel() {
             textSize(12);
             textStyle(NORMAL);
             text(`${player.name}: ${player.overallWins || 0}`, panelX + 15, panelY + yOffset);
-            yOffset += 18;
+            yOffset += 20; // Consistent spacing
         });
     }
 }
