@@ -1987,14 +1987,11 @@ function mousePressed() {
         return;
     }
     
-    // Check if Restart Game button was clicked
+    // Check if Back to Go Fish Menu button was clicked
     if (mouseX >= restartButtonX && mouseX <= restartButtonX + buttonWidth &&
         mouseY >= menuY && mouseY <= menuY + buttonHeight) {
-        console.log('🔄 Restart Game clicked');
-        if (window.goFishClient) {
-            window.goFishClient.reset();
-            window.location.reload();
-        }
+        console.log('🐟 Back to Go Fish Menu clicked');
+        window.location.href = '/go-fish.html';
         return;
     }
 }
@@ -2237,7 +2234,7 @@ function drawGameMenu() {
     textSize(14);
     text('← Back to Main Menu', backButtonX + buttonWidth/2, menuY + buttonHeight/2);
     
-    // Draw Restart Game button
+    // Draw Back to Go Fish Menu button
     fill(isHoveringRestart ? 50 : 30, 100, 150, 200);
     stroke(100, 150, 200);
     strokeWeight(2);
@@ -2247,7 +2244,7 @@ function drawGameMenu() {
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(14);
-    text('🔄 Restart Game', restartButtonX + buttonWidth/2, menuY + buttonHeight/2);
+    text('🐟 Go Fish Menu', restartButtonX + buttonWidth/2, menuY + buttonHeight/2);
 }
 
 // Initialize when page loads
