@@ -14,6 +14,8 @@ class GoFishGame {
 
     // Initialize the game
     initialize(players) {
+        console.log('🐟 Go Fish: Initializing game with players:', players);
+        
         this.players = players.map((player, index) => ({
             ...player,
             hand: [],
@@ -41,6 +43,13 @@ class GoFishGame {
         window.game = this;
         
         this.startNewGame();
+        
+        console.log('🐟 Go Fish: Game state after initialization:', {
+            players: this.players.length,
+            deck: this.deck.length,
+            pond: this.pond.length,
+            currentPlayer: this.currentPlayer
+        });
     }
 
     // Start a new game
@@ -58,16 +67,24 @@ class GoFishGame {
         this.gameOver = false;
         this.winner = null;
         
-        // Shuffle deck
+        // Create fresh deck and shuffle
+        this.deck = CardUtils.createStandardDeck();
         this.deck = CardUtils.shuffleDeck(this.deck);
+        
+        console.log('🃏 Deck created and shuffled, cards:', this.deck.length);
         
         // Deal cards
         this.dealCards();
+        
+        console.log('🃏 Cards dealt. Player hands:', this.players.map(p => ({ name: p.name, cards: p.hand.length })));
+        console.log('🃏 Pond cards:', this.pond.length);
         
         // Check for initial pairs
         this.players.forEach(player => {
             this.checkForPairs(player);
         });
+        
+        console.log('🎯 Initial pairs found:', this.players.map(p => ({ name: p.name, pairs: p.pairs })));
         
         this.emitEvent('gameStarted', {
             players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
@@ -460,12 +477,40 @@ class GoFishClient {
 
     // Start game
     startGame(data = null) {
+        console.log('🎮 Go Fish: Starting game with data:', data);
+        
         if (data) {
             this.game.initialize(data.players);
-            this.localPlayerIndex = data.localPlayerIndex;
+            this.localPlayerIndex = data.localPlayerIndex || 0;
+        } else {
+            // Initialize with default players for testing
+            const defaultPlayers = [
+                { name: 'Player 1', hand: [], pairs: 0 },
+                { name: 'Bot 1', hand: [], pairs: 0 },
+                { name: 'Bot 2', hand: [], pairs: 0 }
+            ];
+            this.game.initialize(defaultPlayers);
+            this.localPlayerIndex = 0;
         }
         
-        UIUtils.showGame();
+        // Set global game instance
+        window.game = this.game;
+        
+        // Update UI
+        this.updateUI();
+        
+        // Show game interface
+        if (typeof UIUtils !== 'undefined' && UIUtils.showGame) {
+            UIUtils.showGame();
+        } else {
+            // Fallback: show game div directly
+            const gameDiv = document.getElementById('Game');
+            const menuDiv = document.getElementById('Menu');
+            if (gameDiv) gameDiv.style.display = 'block';
+            if (menuDiv) menuDiv.style.display = 'none';
+        }
+        
+        console.log('🎮 Go Fish: Game started successfully');
     }
 
     // Ask for cards
@@ -734,84 +779,133 @@ class GoFishClient {
 function drawGameState() {
     if (!window.game || !window.game.players) {
         console.log('🎨 Go Fish: No game or players available for rendering');
+        // Draw a waiting screen
+        background(0, 50, 100);
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        text('🐟 Go Fish', width/2, height/2 - 50);
+        textSize(16);
+        text('Waiting for game to start...', width/2, height/2);
         return;
     }
     
     console.log('🎨 Drawing Go Fish game state');
     
-    // Clear canvas with ocean-like background
+    // Clear canvas with beautiful ocean-like background
     background(0, 50, 100); // Dark blue ocean
+    
+    // Add subtle ocean texture
+    for (let i = 0; i < 50; i++) {
+        fill(0, 100, 150, 20);
+        noStroke();
+        ellipse(random(width), random(height), random(20, 80), random(10, 30));
+    }
     
     // Draw game elements
     drawGoFishTable();
     drawPlayers();
     drawPond();
     drawGameInfo();
+    drawScores();
 }
 
 function drawGoFishTable() {
-    // Draw table outline
-    stroke(0, 100, 150);
-    strokeWeight(8);
+    // Draw table shadow
+    fill(0, 0, 0, 50);
+    noStroke();
+    rect(55, 55, width - 100, height - 100, 20);
+    
+    // Draw table outline with gradient effect
+    stroke(0, 150, 200);
+    strokeWeight(6);
     noFill();
     rect(50, 50, width - 100, height - 100, 20);
     
-    // Draw table surface
-    fill(0, 80, 120, 100);
-    noStroke();
-    rect(60, 60, width - 120, height - 120, 15);
+    // Draw table surface with gradient
+    for (let i = 0; i < height - 120; i += 2) {
+        const alpha = map(i, 0, height - 120, 120, 80);
+        fill(0, 80, 120, alpha);
+        noStroke();
+        rect(60, 60 + i, width - 120, 2, 15);
+    }
+    
+    // Add table texture
+    for (let i = 0; i < 100; i++) {
+        fill(0, 120, 160, 30);
+        noStroke();
+        ellipse(random(60, width - 60), random(60, height - 60), random(5, 15), random(5, 15));
+    }
 }
 
 function drawPlayers() {
     if (!window.game.players) return;
     
-    const playerY = height * 0.2;
-    const playerWidth = 150;
+    const playerY = height * 0.15;
+    const playerWidth = 180;
+    const playerHeight = 120;
     const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
     
     window.game.players.forEach((player, index) => {
         const playerX = spacing + index * (playerWidth + spacing);
         
-        // Draw player area
-        fill(0, 0, 0, 150);
-        stroke(255);
-        strokeWeight(2);
-        rect(playerX, playerY - 40, playerWidth, 80, 10);
+        // Draw player area shadow
+        fill(0, 0, 0, 80);
+        noStroke();
+        rect(playerX + 3, playerY - 37, playerWidth, playerHeight, 12);
         
-        // Highlight current player
+        // Draw player area background
+        fill(0, 0, 0, 180);
+        stroke(255, 255, 255, 200);
+        strokeWeight(2);
+        rect(playerX, playerY - 40, playerWidth, playerHeight, 10);
+        
+        // Highlight current player with golden glow
         if (index === window.game.currentPlayer) {
-            stroke(255, 255, 0);
+            stroke(255, 215, 0);
             strokeWeight(4);
             noFill();
-            rect(playerX - 5, playerY - 45, playerWidth + 10, 90, 15);
+            rect(playerX - 5, playerY - 45, playerWidth + 10, playerHeight + 10, 15);
+            
+            // Add glow effect
+            fill(255, 215, 0, 30);
+            noStroke();
+            rect(playerX - 8, playerY - 48, playerWidth + 16, playerHeight + 16, 18);
         }
         
-        // Draw player name
+        // Draw player name with better styling
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(12);
+        textSize(14);
+        textStyle(BOLD);
         text(player.name, playerX + playerWidth/2, playerY - 20);
         
         // Draw cards count
-        textSize(10);
+        textSize(12);
+        textStyle(NORMAL);
         text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY);
         
-        // Draw sets count
-        text(`Sets: ${player.sets ? player.sets.length : 0}`, playerX + playerWidth/2, playerY + 15);
+        // Draw pairs count
+        text(`Pairs: ${player.pairs || 0}`, playerX + playerWidth/2, playerY + 15);
         
-        // Draw player cards (small representation)
+        // Draw player cards (improved representation)
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 30, player.hand, 20, 28);
+            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 25, 35, index === 0);
+        } else {
+            // Show empty hand indicator
+            fill(255, 255, 255, 100);
+            textSize(10);
+            text('No cards', playerX + playerWidth/2, playerY + 35);
         }
     });
 }
 
-function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight) {
+function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocalPlayer = false) {
     if (!cards || cards.length === 0) return;
     
-    const maxCards = 8; // Show max 8 cards
+    const maxCards = 6; // Show max 6 cards
     const cardsToShow = cards.slice(0, maxCards);
-    const spacing = 5;
+    const spacing = 8;
     const totalWidth = (cardsToShow.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -819,58 +913,110 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight) {
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
-        // Draw card
+        push();
+        
+        // Draw card shadow
+        fill(0, 0, 0, 60);
+        noStroke();
+        rect(x + 2, y + 2, cardWidth, cardHeight, 4);
+        
+        // Draw card background
         fill(255);
         stroke(0);
-        strokeWeight(1);
-        rect(x, y, cardWidth, cardHeight, 3);
+        strokeWeight(2);
+        rect(x, y, cardWidth, cardHeight, 4);
         
-        // Draw card content
-        fill(0);
-        textAlign(CENTER, CENTER);
-        textSize(6);
-        text(card.name, x + cardWidth/2, y + cardHeight/2);
+        if (isLocalPlayer) {
+            // Show actual card for local player
+            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
+                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to text
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(8);
+                textStyle(BOLD);
+                text(card.name, x + cardWidth/2, y + cardHeight/2);
+            }
+        } else {
+            // Show card back for other players
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, x, y, cardWidth, cardHeight);
+            } else {
+                // Fallback to colored rectangle
+                fill(0, 0, 150);
+                textAlign(CENTER, CENTER);
+                textSize(10);
+                textStyle(BOLD);
+                text('?', x + cardWidth/2, y + cardHeight/2);
+            }
+        }
+        
+        pop();
     });
     
     // Show "+X more" if there are more cards
     if (cards.length > maxCards) {
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(8);
-        text(`+${cards.length - maxCards}`, centerX, centerY + 20);
+        textSize(10);
+        textStyle(BOLD);
+        text(`+${cards.length - maxCards}`, centerX, centerY + 25);
     }
 }
 
 function drawPond() {
     const centerX = width / 2;
-    const pondY = height * 0.6;
+    const pondY = height * 0.65;
     
-    // Draw pond area
-    fill(0, 0, 0, 150);
-    stroke(255);
-    strokeWeight(2);
+    // Draw pond shadow
+    fill(0, 0, 0, 100);
+    noStroke();
+    rect(centerX - 202, pondY - 52, 404, 104, 12);
+    
+    // Draw pond area with gradient
+    fill(0, 0, 0, 180);
+    stroke(255, 255, 255, 200);
+    strokeWeight(3);
     rect(centerX - 200, pondY - 50, 400, 100, 10);
     
-    // Draw pond label
-    fill(255);
+    // Add pond texture
+    for (let i = 0; i < 20; i++) {
+        fill(0, 100, 150, 40);
+        noStroke();
+        ellipse(random(centerX - 180, centerX + 180), random(pondY - 30, pondY + 30), random(10, 30), random(5, 15));
+    }
+    
+    // Draw pond label with better styling
+    fill(255, 215, 0);
     textAlign(CENTER, CENTER);
-    textSize(16);
-    text('Pond', centerX, pondY - 30);
+    textSize(20);
+    textStyle(BOLD);
+    text('🐟 Fish Pond', centerX, pondY - 30);
     
     // Draw cards in pond
     if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 10, window.game.pond, 60, 84, false);
+        drawCards(centerX, pondY + 10, window.game.pond, 50, 70, false);
+        
+        // Show pond count
+        fill(255);
+        textSize(14);
+        textStyle(BOLD);
+        text(`${window.game.pond.length} cards`, centerX, pondY + 45);
     } else {
-        textSize(12);
-        text('No cards in pond', centerX, pondY + 10);
+        fill(255, 255, 255, 150);
+        textSize(14);
+        textStyle(NORMAL);
+        text('Pond is empty', centerX, pondY + 10);
     }
 }
 
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
     if (!cards || cards.length === 0) return;
     
-    const spacing = 15; // Increased spacing
-    const maxVisible = Math.min(cards.length, 5);
+    const spacing = 12;
+    const maxVisible = Math.min(cards.length, 6);
     const totalWidth = (maxVisible - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -880,15 +1026,15 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
         
         push();
         
-        // Draw card shadow
-        fill(0, 0, 0, 80);
+        // Draw card shadow with depth
+        fill(0, 0, 0, 100);
         noStroke();
-        rect(x + 3, y + 3, cardWidth, cardHeight, 6);
+        rect(x + 4, y + 4, cardWidth, cardHeight, 8);
         
-        // Draw card
+        // Draw card background
         fill(255);
         stroke(0);
-        strokeWeight(3);
+        strokeWeight(2);
         rect(x, y, cardWidth, cardHeight, 6);
         
         if (showCards && cards[i].name) {
@@ -900,7 +1046,7 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
                 // Fallback to text if image not available
                 fill(0);
                 textAlign(CENTER, CENTER);
-                textSize(12); // Increased for bigger cards
+                textSize(10);
                 textStyle(BOLD);
                 text(cards[i].name, x + cardWidth/2, y + cardHeight/2);
             }
@@ -909,10 +1055,15 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
             if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
                 image(window.cardBackImage, x, y, cardWidth, cardHeight);
             } else {
-                // Fallback to colored rectangle
+                // Fallback to colored rectangle with pattern
                 fill(0, 0, 150);
+                stroke(255);
+                strokeWeight(1);
+                rect(x + 2, y + 2, cardWidth - 4, cardHeight - 4, 4);
+                
+                fill(255);
                 textAlign(CENTER, CENTER);
-                textSize(12); // Increased for bigger cards
+                textSize(12);
                 textStyle(BOLD);
                 text('?', x + cardWidth/2, y + cardHeight/2);
             }
@@ -921,39 +1072,117 @@ function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
         pop();
     }
     
-    // Show count if more than 5 cards
-    if (cards.length > 5) {
-        fill(255);
+    // Show count if more than 6 cards
+    if (cards.length > 6) {
+        fill(255, 215, 0);
         textAlign(CENTER, CENTER);
-        textSize(14); // Increased for bigger cards
-        text(`+${cards.length - 5}`, centerX, centerY + 50);
+        textSize(16);
+        textStyle(BOLD);
+        text(`+${cards.length - 6} more`, centerX, centerY + 60);
     }
 }
 
 function drawGameInfo() {
-    // Draw game phase
-    fill(255);
+    // Draw game phase with better styling
+    fill(255, 215, 0);
     textAlign(LEFT, TOP);
-    textSize(14);
-    text(`Phase: ${window.game.gamePhase || 'playing'}`, 20, 20);
+    textSize(16);
+    textStyle(BOLD);
+    text(`🎮 Phase: ${window.game.gamePhase || 'playing'}`, 20, 20);
     
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
         const currentPlayer = window.game.players[window.game.currentPlayer];
-        text(`Current Player: ${currentPlayer.name}`, 20, 40);
+        fill(255);
+        textSize(14);
+        textStyle(NORMAL);
+        text(`👤 Current Player: ${currentPlayer.name}`, 20, 45);
     }
+    
+    // Draw pond info
+    fill(255);
+    textSize(14);
+    text(`🐟 Cards in Pond: ${window.game.pond ? window.game.pond.length : 0}`, 20, 65);
     
     // Draw winner if game is over
     if (window.game.gameOver && window.game.winner) {
         fill(255, 255, 0);
         textAlign(CENTER, CENTER);
-        textSize(24);
-        text(`Winner: ${window.game.winner.name}!`, width/2, height/2);
+        textSize(28);
+        textStyle(BOLD);
+        text(`🏆 Winner: ${window.game.winner.name}!`, width/2, height/2);
+        textSize(18);
+        text(`With ${window.game.winner.pairs} pairs!`, width/2, height/2 + 35);
     }
+}
+
+function drawScores() {
+    if (!window.game.players) return;
+    
+    const scoresX = width - 200;
+    const scoresY = 20;
+    const scoresWidth = 180;
+    const scoresHeight = 150;
+    
+    // Draw scores panel shadow
+    fill(0, 0, 0, 100);
+    noStroke();
+    rect(scoresX + 3, scoresY + 3, scoresWidth, scoresHeight, 10);
+    
+    // Draw scores panel background
+    fill(0, 0, 0, 180);
+    stroke(255, 215, 0);
+    strokeWeight(2);
+    rect(scoresX, scoresY, scoresWidth, scoresHeight, 8);
+    
+    // Draw scores title
+    fill(255, 215, 0);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    textStyle(BOLD);
+    text('🏆 Pairs', scoresX + scoresWidth/2, scoresY + 20);
+    
+    // Draw player scores
+    fill(255);
+    textSize(12);
+    textStyle(NORMAL);
+    textAlign(LEFT, CENTER);
+    
+    let yOffset = 45;
+    window.game.players.forEach((player, index) => {
+        const isCurrentPlayer = index === window.game.currentPlayer;
+        
+        if (isCurrentPlayer) {
+            fill(255, 215, 0);
+            textStyle(BOLD);
+        } else {
+            fill(255);
+            textStyle(NORMAL);
+        }
+        
+        text(`${player.name}: ${player.pairs || 0}`, scoresX + 10, scoresY + yOffset);
+        yOffset += 20;
+    });
 }
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();
     window.goFishClient.initialize();
+    
+    // Add test button for debugging
+    const testButton = document.createElement('button');
+    testButton.textContent = 'Test Start Game';
+    testButton.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: #ff6b6b; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;';
+    testButton.onclick = function() {
+        console.log('🧪 Test: Starting Go Fish game manually');
+        window.goFishClient.startGame();
+    };
+    document.body.appendChild(testButton);
+    
+    // Auto-start game after 2 seconds for testing
+    setTimeout(() => {
+        console.log('🧪 Auto-starting Go Fish game for testing');
+        window.goFishClient.startGame();
+    }, 2000);
 });
