@@ -321,13 +321,15 @@
 
         /* Button hiding logic when room is created */
         .room-created #createRoomBtn,
-        .room-created #joinRoomBtn {
+        .room-created #joinRoomBtn,
+        .room-created #roomCodeInput {
             display: none !important;
         }
         
         /* Ensure buttons are visible by default */
         #createRoomBtn,
-        #joinRoomBtn {
+        #joinRoomBtn,
+        #roomCodeInput {
             display: inline-block !important;
         }
 
@@ -399,9 +401,9 @@
           
           <!-- Room Controls -->
           <div style="margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
-            <button id="createRoomBtn">Create Room</button>
             <input type="text" id="roomCodeInput" placeholder="Enter room code to join" style="width: 200px; padding: 8px; border: 2px solid #FFD700; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 5px; text-align: center; font-size: 14px;">
             <button id="joinRoomBtn">Join Room</button>
+            <button id="createRoomBtn">Create Room</button>
           </div>
           
           
