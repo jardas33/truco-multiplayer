@@ -1102,6 +1102,7 @@ function drawGameState() {
     drawModernScorePanel();
     drawGameHistoryPanel();
     drawGameMessages();
+    drawGameMenu();
     
     // Validate layout spacing (only in development)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -1966,6 +1967,46 @@ function mousePressed() {
         console.log('📜 View Full History button clicked');
         showFullGameHistory();
     }
+    
+    // Check if Game Menu button was clicked
+    const menuButtonSize = 50;
+    const menuX = 20;
+    const menuY = 20;
+    
+    if (mouseX >= menuX && mouseX <= menuX + menuButtonSize &&
+        mouseY >= menuY && mouseY <= menuY + menuButtonSize) {
+        console.log('🎮 Game Menu button clicked');
+        // Menu panel appears on hover, no action needed here
+        return;
+    }
+    
+    // Check if Back to Main Menu button was clicked (when menu is open)
+    const panelWidth = 200;
+    const panelHeight = 120;
+    const panelX = menuX + menuButtonSize + 10;
+    const panelY = menuY;
+    const backButtonY = panelY + 45;
+    const backButtonHeight = 30;
+    
+    if (mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+        mouseY >= backButtonY && mouseY <= backButtonY + backButtonHeight) {
+        console.log('🔙 Back to Main Menu clicked');
+        window.location.href = '/';
+        return;
+    }
+    
+    // Check if Restart Game button was clicked
+    const restartButtonY = panelY + 85;
+    
+    if (mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+        mouseY >= restartButtonY && mouseY <= restartButtonY + backButtonHeight) {
+        console.log('🔄 Restart Game clicked');
+        if (window.goFishClient) {
+            window.goFishClient.reset();
+            window.location.reload();
+        }
+        return;
+    }
 }
 
 function showAskForCardsDialog() {
@@ -2170,6 +2211,84 @@ function showFullGameHistory() {
             document.body.removeChild(modal);
         }
     };
+}
+
+function drawGameMenu() {
+    // Only show menu during gameplay
+    if (!window.game || !window.game.players || window.game.players.length === 0) return;
+    
+    // Menu button in top-left corner
+    const menuButtonSize = 50;
+    const menuX = 20;
+    const menuY = 20;
+    
+    // Check if mouse is hovering over menu button
+    const isHoveringMenu = mouseX >= menuX && mouseX <= menuX + menuButtonSize &&
+                          mouseY >= menuY && mouseY <= menuY + menuButtonSize;
+    
+    // Draw menu button
+    fill(isHoveringMenu ? 60 : 40, 60, 80, 200);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(menuX, menuY, menuButtonSize, menuButtonSize, 8);
+    
+    // Draw menu icon (hamburger menu)
+    fill(255, 255, 255);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    text('☰', menuX + menuButtonSize/2, menuY + menuButtonSize/2);
+    
+    // Draw menu panel if hovering
+    if (isHoveringMenu) {
+        const panelWidth = 200;
+        const panelHeight = 120;
+        const panelX = menuX + menuButtonSize + 10;
+        const panelY = menuY;
+        
+        // Panel background
+        fill(0, 0, 0, 220);
+        stroke(100, 150, 200);
+        strokeWeight(2);
+        rect(panelX, panelY, panelWidth, panelHeight, 10);
+        
+        // Menu title
+        fill(255, 215, 0);
+        textAlign(LEFT, CENTER);
+        textSize(16);
+        text('🎮 Game Menu', panelX + 15, panelY + 25);
+        
+        // Back to Main Menu button
+        const backButtonY = panelY + 45;
+        const backButtonHeight = 30;
+        const isHoveringBack = mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+                              mouseY >= backButtonY && mouseY <= backButtonY + backButtonHeight;
+        
+        fill(isHoveringBack ? 50 : 30, 100, 150);
+        stroke(100, 150, 200);
+        strokeWeight(1);
+        rect(panelX + 10, backButtonY, panelWidth - 20, backButtonHeight, 5);
+        
+        fill(255, 255, 255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text('← Back to Main Menu', panelX + panelWidth/2, backButtonY + backButtonHeight/2);
+        
+        // Restart Game button
+        const restartButtonY = panelY + 85;
+        const isHoveringRestart = mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+                                 mouseY >= restartButtonY && mouseY <= restartButtonY + backButtonHeight;
+        
+        fill(isHoveringRestart ? 50 : 30, 100, 150);
+        stroke(100, 150, 200);
+        strokeWeight(1);
+        rect(panelX + 10, restartButtonY, panelWidth - 20, backButtonHeight, 5);
+        
+        fill(255, 255, 255);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text('🔄 Restart Game', panelX + panelWidth/2, restartButtonY + backButtonHeight/2);
+    }
 }
 
 // Initialize when page loads
