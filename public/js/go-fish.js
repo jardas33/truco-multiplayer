@@ -1450,7 +1450,7 @@ function drawModernFishPond() {
     // Draw card count
     fill(255, 255, 255);
         textSize(14);
-    text(`${window.game.pond ? window.game.pond.length : 0} cards`, centerX + 20, pondY + 65);
+    text(`${window.game.pond ? window.game.pond.length : 0} cards`, centerX + 20, pondY + 50);
 }
 
 function drawCards(centerX, centerY, cards, cardWidth, cardHeight, showCards) {
