@@ -1981,14 +1981,14 @@ function mousePressed() {
     }
     
     // Check if Back to Main Menu button was clicked (when menu is open)
-    const panelWidth = 200;
-    const panelHeight = 120;
-    const panelX = menuX + menuButtonSize + 10;
-    const panelY = menuY;
-    const backButtonY = panelY + 45;
+    const menuPanelWidth = 200;
+    const menuPanelHeight = 120;
+    const menuPanelX = menuX + menuButtonSize + 10;
+    const menuPanelY = menuY;
+    const backButtonY = menuPanelY + 45;
     const backButtonHeight = 30;
     
-    if (mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+    if (mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
         mouseY >= backButtonY && mouseY <= backButtonY + backButtonHeight) {
         console.log('🔙 Back to Main Menu clicked');
         window.location.href = '/';
@@ -1996,9 +1996,9 @@ function mousePressed() {
     }
     
     // Check if Restart Game button was clicked
-    const restartButtonY = panelY + 85;
+    const restartButtonY = menuPanelY + 85;
     
-    if (mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+    if (mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
         mouseY >= restartButtonY && mouseY <= restartButtonY + backButtonHeight) {
         console.log('🔄 Restart Game clicked');
         if (window.goFishClient) {
@@ -2241,53 +2241,53 @@ function drawGameMenu() {
     
     // Draw menu panel if hovering
     if (isHoveringMenu) {
-        const panelWidth = 200;
-        const panelHeight = 120;
-        const panelX = menuX + menuButtonSize + 10;
-        const panelY = menuY;
+        const menuPanelWidth = 200;
+        const menuPanelHeight = 120;
+        const menuPanelX = menuX + menuButtonSize + 10;
+        const menuPanelY = menuY;
         
         // Panel background
         fill(0, 0, 0, 220);
         stroke(100, 150, 200);
         strokeWeight(2);
-        rect(panelX, panelY, panelWidth, panelHeight, 10);
+        rect(menuPanelX, menuPanelY, menuPanelWidth, menuPanelHeight, 10);
         
         // Menu title
         fill(255, 215, 0);
         textAlign(LEFT, CENTER);
         textSize(16);
-        text('🎮 Game Menu', panelX + 15, panelY + 25);
+        text('🎮 Game Menu', menuPanelX + 15, menuPanelY + 25);
         
         // Back to Main Menu button
-        const backButtonY = panelY + 45;
+        const backButtonY = menuPanelY + 45;
         const backButtonHeight = 30;
-        const isHoveringBack = mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+        const isHoveringBack = mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
                               mouseY >= backButtonY && mouseY <= backButtonY + backButtonHeight;
         
         fill(isHoveringBack ? 50 : 30, 100, 150);
         stroke(100, 150, 200);
         strokeWeight(1);
-        rect(panelX + 10, backButtonY, panelWidth - 20, backButtonHeight, 5);
+        rect(menuPanelX + 10, backButtonY, menuPanelWidth - 20, backButtonHeight, 5);
         
         fill(255, 255, 255);
         textAlign(CENTER, CENTER);
         textSize(12);
-        text('← Back to Main Menu', panelX + panelWidth/2, backButtonY + backButtonHeight/2);
+        text('← Back to Main Menu', menuPanelX + menuPanelWidth/2, backButtonY + backButtonHeight/2);
         
         // Restart Game button
-        const restartButtonY = panelY + 85;
-        const isHoveringRestart = mouseX >= panelX + 10 && mouseX <= panelX + panelWidth - 10 &&
+        const restartButtonY = menuPanelY + 85;
+        const isHoveringRestart = mouseX >= menuPanelX + 10 && mouseX <= menuPanelX + menuPanelWidth - 10 &&
                                  mouseY >= restartButtonY && mouseY <= restartButtonY + backButtonHeight;
         
         fill(isHoveringRestart ? 50 : 30, 100, 150);
         stroke(100, 150, 200);
         strokeWeight(1);
-        rect(panelX + 10, restartButtonY, panelWidth - 20, backButtonHeight, 5);
+        rect(menuPanelX + 10, restartButtonY, menuPanelWidth - 20, backButtonHeight, 5);
         
         fill(255, 255, 255);
         textAlign(CENTER, CENTER);
         textSize(12);
-        text('🔄 Restart Game', panelX + panelWidth/2, restartButtonY + backButtonHeight/2);
+        text('🔄 Restart Game', menuPanelX + menuPanelWidth/2, restartButtonY + backButtonHeight/2);
     }
 }
 
