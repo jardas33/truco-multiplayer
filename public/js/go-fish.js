@@ -2362,12 +2362,18 @@ function drawGameHistoryPanel() {
     // Draw history entries
     if (window.game && window.game.gameHistory) {
         let yOffset = 65; // Start below button
-        const maxEntries = Math.floor((panelHeight - 100) / 16); // Calculate how many entries fit (account for button)
+        const availableHeight = panelHeight - 85; // Account for title, button, and padding
+        const lineHeight = 14; // Reduced line height for better fit
+        const maxEntries = Math.floor(availableHeight / lineHeight);
         
         // Display history in reverse order (newest first)
         const historyToShow = window.game.gameHistory.slice(0, maxEntries);
         historyToShow.forEach((entry, index) => {
-            if (yOffset + 16 > panelY + panelHeight - 20) return; // Don't draw outside panel
+            const textY = panelY + yOffset;
+            const bottomBoundary = panelY + panelHeight - 15; // Leave 15px padding from bottom
+            
+            // Don't draw if text would go outside panel
+            if (textY > bottomBoundary) return;
             
             // Set text color based on entry type
             switch (entry.type) {
@@ -2385,17 +2391,33 @@ function drawGameHistoryPanel() {
                     break;
             }
             
-            textSize(10);
+            textSize(9); // Smaller font for better fit
             textStyle(NORMAL);
-            text(entry.message, panelX + 15, panelY + yOffset);
-            yOffset += 16;
+            textAlign(LEFT, TOP);
+            
+            // Truncate long text to fit in panel
+            const maxWidth = panelWidth - 30; // Leave 15px margin on each side
+            let displayText = entry.message;
+            if (textWidth(displayText) > maxWidth) {
+                // Truncate text to fit
+                while (textWidth(displayText + '...') > maxWidth && displayText.length > 0) {
+                    displayText = displayText.slice(0, -1);
+                }
+                displayText += '...';
+            }
+            
+            text(displayText, panelX + 15, textY);
+            yOffset += lineHeight;
         });
         
         // Show "..." if there are more entries
         if (window.game.gameHistory.length > maxEntries) {
-            fill(150, 150, 150);
-            textSize(10);
-            text('...', panelX + 15, panelY + yOffset);
+            const textY = panelY + yOffset;
+            if (textY <= panelY + panelHeight - 15) { // Only show if within bounds
+                fill(150, 150, 150);
+                textSize(9);
+                text('...', panelX + 15, textY);
+            }
         }
     } else {
         // No history yet
