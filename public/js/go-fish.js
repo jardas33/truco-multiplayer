@@ -10,6 +10,25 @@ class GoFishGame {
         this.pairs = [];
         this.gameOver = false;
         this.winner = null;
+        this.gameHistory = []; // Array to store game actions
+        this.maxHistoryEntries = 20; // Maximum number of history entries to display
+    }
+    
+    // Add entry to game history
+    addToHistory(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = {
+            message: message,
+            type: type, // 'info', 'success', 'warning', 'error'
+            timestamp: timestamp
+        };
+        
+        this.gameHistory.unshift(entry); // Add to beginning of array
+        
+        // Keep only the latest entries
+        if (this.gameHistory.length > this.maxHistoryEntries) {
+            this.gameHistory = this.gameHistory.slice(0, this.maxHistoryEntries);
+        }
     }
 
     // Initialize the game
@@ -86,6 +105,10 @@ class GoFishGame {
             currentPlayer: this.currentPlayer
         });
         
+        // Log game start
+        this.addToHistory(`🎮 Game started with ${this.players.length} players`, 'info');
+        this.addToHistory(`🎯 ${this.players[this.currentPlayer].name} goes first`, 'info');
+        
         // If it's a bot's turn, make them play after a short delay
         const currentPlayer = this.players[this.currentPlayer];
         if (currentPlayer.isBot) {
@@ -144,6 +167,9 @@ class GoFishGame {
                 
                 console.log(`🎯 ${player.name} found ${pairs} pair(s) of ${rank}s`);
                 
+                // Log pair found
+                this.addToHistory(`🎯 ${player.name} found ${pairs} pair(s) of ${rank}s!`, 'success');
+                
                 // Show pair found message
                 this.showGameMessage(`${player.name} found ${pairs} pair(s) of ${rank}s!`, 1500);
             }
@@ -176,6 +202,9 @@ class GoFishGame {
             
             console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
             
+            // Log successful ask
+            this.addToHistory(`✅ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s and got ${requestedCards.length} card(s)`, 'success');
+            
             // Show success message
             this.showGameMessage(`${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 2000);
             
@@ -195,6 +224,7 @@ class GoFishGame {
             return true;
         } else {
             // Target player doesn't have the cards - Go Fish!
+            this.addToHistory(`❌ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s but got "Go Fish!"`, 'warning');
             this.showGameMessage(`${targetPlayer.name} says "Go Fish!"`, 1500);
             this.goFish(askingPlayer);
             return false;
@@ -217,6 +247,9 @@ class GoFishGame {
         player.hand.push(drawnCard);
         
         console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
+        
+        // Log the draw
+        this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
         
         // Show what was drawn
         this.showGameMessage(`${player.name} drew ${drawnCard.name}`, 1500);
@@ -251,6 +284,9 @@ class GoFishGame {
         while (this.players[this.currentPlayer].hand.length === 0 && !this.isGameOver()) {
             this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
         }
+        
+        // Log turn change
+        this.addToHistory(`🔄 ${this.players[this.currentPlayer].name}'s turn`, 'info');
         
         this.emitEvent('turnChanged', {
             currentPlayer: this.currentPlayer,
@@ -354,6 +390,10 @@ class GoFishGame {
         // Increment overall wins for the winner
         this.winner.overallWins = (this.winner.overallWins || 0) + 1;
         console.log(`🏆 ${this.winner.name} wins! Total wins: ${this.winner.overallWins}`);
+        
+        // Log game end
+        this.addToHistory(`🏆 ${this.winner.name} wins the game with ${this.winner.pairs} pairs!`, 'success');
+        this.addToHistory(`🎮 Game Over! ${this.winner.name} now has ${this.winner.overallWins} total wins`, 'info');
         
         this.emitEvent('gameOver', {
             winner: {
@@ -998,6 +1038,7 @@ function drawGameState() {
     drawMainPlayerHand();
     drawModernFishPond();
     drawModernScorePanel();
+    drawGameHistoryPanel();
     drawGameMessages();
     
     // Validate layout spacing (only in development)
@@ -2039,6 +2080,81 @@ function drawModernScorePanel() {
             text(`${player.name}: ${player.overallWins || 0}`, panelX + 15, panelY + yOffset);
             yOffset += 16; // Optimized spacing
         });
+    }
+}
+
+function drawGameHistoryPanel() {
+    const dims = getResponsiveDimensions();
+    
+    // Calculate dynamic size based on number of players (same as score panel)
+    const playerCount = window.game && window.game.players ? window.game.players.length : 3;
+    const baseHeight = 120; // Base height for title
+    const playerSectionHeight = 25; // Height per player for current scores
+    const overallSectionHeight = 40; // Height for "Overall Wins" header
+    const overallPlayerHeight = 20; // Height per player for overall wins
+    const padding = 20; // Extra padding
+    
+    const calculatedHeight = baseHeight + (playerCount * playerSectionHeight) + overallSectionHeight + (playerCount * overallPlayerHeight) + padding;
+    
+    const panelWidth = dims.isSmallScreen ? 240 : 260; // Same width as score panel
+    const panelHeight = Math.max(calculatedHeight, dims.isSmallScreen ? 250 : 280); // Same height as score panel
+    const panelX = 20; // Bottom left with margin
+    const panelY = height - panelHeight - 40; // Same position as score panel
+    
+    // Draw history panel background
+    fill(0, 0, 0, 200);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(panelX, panelY, panelWidth, panelHeight, 10);
+    
+    // Panel title
+    fill(255, 215, 0);
+    textAlign(LEFT, CENTER);
+    textSize(18);
+    noStroke();
+    text('📜 Game History', panelX + 15, panelY + 25);
+    
+    // Draw history entries
+    if (window.game && window.game.gameHistory) {
+        let yOffset = 50;
+        const maxEntries = Math.floor((panelHeight - 80) / 16); // Calculate how many entries fit
+        
+        window.game.gameHistory.slice(0, maxEntries).forEach((entry, index) => {
+            if (yOffset + 16 > panelY + panelHeight - 20) return; // Don't draw outside panel
+            
+            // Set text color based on entry type
+            switch (entry.type) {
+                case 'success':
+                    fill(100, 255, 100); // Green
+                    break;
+                case 'warning':
+                    fill(255, 200, 100); // Orange
+                    break;
+                case 'error':
+                    fill(255, 100, 100); // Red
+                    break;
+                default:
+                    fill(255, 255, 255); // White
+                    break;
+            }
+            
+            textSize(10);
+            textStyle(NORMAL);
+            text(entry.message, panelX + 15, panelY + yOffset);
+            yOffset += 16;
+        });
+        
+        // Show "..." if there are more entries
+        if (window.game.gameHistory.length > maxEntries) {
+            fill(150, 150, 150);
+            textSize(10);
+            text('...', panelX + 15, panelY + yOffset);
+        }
+    } else {
+        // No history yet
+        fill(200, 200, 200);
+        textSize(12);
+        text('No game history yet...', panelX + 15, panelY + 60);
     }
 }
 
