@@ -13,18 +13,27 @@ function draw() {
         return; // Don't draw anything if canvas is hidden
     }
     
-    // Add frame limiting only when game is playing to prevent flashing
-    if (gameState === gameStateEnum.Playing) {
-        if (!window.lastDrawTime) {
-            window.lastDrawTime = 0;
-        }
-        
-        const drawTime = millis();
-        if (drawTime - window.lastDrawTime < 100) { // Only draw every 100ms (10 FPS) when playing
-            return;
-        }
-        window.lastDrawTime = drawTime;
+    // Add frame limiting to prevent excessive drawing and blinking
+    if (!window.lastDrawTime) {
+        window.lastDrawTime = 0;
     }
+    
+    const drawTime = millis();
+    let drawInterval = 33; // Default 30 FPS (33ms)
+    
+    // Different frame rates for different states
+    if (gameState === gameStateEnum.Playing && window.game && window.game.players) {
+        drawInterval = 100; // 10 FPS for game playing
+    } else if (gameState === gameStateEnum.Menu) {
+        drawInterval = 100; // 10 FPS for menu to prevent blinking
+    } else {
+        drawInterval = 50; // 20 FPS for other states
+    }
+    
+    if (drawTime - window.lastDrawTime < drawInterval) {
+        return;
+    }
+    window.lastDrawTime = drawTime;
     
     // Fix canvas parenting based on game state
     if (window.gameCanvas) {
@@ -57,50 +66,29 @@ function draw() {
         }
     }
     
-    // Draw background for all states (only when needed)
-    if (gameState === gameStateEnum.Menu) {
-        // For menu, only draw background if it hasn't been drawn recently
-        if (!window.menuBackgroundDrawn || frameCount % 60 === 0) {
-            push();
-            imageMode(CORNER);
-            if (backgroundImage) {
-                image(backgroundImage, 0, 0, width, height);
-            } else {
-                // Fallback background if image not loaded
-                background(0, 100, 0); // Dark green
-            }
-            pop();
-            window.menuBackgroundDrawn = true;
-        }
+    // Draw background for all states
+    push();
+    imageMode(CORNER);
+    if (backgroundImage) {
+        image(backgroundImage, 0, 0, width, height);
     } else {
-        // For other states, draw background normally
-        push();
-        imageMode(CORNER);
-        if (backgroundImage) {
-            image(backgroundImage, 0, 0, width, height);
-        } else {
-            // Fallback background if image not loaded
-            background(0, 100, 0); // Dark green
-        }
-        pop();
+        // Fallback background if image not loaded
+        background(0, 100, 0); // Dark green
     }
+    pop();
     
     if (gameState === gameStateEnum.Menu) {
-        // Only update menu display if it hasn't been updated recently
-        if (!window.menuDisplayUpdated || frameCount % 30 === 0) {
-            menuDiv.show();
-            gameDiv.hide();
-            if (instructionsDiv) instructionsDiv.hide();
-            if (valuesDiv) valuesDiv.hide();
-            if (instructionsCloseButton) {
-                instructionsCloseButton.remove();
-            }
-            // Remove any existing instructions box
-            const existingBox = document.querySelector('.instructions-box');
-            if (existingBox) {
-                existingBox.remove();
-            }
-            window.menuDisplayUpdated = true;
+        menuDiv.show();
+        gameDiv.hide();
+        if (instructionsDiv) instructionsDiv.hide();
+        if (valuesDiv) valuesDiv.hide();
+        if (instructionsCloseButton) {
+            instructionsCloseButton.remove();
+        }
+        // Remove any existing instructions box
+        const existingBox = document.querySelector('.instructions-box');
+        if (existingBox) {
+            existingBox.remove();
         }
     }
     else if (gameState === gameStateEnum.Instructions) {

@@ -24,7 +24,7 @@ function preload() {
     
     // Load card back image
     try {
-        backCardImage = loadImage(`${baseUrl}/Images/cardBack.jpg`,
+        window.cardBackImage = loadImage(`${baseUrl}/Images/cardBack.jpg`,
             () => console.log('SUCCESS: Card back image loaded'),
             () => console.error('ERROR: Failed to load card back image')
         );
