@@ -931,7 +931,7 @@ function drawGoFishTable() {
 function drawPlayers() {
     if (!window.game.players) return;
     
-    const playerY = height * 0.25; // Moved down to avoid overlaps
+    const playerY = height * 0.15; // Moved back up to original position
     const playerWidth = 500; // Increased by 250%
     const playerHeight = 250; // Increased by 250%
     const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
@@ -1307,7 +1307,7 @@ function drawGameControls() {
     fill(0, 0, 0, 180);
     stroke(255, 215, 0);
     strokeWeight(2);
-    rect(controlsX - 250, controlsY - 40, 500, 80, 10);
+    rect(controlsX - 300, controlsY - 50, 600, 100, 10);
     
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
@@ -1316,19 +1316,19 @@ function drawGameControls() {
         textAlign(CENTER, CENTER);
         textSize(16);
         noStroke();
-        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 10);
+        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 20);
         
         // Draw available actions
         fill(255);
         textSize(12);
-        text('Ask for cards or Go Fish!', controlsX, controlsY + 10);
+        text('Ask for cards or Go Fish!', controlsX, controlsY + 5);
     }
 }
 
 function drawActionButtons() {
     if (!window.game || window.game.gameOver) return;
     
-    const buttonY = height - 60; // Moved up to avoid bottom edge
+    const buttonY = height - 50; // Adjusted for bigger control box
     const buttonX = width / 2;
     const buttonWidth = 120;
     const buttonHeight = 35;
@@ -1513,7 +1513,7 @@ function drawConfetti() {
 function mousePressed() {
     if (!window.game || window.game.gameOver) return;
     
-    const buttonY = height - 60; // Moved up to match drawActionButtons
+    const buttonY = height - 50; // Adjusted for bigger control box
     const buttonX = width / 2;
     const buttonWidth = 120;
     const buttonHeight = 35;
