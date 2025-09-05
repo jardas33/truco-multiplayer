@@ -877,8 +877,6 @@ function drawGameState() {
         return;
     }
     
-    console.log('🎨 Drawing Go Fish game state');
-    
     // Clear canvas with beautiful ocean-like background
     background(0, 50, 100); // Dark blue ocean
     
@@ -1003,11 +1001,6 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
-    
-    // Debug: Log player's actual cards
-    if (player.hand && player.hand.length > 0) {
-        console.log('Player hand:', player.hand.map(card => `${card.rank} of ${card.suit}`));
-    }
     const handY = height - 80; // Moved up to avoid control panel overlap
     const cardWidth = 60;
     const cardHeight = 84;
