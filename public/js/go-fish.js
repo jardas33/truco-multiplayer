@@ -373,9 +373,16 @@ class GoFishClient {
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
         document.getElementById('startGameBtn').onclick = () => this.startGame();
         
-        // Game controls
-        document.getElementById('askBtn').onclick = () => this.askForCards();
-        document.getElementById('goFishBtn').onclick = () => this.goFish();
+        // Game controls (only if elements exist)
+        const askBtn = document.getElementById('askBtn');
+        const goFishBtn = document.getElementById('goFishBtn');
+        
+        if (askBtn) {
+            askBtn.onclick = () => this.askForCards();
+        }
+        if (goFishBtn) {
+            goFishBtn.onclick = () => this.goFish();
+        }
         
         // Copy room code
         document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
@@ -712,50 +719,65 @@ class GoFishClient {
         }
     }
 
-    // Show player selector
+    // Show player selector (if element exists)
     showPlayerSelector() {
-        document.getElementById('playerSelector').style.display = 'flex';
+        const playerSelector = document.getElementById('playerSelector');
+        if (playerSelector) {
+            playerSelector.style.display = 'flex';
+        }
     }
 
-    // Hide player selector
+    // Hide player selector (if element exists)
     hidePlayerSelector() {
-        document.getElementById('playerSelector').style.display = 'none';
+        const playerSelector = document.getElementById('playerSelector');
+        if (playerSelector) {
+            playerSelector.style.display = 'none';
+        }
     }
 
-    // Show action controls
+    // Show action controls (if element exists)
     showActionControls() {
-        document.getElementById('actionControls').style.display = 'flex';
+        const actionControls = document.getElementById('actionControls');
+        if (actionControls) {
+            actionControls.style.display = 'flex';
+        }
     }
 
-    // Hide action controls
+    // Hide action controls (if element exists)
     hideActionControls() {
-        document.getElementById('actionControls').style.display = 'none';
+        const actionControls = document.getElementById('actionControls');
+        if (actionControls) {
+            actionControls.style.display = 'none';
+        }
     }
 
-    // Update player selector
+    // Update player selector (if elements exist)
     updatePlayerSelector() {
         const targetSelect = document.getElementById('targetPlayerSelect');
         const rankSelect = document.getElementById('rankSelect');
         
-        // Update target players
-        targetSelect.innerHTML = '';
-        const targets = this.game.getAvailableTargets(this.localPlayerIndex);
-        targets.forEach(target => {
-            const option = document.createElement('option');
-            option.value = target.index;
-            option.textContent = target.name;
-            targetSelect.appendChild(option);
-        });
+        // Only update if elements exist
+        if (targetSelect && this.game) {
+            targetSelect.innerHTML = '';
+            const targets = this.game.getAvailableTargets(this.localPlayerIndex);
+            targets.forEach(target => {
+                const option = document.createElement('option');
+                option.value = target.index;
+                option.textContent = target.name;
+                targetSelect.appendChild(option);
+            });
+        }
         
-        // Update available ranks
-        rankSelect.innerHTML = '';
-        const ranks = this.game.getAvailableRanks(this.localPlayerIndex);
-        ranks.forEach(rank => {
-            const option = document.createElement('option');
-            option.value = rank;
-            option.textContent = rank;
-            rankSelect.appendChild(option);
-        });
+        if (rankSelect && this.game) {
+            rankSelect.innerHTML = '';
+            const ranks = this.game.getAvailableRanks(this.localPlayerIndex);
+            ranks.forEach(rank => {
+                const option = document.createElement('option');
+                option.value = rank;
+                option.textContent = rank;
+                rankSelect.appendChild(option);
+            });
+        }
     }
 
     // Show room code
