@@ -286,46 +286,45 @@ function draw() {
         cardValuesCloseButton = createButton('Close');
         cardValuesCloseButton.class('close-button');
         cardValuesCloseButton.mousePressed(() => {
-                // ✅ Return to previous state (game or menu)
-                if (previousGameState === gameStateEnum.Playing) {
-                    // Return to game
-                    gameState = gameStateEnum.Playing;
-                    const gameDiv = document.getElementById('Game');
-                    if (gameDiv) {
-                        gameDiv.style.display = 'block';
-                    }
-                    const valuesDiv = document.getElementById('Values');
-                    if (valuesDiv) {
-                        valuesDiv.style.display = 'none';
-                    }
-                    
-                    // ✅ CRITICAL: Move canvas back to Game div
-                    let canvas = document.querySelector('canvas');
-                    if (canvas && gameDiv) {
-                        gameDiv.appendChild(canvas);
-                    }
-                } else {
-                    // Return to menu
-                    gameState = gameStateEnum.Menu;
-                    const menuDiv = document.getElementById('Menu');
-                    if (menuDiv) {
-                        menuDiv.style.display = 'block';
-                    }
-                    const valuesDiv = document.getElementById('Values');
-                    if (valuesDiv) {
-                        valuesDiv.style.display = 'none';
-                    }
-                    
-                    // ✅ CRITICAL: Move canvas back to Menu div
-                    let canvas = document.querySelector('canvas');
-                    if (canvas && menuDiv) {
-                        menuDiv.appendChild(canvas);
-                    }
+            // ✅ Return to previous state (game or menu)
+            if (previousGameState === gameStateEnum.Playing) {
+                // Return to game
+                gameState = gameStateEnum.Playing;
+                const gameDiv = document.getElementById('Game');
+                if (gameDiv) {
+                    gameDiv.style.display = 'block';
                 }
-                cardValuesCloseButton.hide();
-                loop();
-            });
-        }
+                const valuesDiv = document.getElementById('Values');
+                if (valuesDiv) {
+                    valuesDiv.style.display = 'none';
+                }
+                
+                // ✅ CRITICAL: Move canvas back to Game div
+                let canvas = document.querySelector('canvas');
+                if (canvas && gameDiv) {
+                    gameDiv.appendChild(canvas);
+                }
+            } else {
+                // Return to menu
+                gameState = gameStateEnum.Menu;
+                const menuDiv = document.getElementById('Menu');
+                if (menuDiv) {
+                    menuDiv.style.display = 'block';
+                }
+                const valuesDiv = document.getElementById('Values');
+                if (valuesDiv) {
+                    valuesDiv.style.display = 'none';
+                }
+                
+                // ✅ CRITICAL: Move canvas back to Menu div
+                let canvas = document.querySelector('canvas');
+                if (canvas && menuDiv) {
+                    menuDiv.appendChild(canvas);
+                }
+            }
+            cardValuesCloseButton.hide();
+            loop();
+        });
         
         cardValuesCloseButton.position(width/2 - 50, boxY + boxHeight - 50);
         cardValuesCloseButton.style('background-color', '#dc3545');
