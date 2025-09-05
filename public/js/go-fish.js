@@ -325,6 +325,8 @@ class GoFishClient {
         this.localPlayerIndex = 0;
         this.isMyTurn = false;
         this.canAct = false;
+        this.currentTargetIndex = 0; // Track selected target
+        this.currentRankIndex = 0;   // Track selected rank
     }
 
     // Initialize the client
@@ -1325,61 +1327,78 @@ function drawGameControls() {
     const controlsY = height - 140; // Moved up and made taller
     const controlsX = 200; // Moved to left side
     
-    // Draw controls background - made wider to accommodate dropdowns
+    // Draw controls background - made much bigger to accommodate dropdowns
     fill(0, 0, 0, 180);
     stroke(255, 215, 0);
     strokeWeight(2);
-    rect(controlsX - 200, controlsY - 80, 400, 160, 10);
+    rect(controlsX - 250, controlsY - 100, 500, 200, 10);
     
-    // Draw current player info
-    if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
-        const currentPlayer = window.game.players[window.game.currentPlayer];
-        fill(255, 215, 0);
-        textAlign(CENTER, CENTER);
-        textSize(16);
-        noStroke();
-        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 50);
-        
-        // Draw available actions
-        fill(255);
-        textSize(12);
-        text('Ask for cards or Go Fish!', controlsX, controlsY - 20);
-        
-        // Draw player selector
-        if (window.game.currentPlayer === 0) { // Only show for human player
+            // Draw current player info
+        if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
+            const currentPlayer = window.game.players[window.game.currentPlayer];
+            fill(255, 215, 0);
+            textAlign(CENTER, CENTER);
+            textSize(18);
+            noStroke();
+            text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 70);
+            
+            // Draw available actions
             fill(255);
-            textSize(12);
-            textAlign(LEFT, CENTER);
-            text('Ask player:', controlsX - 180, controlsY + 10);
+            textSize(14);
+            text('Ask for cards or Go Fish!', controlsX, controlsY - 40);
             
-            // Draw target player selector (simplified - just show available targets)
-            const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
-            if (availableTargets.length > 0) {
-                fill(255, 255, 255, 200);
-                rect(controlsX - 120, controlsY + 5, 100, 20, 5);
-                fill(0);
+            // Draw player selector
+            if (window.game.currentPlayer === 0) { // Only show for human player
+                // Ask player selector
+                fill(255);
+                textSize(14);
+                textAlign(LEFT, CENTER);
+                text('Ask player:', controlsX - 220, controlsY - 10);
+                
+                // Draw target player selector dropdown
+                const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
+                if (availableTargets.length > 0) {
+                    // Check if current selection is valid
+                    if (this.currentTargetIndex >= availableTargets.length) {
+                        this.currentTargetIndex = 0;
+                    }
+                    
+                    fill(255, 255, 255, 200);
+                    rect(controlsX - 120, controlsY - 20, 120, 25, 5);
+                    fill(0);
+                    textAlign(CENTER, CENTER);
+                    textSize(12);
+                    text(availableTargets[this.currentTargetIndex].name, controlsX - 60, controlsY - 7);
+                }
+                
+                // Rank selector
+                fill(255);
+                textAlign(LEFT, CENTER);
+                text('for rank:', controlsX - 220, controlsY + 20);
+                
+                // Draw rank selector dropdown
+                const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
+                if (availableRanks.length > 0) {
+                    // Check if current selection is valid
+                    if (this.currentRankIndex >= availableRanks.length) {
+                        this.currentRankIndex = 0;
+                    }
+                    
+                    fill(255, 255, 255, 200);
+                    rect(controlsX - 120, controlsY + 10, 80, 25, 5);
+                    fill(0);
+                    textAlign(CENTER, CENTER);
+                    textSize(12);
+                    text(availableRanks[this.currentRankIndex], controlsX - 80, controlsY + 23);
+                }
+                
+                // Instructions for clicking
+                fill(255, 255, 0);
                 textAlign(CENTER, CENTER);
-                textSize(10);
-                text(availableTargets[0].name, controlsX - 70, controlsY + 15);
-            }
-            
-            // Draw rank selector
-            fill(255);
-            textAlign(LEFT, CENTER);
-            text('for rank:', controlsX - 10, controlsY + 10);
-            
-            // Draw rank selector (simplified - show available ranks)
-            const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
-            if (availableRanks.length > 0) {
-                fill(255, 255, 255, 200);
-                rect(controlsX + 50, controlsY + 5, 60, 20, 5);
-                fill(0);
-                textAlign(CENTER, CENTER);
-                textSize(10);
-                text(availableRanks[0], controlsX + 80, controlsY + 15);
+                textSize(12);
+                text('Click dropdowns to select different options', controlsX, controlsY + 50);
             }
         }
-    }
 }
 
 function drawActionButtons() {
@@ -1574,12 +1593,44 @@ function mousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
+        const controlsY = height - 140;
+        const controlsX = 200;
+        
+        // Check if target player dropdown was clicked
+        if (mouseX >= controlsX - 120 && mouseX <= controlsX && 
+            mouseY >= controlsY - 20 && mouseY <= controlsY + 5) {
+            console.log('🎯 Target player dropdown clicked');
+            const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
+            if (availableTargets.length > 0) {
+                window.goFishClient.currentTargetIndex = (window.goFishClient.currentTargetIndex + 1) % availableTargets.length;
+                console.log('Selected target:', availableTargets[window.goFishClient.currentTargetIndex].name);
+            }
+        }
+        
+        // Check if rank dropdown was clicked
+        if (mouseX >= controlsX - 120 && mouseX <= controlsX - 40 && 
+            mouseY >= controlsY + 10 && mouseY <= controlsY + 35) {
+            console.log('🎯 Rank dropdown clicked');
+            const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
+            if (availableRanks.length > 0) {
+                window.goFishClient.currentRankIndex = (window.goFishClient.currentRankIndex + 1) % availableRanks.length;
+                console.log('Selected rank:', availableRanks[window.goFishClient.currentRankIndex]);
+            }
+        }
+        
         // Check if Ask button was clicked
         const askButtonX = buttonX - 120;
         if (mouseX >= askButtonX - buttonWidth/2 && mouseX <= askButtonX + buttonWidth/2 &&
             mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
             console.log('🎯 Ask button clicked');
-            showAskForCardsDialog();
+            // Use selected values instead of dialog
+            const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
+            const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
+            if (availableTargets.length > 0 && availableRanks.length > 0) {
+                const targetIndex = availableTargets[window.goFishClient.currentTargetIndex].index;
+                const rank = availableRanks[window.goFishClient.currentRankIndex];
+                window.goFishClient.askForCards(targetIndex, rank);
+            }
         }
         
         // Check if Go Fish button was clicked
