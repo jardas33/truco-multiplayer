@@ -1069,43 +1069,16 @@ function drawGameState() {
         console.log('Drawing poker game state');
     }
     
-    // Draw background with card back pattern
+    // Draw background image
     push();
-    
-    // Try to draw card back pattern if available
-    if (typeof cardImages !== 'undefined' && cardImages['cardBack'] && cardImages['cardBack'].width > 0) {
-        // Clear with dark green first
-        background(0, 80, 0);
-        
-        imageMode(CORNER);
-        const cardWidth = 100;
-        const cardHeight = 140;
-        const spacing = 15;
-        
-        // Draw a visible tiled pattern
-        for (let x = 0; x < width + cardWidth; x += cardWidth + spacing) {
-            for (let y = 0; y < height + cardHeight; y += cardHeight + spacing) {
-                push();
-                translate(x, y);
-                // Add slight rotation for texture
-                rotate(sin(x * 0.01) * 0.03);
-                tint(255, 60); // More visible
-                image(cardImages['cardBack'], 0, 0, cardWidth, cardHeight);
-                pop();
-            }
-        }
+    imageMode(CORNER);
+    if (backgroundImage && backgroundImage.width > 0) {
+        // Draw the actual background image
+        image(backgroundImage, 0, 0, width, height);
     } else {
-        // Fallback to solid background with pattern
+        // Fallback to solid background
         background(0, 100, 0);
-        fill(0, 120, 0, 50);
-        noStroke();
-        for (let i = 0; i < 30; i++) {
-            const x = (i * 80) % width;
-            const y = (i * 60) % height;
-            ellipse(x, y, 30, 30);
-        }
     }
-    
     pop();
     
     // Draw poker table elements
@@ -1188,17 +1161,17 @@ function drawCommunityCards() {
         strokeWeight(2);
         rect(x, y, cardWidth, cardHeight, 8);
         
-        // Draw card content with better styling
-        fill(0);
-        textAlign(CENTER, CENTER);
-        textSize(12);
-        textStyle(BOLD);
-        text(card.name, x + cardWidth/2, y + cardHeight/2);
-        
-        // Add subtle highlight
-        fill(255, 255, 255, 30);
-        noStroke();
-        rect(x, y, cardWidth, cardHeight/3, 8, 8, 0, 0);
+        // Draw card content with actual card image
+        if (typeof cardImages !== 'undefined' && cardImages[card.name] && cardImages[card.name].width > 0) {
+            image(cardImages[card.name], x, y, cardWidth, cardHeight);
+        } else {
+            // Fallback to text if image not available
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            textStyle(BOLD);
+            text(card.name, x + cardWidth/2, y + cardHeight/2);
+        }
         pop();
     });
 }
@@ -1208,12 +1181,14 @@ function drawPlayers() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radius = Math.min(width, height) * 0.35;
+    // Use elliptical positioning to match the table shape
+    const radiusX = width * 0.35;  // Horizontal radius
+    const radiusY = height * 0.25; // Vertical radius (smaller for oval shape)
     
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
-        const x = centerX + cos(angle) * radius;
-        const y = centerY + sin(angle) * radius;
+        const x = centerX + cos(angle) * radiusX;
+        const y = centerY + sin(angle) * radiusY;
         
         push();
         
@@ -1223,24 +1198,42 @@ function drawPlayers() {
         strokeWeight(3);
         ellipse(x, y, 140, 100);
         
-        // Draw player name with better styling
-        fill(255, 255, 255);
+        // Draw player name with better styling and shadow
+        push();
+        fill(0, 0, 0, 150); // Shadow
+        textAlign(CENTER, CENTER);
+        textSize(16);
+        textStyle(BOLD);
+        text(player.name, x + 2, y - 25 + 2);
+        
+        fill(255, 255, 255); // Main text
+        text(player.name, x, y - 25);
+        pop();
+        
+        // Draw player chips with better styling and shadow
+        push();
+        fill(0, 0, 0, 150); // Shadow
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
-        text(player.name, x, y - 25);
+        text('$' + player.chips, x + 2, y - 5 + 2);
         
-        // Draw player chips with better styling
         fill(255, 215, 0); // Gold color
-        textSize(12);
-        textStyle(BOLD);
         text('$' + player.chips, x, y - 5);
+        pop();
         
         // Draw current bet if any
         if (player.currentBet > 0) {
+            push();
+            fill(0, 0, 0, 150); // Shadow
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            textStyle(BOLD);
+            text('Bet: $' + player.currentBet, x + 2, y + 15 + 2);
+            
             fill(255, 100, 100);
-            textSize(10);
             text('Bet: $' + player.currentBet, x, y + 15);
+            pop();
         }
         
         // Draw player cards
@@ -1289,30 +1282,36 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
         
         // Draw card content (only show for local player or if revealed)
         if (isLocalPlayer || card.isRevealed) {
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(11);
-            textStyle(BOLD);
-            text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
-            
-            // Add subtle highlight
-            fill(255, 255, 255, 20);
-            noStroke();
-            rect(cardX, cardY, cardWidth, cardHeight/3, 4, 4, 0, 0);
+            // Try to draw actual card image
+            if (typeof cardImages !== 'undefined' && cardImages[card.name] && cardImages[card.name].width > 0) {
+                image(cardImages[card.name], cardX, cardY, cardWidth, cardHeight);
+            } else {
+                // Fallback to text if image not available
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(11);
+                textStyle(BOLD);
+                text(card.name, cardX + cardWidth/2, cardY + cardHeight/2);
+            }
         } else {
-            // Draw card back with better styling
-            fill(0, 0, 150);
-            textAlign(CENTER, CENTER);
-            textSize(12);
-            textStyle(BOLD);
-            text('?', cardX + cardWidth/2, cardY + cardHeight/2);
-            
-            // Add pattern to card back
-            fill(255, 255, 255, 30);
-            for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 2; j++) {
-                    ellipse(cardX + 8 + i * 8, cardY + 8 + j * 15, 3, 3);
-                }
+            // Draw card back image
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+                image(window.cardBackImage, cardX, cardY, cardWidth, cardHeight);
+            } else {
+                // Fallback to colored rectangle
+                fill(0, 0, 150);
+                textAlign(CENTER, CENTER);
+                textSize(12);
+                textStyle(BOLD);
+                text('?', cardX + cardWidth/2, cardY + cardHeight/2);
+            }
+        }
+        
+        // Add pattern to card back
+        fill(255, 255, 255, 30);
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 2; j++) {
+                ellipse(cardX + 8 + i * 8, cardY + 8 + j * 15, 3, 3);
             }
         }
         
@@ -1330,11 +1329,18 @@ function drawPot() {
         strokeWeight(3);
         ellipse(width/2, height/2 + 100, 120, 60);
         
-        // Draw pot text
-        fill(255, 215, 0); // Gold color
+        // Draw pot text with shadow
         textAlign(CENTER, CENTER);
         textSize(18);
         textStyle(BOLD);
+        
+        // Shadow
+        fill(0, 0, 0, 150);
+        text('POT', width/2 + 2, height/2 + 90 + 2);
+        text('$' + window.game.pot, width/2 + 2, height/2 + 110 + 2);
+        
+        // Main text
+        fill(255, 215, 0); // Gold color
         text('POT', width/2, height/2 + 90);
         
         textSize(16);
