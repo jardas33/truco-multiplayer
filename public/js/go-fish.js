@@ -1429,7 +1429,7 @@ function drawModernFishPond() {
     const cardWidth = 30;
     const cardHeight = 42;
     const stackX = centerX - 40;
-    const stackY = pondY + 15; // Moved up slightly
+    const stackY = pondY + 10; // Moved up more to make room for text
     
     // Draw card stack
     for (let i = 0; i < 3; i++) {
@@ -1449,7 +1449,8 @@ function drawModernFishPond() {
     
     // Calculate where cards end (last card with offset)
     const lastCardBottom = stackY + cardHeight + (2 * 2); // stackY + cardHeight + max offsetY
-    const textY = lastCardBottom + 8; // 8px spacing below cards
+    const boxBottom = pondY + 60; // Bottom of the pond container
+    const textY = Math.min(lastCardBottom + 6, boxBottom - 8); // 6px spacing, but stay 8px from box bottom
     
     // Draw card count
     fill(255, 255, 255);
