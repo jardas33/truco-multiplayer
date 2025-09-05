@@ -1,4 +1,4 @@
-// Clean version of preload.js without emoji characters - loads only available 40 cards
+// Clean version of preload.js without emoji characters - loads all 52 standard deck cards
 function preload() {
     console.log('Starting image preload...');
     
@@ -48,11 +48,11 @@ function preload() {
 
 function loadAllCardImages(baseUrl) {
     const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    // Only load available cards: 2-7, J, Q, K, A (40 cards total)
-    const ranks = ['2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king', 'ace'];
+    // Load all standard deck cards: 2-10, J, Q, K, A (52 cards total)
+    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
     
     let loadedImages = 0;
-    const totalImages = suits.length * ranks.length; // 40 cards
+    const totalImages = suits.length * ranks.length; // 52 cards
     
     console.log('Image preload initiated for', totalImages, 'card images');
     
