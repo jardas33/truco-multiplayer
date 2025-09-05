@@ -1007,8 +1007,10 @@ function drawGameState() {
     if (!window.game || !window.game.players) {
         // Draw a waiting screen with pond background
         if (window.pondImage) {
+            console.log('🐟 Drawing pond background for waiting screen');
             image(window.pondImage, 0, 0, width, height);
         } else {
+            console.log('🐟 Pond image not available for waiting screen, using solid background');
             background(0, 50, 100);
         }
         fill(255);
@@ -1022,9 +1024,11 @@ function drawGameState() {
     
     // Draw pond background image
     if (window.pondImage) {
+        console.log('🐟 Drawing pond background image');
         // Draw the pond image to fill the entire canvas
         image(window.pondImage, 0, 0, width, height);
     } else {
+        console.log('🐟 Pond image not available, using solid background');
         // Fallback to solid color if pond image not loaded
         background(0, 50, 100); // Dark blue ocean
     }
@@ -1048,25 +1052,31 @@ function drawGameState() {
 }
 
 function drawModernTable() {
-    // Modern gradient background
-    for (let y = 0; y < height; y++) {
-        const inter = map(y, 0, height, 0, 1);
-        const c1 = color(15, 25, 45);  // Dark blue
-        const c2 = color(25, 35, 55);  // Lighter blue
-        const c = lerpColor(c1, c2, inter);
-        fill(c);
-        noStroke();
-        rect(0, y, width, 1);
+    // Skip background drawing since pond image is already drawn
+    // Only add subtle pattern overlay if pond image is not available
+    if (!window.pondImage) {
+        // Modern gradient background fallback
+        for (let y = 0; y < height; y++) {
+            const inter = map(y, 0, height, 0, 1);
+            const c1 = color(15, 25, 45);  // Dark blue
+            const c2 = color(25, 35, 55);  // Lighter blue
+            const c = lerpColor(c1, c2, inter);
+            fill(c);
+            noStroke();
+            rect(0, y, width, 1);
+        }
     }
     
-    // Add subtle pattern overlay
-    for (let i = 0; i < 200; i++) {
-        const x = random(width);
-        const y = random(height);
-        const size = random(0.5, 2);
-        fill(255, 255, 255, 8);
-        noStroke();
-        ellipse(x, y, size, size);
+    // Add subtle pattern overlay (only if pond image is available)
+    if (window.pondImage) {
+        for (let i = 0; i < 100; i++) {
+            const x = random(width);
+            const y = random(height);
+            const size = random(0.5, 1.5);
+            fill(255, 255, 255, 5); // More subtle overlay
+            noStroke();
+            ellipse(x, y, size, size);
+        }
     }
 }
 
