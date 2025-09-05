@@ -273,6 +273,7 @@ class GoFishGame {
             console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
             // Don't end turn - player gets another turn
         } else {
+            console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
             // No pairs found, end turn
             this.endTurn();
         }
@@ -280,6 +281,8 @@ class GoFishGame {
 
     // End current player's turn
     endTurn() {
+        console.log(`🔄 Ending turn for ${this.players[this.currentPlayer].name}`);
+        
         // Check if game is over
         if (this.isGameOver()) {
             this.endGame();
@@ -295,6 +298,7 @@ class GoFishGame {
         }
         
         // Log turn change
+        console.log(`🔄 Turn changed to ${this.players[this.currentPlayer].name}`);
         this.addToHistory(`🔄 ${this.players[this.currentPlayer].name}'s turn`, 'info');
         
         this.emitEvent('turnChanged', {
@@ -305,7 +309,10 @@ class GoFishGame {
         // If it's a bot's turn, make them play after a delay
         const currentPlayer = this.players[this.currentPlayer];
         if (currentPlayer.isBot) {
+            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 1.5 seconds`);
             setTimeout(() => this.botPlay(), 1500); // 1.5 second delay for bot thinking
+        } else {
+            console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
         }
     }
     
