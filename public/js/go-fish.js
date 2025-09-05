@@ -1070,19 +1070,19 @@ function drawPond() {
     // Draw pond shadow
     fill(0, 0, 0, 100);
     noStroke();
-    rect(centerX - 252, pondY - 65, 505, 130, 12);
+    rect(centerX - 252, pondY - 85, 505, 170, 12);
     
     // Draw pond area with gradient
     fill(0, 0, 0, 180);
     stroke(255, 255, 255, 200);
     strokeWeight(3);
-    rect(centerX - 250, pondY - 62, 500, 125, 10);
+    rect(centerX - 250, pondY - 82, 500, 165, 10);
     
     // Add animated pond texture
     const time = millis() * 0.001;
     for (let i = 0; i < 20; i++) {
         const x = centerX - 225 + (i * 22) + sin(time + i) * 12;
-        const y = pondY - 37 + cos(time + i * 0.5) * 18;
+        const y = pondY - 57 + cos(time + i * 0.5) * 28;
         const size = 10 + sin(time + i) * 5;
         
         fill(0, 100, 150, 40);
@@ -1300,14 +1300,14 @@ function drawScores() {
 function drawGameControls() {
     if (!window.game || window.game.gameOver) return;
     
-    const controlsY = height - 120; // Moved up to avoid button overlap
-    const controlsX = width / 2;
+    const controlsY = height - 140; // Moved up and made taller
+    const controlsX = 200; // Moved to left side
     
     // Draw controls background
     fill(0, 0, 0, 180);
     stroke(255, 215, 0);
     strokeWeight(2);
-    rect(controlsX - 300, controlsY - 50, 600, 100, 10);
+    rect(controlsX - 150, controlsY - 60, 300, 120, 10);
     
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
@@ -1316,12 +1316,12 @@ function drawGameControls() {
         textAlign(CENTER, CENTER);
         textSize(16);
         noStroke();
-        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 20);
+        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 30);
         
         // Draw available actions
         fill(255);
         textSize(12);
-        text('Ask for cards or Go Fish!', controlsX, controlsY + 5);
+        text('Ask for cards or Go Fish!', controlsX, controlsY + 10);
     }
 }
 
@@ -1329,7 +1329,7 @@ function drawActionButtons() {
     if (!window.game || window.game.gameOver) return;
     
     const buttonY = height - 50; // Adjusted for bigger control box
-    const buttonX = width / 2;
+    const buttonX = 200; // Moved to left side to match control box
     const buttonWidth = 120;
     const buttonHeight = 35;
     
@@ -1514,7 +1514,7 @@ function mousePressed() {
     if (!window.game || window.game.gameOver) return;
     
     const buttonY = height - 50; // Adjusted for bigger control box
-    const buttonX = width / 2;
+    const buttonX = 200; // Moved to left side to match control box
     const buttonWidth = 120;
     const buttonHeight = 35;
     
