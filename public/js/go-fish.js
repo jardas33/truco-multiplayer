@@ -825,11 +825,28 @@ function drawGameState() {
     // Clear canvas with beautiful ocean-like background
     background(0, 50, 100); // Dark blue ocean
     
-    // Add subtle ocean texture
+    // Add animated ocean texture
+    const time = millis() * 0.001;
     for (let i = 0; i < 50; i++) {
-        fill(0, 100, 150, 20);
+        const x = (i * 20) % width;
+        const y = (i * 15) % height;
+        const size = 20 + sin(time + i) * 10;
+        const alpha = 20 + sin(time * 0.5 + i) * 10;
+        
+        fill(0, 100, 150, alpha);
         noStroke();
-        ellipse(random(width), random(height), random(20, 80), random(10, 30));
+        ellipse(x, y, size, size * 0.5);
+    }
+    
+    // Add floating particles
+    for (let i = 0; i < 30; i++) {
+        const x = (i * 30 + time * 20) % width;
+        const y = (i * 25 + time * 15) % height;
+        const size = 2 + sin(time + i) * 1;
+        
+        fill(255, 255, 255, 30);
+        noStroke();
+        ellipse(x, y, size, size);
     }
     
     // Reset cursor
@@ -949,43 +966,52 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
+        // Add subtle animation
+        const time = millis() * 0.001;
+        const floatY = y + sin(time + index) * 2;
+        
         push();
         
-        // Draw card shadow
+        // Draw card shadow with animation
         fill(0, 0, 0, 60);
         noStroke();
-        rect(x + 2, y + 2, cardWidth, cardHeight, 4);
+        rect(x + 3, floatY + 3, cardWidth, cardHeight, 4);
         
         // Draw card background
         fill(255);
         stroke(0);
         strokeWeight(2);
-        rect(x, y, cardWidth, cardHeight, 4);
+        rect(x, floatY, cardWidth, cardHeight, 4);
         
         if (isLocalPlayer) {
             // Show actual card for local player
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
             if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
-                image(cardImages[imageName], x, y, cardWidth, cardHeight);
+                image(cardImages[imageName], x, floatY, cardWidth, cardHeight);
             } else {
                 // Fallback to text
                 fill(0);
                 textAlign(CENTER, CENTER);
                 textSize(8);
                 textStyle(BOLD);
-                text(card.name, x + cardWidth/2, y + cardHeight/2);
+                text(card.name, x + cardWidth/2, floatY + cardHeight/2);
             }
         } else {
             // Show card back for other players
             if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
-                image(window.cardBackImage, x, y, cardWidth, cardHeight);
+                image(window.cardBackImage, x, floatY, cardWidth, cardHeight);
             } else {
-                // Fallback to colored rectangle
+                // Fallback to colored rectangle with pattern
                 fill(0, 0, 150);
+                stroke(255);
+                strokeWeight(1);
+                rect(x + 2, floatY + 2, cardWidth - 4, cardHeight - 4, 3);
+                
+                fill(255);
                 textAlign(CENTER, CENTER);
                 textSize(10);
                 textStyle(BOLD);
-                text('?', x + cardWidth/2, y + cardHeight/2);
+                text('?', x + cardWidth/2, floatY + cardHeight/2);
             }
         }
         
@@ -1017,11 +1043,16 @@ function drawPond() {
     strokeWeight(3);
     rect(centerX - 200, pondY - 50, 400, 100, 10);
     
-    // Add pond texture
+    // Add animated pond texture
+    const time = millis() * 0.001;
     for (let i = 0; i < 20; i++) {
+        const x = centerX - 180 + (i * 18) + sin(time + i) * 10;
+        const y = pondY - 30 + cos(time + i * 0.5) * 15;
+        const size = 8 + sin(time + i) * 4;
+        
         fill(0, 100, 150, 40);
         noStroke();
-        ellipse(random(centerX - 180, centerX + 180), random(pondY - 30, pondY + 30), random(10, 30), random(5, 15));
+        ellipse(x, y, size, size * 0.6);
     }
     
     // Draw pond label with better styling
@@ -1035,11 +1066,12 @@ function drawPond() {
     if (window.game.pond && window.game.pond.length > 0) {
         drawCards(centerX, pondY + 10, window.game.pond, 50, 70, false);
         
-        // Show pond count
+        // Show pond count with animation
         fill(255);
         textSize(14);
         textStyle(BOLD);
-        text(`${window.game.pond.length} cards`, centerX, pondY + 45);
+        const countY = pondY + 45 + sin(time * 2) * 2;
+        text(`${window.game.pond.length} cards`, centerX, countY);
     } else {
         fill(255, 255, 255, 150);
         textSize(14);
@@ -1142,13 +1174,32 @@ function drawGameInfo() {
     
     // Draw winner if game is over
     if (window.game.gameOver && window.game.winner) {
+        // Draw celebration background
+        fill(255, 215, 0, 50);
+        noStroke();
+        rect(0, 0, width, height);
+        
+        // Draw winner text with animation
+        const time = millis() * 0.001;
+        const scale = 1 + sin(time * 3) * 0.1;
+        
+        push();
+        translate(width/2, height/2);
+        scale(scale);
+        
         fill(255, 255, 0);
         textAlign(CENTER, CENTER);
-        textSize(28);
+        textSize(32);
         textStyle(BOLD);
-        text(`🏆 Winner: ${window.game.winner.name}!`, width/2, height/2);
-        textSize(18);
-        text(`With ${window.game.winner.pairs} pairs!`, width/2, height/2 + 35);
+        text(`🏆 Winner: ${window.game.winner.name}!`, 0, -20);
+        
+        textSize(20);
+        text(`With ${window.game.winner.pairs} pairs!`, 0, 20);
+        
+        pop();
+        
+        // Draw confetti particles
+        drawConfetti();
     }
 }
 
@@ -1344,6 +1395,73 @@ function addGameMessage(text, type = 'info') {
         type: type,
         life: 120, // 2 seconds at 60fps
         color: colors[type] || colors['info']
+    });
+    
+    // Play sound effect
+    playSoundEffect(type);
+}
+
+function playSoundEffect(type) {
+    // Simple sound effects using Web Audio API
+    if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+        const audioContext = new (AudioContext || webkitAudioContext)();
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Different frequencies for different message types
+        const frequencies = {
+            'info': 440,      // A4
+            'success': 523,   // C5
+            'error': 220,     // A3
+            'warning': 330    // E4
+        };
+        
+        oscillator.frequency.setValueAtTime(frequencies[type] || 440, audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    }
+}
+
+function drawConfetti() {
+    if (!window.confetti) {
+        window.confetti = [];
+        // Initialize confetti particles
+        for (let i = 0; i < 50; i++) {
+            window.confetti.push({
+                x: random(width),
+                y: random(height),
+                vx: random(-3, 3),
+                vy: random(-5, -1),
+                color: [random(255), random(255), random(255)],
+                size: random(3, 8),
+                life: 180
+            });
+        }
+    }
+    
+    // Update and draw confetti
+    window.confetti.forEach((particle, index) => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += 0.1; // gravity
+        particle.life--;
+        
+        if (particle.life > 0) {
+            fill(particle.color[0], particle.color[1], particle.color[2], particle.life);
+            noStroke();
+            ellipse(particle.x, particle.y, particle.size, particle.size);
+        } else {
+            window.confetti.splice(index, 1);
+        }
     });
 }
 
