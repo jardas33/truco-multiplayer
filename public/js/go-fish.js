@@ -283,9 +283,12 @@ class GoFishGame {
     // End current player's turn
     endTurn() {
         console.log(`🔄 Ending turn for ${this.players[this.currentPlayer].name}`);
+        console.log(`🔄 Current player hand:`, this.players[this.currentPlayer].hand.map(card => card.name));
+        console.log(`🔄 Current player pairs:`, this.players[this.currentPlayer].pairs);
         
         // Check if game is over
         if (this.isGameOver()) {
+            console.log(`🏆 Game is over!`);
             this.endGame();
             return;
         }
@@ -344,7 +347,22 @@ class GoFishGame {
         this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
         
         // Execute the ask
-        this.askForCards(this.currentPlayer, targetIndex, targetRank);
+        const success = this.askForCards(this.currentPlayer, targetIndex, targetRank);
+        
+        // If bot got cards successfully, they get another turn
+        if (success) {
+            console.log(`🤖 ${bot.name} got cards successfully - gets another turn`);
+            console.log(`🤖 ${bot.name} current hand:`, bot.hand.map(card => card.name));
+            console.log(`🤖 ${bot.name} current pairs:`, bot.pairs);
+            // Schedule another bot play after a short delay
+            setTimeout(() => {
+                console.log(`🤖 ${bot.name} continuing their turn...`);
+                this.botPlay();
+            }, 1000); // 1 second delay for bot thinking
+        } else {
+            console.log(`🤖 ${bot.name} ask failed - Go Fish scenario handled by game`);
+        }
+        // If ask failed (Go Fish), the goFish method will handle turn progression
     }
     
     // Show game message popup
@@ -829,29 +847,46 @@ class GoFishClient {
 
     // Update game info
     updateGameInfo() {
-        document.getElementById('currentPlayerName').textContent = this.game.players[this.game.currentPlayer]?.name || '-';
-        document.getElementById('pondCount').textContent = this.game.pond.length;
-        document.getElementById('pondCards').textContent = this.game.pond.length;
+        // Only update if elements exist
+        const currentPlayerElement = document.getElementById('currentPlayerName');
+        if (currentPlayerElement) {
+            currentPlayerElement.textContent = this.game.players[this.game.currentPlayer]?.name || '-';
+        }
+        
+        const pondCountElement = document.getElementById('pondCount');
+        if (pondCountElement) {
+            pondCountElement.textContent = this.game.pond.length;
+        }
+        
+        const pondCardsElement = document.getElementById('pondCards');
+        if (pondCardsElement) {
+            pondCardsElement.textContent = this.game.pond.length;
+        }
         
         const localPlayer = this.game.players[this.localPlayerIndex];
         if (localPlayer) {
-            document.getElementById('playerPairs').textContent = localPlayer.pairs;
+            const playerPairsElement = document.getElementById('playerPairs');
+            if (playerPairsElement) {
+                playerPairsElement.textContent = localPlayer.pairs;
+            }
         }
     }
 
     // Update scores
     updateScores() {
         const scoresBody = document.getElementById('scoresBody');
-        scoresBody.innerHTML = '';
-        
-        this.game.players.forEach(player => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${player.name}</td>
-                <td>${player.pairs}</td>
-            `;
-            scoresBody.appendChild(row);
-        });
+        if (scoresBody) {
+            scoresBody.innerHTML = '';
+            
+            this.game.players.forEach(player => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${player.name}</td>
+                    <td>${player.pairs}</td>
+                `;
+                scoresBody.appendChild(row);
+            });
+        }
     }
 
     // Update player areas
