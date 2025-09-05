@@ -255,7 +255,10 @@ class GoFishGame {
         this.showGameMessage(`${player.name} drew ${drawnCard.name}`, 1500);
         
         // Check for pairs
+        const pairsBefore = player.pairs;
         this.checkForPairs(player);
+        const pairsAfter = player.pairs;
+        const foundPairs = pairsAfter - pairsBefore;
         
         this.emitEvent('goFish', {
             player: player.name,
@@ -265,8 +268,14 @@ class GoFishGame {
             currentPlayer: this.currentPlayer
         });
         
-        // End turn
-        this.endTurn();
+        // If player found pairs, they get another turn
+        if (foundPairs > 0) {
+            console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
+            // Don't end turn - player gets another turn
+        } else {
+            // No pairs found, end turn
+            this.endTurn();
+        }
     }
 
     // End current player's turn
@@ -712,10 +721,10 @@ class GoFishClient {
             this.updateUI();
             // Player gets another turn, so don't call endTurn()
         } else {
-            console.log('❌ Failed to ask for cards');
-            addGameMessage('Failed to ask for cards', 'error');
-            // If ask failed, end the turn
-            this.game.endTurn();
+            console.log('❌ Ask failed - target player said "Go Fish!"');
+            addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s but got "Go Fish!"`, 'warning');
+            this.updateUI();
+            // Game will handle turn progression internally (goFish method)
         }
         
         // Emit to server if connected
