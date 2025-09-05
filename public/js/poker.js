@@ -1309,6 +1309,7 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
         if (isLocalPlayer || card.isRevealed) {
             // Try to draw actual card image with proper name mapping
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            
             if (typeof cardImages !== 'undefined' && cardImages[imageName] && cardImages[imageName].width > 0) {
                 image(cardImages[imageName], cardX, cardY, cardWidth, cardHeight);
             } else {
@@ -1443,14 +1444,20 @@ function drawChips() {
     const radiusX = width * 0.35;
     const radiusY = height * 0.25;
     
-    // Draw chips for each player
+    // Draw chips for each player - positioned further from cards
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const x = centerX + cos(angle) * radiusX;
         const y = centerY + sin(angle) * radiusY;
         
+        // Position chips further from player cards (below and to the side)
+        const chipOffsetX = cos(angle) * 80; // Move chips further out
+        const chipOffsetY = sin(angle) * 80; // Move chips further out
+        const chipX = x + chipOffsetX;
+        const chipY = y + chipOffsetY + 40; // Move chips down from player area
+        
         // Draw chip stack based on player's chips
-        drawChipStack(x, y + 60, player.chips, player.currentBet);
+        drawChipStack(chipX, chipY, player.chips, player.currentBet);
     });
 }
 
@@ -1475,47 +1482,59 @@ function drawChipStack(x, y, totalChips, currentBet) {
     chipValues.forEach((value, index) => {
         const chipCount = Math.floor(remainingChips / value);
         if (chipCount > 0) {
-            const maxChipsToShow = Math.min(chipCount, 10); // Limit visual chips to 10 per value
+            const maxChipsToShow = Math.min(chipCount, 8); // Limit visual chips to 8 per value
             
             for (let i = 0; i < maxChipsToShow; i++) {
-                const chipX = x + (i % 5) * 3 - 6; // Spread chips in a small area
-                const chipY = y - stackHeight - i * 2;
+                const chipX = x + (i % 4) * 8 - 12; // Spread chips wider
+                const chipY = y - stackHeight - i * 3; // More vertical spacing
+                
+                // Draw chip shadow
+                fill(0, 0, 0, 100);
+                noStroke();
+                ellipse(chipX + 2, chipY + 2, 20, 12);
                 
                 // Draw chip
                 fill(chipColors[index][0], chipColors[index][1], chipColors[index][2]);
                 stroke(0);
-                strokeWeight(1);
-                ellipse(chipX, chipY, 12, 8);
+                strokeWeight(2);
+                ellipse(chipX, chipY, 20, 12);
                 
                 // Draw chip value
-                fill(0);
+                fill(255);
                 textAlign(CENTER, CENTER);
-                textSize(6);
+                textSize(8);
+                textStyle(BOLD);
                 text(value, chipX, chipY);
             }
             
             remainingChips -= chipCount * value;
-            stackHeight += maxChipsToShow * 2 + 2;
+            stackHeight += maxChipsToShow * 3 + 5;
         }
     });
     
     // Draw current bet chips separately
     if (currentBet > 0) {
-        const betChips = Math.min(currentBet, 5); // Show up to 5 bet chips
+        const betChips = Math.min(currentBet, 4); // Show up to 4 bet chips
         for (let i = 0; i < betChips; i++) {
-            const chipX = x + i * 4 - 8;
-            const chipY = y + 20;
+            const chipX = x + i * 10 - 15;
+            const chipY = y + 25;
+            
+            // Draw bet chip shadow
+            fill(0, 0, 0, 100);
+            noStroke();
+            ellipse(chipX + 2, chipY + 2, 18, 10);
             
             // Draw bet chip (different color)
             fill(255, 0, 255); // Magenta for bet chips
             stroke(255);
             strokeWeight(2);
-            ellipse(chipX, chipY, 10, 6);
+            ellipse(chipX, chipY, 18, 10);
             
             // Draw bet indicator
             fill(255);
             textAlign(CENTER, CENTER);
-            textSize(5);
+            textSize(7);
+            textStyle(BOLD);
             text('B', chipX, chipY);
         }
     }

@@ -18,7 +18,8 @@ window.gameFramework = {
 class CardUtils {
     static createStandardDeck() {
         const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+        // Only use ranks that have corresponding images (2-7, jack, queen, king, ace)
+        const ranks = ['2', '3', '4', '5', '6', '7', 'jack', 'queen', 'king', 'ace'];
         const deck = [];
         
         for (let suit of suits) {
