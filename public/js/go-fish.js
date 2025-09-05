@@ -1303,11 +1303,11 @@ function drawGameControls() {
     const controlsY = height - 140; // Moved up and made taller
     const controlsX = 200; // Moved to left side
     
-    // Draw controls background
+    // Draw controls background - made wider to accommodate dropdowns
     fill(0, 0, 0, 180);
     stroke(255, 215, 0);
     strokeWeight(2);
-    rect(controlsX - 150, controlsY - 60, 300, 120, 10);
+    rect(controlsX - 200, controlsY - 80, 400, 160, 10);
     
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
@@ -1316,12 +1316,47 @@ function drawGameControls() {
         textAlign(CENTER, CENTER);
         textSize(16);
         noStroke();
-        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 30);
+        text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 50);
         
         // Draw available actions
         fill(255);
         textSize(12);
-        text('Ask for cards or Go Fish!', controlsX, controlsY + 10);
+        text('Ask for cards or Go Fish!', controlsX, controlsY - 20);
+        
+        // Draw player selector
+        if (window.game.currentPlayer === 0) { // Only show for human player
+            fill(255);
+            textSize(12);
+            textAlign(LEFT, CENTER);
+            text('Ask player:', controlsX - 180, controlsY + 10);
+            
+            // Draw target player selector (simplified - just show available targets)
+            const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
+            if (availableTargets.length > 0) {
+                fill(255, 255, 255, 200);
+                rect(controlsX - 120, controlsY + 5, 100, 20, 5);
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(10);
+                text(availableTargets[0].name, controlsX - 70, controlsY + 15);
+            }
+            
+            // Draw rank selector
+            fill(255);
+            textAlign(LEFT, CENTER);
+            text('for rank:', controlsX - 10, controlsY + 10);
+            
+            // Draw rank selector (simplified - show available ranks)
+            const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
+            if (availableRanks.length > 0) {
+                fill(255, 255, 255, 200);
+                rect(controlsX + 50, controlsY + 5, 60, 20, 5);
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(10);
+                text(availableRanks[0], controlsX + 80, controlsY + 15);
+            }
+        }
     }
 }
 
@@ -1330,68 +1365,65 @@ function drawActionButtons() {
     
     const buttonY = height - 50; // Adjusted for bigger control box
     const buttonX = 200; // Moved to left side to match control box
-    const buttonWidth = 120;
-    const buttonHeight = 35;
+    const buttonWidth = 100;
+    const buttonHeight = 30;
     
-    // Ask for cards button
-    if (window.game.players && window.game.players[window.game.currentPlayer] && 
-        window.game.players[window.game.currentPlayer].hand.length > 0) {
+    // Only show buttons for human player's turn
+    if (window.game.currentPlayer === 0) {
+        // Ask button
+        const askButtonX = buttonX - 120;
+        const isHoveringAsk = mouseX >= askButtonX - buttonWidth/2 && mouseX <= askButtonX + buttonWidth/2 &&
+                             mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
         
-        // Check if mouse is hovering over button
-        const isHovering = mouseX >= buttonX - buttonWidth - 10 && mouseX <= buttonX - 10 &&
-                          mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
-        
-        // Change cursor
-        if (isHovering) {
+        if (isHoveringAsk) {
             cursor(HAND);
         }
         
-        // Draw button shadow
+        // Draw Ask button shadow
         fill(0, 0, 0, 100);
         noStroke();
-        rect(buttonX - buttonWidth - 10 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
+        rect(askButtonX - buttonWidth/2 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
         
-        // Draw button with hover effect
-        fill(isHovering ? 69 : 76, isHovering ? 160 : 175, isHovering ? 73 : 80);
+        // Draw Ask button with hover effect
+        fill(isHoveringAsk ? 69 : 76, isHoveringAsk ? 160 : 175, isHoveringAsk ? 73 : 80);
         stroke(255);
         strokeWeight(2);
-        rect(buttonX - buttonWidth - 10, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
+        rect(askButtonX - buttonWidth/2, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
         
-        // Draw button text
+        // Draw Ask button text
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(12);
+        textSize(11);
         noStroke();
-        text('Ask for Cards', buttonX - buttonWidth/2 - 10, buttonY);
+        text('Ask', askButtonX, buttonY);
+        
+        // Go Fish button
+        const goFishButtonX = buttonX + 120;
+        const isHoveringGoFish = mouseX >= goFishButtonX - buttonWidth/2 && mouseX <= goFishButtonX + buttonWidth/2 &&
+                                mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
+        
+        if (isHoveringGoFish) {
+            cursor(HAND);
+        }
+        
+        // Draw Go Fish button shadow
+        fill(0, 0, 0, 100);
+        noStroke();
+        rect(goFishButtonX - buttonWidth/2 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
+        
+        // Draw Go Fish button with hover effect
+        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
+        stroke(255);
+        strokeWeight(2);
+        rect(goFishButtonX - buttonWidth/2, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
+        
+        // Draw Go Fish button text
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(11);
+        noStroke();
+        text('🐟 Go Fish!', goFishButtonX, buttonY);
     }
-    
-    // Go Fish button
-    // Check if mouse is hovering over button
-    const isHoveringFish = mouseX >= buttonX + 10 && mouseX <= buttonX + 10 + buttonWidth &&
-                          mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
-    
-    // Change cursor
-    if (isHoveringFish) {
-        cursor(HAND);
-    }
-    
-    // Draw button shadow
-    fill(0, 0, 0, 100);
-    noStroke();
-    rect(buttonX + 10 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
-    
-    // Draw button with hover effect
-    fill(isHoveringFish ? 25 : 33, isHoveringFish ? 118 : 150, isHoveringFish ? 210 : 243);
-    stroke(255);
-    strokeWeight(2);
-    rect(buttonX + 10, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
-    
-    // Draw button text
-    fill(255);
-    textAlign(CENTER, CENTER);
-    textSize(12);
-    noStroke();
-    text('🐟 Go Fish!', buttonX + buttonWidth/2 + 10, buttonY);
 }
 
 function drawGameMessages() {
@@ -1515,24 +1547,27 @@ function mousePressed() {
     
     const buttonY = height - 50; // Adjusted for bigger control box
     const buttonX = 200; // Moved to left side to match control box
-    const buttonWidth = 120;
-    const buttonHeight = 35;
+    const buttonWidth = 100;
+    const buttonHeight = 30;
     
-    // Check if Ask for Cards button was clicked
-    if (mouseX >= buttonX - buttonWidth - 10 && mouseX <= buttonX - 10 &&
-        mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
-        console.log('🎯 Ask for Cards button clicked');
-        // TODO: Implement ask for cards logic
-        showAskForCardsDialog();
-    }
-    
-    // Check if Go Fish button was clicked
-    if (mouseX >= buttonX + 10 && mouseX <= buttonX + 10 + buttonWidth &&
-        mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
-        console.log('🐟 Go Fish button clicked');
-        // TODO: Implement go fish logic
-        if (window.goFishClient) {
-            window.goFishClient.goFish();
+    // Only handle clicks for human player's turn
+    if (window.game.currentPlayer === 0) {
+        // Check if Ask button was clicked
+        const askButtonX = buttonX - 120;
+        if (mouseX >= askButtonX - buttonWidth/2 && mouseX <= askButtonX + buttonWidth/2 &&
+            mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
+            console.log('🎯 Ask button clicked');
+            showAskForCardsDialog();
+        }
+        
+        // Check if Go Fish button was clicked
+        const goFishButtonX = buttonX + 120;
+        if (mouseX >= goFishButtonX - buttonWidth/2 && mouseX <= goFishButtonX + buttonWidth/2 &&
+            mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2) {
+            console.log('🐟 Go Fish button clicked');
+            if (window.goFishClient) {
+                window.goFishClient.goFish();
+            }
         }
     }
 }
