@@ -923,8 +923,8 @@ function drawPlayers() {
     if (!window.game.players) return;
     
     const playerY = height * 0.15;
-    const playerWidth = 180;
-    const playerHeight = 120;
+    const playerWidth = 200; // Increased width
+    const playerHeight = 140; // Increased height
     const spacing = (width - playerWidth * window.game.players.length) / (window.game.players.length + 1);
     
     window.game.players.forEach((player, index) => {
@@ -957,21 +957,21 @@ function drawPlayers() {
         // Draw player name with better styling
         fill(255);
         textAlign(CENTER, CENTER);
-        textSize(14);
+        textSize(16); // Increased font size
         textStyle(BOLD);
-        text(player.name, playerX + playerWidth/2, playerY - 20);
+        text(player.name, playerX + playerWidth/2, playerY - 25);
         
         // Draw cards count
-        textSize(12);
+        textSize(14); // Increased font size
         textStyle(NORMAL);
-        text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY);
+        text(`Cards: ${player.hand ? player.hand.length : 0}`, playerX + playerWidth/2, playerY - 5);
         
         // Draw pairs count
         text(`Pairs: ${player.pairs || 0}`, playerX + playerWidth/2, playerY + 15);
         
         // Draw player cards (improved representation)
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 25, 35, index === 0);
+            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 40, 56, index === 0);
         } else {
             // Show empty hand indicator
             fill(255, 255, 255, 100);
@@ -986,7 +986,7 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
     
     const maxCards = 6; // Show max 6 cards
     const cardsToShow = cards.slice(0, maxCards);
-    const spacing = 8;
+    const spacing = 12; // Increased spacing
     const totalWidth = (cardsToShow.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -994,13 +994,12 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight / 2;
         
-        // Add subtle animation
-        const time = millis() * 0.001;
-        const floatY = y + sin(time + index) * 2;
+        // Remove animation for stability
+        const floatY = y;
         
         push();
         
-        // Draw card shadow with animation
+        // Draw card shadow - removed animation
         fill(0, 0, 0, 60);
         noStroke();
         rect(x + 3, floatY + 3, cardWidth, cardHeight, 4);
@@ -1083,28 +1082,27 @@ function drawPond() {
         ellipse(x, y, size, size * 0.6);
     }
     
-    // Draw pond label with better styling
+    // Draw pond label with better styling - moved higher
     fill(255, 215, 0);
     textAlign(CENTER, CENTER);
     textSize(20);
     textStyle(BOLD);
-    text('🐟 Fish Pond', centerX, pondY - 30);
+    text('🐟 Fish Pond', centerX, pondY - 40);
     
-    // Draw cards in pond
+    // Draw cards in pond - moved lower to avoid text overlap
     if (window.game.pond && window.game.pond.length > 0) {
-        drawCards(centerX, pondY + 10, window.game.pond, 50, 70, false);
+        drawCards(centerX, pondY + 20, window.game.pond, 50, 70, false);
         
-        // Show pond count with animation
+        // Show pond count - removed animation for stability
         fill(255);
         textSize(14);
         textStyle(BOLD);
-        const countY = pondY + 45 + sin(time * 2) * 2;
-        text(`${window.game.pond.length} cards`, centerX, countY);
+        text(`${window.game.pond.length} cards`, centerX, pondY + 55);
     } else {
         fill(255, 255, 255, 150);
         textSize(14);
         textStyle(NORMAL);
-        text('Pond is empty', centerX, pondY + 10);
+        text('Pond is empty', centerX, pondY + 20);
     }
 }
 
