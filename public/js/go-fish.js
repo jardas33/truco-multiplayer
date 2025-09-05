@@ -868,6 +868,11 @@ class GoFishClient {
 
 // 🎨 GO FISH RENDERING FUNCTIONS
 function drawGameState() {
+    // Load card images if not already loaded
+    if (Object.keys(cardImages).length === 0) {
+        loadCardImages();
+    }
+    
     if (!window.game || !window.game.players) {
         console.log('🎨 Go Fish: No game or players available for rendering');
         // Draw a waiting screen
@@ -999,21 +1004,8 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
         const cardX = x + i * (cardWidth + spacing);
         const cardY = y + 90;
         
-        // Card shadow
-        fill(0, 0, 0, 100);
-        noStroke();
-        rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 4);
-        
-        // Card back
-        fill(50, 50, 100);
-        stroke(100, 100, 150);
-        strokeWeight(1);
-        rect(cardX, cardY, cardWidth, cardHeight, 4);
-        
-        // Card back pattern
-        fill(100, 100, 150);
-        noStroke();
-        rect(cardX + 5, cardY + 5, cardWidth - 10, cardHeight - 10, 2);
+        // Use the drawCard function for consistent styling
+        drawCard(cardX, cardY, null, cardWidth, cardHeight, false);
     }
 }
 
@@ -1076,16 +1068,31 @@ function drawCard(x, y, card, cardWidth, cardHeight, isLocalPlayer = false) {
     rect(x, y, cardWidth, cardHeight, 6);
     
     if (isLocalPlayer && card) {
-        // Draw card content
-        fill(0, 0, 0);
-        textAlign(CENTER, CENTER);
-        textSize(12);
-        noStroke();
-        text(card.rank, x + cardWidth/2, y + cardHeight/2 - 5);
-        
-        // Draw suit
-        textSize(10);
-        text(card.suit, x + cardWidth/2, y + cardHeight/2 + 8);
+        // Draw card image if available
+        const imageKey = getCardImageKey(card);
+        if (cardImages[imageKey]) {
+            image(cardImages[imageKey], x + 2, y + 2, cardWidth - 4, cardHeight - 4);
+        } else {
+            // Fallback to text if image not loaded
+            fill(0, 0, 0);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            noStroke();
+            text(card.rank, x + cardWidth/2, y + cardHeight/2 - 5);
+            
+            textSize(10);
+            text(card.suit, x + cardWidth/2, y + cardHeight/2 + 8);
+        }
+    } else {
+        // Draw card back for opponent cards
+        if (cardBackImage) {
+            image(cardBackImage, x + 2, y + 2, cardWidth - 4, cardHeight - 4);
+        } else {
+            // Fallback card back pattern
+            fill(50, 50, 100);
+            noStroke();
+            rect(x + 5, y + 5, cardWidth - 10, cardHeight - 10, 2);
+        }
     }
 }
 
@@ -1663,11 +1670,14 @@ function mousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
-        const panelX = 50;
-        const panelY = height - 200; // Updated to match new control panel position
-        const buttonY = panelY + 50;
-        const buttonWidth = 80;
+        const panelWidth = 200;
+        const panelHeight = 60;
+        const panelX = (width - panelWidth) / 2;
+        const panelY = height - 100;
+        const buttonY = panelY + 15;
+        const buttonWidth = 70;
         const buttonHeight = 30;
+        const buttonSpacing = 20;
         
         // Check if Ask button was clicked
         const askX = panelX + 15;
@@ -1678,7 +1688,7 @@ function mousePressed() {
         }
         
         // Check if Go Fish button was clicked
-        const goFishX = panelX + 110;
+        const goFishX = panelX + 15 + buttonWidth + buttonSpacing;
         if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🐟 Go Fish button clicked');
@@ -1766,6 +1776,33 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Modern UI Functions
+let cardImages = {};
+let cardBackImage = null;
+
+function loadCardImages() {
+    // Load card back image
+    cardBackImage = loadImage('Images/cardBack.jpg');
+    
+    // Load all card images
+    const suits = ['clubs', 'diamonds', 'hearts', 'spades'];
+    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+    
+    suits.forEach(suit => {
+        ranks.forEach(rank => {
+            const filename = `${rank}_of_${suit}.png`;
+            const key = `${rank}_${suit}`;
+            cardImages[key] = loadImage(`Images/${filename}`);
+        });
+    });
+}
+
+function getCardImageKey(card) {
+    if (!card) return null;
+    const rank = card.rank.toLowerCase();
+    const suit = card.suit.toLowerCase();
+    return `${rank}_${suit}`;
+}
+
 function getResponsiveDimensions() {
     const minWidth = 800;
     const minHeight = 600;
@@ -1810,10 +1847,10 @@ function validateLayoutSpacing() {
 
 function drawModernScorePanel() {
     const dims = getResponsiveDimensions();
-    const panelX = width - 200;
-    const panelY = 50;
     const panelWidth = dims.isSmallScreen ? 160 : 180;
-    const panelHeight = dims.isSmallScreen ? 180 : 200;
+    const panelHeight = dims.isSmallScreen ? 120 : 140;
+    const panelX = width - panelWidth - 20; // Bottom right with margin
+    const panelY = height - panelHeight - 20; // Bottom right with margin
     
     // Draw score panel background
     fill(0, 0, 0, 200);
@@ -1854,27 +1891,24 @@ function drawModernScorePanel() {
 function drawModernControlPanel() {
     if (!window.game || window.game.gameOver) return;
     
-    const panelX = 50;
-    const panelY = height - 200; // Moved up to avoid main player hand overlap
+    const panelWidth = 200;
+    const panelHeight = 60;
+    const panelX = (width - panelWidth) / 2; // Center horizontally
+    const panelY = height - 100; // Move to bottom center
     
     // Draw control panel background
     fill(0, 0, 0, 200);
     stroke(100, 150, 200);
     strokeWeight(2);
-    rect(panelX, panelY, 300, 100, 10);
+    rect(panelX, panelY, panelWidth, panelHeight, 10);
     
     // Current player info
     if (window.game.currentPlayer === 0) {
-        fill(255, 255, 255);
-        textAlign(LEFT, CENTER);
-        textSize(16);
-        noStroke();
-        text('Your Turn', panelX + 15, panelY + 20);
-        
-        // Action buttons
-        const buttonY = panelY + 50;
-        const buttonWidth = 80;
+        // Action buttons - centered in smaller panel
+        const buttonY = panelY + 15;
+        const buttonWidth = 70;
         const buttonHeight = 30;
+        const buttonSpacing = 20;
         
         // Ask button
         const askX = panelX + 15;
@@ -1892,7 +1926,7 @@ function drawModernControlPanel() {
         text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
         
         // Go Fish button
-        const goFishX = panelX + 110;
+        const goFishX = panelX + 15 + buttonWidth + buttonSpacing;
         const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
