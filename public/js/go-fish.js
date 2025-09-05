@@ -519,6 +519,10 @@ class GoFishClient {
             window.gameState = gameStateEnum.Playing;
         }
         
+        // Set initial turn state
+        this.isMyTurn = (this.game.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn; // Allow action when it's my turn
+        
         // Update UI
         this.updateUI();
         
@@ -613,6 +617,7 @@ class GoFishClient {
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn; // Allow action when it's my turn
         this.updateUI();
         
         UIUtils.showGameMessage(`${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`, 'info');
@@ -625,6 +630,7 @@ class GoFishClient {
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn; // Allow action when it's my turn
         this.updateUI();
         
         UIUtils.showGameMessage(`${data.player} went fishing and drew ${data.drawnCard.name}`, 'info');
@@ -636,6 +642,7 @@ class GoFishClient {
         this.game.players = data.players;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn; // Allow action when it's my turn
         this.updateUI();
     }
 
@@ -970,12 +977,12 @@ function drawPlayers() {
         
         // Draw player cards (improved representation)
         if (player.hand && player.hand.length > 0) {
-            drawPlayerCards(playerX + playerWidth/2, playerY + 35, player.hand, 69, 97, index === 0);
+            drawPlayerCards(playerX + playerWidth/2, playerY + 60, player.hand, 69, 97, index === 0);
         } else {
             // Show empty hand indicator
             fill(255, 255, 255, 100);
             textSize(10);
-            text('No cards', playerX + playerWidth/2, playerY + 35);
+            text('No cards', playerX + playerWidth/2, playerY + 60);
         }
     });
 }
@@ -985,7 +992,7 @@ function drawPlayerCards(centerX, centerY, cards, cardWidth, cardHeight, isLocal
     
     const maxCards = 6; // Show max 6 cards
     const cardsToShow = cards.slice(0, maxCards);
-    const spacing = 12; // Increased spacing
+    const spacing = 20; // Increased spacing to prevent overlap
     const totalWidth = (cardsToShow.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
@@ -1061,20 +1068,20 @@ function drawPond() {
     // Draw pond shadow
     fill(0, 0, 0, 100);
     noStroke();
-    rect(centerX - 505, pondY - 130, 1010, 260, 12);
+    rect(centerX - 252, pondY - 65, 505, 130, 12);
     
     // Draw pond area with gradient
     fill(0, 0, 0, 180);
     stroke(255, 255, 255, 200);
     strokeWeight(3);
-    rect(centerX - 500, pondY - 125, 1000, 250, 10);
+    rect(centerX - 250, pondY - 62, 500, 125, 10);
     
     // Add animated pond texture
     const time = millis() * 0.001;
     for (let i = 0; i < 20; i++) {
-        const x = centerX - 450 + (i * 45) + sin(time + i) * 25;
-        const y = pondY - 75 + cos(time + i * 0.5) * 37;
-        const size = 20 + sin(time + i) * 10;
+        const x = centerX - 225 + (i * 22) + sin(time + i) * 12;
+        const y = pondY - 37 + cos(time + i * 0.5) * 18;
+        const size = 10 + sin(time + i) * 5;
         
         fill(0, 100, 150, 40);
         noStroke();
@@ -1096,7 +1103,7 @@ function drawPond() {
         fill(255);
         textSize(18); // Increased for larger pond
         noStroke();
-        text(`${window.game.pond.length} cards`, centerX, pondY + 140);
+        text(`${window.game.pond.length} cards`, centerX, pondY + 70);
     } else {
         fill(255, 255, 255, 150);
         textSize(14);
