@@ -42,6 +42,16 @@ function preload() {
         console.error('ERROR: Error loading popup frame image:', error);
     }
     
+    // Load pond image for Go Fish game
+    try {
+        window.pondImage = loadImage(`${baseUrl}/Images/pond.png`,
+            () => console.log('SUCCESS: Pond image loaded'),
+            () => console.error('ERROR: Failed to load pond image')
+        );
+    } catch (error) {
+        console.error('ERROR: Error loading pond image:', error);
+    }
+    
     // Load all card images
     loadAllCardImages(baseUrl);
 }

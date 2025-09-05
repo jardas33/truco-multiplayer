@@ -965,8 +965,12 @@ function drawGameState() {
     // No need to check or load them here
     
     if (!window.game || !window.game.players) {
-        // Draw a waiting screen
+        // Draw a waiting screen with pond background
+        if (window.pondImage) {
+            image(window.pondImage, 0, 0, width, height);
+        } else {
         background(0, 50, 100);
+        }
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(24);
@@ -976,31 +980,13 @@ function drawGameState() {
         return;
     }
     
-    // Clear canvas with beautiful ocean-like background
+    // Draw pond background image
+    if (window.pondImage) {
+        // Draw the pond image to fill the entire canvas
+        image(window.pondImage, 0, 0, width, height);
+    } else {
+        // Fallback to solid color if pond image not loaded
     background(0, 50, 100); // Dark blue ocean
-    
-    // Add animated ocean texture
-    const time = millis() * 0.001;
-    for (let i = 0; i < 50; i++) {
-        const x = (i * 20) % width;
-        const y = (i * 15) % height;
-        const size = 20 + sin(time + i) * 10;
-        const alpha = 20 + sin(time * 0.5 + i) * 10;
-        
-        fill(0, 100, 150, alpha);
-        noStroke();
-        ellipse(x, y, size, size * 0.5);
-    }
-    
-    // Add floating particles
-    for (let i = 0; i < 30; i++) {
-        const x = (i * 30 + time * 20) % width;
-        const y = (i * 25 + time * 15) % height;
-        const size = 2 + sin(time + i) * 1;
-        
-        fill(255, 255, 255, 30);
-        noStroke();
-        ellipse(x, y, size, size);
     }
     
     // Reset cursor
@@ -1028,7 +1014,7 @@ function drawModernTable() {
         const c2 = color(25, 35, 55);  // Lighter blue
         const c = lerpColor(c1, c2, inter);
         fill(c);
-    noStroke();
+        noStroke();
         rect(0, y, width, 1);
     }
     
@@ -1072,7 +1058,7 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
     fill(255, 255, 255);
     textAlign(LEFT, CENTER);
     textSize(14);
-        noStroke();
+    noStroke();
     text(player.name, x + 10, y + 20);
     
     // Card count
