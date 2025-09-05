@@ -1,0 +1,147 @@
+.poker-table {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.pot-display {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffd700;
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 50%;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.community-cards {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 8px;
+}
+
+.player-seats {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.player-seat {
+  position: absolute;
+  width: 120px;
+  text-align: center;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  display: none;
+}
+
+.player-seat.active {
+  border: 2px solid #ffd700;
+}
+
+.player-seat .player-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.player-seat .player-chips {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.seat-0 { bottom: 5%; left: 50%; transform: translateX(-50%); }
+.seat-1 { bottom: 20%; left: 5%; }
+.seat-2 { bottom: 20%; right: 5%; }
+.seat-3 { top: 5%; left: 50%; transform: translateX(-50%); }
+.seat-4 { top: 20%; left: 5%; }
+.seat-5 { top: 20%; right: 5%; }
+
+.betting-controls {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, -20%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.betting-controls input {
+  width: 80px;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.fold-button {
+  background: #e53935;
+  color: #fff;
+}
+
+.call-button {
+  background: #43a047;
+  color: #fff;
+}
+
+.raise-button {
+  background: #1e88e5;
+  color: #fff;
+}
+
+.bet-button {
+  background: #fb8c00;
+  color: #fff;
+}
+
+.fold-button,
+.call-button,
+.raise-button,
+.bet-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.hand-rankings {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  max-width: 200px;
+  display: none;
+}
+
+.hand-rankings.show {
+  display: block;
+}
+
+.hand-rankings-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 8px 12px;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}

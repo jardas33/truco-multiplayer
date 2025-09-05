@@ -23,6 +23,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
+    <link rel="stylesheet" href="css/poker.css">
     <style>
         body {
             margin: 0;
@@ -378,11 +379,12 @@
 
     <div id="Game">
         <div class="poker-table">
+            <button id="handRankingsToggle" class="hand-rankings-btn">Hand Rankings</button>
             <div class="pot-display">
                 Pot: $<span id="potAmount">0</span>
             </div>
-            
-            <div class="hand-rankings">
+
+            <div class="hand-rankings" id="handRankings">
                 <h3>Hand Rankings</h3>
                 <ul>
                     <li>Royal Flush</li>
@@ -401,12 +403,21 @@
             <div class="community-cards" id="communityCards">
                 <!-- Community cards will be rendered here -->
             </div>
-            
+
+            <div class="player-seats" id="playerSeats">
+                <div class="player-seat seat-0"></div>
+                <div class="player-seat seat-1"></div>
+                <div class="player-seat seat-2"></div>
+                <div class="player-seat seat-3"></div>
+                <div class="player-seat seat-4"></div>
+                <div class="player-seat seat-5"></div>
+            </div>
+
             <div class="betting-controls" id="bettingControls" style="display: none;">
                 <button id="foldBtn" class="fold-button">Fold</button>
                 <button id="callBtn" class="call-button">Call $<span id="callAmount">0</span></button>
                 <button id="raiseBtn" class="raise-button">Raise</button>
-                <input type="number" id="betAmount" placeholder="Bet amount" style="padding: 10px; border: none; border-radius: 5px; width: 100px;">
+                <input type="number" id="betAmount" placeholder="Bet amount">
                 <button id="betBtn" class="bet-button">Bet</button>
             </div>
         </div>
@@ -443,6 +454,17 @@
                         document.body.classList.add('room-created');
                         console.log('🎮 Room-created class added');
                     }, 100);
+                });
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rankingsBtn = document.getElementById('handRankingsToggle');
+            const rankings = document.getElementById('handRankings');
+            if (rankingsBtn && rankings) {
+                rankingsBtn.addEventListener('click', () => {
+                    rankings.classList.toggle('show');
                 });
             }
         });
