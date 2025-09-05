@@ -193,6 +193,19 @@ function showInstructions() {
   console.log('📖 Instructions div found:', !!instructionsDiv);
   
   if (canvas && instructionsDiv) {
+    // Hide other divs
+    const menuDiv = document.getElementById('Menu');
+    const gameDiv = document.getElementById('Game');
+    const valuesDiv = document.getElementById('Values');
+    
+    if (menuDiv) menuDiv.style.display = 'none';
+    if (gameDiv) gameDiv.style.display = 'none';
+    if (valuesDiv) valuesDiv.style.display = 'none';
+    
+    // Show Instructions div
+    instructionsDiv.style.display = 'block';
+    
+    // Move canvas to Instructions div
     instructionsDiv.appendChild(canvas);
     console.log('📖 Canvas moved to Instructions div');
   } else {
@@ -228,6 +241,19 @@ function showCardValues() {
   console.log('🃏 Values div found:', !!valuesDiv);
   
   if (canvas && valuesDiv) {
+    // Hide other divs
+    const menuDiv = document.getElementById('Menu');
+    const gameDiv = document.getElementById('Game');
+    const instructionsDiv = document.getElementById('Instructions');
+    
+    if (menuDiv) menuDiv.style.display = 'none';
+    if (gameDiv) gameDiv.style.display = 'none';
+    if (instructionsDiv) instructionsDiv.style.display = 'none';
+    
+    // Show Values div
+    valuesDiv.style.display = 'block';
+    
+    // Move canvas to Values div
     valuesDiv.appendChild(canvas);
     console.log('🃏 Canvas moved to Values div');
   } else {
