@@ -85,6 +85,12 @@ class GoFishGame {
             pond: this.pond,
             currentPlayer: this.currentPlayer
         });
+        
+        // If it's a bot's turn, make them play after a short delay
+        const currentPlayer = this.players[this.currentPlayer];
+        if (currentPlayer.isBot) {
+            setTimeout(() => this.botPlay(), 2000); // 2 second delay for game start
+        }
     }
 
     // Deal cards to all players
@@ -137,6 +143,9 @@ class GoFishGame {
                 player.pairs += pairs;
                 
                 console.log(`🎯 ${player.name} found ${pairs} pair(s) of ${rank}s`);
+                
+                // Show pair found message
+                this.showGameMessage(`${player.name} found ${pairs} pair(s) of ${rank}s!`, 1500);
             }
         });
     }
@@ -167,6 +176,9 @@ class GoFishGame {
             
             console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
             
+            // Show success message
+            this.showGameMessage(`${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 2000);
+            
             // Check for new pairs
             this.checkForPairs(askingPlayer);
             
@@ -183,6 +195,7 @@ class GoFishGame {
             return true;
         } else {
             // Target player doesn't have the cards - Go Fish!
+            this.showGameMessage(`${targetPlayer.name} says "Go Fish!"`, 1500);
             this.goFish(askingPlayer);
             return false;
         }
@@ -194,6 +207,7 @@ class GoFishGame {
         
         if (this.pond.length === 0) {
             console.log('🐟 Pond is empty!');
+            this.showGameMessage('Pond is empty! Game continues...', 1500);
             this.endTurn();
             return;
         }
@@ -203,6 +217,9 @@ class GoFishGame {
         player.hand.push(drawnCard);
         
         console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
+        
+        // Show what was drawn
+        this.showGameMessage(`${player.name} drew ${drawnCard.name}`, 1500);
         
         // Check for pairs
         this.checkForPairs(player);
@@ -239,6 +256,83 @@ class GoFishGame {
             currentPlayer: this.currentPlayer,
             players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs }))
         });
+        
+        // If it's a bot's turn, make them play after a delay
+        const currentPlayer = this.players[this.currentPlayer];
+        if (currentPlayer.isBot) {
+            setTimeout(() => this.botPlay(), 1500); // 1.5 second delay for bot thinking
+        }
+    }
+    
+    // Bot AI logic
+    botPlay() {
+        const bot = this.players[this.currentPlayer];
+        if (!bot.isBot || bot.hand.length === 0) return;
+        
+        console.log(`🤖 ${bot.name} is thinking...`);
+        
+        // Simple bot strategy: ask for a rank they have
+        const availableRanks = [...new Set(bot.hand.map(card => card.rank))];
+        const targetRank = availableRanks[Math.floor(Math.random() * availableRanks.length)];
+        
+        // Choose a target player (not themselves)
+        const otherPlayers = this.players.filter((p, index) => index !== this.currentPlayer && p.hand.length > 0);
+        if (otherPlayers.length === 0) {
+            this.goFish(bot);
+            return;
+        }
+        
+        const targetPlayer = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+        const targetIndex = this.players.indexOf(targetPlayer);
+        
+        console.log(`🤖 ${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
+        
+        // Show bot action popup
+        this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
+        
+        // Execute the ask
+        this.askForCards(this.currentPlayer, targetIndex, targetRank);
+    }
+    
+    // Show game message popup
+    showGameMessage(message, duration = 2000) {
+        // Remove existing message
+        const existingMessage = document.getElementById('game-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Create new message
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'game-message';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #64b8ff;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            word-wrap: break-word;
+        `;
+        messageDiv.textContent = message;
+        
+        document.body.appendChild(messageDiv);
+        
+        // Auto-remove after duration
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, duration);
     }
 
     // Check if game is over
@@ -1710,7 +1804,7 @@ function mousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
-        const handY = height - 80;
+        const handY = height - 90; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
         const buttonWidth = 70;
