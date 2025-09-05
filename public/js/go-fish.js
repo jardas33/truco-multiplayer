@@ -1196,7 +1196,7 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
-    const handY = height - 90; // Moved up slightly more for better positioning
+    const handY = height - 110; // Moved up more to give space from bottom
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
@@ -1908,7 +1908,7 @@ function mousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
-        const handY = height - 90; // Match the new position from drawMainPlayerHand
+        const handY = height - 110; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
         const buttonWidth = 70;
@@ -2474,7 +2474,7 @@ function drawGameHistoryPanel() {
                     break;
             }
             
-            textSize(9); // Smaller font for better fit
+            textSize(10); // Slightly bigger font for better readability
             textStyle(NORMAL);
             textAlign(LEFT, TOP);
             
