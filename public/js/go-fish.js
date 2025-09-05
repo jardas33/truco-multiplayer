@@ -710,9 +710,12 @@ class GoFishClient {
             console.log('✅ Successfully asked for cards');
             addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`, 'info');
             this.updateUI();
+            // Player gets another turn, so don't call endTurn()
         } else {
             console.log('❌ Failed to ask for cards');
             addGameMessage('Failed to ask for cards', 'error');
+            // If ask failed, end the turn
+            this.game.endTurn();
         }
         
         // Emit to server if connected
@@ -744,6 +747,9 @@ class GoFishClient {
         
         // Update UI
         this.updateUI();
+        
+        // End the turn after going fishing
+        this.game.endTurn();
         
         // Emit to server if connected
         if (window.gameFramework && window.gameFramework.socket) {
@@ -2129,7 +2135,9 @@ function drawGameHistoryPanel() {
         let yOffset = 50;
         const maxEntries = Math.floor((panelHeight - 80) / 16); // Calculate how many entries fit
         
-        window.game.gameHistory.slice(0, maxEntries).forEach((entry, index) => {
+        // Display history in reverse order (newest first)
+        const historyToShow = window.game.gameHistory.slice(0, maxEntries);
+        historyToShow.forEach((entry, index) => {
             if (yOffset + 16 > panelY + panelHeight - 20) return; // Don't draw outside panel
             
             // Set text color based on entry type
