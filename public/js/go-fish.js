@@ -1611,10 +1611,4 @@ function showAskForCardsDialog() {
 document.addEventListener('DOMContentLoaded', function() {
     window.goFishClient = new GoFishClient();
     window.goFishClient.initialize();
-    
-    // Start a test game after a short delay to ensure everything is loaded
-    setTimeout(() => {
-        console.log('Starting test Go Fish game...');
-        window.goFishClient.startGame();
-    }, 1000);
 });
