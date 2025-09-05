@@ -2644,6 +2644,8 @@ function startMultiplayerGame(data) {
         // Reset to menu state
         window.gameState = gameStateEnum.Menu;
         gameState = gameStateEnum.Menu;
+        // Stop the draw loop when returning to menu
+        noLoop();
         window.isMultiplayerMode = false;
     }
 }
@@ -2752,6 +2754,8 @@ function leaveRoomAndReturnToMenu() {
     // Reset UI to main menu
     gameState = gameStateEnum.Menu;
     window.gameState = gameStateEnum.Menu;
+    // Stop the draw loop when returning to menu
+    noLoop();
     
     // Hide game div and show menu div
     if (gameDiv) gameDiv.style('display', 'none');

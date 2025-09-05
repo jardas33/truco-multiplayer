@@ -330,6 +330,15 @@ function setup() {
     popupProgressFill.style('transition', 'width 0.1s linear');
     popupProgressFill.style('transform-origin', 'left');
 
+    // Initialize menu state properly
+    if (typeof gameStateEnum !== 'undefined') {
+        gameState = gameStateEnum.Menu;
+        window.gameState = gameStateEnum.Menu;
+    }
+    
+    // Stop the draw loop initially to prevent blinking
+    noLoop();
+    
     console.log('Setup complete - canvas and UI elements initialized');
 }
   

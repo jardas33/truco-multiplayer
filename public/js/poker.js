@@ -775,6 +775,8 @@ class PokerClient {
             gameState = gameStateEnum.Playing;
             window.gameState = gameStateEnum.Playing;
             console.log('Game state set to Playing');
+            // Start the draw loop when game starts
+            loop();
         }
         
         // Set global game instance

@@ -13,27 +13,19 @@ function draw() {
         return; // Don't draw anything if canvas is hidden
     }
     
-    // Add frame limiting to prevent excessive drawing and blinking
-    if (!window.lastDrawTime) {
-        window.lastDrawTime = 0;
+    // Use p5.js built-in loop control instead of manual frame limiting
+    if (gameState === gameStateEnum.Menu) {
+        // For menu, stop the draw loop to prevent blinking
+        if (isLooping()) {
+            noLoop();
+        }
+        return; // Don't draw anything in menu state
+    } else if (gameState === gameStateEnum.Playing) {
+        // For game playing, ensure loop is running
+        if (!isLooping()) {
+            loop();
+        }
     }
-    
-    const drawTime = millis();
-    let drawInterval = 33; // Default 30 FPS (33ms)
-    
-    // Different frame rates for different states
-    if (gameState === gameStateEnum.Playing && window.game && window.game.players) {
-        drawInterval = 100; // 10 FPS for game playing
-    } else if (gameState === gameStateEnum.Menu) {
-        drawInterval = 100; // 10 FPS for menu to prevent blinking
-    } else {
-        drawInterval = 50; // 20 FPS for other states
-    }
-    
-    if (drawTime - window.lastDrawTime < drawInterval) {
-        return;
-    }
-    window.lastDrawTime = drawTime;
     
     // Fix canvas parenting based on game state
     if (window.gameCanvas) {
@@ -77,21 +69,7 @@ function draw() {
     }
     pop();
     
-    if (gameState === gameStateEnum.Menu) {
-        menuDiv.show();
-        gameDiv.hide();
-        if (instructionsDiv) instructionsDiv.hide();
-        if (valuesDiv) valuesDiv.hide();
-        if (instructionsCloseButton) {
-            instructionsCloseButton.remove();
-        }
-        // Remove any existing instructions box
-        const existingBox = document.querySelector('.instructions-box');
-        if (existingBox) {
-            existingBox.remove();
-        }
-    }
-    else if (gameState === gameStateEnum.Instructions) {
+    if (gameState === gameStateEnum.Instructions) {
         // ✅ CRITICAL: Ensure proper div visibility
         if (menuDiv) menuDiv.hide();
         if (gameDiv) gameDiv.hide();
