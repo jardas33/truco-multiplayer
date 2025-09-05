@@ -25,7 +25,7 @@
       /* Force TRUCO button to have red background and 15% smaller size */
       button:contains("TRUCO"), 
       .truco-button,
-      [id*="truco"],
+      [id*="truco"]:not([id*="instructions"]),
       button[style*="TRUCO"] {
         background-color: #dc3545 !important;
         background: #dc3545 !important;
@@ -35,6 +35,20 @@
         border-radius: 17px !important;
         box-shadow: 0 13px 26px rgba(0,0,0,0.7) !important;
         transform: scale(0.51) !important;
+      }
+      
+      /* Ensure Instructions button has proper styling */
+      button:contains("Instructions"),
+      [id*="instructions"] {
+        background-color: rgba(0, 0, 0, 0.7) !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        color: white !important;
+        font-size: 14px !important;
+        padding: 10px 20px !important;
+        border: 2px solid #fff !important;
+        border-radius: 5px !important;
+        transform: none !important;
+        box-shadow: none !important;
       }
       
       /* Additional rule for p5.js buttons */

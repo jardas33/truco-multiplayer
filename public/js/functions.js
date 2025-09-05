@@ -180,12 +180,23 @@ function backToMainMenu() {
 }
 
 function showInstructions() {
+  console.log('📖 showInstructions called - current gameState:', gameState);
   previousGameState = gameState; // Store the current game state
   gameState = gameStateEnum.Instructions;
+  console.log('📖 New gameState:', gameState);
+  
   // Move canvas to Instructions div
   let canvas = document.querySelector('canvas');
-  if (canvas) {
-    document.getElementById('Instructions').appendChild(canvas);
+  let instructionsDiv = document.getElementById('Instructions');
+  
+  console.log('📖 Canvas found:', !!canvas);
+  console.log('📖 Instructions div found:', !!instructionsDiv);
+  
+  if (canvas && instructionsDiv) {
+    instructionsDiv.appendChild(canvas);
+    console.log('📖 Canvas moved to Instructions div');
+  } else {
+    console.error('📖 Missing canvas or Instructions div');
   }
 }
 
@@ -204,12 +215,23 @@ function closeInstructions() {
 }
 
 function showCardValues() {
+  console.log('🃏 showCardValues called - current gameState:', gameState);
   previousGameState = gameState; // Store the current game state
   gameState = gameStateEnum.CardValues;
+  console.log('🃏 New gameState:', gameState);
+  
   // Move canvas to Values div
   let canvas = document.querySelector('canvas');
-  if (canvas) {
-    document.getElementById('Values').appendChild(canvas);
+  let valuesDiv = document.getElementById('Values');
+  
+  console.log('🃏 Canvas found:', !!canvas);
+  console.log('🃏 Values div found:', !!valuesDiv);
+  
+  if (canvas && valuesDiv) {
+    valuesDiv.appendChild(canvas);
+    console.log('🃏 Canvas moved to Values div');
+  } else {
+    console.error('🃏 Missing canvas or Values div');
   }
 }
 

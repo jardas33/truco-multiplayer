@@ -428,6 +428,11 @@ function drawBasicGameState() {
 
 // Add mouse click detection for card gameplay
 function mousePressed() {
+    // Allow button clicks in menu state (Instructions, Card Values, etc.)
+    if (gameState === gameStateEnum.Menu) {
+        return; // Let p5.js buttons handle their own clicks
+    }
+    
     if (gameState !== gameStateEnum.Playing || !window.game) {
         console.log('❌ Game not in playing state or no game instance');
         return;
