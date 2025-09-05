@@ -891,7 +891,7 @@ function drawGameState() {
     drawGoFishTable();
     drawPlayers();
     drawPond();
-    drawGameInfo();
+    // drawGameInfo(); // Removed - redundant info
     drawScores();
     drawGameControls();
     drawActionButtons();
@@ -1253,7 +1253,7 @@ function drawScores() {
     if (!window.game.players) return;
     
     const scoresX = width - 200;
-    const scoresY = 20;
+    const scoresY = height - 170;
     const scoresWidth = 180;
     const scoresHeight = 150;
     
