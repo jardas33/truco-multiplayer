@@ -753,6 +753,9 @@ class BattleshipClient {
     }
     
     drawGrids() {
+        console.log('🎨 BattleshipClient.drawGrids() called');
+        console.log('🎯 Grid start position:', this.gridStartX, this.gridStartY);
+        
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
@@ -776,6 +779,7 @@ class BattleshipClient {
     }
     
     drawGrid(x, y, player, showShips) {
+        console.log(`🎨 Drawing grid at ${x}, ${y} for player ${player}, showShips: ${showShips}`);
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
         // Draw grid background with more opacity to make it visible
