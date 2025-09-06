@@ -672,7 +672,7 @@ class BattleshipClient {
             
             // Calculate grid positions - ensure grids fit within canvas
             this.gridStartX = Math.max(30, Math.min(canvasWidth - 920, 50)); // Ensure grids fit
-            this.gridStartY = Math.min(300, canvasHeight - 450); // Ensure grids fit vertically
+            this.gridStartY = Math.min(400, canvasHeight - 350); // Moved further down
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
@@ -718,7 +718,7 @@ class BattleshipClient {
                 const canvasWidth = this.canvas.width;
                 const canvasHeight = this.canvas.height;
                 this.gridStartX = Math.max(30, Math.min(canvasWidth - 920, 50));
-                this.gridStartY = Math.min(300, canvasHeight - 450);
+                this.gridStartY = Math.min(400, canvasHeight - 350);
                 console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
                 // Redraw after resize
                 redraw();
@@ -837,12 +837,6 @@ class BattleshipClient {
         stroke(255, 255, 0); // Yellow border for maximum visibility
         strokeWeight(3);
         rect(x - 8, y - 8, (this.gridSize + this.gridSpacing) * 10 + 16, (this.gridSize + this.gridSpacing) * 10 + 16);
-        
-        // Add debug rectangle to make sure something is visible
-        fill(255, 0, 0, 150); // Red debug rectangle
-        stroke(255, 0, 0);
-        strokeWeight(2);
-        rect(x, y, 100, 100);
         
         for (let row = 0; row < 10; row++) {
             for (let col = 0; col < 10; col++) {
@@ -1040,12 +1034,12 @@ class BattleshipClient {
             fill(0, 0, 0, 200);
             stroke(76, 175, 80);
             strokeWeight(2);
-            rect(width - 250, 10, 240, 80);
+            rect(width - 250, 120, 240, 80); // Moved from y=10 to y=120
             
             fill(76, 175, 80);
             textAlign(LEFT, TOP);
             textSize(16);
-            text(`Ships Placed: ${placedCount}/${totalShips}`, width - 240, 20);
+            text(`Ships Placed: ${placedCount}/${totalShips}`, width - 240, 130); // Moved from y=20 to y=130
             
             // Draw progress bar
             const progressWidth = 200;
@@ -1053,15 +1047,15 @@ class BattleshipClient {
             const progress = placedCount / totalShips;
             
             fill(50, 50, 50);
-            rect(width - 240, 40, progressWidth, progressHeight);
+            rect(width - 240, 150, progressWidth, progressHeight); // Moved from y=40 to y=150
             
             fill(76, 175, 80);
-            rect(width - 240, 40, progressWidth * progress, progressHeight);
+            rect(width - 240, 150, progressWidth * progress, progressHeight); // Moved from y=40 to y=150
             
             fill(255);
             textAlign(CENTER, CENTER);
             textSize(12);
-            text(`${Math.round(progress * 100)}%`, width - 140, 50);
+            text(`${Math.round(progress * 100)}%`, width - 140, 160); // Moved from y=50 to y=160
         } else if (this.game.gamePhase === 'playing') {
             // Draw turn indicator
             fill(0, 0, 0, 200);
@@ -1218,7 +1212,7 @@ function drawBasicGrids() {
     const gridSize = 40;
     const gridSpacing = 2;
     const gridStartX = Math.max(30, Math.min(windowWidth - 920, 50)); // Ensure grids fit
-    const gridStartY = Math.min(300, windowHeight - 450); // Ensure grids fit vertically
+    const gridStartY = Math.min(400, windowHeight - 350); // Moved further down
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
