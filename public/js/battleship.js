@@ -633,8 +633,8 @@ class BattleshipClient {
     constructor() {
         this.game = new BattleshipGame();
         this.canvas = null;
-        this.gridSize = 40;
-        this.gridSpacing = 2;
+        this.gridSize = 50; // Increased from 40 to 50
+        this.gridSpacing = 3; // Increased from 2 to 3
         this.gridStartX = 0;
         this.gridStartY = 0;
         this.isDragging = false;
@@ -812,8 +812,8 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - side by side with more space
-        const attackGridX = this.gridStartX + 480; // More space between grids
+        // Draw attack grid (right side) - side by side with wider gap
+        const attackGridX = this.gridStartX + 550; // Much wider gap between grids
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -821,7 +821,7 @@ class BattleshipClient {
         noStroke();
         fill(255, 255, 0); // Yellow titles
         textAlign(CENTER, CENTER);
-        textSize(18); // Larger titles
+        textSize(22); // Much larger titles
         text('Your Fleet', this.gridStartX + 200, this.gridStartY - 40);
         text('Attack Grid', attackGridX + 200, attackGridY - 40);
         
@@ -915,9 +915,9 @@ class BattleshipClient {
         // Draw grid labels with better visibility
         fill(255, 255, 255); // White text
         textAlign(CENTER, CENTER);
-        textSize(14); // Slightly larger
+        textSize(18); // Much larger for better visibility
         stroke(0, 0, 0); // Black outline
-        strokeWeight(1);
+        strokeWeight(2); // Thicker outline
         
         // Numbers (1-10) - positioned above grid
         for (let i = 1; i <= 10; i++) {
@@ -1074,8 +1074,8 @@ class BattleshipClient {
     }
     
     handleAttack() {
-        // Use correct attack grid position (side by side with more space)
-        const attackGridX = this.gridStartX + 480; // More space between grids
+        // Use correct attack grid position (side by side with wider gap)
+        const attackGridX = this.gridStartX + 550; // Much wider gap between grids
         const attackGridY = this.gridStartY; // Same Y as player grid
         const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
@@ -1181,16 +1181,16 @@ function draw() {
 
 function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
-    const gridSize = 40;
-    const gridSpacing = 2;
+    const gridSize = 50; // Increased from 40 to 50
+    const gridSpacing = 3; // Increased from 2 to 3
     const gridStartX = Math.max(30, Math.min(windowWidth - 920, 50)); // Ensure grids fit
     const gridStartY = Math.min(400, windowHeight - 450); // Ensure grids fit with larger canvas
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - side by side with more space
-    const attackGridX = gridStartX + 480; // More space between grids
+    // Draw attack grid (right side) - side by side with wider gap
+    const attackGridX = gridStartX + 550; // Much wider gap between grids
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
@@ -1222,9 +1222,9 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
     // Draw grid labels with better visibility
     fill(255, 255, 255); // White text
     textAlign(CENTER, CENTER);
-    textSize(14); // Slightly larger
+    textSize(18); // Much larger for better visibility
     stroke(0, 0, 0); // Black outline
-    strokeWeight(1);
+    strokeWeight(2); // Thicker outline
     
     // Numbers (1-10) - positioned above grid
     for (let i = 1; i <= 10; i++) {
@@ -1241,7 +1241,7 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
     noStroke(); // Remove stroke for title
     fill(255, 255, 0); // Yellow title
     textAlign(CENTER, CENTER);
-    textSize(18); // Larger title
+    textSize(22); // Much larger title
     text(title, x + 200, y - 40); // Moved up more
 }
 
