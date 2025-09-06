@@ -208,8 +208,14 @@ class GoFishGame {
         
         console.log(`🎯 ${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s`);
         
-        // Show asking message first
-        this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s...`, 1500);
+        // Show asking message first - hide specific rank from human player if they're not the one asking
+        if (askingPlayer === this.players[0]) { // Human player asking
+            this.showGameMessage(`You ask ${targetPlayer.name} for ${rank}s...`, 1500);
+        } else if (targetPlayer === this.players[0]) { // Bot asking human player
+            this.showGameMessage(`${askingPlayer.name} asks you for a card...`, 1500);
+        } else { // Bot asking bot
+            this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for a card...`, 1500);
+        }
         
         // Add delay to make the game flow more natural
         setTimeout(() => {
@@ -304,11 +310,14 @@ class GoFishGame {
         
         console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
             
-            // Log the draw
-            this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
-            
-            // Show what was drawn with excitement
-            this.showGameMessage(`🎉 ${player.name} caught ${drawnCard.name}!`, 2500);
+            // Log the draw - only show card name to the player who drew it
+            if (player === this.players[0]) { // Human player (Player 1)
+                this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
+                this.showGameMessage(`🎉 You caught ${drawnCard.name}!`, 2500);
+            } else { // Bot players
+                this.addToHistory(`🎣 ${player.name} drew a card from the pond`, 'info');
+                this.showGameMessage(`🎣 ${player.name} went fishing!`, 2500);
+            }
             
             // Trigger fishing visual effect
             this.triggerFishingEffect();
@@ -510,8 +519,12 @@ class GoFishGame {
         
         console.log(`🤖 ${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
         
-        // Show bot action popup
-        this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
+        // Show bot action popup - don't reveal specific card rank to human player
+        if (targetPlayer === this.players[0]) { // Asking human player
+            this.showGameMessage(`${bot.name} asks you for a card`);
+        } else { // Bot asking another bot
+            this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for a card`);
+        }
         
         // Execute the ask
         const success = this.askForCards(this.currentPlayer, targetIndex, targetRank);
@@ -1883,7 +1896,7 @@ function drawGameControls() {
                 // Rank selector
                 fill(255);
                 textAlign(LEFT, CENTER);
-                text('for rank:', controlsX - 200, controlsY + 35);
+                text('for card:', controlsX - 200, controlsY + 35);
                 
                 // Draw rank selector dropdown
                 const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
@@ -2226,7 +2239,7 @@ function showAskForCardsDialog() {
             </select>
         </div>
         <div style="margin: 10px 0;">
-            <label style="display: block; margin-bottom: 5px;">for rank:</label>
+            <label style="display: block; margin-bottom: 5px;">for card:</label>
             <select id="rankSelect" style="width: 100%; padding: 5px; margin-bottom: 15px;">
                 ${availableRanks.map(rank => `<option value="${rank}">${rank}</option>`).join('')}
             </select>
