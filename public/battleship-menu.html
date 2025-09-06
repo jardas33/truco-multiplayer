@@ -198,6 +198,11 @@
 </head>
 <body>
     <div id="Menu">
+        <!-- Instructions Button -->
+        <button id="instructionsBtn" onclick="showInstructions()" style="position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.9); color: #333; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; z-index: 1001;">
+            Instructions
+        </button>
+        
         <h1 class="game-title">🚢 Battleship</h1>
         <div id="roomControls" class="room-controls">
           <!-- Back to Main Menu Button -->
@@ -251,32 +256,117 @@
     <script src="js/setup.js"></script>
     <script src="js/draw.js"></script>
     <script src="js/game-framework.js"></script>
-    <script src="js/battleship.js"></script>
     
     <script>
+        // Instructions functionality
+        function showInstructions() {
+            alert(`🚢 BATTLESHIP - How to Play:
+
+🎯 OBJECTIVE:
+Place your ships on the grid and try to sink all enemy ships before they sink yours!
+
+⚓ SHIP PLACEMENT:
+• Click a ship to select it, then click on the grid to place it
+• Press 'R' to rotate ships horizontally/vertically
+• Press 'Esc' to cancel placement
+• Ships cannot overlap or go off the grid
+
+🎯 ATTACK PHASE:
+• Click on the enemy grid to attack
+• Red = Hit, White = Miss
+• Sink all enemy ships to win!
+
+🚢 SHIPS:
+• Carrier (5 spaces)
+• Battleship (4 spaces)  
+• Cruiser (3 spaces)
+• Submarine (3 spaces)
+• Destroyer (2 spaces)
+
+Good luck, Admiral! 🫡`);
+        }
+
+        // Room creation functionality
+        function createRoom() {
+            const roomCode = document.getElementById('roomCodeInput').value.trim() || generateRoomCode();
+            console.log('🚢 Creating Battleship room:', roomCode);
+            
+            // Store room settings
+            localStorage.setItem('battleshipRoomCode', roomCode);
+            localStorage.setItem('battleshipPlayerCount', '2');
+            localStorage.setItem('battleshipGameMode', 'multiplayer');
+            
+            // Show room code
+            document.getElementById('roomCodeDisplay').style.display = 'block';
+            document.getElementById('roomCodeText').textContent = roomCode;
+            document.getElementById('roomCodeInput').value = roomCode;
+            
+            // Hide create/join buttons
+            document.body.classList.add('room-created');
+            
+            // Show game controls
+            document.getElementById('addBotBtn').style.display = 'inline-block';
+            document.getElementById('removeBotBtn').style.display = 'inline-block';
+            document.getElementById('startGameBtn').style.display = 'inline-block';
+            document.getElementById('gameMenuBtn').style.display = 'inline-block';
+            document.getElementById('playerCustomization').style.display = 'block';
+        }
+
+        function joinRoom() {
+            const roomCode = document.getElementById('roomCodeInput').value.trim();
+            if (!roomCode) {
+                alert('Please enter a room code!');
+                return;
+            }
+            
+            console.log('🚢 Joining Battleship room:', roomCode);
+            
+            // Store room settings
+            localStorage.setItem('battleshipRoomCode', roomCode);
+            localStorage.setItem('battleshipPlayerCount', '2');
+            localStorage.setItem('battleshipGameMode', 'multiplayer');
+            
+            // Redirect to game
+            window.location.href = '/battleship';
+        }
+
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        function copyRoomCode() {
+            const roomCode = document.getElementById('roomCodeText').textContent;
+            navigator.clipboard.writeText(roomCode).then(() => {
+                const message = document.getElementById('copySuccessMessage');
+                message.style.display = 'block';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        function startGame() {
+            console.log('🚢 Starting Battleship game...');
+            window.location.href = '/battleship';
+        }
+
         // Add room-created class when room is created to hide Create/Join buttons
         document.addEventListener('DOMContentLoaded', function() {
-            // Listen for room creation events
-            const createBtn = document.getElementById('createRoomBtn');
-            const joinBtn = document.getElementById('joinRoomBtn');
+            // Set up event listeners
+            document.getElementById('createRoomBtn').onclick = createRoom;
+            document.getElementById('joinRoomBtn').onclick = joinRoom;
+            document.getElementById('copyRoomCodeBtn').onclick = copyRoomCode;
+            document.getElementById('startGameBtn').onclick = startGame;
             
-            if (createBtn) {
-                createBtn.addEventListener('click', function() {
-                    setTimeout(() => {
-                        document.body.classList.add('room-created');
-                    }, 100);
-                });
-            }
+            // Auto-focus on room code input
+            document.getElementById('roomCodeInput').focus();
             
-            if (joinBtn) {
-                joinBtn.addEventListener('click', function() {
-                    setTimeout(() => {
-                        document.body.classList.add('room-created');
-                    }, 100);
-                });
-            }
-            
-            
+            // Enter key support
+            document.getElementById('roomCodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    joinRoom();
+                }
+            });
         });
     </script>
 </body>
