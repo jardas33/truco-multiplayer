@@ -77,7 +77,7 @@ function createCanvasSafely() {
     if (currentPath === '/battleship') {
         // For Battleship, use gameCanvas div instead of Menu
         menuDiv = select("#gameCanvas");
-        gameDiv = select("#Game");
+        gameDiv = select("#gameCanvas"); // Use gameCanvas for battleship
         instructionsDiv = select("#Instructions");
         valuesDiv = select("#Values");
         console.log('✅ Battleship div containers initialized');

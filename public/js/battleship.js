@@ -266,7 +266,10 @@ class BattleshipGame {
             });
             if (allLoaded) {
                 console.log('✅ All ship images loaded, re-rendering UI');
-                this.renderShipsList();
+                // Add a small delay to ensure images are fully processed
+                setTimeout(() => {
+                    this.renderShipsList();
+                }, 100);
                 return true;
             }
         } else {
@@ -1073,6 +1076,10 @@ class BattleshipClient {
         // Don't draw preview if mouse is at origin (0,0) - likely not moved yet
         if (mouseX === 0 && mouseY === 0) return;
         
+        // Don't draw preview if mouse is outside the grid area
+        if (mouseX < this.gridStartX || mouseX > this.gridStartX + 420 || 
+            mouseY < this.gridStartY || mouseY > this.gridStartY + 420) return;
+        
         const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
         
@@ -1358,6 +1365,8 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
     stroke(255, 255, 255); // White border
     strokeWeight(2);
     rect(x - 5, y - 5, (gridSize + gridSpacing) * 10 + 10, (gridSize + gridSpacing) * 10 + 10);
+    
+    console.log('🎨 Drawing grid at:', x, y, 'size:', gridSize, 'spacing:', gridSpacing);
     
     // Draw grid cells
     for (let row = 0; row < 10; row++) {
