@@ -106,10 +106,10 @@ io.on('connection', (socket) => {
         });
 
         socket.join(roomCode);
-        socket.roomCode = roomCode;
+        roomCode = roomCode;
 
         console.log(`🔍 Socket joined room: ${roomCode}`);
-        console.log(`🔍 Socket room code set to: ${socket.roomCode}`);
+        console.log(`🔍 Socket room code set to: ${roomCode}`);
 
         socket.emit('roomCreated', {
             roomId: roomCode,
@@ -138,7 +138,7 @@ io.on('connection', (socket) => {
         if (!room) {
             console.log(`❌ Room ${roomCode} not found`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
-            console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+            console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
             socket.emit('error', 'Room not found');
             return;
         }
@@ -159,11 +159,11 @@ io.on('connection', (socket) => {
         });
         
         socket.join(roomCode);
-        socket.roomCode = roomCode;
+        roomCode = roomCode;
 
         console.log(`✅ User ${socket.id} joined room ${roomCode}. Total players: ${room.players.length}`);
         console.log(`🔍 Socket joined room: ${roomCode}`);
-        console.log(`🔍 Socket room code set to: ${socket.roomCode}`);
+        console.log(`🔍 Socket room code set to: ${roomCode}`);
 
         // ✅ CRITICAL FIX: Emit roomJoined event to the joining player
         socket.emit('roomJoined', {
@@ -195,7 +195,7 @@ io.on('connection', (socket) => {
         // Remove user from room
         room.players = room.players.filter(p => p.id !== socket.id);
         socket.leave(roomCode);
-        socket.roomCode = null;
+        roomCode = null;
 
         console.log(`✅ User ${socket.id} left room ${roomCode}. Total players: ${room.players.length}`);
 
@@ -316,7 +316,7 @@ io.on('connection', (socket) => {
         try {
             console.log(`🎮 STARTGAME EVENT RECEIVED! Room: ${roomCode}`);
             console.log(`🔍 Socket ID: ${socket.id}`);
-            console.log(`🔍 Socket room code: ${socket.roomCode}`);
+            console.log(`🔍 Socket room code: ${roomCode}`);
             console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
             console.log(`🔍 Event handler executing...`);
             
@@ -446,30 +446,30 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('User disconnected');
         
-        if (socket.roomCode) {
-            const room = rooms.get(socket.roomCode);
+        if (roomCode) {
+            const room = rooms.get(roomCode);
             if (room) {
                 // ✅ CRITICAL FIX: Don't remove players during active games
                 // This was causing "Room not found" errors
                 if (!room.game || !room.game.started) {
                     room.players = room.players.filter(p => p.id !== socket.id);
                     
-                    io.to(socket.roomCode).emit('playerLeft', {
+                    io.to(roomCode).emit('playerLeft', {
                         players: room.players,
                         count: room.players.length
                     });
 
                     if (room.players.length === 0) {
-                        console.log(`🔍 DEBUG: Room ${socket.roomCode} is empty after disconnect, checking if game is active before deletion`);
+                        console.log(`🔍 DEBUG: Room ${roomCode} is empty after disconnect, checking if game is active before deletion`);
                         console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
                         console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
                         
                         // ✅ CRITICAL FIX: Don't delete room if game is active
                         if (room.game && room.game.started) {
-                            console.log(`⚠️ WARNING: Attempting to delete room ${socket.roomCode} during active game after disconnect - PREVENTING DELETION`);
+                            console.log(`⚠️ WARNING: Attempting to delete room ${roomCode} during active game after disconnect - PREVENTING DELETION`);
                         } else {
-                        rooms.delete(socket.roomCode);
-                            console.log(`🗑️ Room ${socket.roomCode} deleted (empty and no active game after disconnect)`);
+                        rooms.delete(roomCode);
+                            console.log(`🗑️ Room ${roomCode} deleted (empty and no active game after disconnect)`);
                         }
                     }
                 } else {
@@ -481,27 +481,27 @@ io.on('connection', (socket) => {
 
     // Handle game events
     socket.on('playCard', (data) => {
-        console.log(`🃏 Card played in room: ${socket.roomCode}`);
+        console.log(`🃏 Card played in room: ${roomCode}`);
         console.log(`🃏 Play data:`, data);
         
-        if (!socket.roomCode) {
+        if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
             socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for card play`);
+            console.log(`❌ Room ${roomCode} not found for card play`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
-            console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+            console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
             console.log(`🔍 DEBUG: Socket ID:`, socket.id);
             socket.emit('error', 'Room not found');
             return;
         }
 
         if (!room.game) {
-            console.log(`❌ No active game in room ${socket.roomCode}`);
+            console.log(`❌ No active game in room ${roomCode}`);
             socket.emit('error', 'No active game');
             return;
         }
@@ -653,7 +653,7 @@ io.on('connection', (socket) => {
 
         // ✅ CRITICAL DEBUG: Log after adding card to playedCards
         console.log(`🔍 DEBUG: Card added. New count: ${room.game.playedCards.length}`);
-        console.log(`✅ ${targetPlayer.name} played ${playedCard.name} in room ${socket.roomCode}`);
+        console.log(`✅ ${targetPlayer.name} played ${playedCard.name} in room ${roomCode}`);
         
         // ✅ CRITICAL FIX: Reset roundJustCompleted flag only when the round winner starts playing
         if (room.game.roundJustCompleted && room.game.currentPlayer === clientPlayerIndex) {
@@ -676,7 +676,7 @@ io.on('connection', (socket) => {
         }));
 
         // ✅ Emit card played event to all players in the room with synchronized data
-        io.to(socket.roomCode).emit('cardPlayed', {
+        io.to(roomCode).emit('cardPlayed', {
             playerId: targetPlayer.id, // ✅ Use targetPlayer.id for bots
             playerName: targetPlayer.name, // ✅ Use targetPlayer.name for bots
             cardIndex: cardIndex,
@@ -697,7 +697,7 @@ io.on('connection', (socket) => {
         // ✅ Check if round is complete (only when 4 cards are played)
         if (room.game.playedCards.length === 4) {
             console.log(`🏁 Round completion check triggered - 4 cards played!`);
-            console.log(`🏁 Round complete in room ${socket.roomCode}`);
+            console.log(`🏁 Round complete in room ${roomCode}`);
             
             // ✅ CRITICAL FIX: Implement proper scoring logic with draw handling
             const roundWinner = determineRoundWinner(room.game.playedCards, room);
@@ -858,9 +858,9 @@ io.on('connection', (socket) => {
                 room.game.playedCards = [];
                 
                 // Emit game complete event instead of round complete
-                console.log(`🔍 DEBUG: Emitting gameComplete event to room ${socket.roomCode}`);
+                console.log(`🔍 DEBUG: Emitting gameComplete event to room ${roomCode}`);
                 console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, sets: room.game.sets, gameWinner, setWinner });
-                io.to(socket.roomCode).emit('gameComplete', {
+                io.to(roomCode).emit('gameComplete', {
                     roundWinner: roundWinner,
                     scores: room.game.scores,
                     games: room.game.games,
@@ -871,12 +871,12 @@ io.on('connection', (socket) => {
                 console.log(`🔍 DEBUG: gameComplete event emitted successfully`);
                 
                 // Start new game after 5 seconds
-                console.log(`SERVER: Scheduling new game start in 5 seconds for room ${socket.roomCode}. Game winner: ${gameWinner}`);
+                console.log(`SERVER: Scheduling new game start in 5 seconds for room ${roomCode}. Game winner: ${gameWinner}`);
                 console.log(`🔍 DEBUG: setTimeout scheduled for startNewGame`);
                 setTimeout(() => {
-                    console.log(`SERVER: Executing startNewGame for room ${socket.roomCode}`);
+                    console.log(`SERVER: Executing startNewGame for room ${roomCode}`);
                     console.log(`🔍 DEBUG: setTimeout callback executed, calling startNewGame`);
-                    startNewGame(room, gameWinner, socket.roomCode);
+                    startNewGame(room, gameWinner, roomCode);
                 }, 5000);
                 
                 return; // Don't continue with normal round logic
@@ -977,7 +977,7 @@ io.on('connection', (socket) => {
             
             // ✅ Emit round complete event with scoring information (NO gameWinner for normal rounds)
             console.log(`🔍 DEBUG: Emitting roundComplete with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-            io.to(socket.roomCode).emit('roundComplete', {
+            io.to(roomCode).emit('roundComplete', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands,
                 roundWinner: roundWinner,
@@ -1005,7 +1005,7 @@ io.on('connection', (socket) => {
                 
                 console.log(`🔍 DEBUG: Emitting turnChanged event for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
                 console.log(`🔍 DEBUG: Round completion turnChanged event stack trace:`, new Error().stack);
-                io.to(socket.roomCode).emit('turnChanged', {
+                io.to(roomCode).emit('turnChanged', {
                     currentPlayer: room.game.currentPlayer,
                     allHands: room.game.hands
                 });
@@ -1062,7 +1062,7 @@ io.on('connection', (socket) => {
             // Emit turn change event with the new current player IMMEDIATELY
             console.log(`🔍 DEBUG: Emitting turnChanged event for human player progression with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             console.log(`🔍 DEBUG: Human turnChanged event stack trace:`, new Error().stack);
-            io.to(socket.roomCode).emit('turnChanged', {
+            io.to(roomCode).emit('turnChanged', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands
             });
@@ -1071,7 +1071,7 @@ io.on('connection', (socket) => {
         }
         }
 
-        console.log(`✅ Card played event emitted for user ${socket.id} in room ${socket.roomCode}`);
+        console.log(`✅ Card played event emitted for user ${socket.id} in room ${roomCode}`);
     });
 
     // ✅ TEST: Handle test events to verify socket connection
@@ -1083,16 +1083,16 @@ io.on('connection', (socket) => {
 
     // ✅ CRITICAL FIX: Handle bot turn completion to move to next player
     socket.on('botTurnComplete', (data) => {
-        console.log(`🤖 Bot turn complete in room: ${socket.roomCode}`);
+        console.log(`🤖 Bot turn complete in room: ${roomCode}`);
         console.log(`🔍 DEBUG: botTurnComplete event received from socket ${socket.id}`);
         console.log(`🔍 DEBUG: botTurnComplete data:`, data);
         
-        if (!socket.roomCode) {
+        if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room || !room.game) {
             console.log(`❌ Room or game not found for bot turn completion`);
             return;
@@ -1148,8 +1148,8 @@ io.on('connection', (socket) => {
         }
         
         // ✅ CRITICAL TEST: Send a test event first
-        console.log(`🧪 TEST: Sending testTurnChanged event to room ${socket.roomCode}`);
-        io.to(socket.roomCode).emit('testTurnChanged', {
+        console.log(`🧪 TEST: Sending testTurnChanged event to room ${roomCode}`);
+        io.to(roomCode).emit('testTurnChanged', {
             message: 'Test event from server',
             currentPlayer: room.game.currentPlayer
         });
@@ -1173,39 +1173,46 @@ io.on('connection', (socket) => {
         setTimeout(() => {
         // Emit turn change event with the new current player
         console.log(`🔍 DEBUG: Emitting turnChanged event with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-        console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${socket.roomCode}`);
+        console.log(`🔍 DEBUG: turnChanged event will be sent to room: ${roomCode}`);
         console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event - currentPlayer: ${room.game.currentPlayer}`);
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event - player name: ${room.players[room.game.currentPlayer]?.name}`);
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event - player team: ${room.players[room.game.currentPlayer]?.team}`);
-        io.to(socket.roomCode).emit('turnChanged', {
+        io.to(roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             allHands: room.game.hands
         });
-        console.log(`✅ turnChanged event emitted successfully to room ${socket.roomCode}`);
+        console.log(`✅ turnChanged event emitted successfully to room ${roomCode}`);
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
         }, 1000); // 1-second delay for visual pacing
     });
 
     // ✅ Handle Truco requests with proper game logic
     socket.on('requestTruco', (data) => {
-        console.log(`🎯 Truco requested in room: ${socket.roomCode}`);
+        console.log(`🎯 Truco requested with data:`, data);
         
-        if (!socket.roomCode) {
-            console.log(`❌ User ${socket.id} not in a room`);
+        // ✅ CRITICAL FIX: Use room code from data or fallback to socket.roomCode
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        console.log(`🔍 DEBUG: Socket ID: ${socket.id}`);
+        console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+        
+        if (!roomCode) {
+            console.log(`❌ User ${socket.id} not in a room and no room code provided`);
             socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for Truco request`);
+            console.log(`❌ Room ${roomCode} not found for Truco request`);
+            console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
             socket.emit('error', 'Room not found');
             return;
         }
 
         if (!room.game) {
-            console.log(`❌ No active game in room ${socket.roomCode}`);
+            console.log(`❌ No active game in room ${roomCode}`);
             socket.emit('error', 'No active game');
             return;
         }
@@ -1271,7 +1278,7 @@ io.on('connection', (socket) => {
 
         // ✅ Check if Truco is already active
         if (room.game.trucoState.isActive) {
-            console.log(`❌ Truco is already active in room ${socket.roomCode}`);
+            console.log(`❌ Truco is already active in room ${roomCode}`);
             socket.emit('error', 'Truco already active');
             return;
         }
@@ -1385,7 +1392,7 @@ io.on('connection', (socket) => {
             potentialValue: room.game.trucoState.potentialValue,
             responsePlayerIndex: nextPlayerIndex,
             responsePlayerName: room.players[nextPlayerIndex].name,
-            roomCode: socket.roomCode
+            roomCode: roomCode
         };
         
         if (isRaise) {
@@ -1395,9 +1402,9 @@ io.on('connection', (socket) => {
             eventData.raiserTeam = requestingPlayer.team;
         }
         
-        io.to(socket.roomCode).emit(eventName, eventData);
+        io.to(roomCode).emit(eventName, eventData);
 
-        console.log(`✅ Truco called event emitted for user ${socket.id} in room ${socket.roomCode}`);
+        console.log(`✅ Truco called event emitted for user ${socket.id} in room ${roomCode}`);
 
         // ✅ Bot responses are handled client-side via the trucoCalled event
         // This ensures consistency with other bot actions and prevents double responses
@@ -1577,7 +1584,7 @@ io.on('connection', (socket) => {
             setTimeout(() => {
                 console.log(`🔍 DEBUG: About to call startNewGame with winningTeam: ${winningTeam}`);
                 console.log(`🔍 DEBUG: Room state before startNewGame:`, {
-                    roomCode: socket.roomCode,
+                    roomCode: roomCode,
                     gameStarted: room.game?.started,
                     games: room.game?.games,
                     players: room.players.map(p => ({ name: p.name, team: p.team }))
@@ -1589,7 +1596,7 @@ io.on('connection', (socket) => {
                 console.log(`🔍 DEBUG: winningTeam === 'team1': ${winningTeam === 'team1'}`);
                 console.log(`🔍 DEBUG: winningTeam === 'team2': ${winningTeam === 'team2'}`);
                 
-                startNewGame(room, winningTeam, socket.roomCode);
+                startNewGame(room, winningTeam, roomCode);
                 console.log(`🔍 DEBUG: startNewGame call completed`);
             }, 3000);
 
@@ -1661,13 +1668,13 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: botRespondTruco event handler called`);
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         console.log(`🔍 DEBUG: Socket ID:`, socket.id);
-        console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+        console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
         console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
         console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
-        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to roomCode
+        const roomCode = data.roomCode || roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${roomCode})`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
         
@@ -1694,13 +1701,13 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: respondTruco event handler called`);
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         console.log(`🔍 DEBUG: Socket ID:`, socket.id);
-        console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+        console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
         console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
         console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
-        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to roomCode
+        const roomCode = data.roomCode || roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${roomCode})`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
         
@@ -1745,7 +1752,7 @@ io.on('connection', (socket) => {
 
     // ✅ Handle player nickname changes
     socket.on('changeNickname', (data) => {
-        const roomCode = data.roomCode || socket.roomCode;
+        const roomCode = data.roomCode || roomCode;
         console.log(`✏️ Nickname change requested in room: ${roomCode}`);
         
         if (!roomCode) {
@@ -1797,7 +1804,7 @@ io.on('connection', (socket) => {
 
     // ✅ Handle player team selection
     socket.on('selectTeam', (data) => {
-        const roomCode = data.roomCode || socket.roomCode;
+        const roomCode = data.roomCode || roomCode;
         console.log(`🏆 Team selection requested in room: ${roomCode}`);
         
         if (!roomCode) {

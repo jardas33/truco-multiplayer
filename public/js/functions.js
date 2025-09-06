@@ -21,9 +21,23 @@ function truco() {
     console.log(`🎯 Truco request sent to server`);
   }
 
-  // Send Truco/Raise request to server
+  // ✅ CRITICAL FIX: Get room code and validate before sending request
   if (typeof socket !== 'undefined' && socket) {
-    socket.emit('requestTruco', {});
+    // Extract room code from window.roomId (could be object or string)
+    const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+    
+    if (!roomCode) {
+      console.error('❌ No room code found for Truco request');
+      alert('Error: Not in a room. Please join a room first.');
+      return;
+    }
+    
+    console.log(`🔍 DEBUG: Sending Truco request with room code: ${roomCode}`);
+    
+    // Send Truco/Raise request to server with room code
+    socket.emit('requestTruco', {
+      roomCode: roomCode
+    });
   } else {
     console.error('❌ Socket not available for Truco request');
   }
