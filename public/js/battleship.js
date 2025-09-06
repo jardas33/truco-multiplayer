@@ -40,6 +40,7 @@ class BattleshipGame {
         this.aiLastHit = null;
         
         this.initializeGame();
+        this.imagesChecked = false; // Initialize images checked flag
     }
     
     createEmptyGrid() {
@@ -239,10 +240,6 @@ class BattleshipGame {
             const hasImage = window.shipImages && window.shipImages[ship.type];
             console.log(`Rendering ship ${ship.name} (${ship.type}): hasImage=${hasImage}`);
             
-            const shipImagePath = hasImage ? 
-                `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : 
-                `background: ${ship.color}`;
-            
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
                     <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${hasImage ? '' : `background: ${ship.color}`}">
@@ -334,12 +331,14 @@ class BattleshipGame {
         const grid = this.playerGrids[player];
         const shipData = {
             name: ship.name,
+            type: ship.type,
             size: ship.size,
             color: ship.color,
             x: x,
             y: y,
             orientation: orientation,
-            hits: 0
+            hits: 0,
+            sunk: false
         };
         
         for (let i = 0; i < ship.size; i++) {
@@ -622,7 +621,11 @@ class BattleshipGame {
         this.aiMode = 'hunt';
         this.aiLastHit = null;
         
+        // Reset ship placement status
         this.ships.forEach(ship => ship.placed = false);
+        
+        // Reset images checked flag
+        this.imagesChecked = false;
         
         this.initializeGame();
     }
@@ -642,6 +645,7 @@ class BattleshipGame {
         
         if (ship.placed) {
             console.log('❌ Ship already placed');
+            this.addToHistory(`❌ ${ship.name} is already placed!`, 'error');
             return;
         }
         
@@ -658,6 +662,7 @@ class BattleshipGame {
             this.ships[this.currentShip.index].placed = true;
             this.currentShip = null;
             this.updateUI();
+            this.renderShipsList(); // Force re-render of ships list
             return true;
         } else {
             this.addToHistory(`❌ Cannot place ${this.currentShip.name} there!`, 'error');
@@ -668,6 +673,7 @@ class BattleshipGame {
     cancelShipPlacement() {
         this.currentShip = null;
         this.addToHistory('❌ Ship placement cancelled', 'info');
+        this.updateUI();
     }
     
     rotateCurrentShip() {
@@ -675,6 +681,7 @@ class BattleshipGame {
         
         this.currentShip.orientation = this.currentShip.orientation === 'horizontal' ? 'vertical' : 'horizontal';
         this.addToHistory(`🔄 Rotated ${this.currentShip.name} to ${this.currentShip.orientation}`, 'info');
+        this.updateUI();
     }
 }
 
@@ -726,7 +733,7 @@ class BattleshipClient {
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
-            this.setupEventListeners();
+            this.setupCanvasEventListeners();
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
             console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
@@ -793,7 +800,7 @@ class BattleshipClient {
         });
     }
     
-    setupEventListeners() {
+    setupCanvasEventListeners() {
         // Only set up event listeners if canvas exists
         if (!this.canvas) {
             console.log('⚠️ Canvas not ready for event listeners');
@@ -831,11 +838,6 @@ class BattleshipClient {
         
         // Stop continuous drawing to prevent console spam
         noLoop();
-        
-        // Force an initial redraw to show grids
-        setTimeout(() => {
-            redraw();
-        }, 100);
     }
     
     drawMouseHover() {
@@ -1154,6 +1156,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
+                    // Force redraw after successful placement
+                    redraw();
                 } else {
                     console.log(`❌ Cannot place ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
                 }
@@ -1177,6 +1181,8 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
+                // Force redraw after attack
+                redraw();
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
@@ -1187,10 +1193,12 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
+                redraw(); // Force redraw after rotation
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
+                redraw(); // Force redraw after cancellation
             }
         }
     }
@@ -1226,27 +1234,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initClient, 200);
 });
 
-// p5.js functions
-function setup() {
-    console.log('🎨 p5.js setup called');
-    
-    // Create a fallback canvas if BattleshipClient hasn't created one
-    if (!battleshipClient || !battleshipClient.canvas) {
-        console.log('🔄 Creating fallback canvas...');
-        const canvasDiv = document.getElementById('gameCanvas');
-        if (canvasDiv) {
-            canvasDiv.innerHTML = '';
-            const canvasWidth = Math.min(1000, windowWidth - 100);
-            const canvasHeight = Math.min(700, windowHeight - 100);
-            const fallbackCanvas = createCanvas(canvasWidth, canvasHeight);
-            fallbackCanvas.parent(canvasDiv);
-            fallbackCanvas.style('background', 'transparent');
-            fallbackCanvas.style('max-width', '100%');
-            fallbackCanvas.style('height', 'auto');
-            console.log('✅ Fallback canvas created');
-        }
-    }
-}
+// p5.js functions - setup() is handled in setup.js
 
 function draw() {
     if (battleshipClient && battleshipClient.initialized) {
@@ -1255,7 +1243,9 @@ function draw() {
         // No background - let HTML background show through
         
         // Draw basic grids even without full client
-        drawBasicGrids();
+        if (typeof drawBasicGrids === 'function') {
+            drawBasicGrids();
+        }
         
         fill(255);
         textAlign(CENTER, CENTER);

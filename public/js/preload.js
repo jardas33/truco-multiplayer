@@ -73,7 +73,10 @@ function loadGameImages() {
                 loadedCount++;
                 if (loadedCount === shipTypes.length) {
                     console.log('🚢 All ship images loaded!');
-                    window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+                    // Trigger callback after a short delay to ensure DOM is ready
+                    setTimeout(() => {
+                        window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+                    }, 100);
                 }
             };
             img.onerror = (error) => {
@@ -81,7 +84,10 @@ function loadGameImages() {
                 loadedCount++;
                 if (loadedCount === shipTypes.length) {
                     console.log('🚢 All ship images processed!');
-                    window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+                    // Trigger callback even if some images failed
+                    setTimeout(() => {
+                        window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+                    }, 100);
                 }
             };
             img.src = imageUrl;
