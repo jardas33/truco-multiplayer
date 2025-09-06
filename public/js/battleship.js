@@ -281,19 +281,12 @@ class BattleshipGame {
             const checkX = orientation === 'horizontal' ? x + i : x;
             const checkY = orientation === 'vertical' ? y + i : y;
             
+            // Check bounds
             if (checkX >= this.gridSize || checkY >= this.gridSize) return false;
-            if (grid[checkY][checkX].ship !== null) return false;
+            if (checkX < 0 || checkY < 0) return false;
             
-            // Check adjacent cells for no touching ships
-            for (let dx = -1; dx <= 1; dx++) {
-                for (let dy = -1; dy <= 1; dy++) {
-                    const adjX = checkX + dx;
-                    const adjY = checkY + dy;
-                    if (adjX >= 0 && adjX < this.gridSize && adjY >= 0 && adjY < this.gridSize) {
-                        if (grid[adjY][adjX].ship !== null) return false;
-                    }
-                }
-            }
+            // Check if cell is already occupied
+            if (grid[checkY][checkX].ship !== null) return false;
         }
         
         return true;
@@ -908,7 +901,7 @@ class BattleshipClient {
                     const cellY = this.gridStartY + previewY * (this.gridSize + this.gridSpacing);
                     
                     // Semi-transparent preview with border
-                    fill(red(ship.color), green(ship.color), blue(ship.color), 180);
+                    fill(ship.color + 'B4'); // Add alpha to hex color
                     stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
                     strokeWeight(3);
                     rect(cellX, cellY, this.gridSize, this.gridSize);
@@ -1035,8 +1028,10 @@ class BattleshipClient {
         const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
         
-        // Only handle clicks on the left grid (player grid)
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX < this.gridStartX + 500) {
+        // Only handle clicks on the player grid (top grid)
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
+            mouseX >= this.gridStartX && mouseX < this.gridStartX + 420 && 
+            mouseY >= this.gridStartY && mouseY < this.gridStartY + 420) {
             if (this.game.currentShip) {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
@@ -1049,12 +1044,17 @@ class BattleshipClient {
     }
     
     handleAttack() {
-        const attackGridX = this.gridStartX + 500;
+        // Use correct attack grid position (stacked vertically)
+        const attackGridX = this.gridStartX; // Same X as player grid
+        const attackGridY = this.gridStartY + 450; // Below player grid
         const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
-        const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+        const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
         
-        // Only handle clicks on the right grid (attack grid) and only on player's turn
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX >= attackGridX && this.game.currentPlayer === 0) {
+        // Only handle clicks on the attack grid and only on player's turn
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
+            mouseX >= attackGridX && mouseX < attackGridX + 420 && 
+            mouseY >= attackGridY && mouseY < attackGridY + 420 && 
+            this.game.currentPlayer === 0) {
             const result = this.game.attack(0, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
