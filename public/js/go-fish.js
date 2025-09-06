@@ -386,12 +386,17 @@ class GoFishGame {
                 // Don't end turn - player gets another turn
             } else {
                 console.log(`🎯 ${player.name} found no pairs after fishing`);
-                // If it's a bot and they now have cards, they can continue playing
-                if (player.isBot && player.hand.length > 0) {
-                    console.log(`🤖 ${player.name} has cards after fishing - continuing turn`);
-                    setTimeout(() => {
-                        this.botPlay();
-                    }, 2000); // 2 second delay for bot to continue
+                // If player now has cards, they can continue playing
+                if (player.hand.length > 0) {
+                    if (player.isBot) {
+                        console.log(`🤖 ${player.name} has cards after fishing - continuing turn`);
+                        setTimeout(() => {
+                            this.botPlay();
+                        }, 2000); // 2 second delay for bot to continue
+                    } else {
+                        console.log(`👤 ${player.name} has cards after fishing - continuing turn`);
+                        // Human player continues their turn (no action needed, they can click buttons)
+                    }
                 } else {
                     console.log(`🎯 ${player.name} ending turn`);
                     this.endTurn();
@@ -514,9 +519,13 @@ class GoFishGame {
         // Move to next player
         this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
         
-        // Skip players with empty hands
+        // Handle players with empty hands
         while (this.players[this.currentPlayer].hand.length === 0 && !this.isGameOver()) {
-            this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+            const currentPlayer = this.players[this.currentPlayer];
+            console.log(`🔄 ${currentPlayer.name} has no cards - going fishing`);
+            this.addToHistory(`🔄 ${currentPlayer.name} has no cards - going fishing`, 'info');
+            this.goFish(currentPlayer);
+            return; // goFish will handle turn progression
         }
         
         // Log turn change
