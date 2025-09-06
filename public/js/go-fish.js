@@ -110,11 +110,26 @@ class GoFishGame {
         this.addToHistory(`🎮 Game started with ${this.players.length} players`, 'info');
         this.addToHistory(`🎯 ${this.players[this.currentPlayer].name} goes first`, 'info');
         
+        // Start periodic game over check
+        this.startGameOverCheck();
+        
         // If it's a bot's turn, make them play after a short delay
         const currentPlayer = this.players[this.currentPlayer];
         if (currentPlayer.isBot) {
             setTimeout(() => this.botPlay(), 3000); // 3 second delay for game start
         }
+    }
+    
+    // Start periodic game over check
+    startGameOverCheck() {
+        // Check for game over every 2 seconds
+        this.gameOverCheckInterval = setInterval(() => {
+            if (!this.gameOver && this.isGameOver()) {
+                console.log(`🏆 Periodic check: Game is over!`);
+                clearInterval(this.gameOverCheckInterval);
+                this.endGame();
+            }
+        }, 2000);
     }
 
     // Deal cards to all players
@@ -198,25 +213,25 @@ class GoFishGame {
         
         // Add delay to make the game flow more natural
         setTimeout(() => {
-            // Find cards of the requested rank
-            const requestedCards = targetPlayer.hand.filter(card => card.rank === rank);
+        // Find cards of the requested rank
+        const requestedCards = targetPlayer.hand.filter(card => card.rank === rank);
+        
+        if (requestedCards.length > 0) {
+            // Target player has the cards
+            targetPlayer.hand = targetPlayer.hand.filter(card => card.rank !== rank);
+            askingPlayer.hand.push(...requestedCards);
             
-            if (requestedCards.length > 0) {
-                // Target player has the cards
-                targetPlayer.hand = targetPlayer.hand.filter(card => card.rank !== rank);
-                askingPlayer.hand.push(...requestedCards);
-                
-                console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
+            console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
                 
                 // Log successful ask
                 this.addToHistory(`✅ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s and got ${requestedCards.length} card(s)`, 'success');
                 
                 // Show success message with celebration
                 this.showGameMessage(`🎉 ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 3000);
-                
-                // Check for new pairs
+            
+            // Check for new pairs
                 const pairsBefore = askingPlayer.pairs;
-                this.checkForPairs(askingPlayer);
+            this.checkForPairs(askingPlayer);
                 const pairsAfter = askingPlayer.pairs;
                 const foundPairs = pairsAfter - pairsBefore;
                 
@@ -225,15 +240,15 @@ class GoFishGame {
                     this.addToHistory(`🎯 ${askingPlayer.name} found ${foundPairs} pair(s) after getting cards!`, 'success');
                     this.showGameMessage(`🎉 ${askingPlayer.name} found ${foundPairs} pair(s)!`, 2000);
                 }
-                
-                this.emitEvent('cardsGiven', {
-                    askingPlayer: askingPlayer.name,
-                    targetPlayer: targetPlayer.name,
-                    rank: rank,
-                    cardsGiven: requestedCards.length,
-                    players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
-                    currentPlayer: this.currentPlayer
-                });
+            
+            this.emitEvent('cardsGiven', {
+                askingPlayer: askingPlayer.name,
+                targetPlayer: targetPlayer.name,
+                rank: rank,
+                cardsGiven: requestedCards.length,
+                players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
+                currentPlayer: this.currentPlayer
+            });
                 
                 // If it's a bot, schedule another bot play
                 if (askingPlayer.isBot) {
@@ -242,20 +257,20 @@ class GoFishGame {
                         this.botPlay();
                     }, 3000); // 3 second delay for bot continuation
                 }
-                
-                // Asking player gets another turn
-                return true;
-            } else {
-                // Target player doesn't have the cards - Go Fish!
+            
+            // Asking player gets another turn
+            return true;
+        } else {
+            // Target player doesn't have the cards - Go Fish!
                 this.addToHistory(`❌ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s but got "Go Fish!"`, 'warning');
                 this.showGameMessage(`🐟 ${targetPlayer.name} says "Go Fish!"`, 2000);
                 
                 // Add delay before Go Fish animation
                 setTimeout(() => {
-                    this.goFish(askingPlayer);
+            this.goFish(askingPlayer);
                 }, 1000);
-                return false;
-            }
+            return false;
+        }
         }, 1500); // 1.5 second delay for natural flow
     }
 
@@ -266,6 +281,14 @@ class GoFishGame {
         if (this.pond.length === 0) {
             console.log('🐟 Pond is empty!');
             this.showGameMessage('Pond is empty! Game continues...', 2000);
+            
+            // Check if game is over (all players empty + pond empty)
+            if (this.isGameOver()) {
+                console.log(`🏆 Game is over! Pond is empty and all players have empty hands.`);
+                this.endGame();
+                return;
+            }
+            
             this.endTurn();
             return;
         }
@@ -275,11 +298,11 @@ class GoFishGame {
         
         // Add fishing animation delay
         setTimeout(() => {
-            // Draw a card from pond
-            const drawnCard = this.pond.pop();
-            player.hand.push(drawnCard);
-            
-            console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
+        // Draw a card from pond
+        const drawnCard = this.pond.pop();
+        player.hand.push(drawnCard);
+        
+        console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
             
             // Log the draw
             this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
@@ -289,21 +312,21 @@ class GoFishGame {
             
             // Trigger fishing visual effect
             this.triggerFishingEffect();
-            
-            // Check for pairs
+        
+        // Check for pairs
             const pairsBefore = player.pairs;
-            this.checkForPairs(player);
+        this.checkForPairs(player);
             const pairsAfter = player.pairs;
             const foundPairs = pairsAfter - pairsBefore;
-            
-            this.emitEvent('goFish', {
-                player: player.name,
-                drawnCard: drawnCard,
-                players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
-                pond: this.pond,
-                currentPlayer: this.currentPlayer
-            });
-            
+        
+        this.emitEvent('goFish', {
+            player: player.name,
+            drawnCard: drawnCard,
+            players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
+            pond: this.pond,
+            currentPlayer: this.currentPlayer
+        });
+        
             // If player found pairs, they get another turn
             if (foundPairs > 0) {
                 console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
@@ -321,7 +344,7 @@ class GoFishGame {
             } else {
                 console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
                 // No pairs found, end turn
-                this.endTurn();
+        this.endTurn();
             }
         }, 2000); // 2 second delay for fishing animation
     }
@@ -432,7 +455,7 @@ class GoFishGame {
         
         // Check if game is over
         if (this.isGameOver()) {
-            console.log(`🏆 Game is over!`);
+            console.log(`🏆 Game is over! All players have empty hands and pond is empty.`);
             this.endGame();
             return;
         }
@@ -552,14 +575,25 @@ class GoFishGame {
 
     // Check if game is over
     isGameOver() {
-        // Game is over when all players have empty hands
-        return this.players.every(player => player.hand.length === 0);
+        // Game is over when all players have empty hands AND pond is empty
+        const allPlayersEmpty = this.players.every(player => player.hand.length === 0);
+        const pondEmpty = this.pond.length === 0;
+        
+        console.log(`🔍 Game over check: allPlayersEmpty=${allPlayersEmpty}, pondEmpty=${pondEmpty}`);
+        
+        return allPlayersEmpty && pondEmpty;
     }
 
     // End the game
     endGame() {
         console.log('🏆 Game over!');
         this.gameOver = true;
+        
+        // Clear the game over check interval
+        if (this.gameOverCheckInterval) {
+            clearInterval(this.gameOverCheckInterval);
+            this.gameOverCheckInterval = null;
+        }
         
         // Find winner (most pairs)
         this.winner = this.players.reduce((max, player) => 
@@ -580,9 +614,10 @@ class GoFishGame {
         this.emitEvent('gameOver', {
             winner: {
                 name: this.winner.name,
-                pairs: this.winner.pairs
+                pairs: this.winner.pairs,
+                overallWins: this.winner.overallWins
             },
-            finalScores: this.players.map(p => ({ name: p.name, pairs: p.pairs }))
+            finalScores: this.players.map(p => ({ name: p.name, pairs: p.pairs, overallWins: p.overallWins }))
         });
         
         // ✅ AUTO-START NEW GAME: Start a new game after 5 seconds
