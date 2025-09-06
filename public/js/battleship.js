@@ -723,7 +723,10 @@ class BattleshipClient {
     draw() {
         if (!this.initialized) return;
         
-        // No background - let HTML background show through
+        // Clear canvas with transparent background
+        clear();
+        
+        // Draw grids with high visibility
         this.drawGrids();
         this.drawShips();
         this.drawUI();
@@ -792,10 +795,10 @@ class BattleshipClient {
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
         // Draw grid background with high contrast to make it visible
-        fill(0, 0, 0, 220); // Dark background with high opacity
-        stroke(255, 255, 255); // White border
-        strokeWeight(2);
-        rect(x - 5, y - 5, (this.gridSize + this.gridSpacing) * 10 + 10, (this.gridSize + this.gridSpacing) * 10 + 10);
+        fill(0, 0, 0, 250); // Very dark background with high opacity
+        stroke(255, 255, 0); // Yellow border for maximum visibility
+        strokeWeight(3);
+        rect(x - 8, y - 8, (this.gridSize + this.gridSpacing) * 10 + 16, (this.gridSize + this.gridSpacing) * 10 + 16);
         
         for (let row = 0; row < 10; row++) {
             for (let col = 0; col < 10; col++) {
@@ -829,9 +832,9 @@ class BattleshipClient {
             strokeWeight(1);
         } else {
             // Water with high contrast for visibility
-            fill(60, 60, 60, 200); // Dark gray for visibility
+            fill(40, 40, 40, 220); // Darker gray for better visibility
             stroke(255, 255, 255); // White grid lines
-            strokeWeight(1);
+            strokeWeight(2); // Thicker lines for visibility
         }
         
         rect(x, y, this.gridSize, this.gridSize);
