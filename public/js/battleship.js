@@ -242,8 +242,7 @@ class BattleshipGame {
             
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${hasImage ? '' : `background: ${ship.color}`}">
-                        ${hasImage ? `<img src="${window.location.origin}/Images/${ship.type}.png" alt="${ship.name}" style="width: 100%; height: 100%; object-fit: contain;">` : ''}
+                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
                     </div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
@@ -740,11 +739,17 @@ class BattleshipClient {
             return;
         }
         
+        // Don't reinitialize if already done
+        if (this.initialized && this.canvas) {
+            console.log('✅ Canvas already initialized, skipping...');
+            return;
+        }
+        
         // Clear any existing canvas
         canvasDiv.innerHTML = '';
         
         try {
-            // Create responsive canvas
+            // Create responsive canvas with better sizing
             const canvasWidth = Math.min(1400, windowWidth - 30);
             const canvasHeight = Math.min(1000, windowHeight - 10);
             this.canvas = createCanvas(canvasWidth, canvasHeight);
@@ -754,14 +759,18 @@ class BattleshipClient {
             this.canvas.style('background', 'transparent');
             this.canvas.style('max-width', '100%');
             this.canvas.style('height', 'auto');
+            this.canvas.style('display', 'block');
             
             // Calculate grid positions - ensure grids fit within canvas with wider spacing
-            this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50)); // Ensure grids fit with wider spacing
-            this.gridStartY = Math.min(350, canvasHeight - 550); // Ensure grids fit with larger canvas
+            this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50));
+            this.gridStartY = Math.min(350, canvasHeight - 550);
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
             this.setupCanvasEventListeners();
+            
+            // Force immediate redraw
+            redraw();
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
             console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
@@ -814,17 +823,29 @@ class BattleshipClient {
     }
     
     setupResizeHandler() {
+        let resizeTimeout;
         window.addEventListener('resize', () => {
-            if (this.canvas) {
-                // Recalculate grid positions on resize
-                const canvasWidth = this.canvas.width;
-                const canvasHeight = this.canvas.height;
-                this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50));
-                this.gridStartY = Math.min(350, canvasHeight - 550);
-                console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
-                // Redraw after resize
-                redraw();
-            }
+            // Debounce resize events to prevent excessive redraws
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (this.canvas) {
+                    // Recalculate canvas size and grid positions
+                    const newWidth = Math.min(1400, windowWidth - 30);
+                    const newHeight = Math.min(1000, windowHeight - 10);
+                    
+                    // Resize canvas
+                    resizeCanvas(newWidth, newHeight);
+                    
+                    // Recalculate grid positions
+                    this.gridStartX = Math.max(30, Math.min(newWidth - 1200, 50));
+                    this.gridStartY = Math.min(350, newHeight - 550);
+                    
+                    console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
+                    
+                    // Force redraw after resize
+                    redraw();
+                }
+            }, 100); // 100ms debounce
         });
     }
     
@@ -864,7 +885,7 @@ class BattleshipClient {
         this.drawUI();
         this.drawMouseHover();
         
-        // Stop continuous drawing to prevent console spam
+        // Stop continuous drawing to prevent performance issues
         noLoop();
     }
     
@@ -1251,8 +1272,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Wait for p5.js to be available
     const initClient = () => {
         if (typeof createCanvas !== 'undefined') {
-            battleshipClient = new BattleshipClient();
-            console.log('🎮 Battleship client initialized');
+            if (!battleshipClient) {
+                battleshipClient = new BattleshipClient();
+                console.log('🎮 Battleship client initialized');
+            }
         } else {
             console.log('⏳ Waiting for p5.js...');
             setTimeout(initClient, 100);
@@ -1291,6 +1314,9 @@ function draw() {
         battleshipGame.checkAndUpdateShipImages();
         battleshipGame.imagesChecked = true;
     }
+    
+    // Stop continuous drawing to prevent performance issues
+    noLoop();
 }
 
 function drawBasicGrids() {
