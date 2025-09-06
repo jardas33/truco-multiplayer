@@ -660,8 +660,8 @@ class BattleshipClient {
         
         try {
             // Create responsive canvas
-            const canvasWidth = Math.min(1000, windowWidth - 100);
-            const canvasHeight = Math.min(700, windowHeight - 100);
+            const canvasWidth = Math.min(1200, windowWidth - 50);
+            const canvasHeight = Math.min(800, windowHeight - 50);
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
@@ -670,9 +670,9 @@ class BattleshipClient {
             this.canvas.style('max-width', '100%');
             this.canvas.style('height', 'auto');
             
-            // Calculate grid positions - side by side, lower and slightly left
-            this.gridStartX = Math.max(30, canvasWidth - 920); // Moved slightly left
-            this.gridStartY = 300; // Moved lower
+            // Calculate grid positions - ensure grids fit within canvas
+            this.gridStartX = Math.max(30, Math.min(canvasWidth - 920, 50)); // Ensure grids fit
+            this.gridStartY = Math.min(300, canvasHeight - 450); // Ensure grids fit vertically
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -713,9 +713,30 @@ class BattleshipClient {
             if (this.canvas) {
                 // Recalculate grid positions on resize
                 const canvasWidth = this.canvas.width;
-                this.gridStartX = Math.max(30, canvasWidth - 920);
-                this.gridStartY = 300;
+                const canvasHeight = this.canvas.height;
+                this.gridStartX = Math.max(30, Math.min(canvasWidth - 920, 50));
+                this.gridStartY = Math.min(300, canvasHeight - 450);
                 console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
+                // Redraw after resize
+                redraw();
+            }
+        });
+    }
+    
+    setupEventListeners() {
+        // Add mouse event listeners to trigger redraw
+        this.canvas.mouseMoved(() => {
+            redraw();
+        });
+        
+        this.canvas.mousePressed(() => {
+            redraw();
+        });
+        
+        // Add keyboard event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
+                redraw();
             }
         });
     }
@@ -731,6 +752,12 @@ class BattleshipClient {
         this.drawShips();
         this.drawUI();
         this.drawMouseHover();
+        
+        // Stop continuous drawing to prevent console spam
+        noLoop();
+        
+        // Add event listeners to trigger redraw when needed
+        this.setupEventListeners();
     }
     
     drawMouseHover() {
@@ -1173,8 +1200,8 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
-    const gridStartX = Math.max(30, windowWidth - 920); // Moved slightly left
-    const gridStartY = 300; // Moved lower
+    const gridStartX = Math.max(30, Math.min(windowWidth - 920, 50)); // Ensure grids fit
+    const gridStartY = Math.min(300, windowHeight - 450); // Ensure grids fit vertically
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
