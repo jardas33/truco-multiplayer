@@ -385,9 +385,17 @@ class GoFishGame {
                 }
                 // Don't end turn - player gets another turn
             } else {
-                console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
-                // No pairs found, end turn
-        this.endTurn();
+                console.log(`🎯 ${player.name} found no pairs after fishing`);
+                // If it's a bot and they now have cards, they can continue playing
+                if (player.isBot && player.hand.length > 0) {
+                    console.log(`🤖 ${player.name} has cards after fishing - continuing turn`);
+                    setTimeout(() => {
+                        this.botPlay();
+                    }, 2000); // 2 second delay for bot to continue
+                } else {
+                    console.log(`🎯 ${player.name} ending turn`);
+                    this.endTurn();
+                }
             }
         }, 2000); // 2 second delay for fishing animation
     }
@@ -533,9 +541,17 @@ class GoFishGame {
     // Bot AI logic
     botPlay() {
         const bot = this.players[this.currentPlayer];
-        if (!bot.isBot || bot.hand.length === 0) return;
+        if (!bot.isBot) return;
         
         console.log(`🤖 ${bot.name} is thinking...`);
+        
+        // If bot has no cards, they must go fish
+        if (bot.hand.length === 0) {
+            console.log(`🤖 ${bot.name} has no cards - going fishing`);
+            this.showGameMessage(`${bot.name} has no cards - going fishing`);
+            this.goFish(bot);
+            return;
+        }
         
         // Simple bot strategy: ask for a rank they have
         const availableRanks = [...new Set(bot.hand.map(card => card.rank))];
