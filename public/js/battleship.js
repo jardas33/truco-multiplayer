@@ -242,7 +242,7 @@ class BattleshipGame {
             
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
+                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
                     </div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
@@ -1304,14 +1304,20 @@ document.addEventListener('DOMContentLoaded', function() {
 // p5.js functions - setup() is handled in setup.js
 
 function draw() {
+    console.log('🎨 Global draw() called - battleshipClient:', battleshipClient, 'initialized:', battleshipClient?.initialized);
+    
     if (battleshipClient && battleshipClient.initialized) {
         battleshipClient.draw();
     } else {
         // No background - let HTML background show through
+        clear();
         
         // Draw basic grids even without full client
         if (typeof drawBasicGrids === 'function') {
+            console.log('🎨 Drawing basic grids...');
             drawBasicGrids();
+        } else {
+            console.log('❌ drawBasicGrids function not found!');
         }
         
         fill(255);
@@ -1321,6 +1327,7 @@ function draw() {
         
         // Try to initialize client if not done yet
         if (battleshipGame && !battleshipClient) {
+            console.log('🎮 Initializing battleship client...');
             battleshipClient = new BattleshipClient();
         }
     }

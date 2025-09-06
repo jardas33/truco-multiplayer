@@ -17,6 +17,17 @@ function setup() {
     // Set frame rate to prevent excessive rendering
     frameRate(30); // Limit to 30 FPS instead of 60
     
+    // Wait for DOM to be ready before creating canvas
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            createCanvasSafely();
+        });
+    } else {
+        createCanvasSafely();
+    }
+}
+
+function createCanvasSafely() {
     let canvas = createCanvas(windowWidth, windowHeight);
     
     // Check if we're on the Battleship page and use the correct container
