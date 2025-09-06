@@ -782,6 +782,12 @@ class BattleshipClient {
         console.log(`🎨 Drawing grid at ${x}, ${y} for player ${player}, showShips: ${showShips}`);
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
+        // Draw a very visible test rectangle first
+        fill(255, 0, 0, 255); // Bright red
+        stroke(255, 255, 0); // Yellow border
+        strokeWeight(5);
+        rect(x - 10, y - 10, 200, 200); // Large test rectangle
+        
         // Draw grid background with more opacity to make it visible
         fill(20, 40, 80, 200);
         stroke(100, 150, 200);
@@ -1162,6 +1168,13 @@ function drawBasicGrids() {
 
 function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
     console.log(`🎨 Drawing basic grid at ${x}, ${y} with size ${gridSize}`);
+    
+    // Draw a very visible test rectangle first
+    fill(0, 255, 0, 255); // Bright green
+    stroke(255, 0, 255); // Magenta border
+    strokeWeight(5);
+    rect(x - 10, y - 10, 200, 200); // Large test rectangle
+    
     // Draw grid background with more opacity to make it visible
     fill(20, 40, 80, 200);
     stroke(100, 150, 200);
