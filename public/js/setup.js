@@ -132,7 +132,9 @@ function setup() {
     backToMainMenuButton = createButton("Back to Main Menu");
     backToMainMenuButton.position(20, 20);
     backToMainMenuButton.mousePressed(backToMainMenu);
-    backToMainMenuButton.parent(gameDiv);
+    if (gameDiv) {
+        backToMainMenuButton.parent(gameDiv);
+    }
     backToMainMenuButton.hide();
 
     // Only create Truco-specific elements for Truco game
@@ -140,7 +142,9 @@ function setup() {
         trucoButton = createButton("TRUCO");
         trucoButton.position(width/2 - 95, height/2 + 160); // Moved 5px more to the left
         trucoButton.mousePressed(truco);
-        trucoButton.parent(gameDiv);
+        if (gameDiv) {
+            trucoButton.parent(gameDiv);
+        }
         trucoButton.style('z-index', '200'); // Ensure it's above everything
         trucoButton.style('position', 'absolute'); // Force absolute positioning
         trucoButton.style('font-size', '30px !important'); // 15% smaller font size (35 * 0.85)
@@ -352,8 +356,8 @@ function windowResized() {
     
     // Update canvas styling to match new dimensions
     if (window.gameCanvas) {
-        window.gameCanvas.style('width', windowWidth + 'px');
-        window.gameCanvas.style('height', windowHeight + 'px');
+        window.gameCanvas.style.width = windowWidth + 'px';
+        window.gameCanvas.style.height = windowHeight + 'px';
     }
     
     // Force a redraw after resize
