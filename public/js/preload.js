@@ -64,6 +64,9 @@ function preload() {
         
         shipTypes.forEach(shipType => {
             const img = new Image();
+            const imageUrl = `${baseUrl}/Images/${shipType}.png`;
+            console.log(`🚢 Attempting to load: ${imageUrl}`);
+            
             img.onload = () => {
                 console.log(`SUCCESS: ${shipType} image loaded`);
                 loadedCount++;
@@ -72,15 +75,15 @@ function preload() {
                     window.checkShipImagesLoaded && window.checkShipImagesLoaded();
                 }
             };
-            img.onerror = () => {
-                console.error(`ERROR: Failed to load ${shipType} image`);
+            img.onerror = (error) => {
+                console.error(`ERROR: Failed to load ${shipType} image from ${imageUrl}:`, error);
                 loadedCount++;
                 if (loadedCount === shipTypes.length) {
                     console.log('🚢 All ship images processed!');
                     window.checkShipImagesLoaded && window.checkShipImagesLoaded();
                 }
             };
-            img.src = `${baseUrl}/Images/${shipType}.png`;
+            img.src = imageUrl;
             window.shipImages[shipType] = img;
         });
         
