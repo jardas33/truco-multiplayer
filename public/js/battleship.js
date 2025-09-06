@@ -4,11 +4,11 @@ class BattleshipGame {
     constructor() {
         this.gridSize = 10;
         this.ships = [
-            { name: 'Carrier', size: 5, color: '#FF6B6B', placed: false },
-            { name: 'Battleship', size: 4, color: '#4ECDC4', placed: false },
-            { name: 'Cruiser', size: 3, color: '#45B7D1', placed: false },
-            { name: 'Submarine', size: 3, color: '#96CEB4', placed: false },
-            { name: 'Destroyer', size: 2, color: '#FFEAA7', placed: false }
+            { name: 'Carrier', type: 'carrier', size: 5, color: '#FF6B6B', placed: false },
+            { name: 'Battleship', type: 'battleship', size: 4, color: '#4ECDC4', placed: false },
+            { name: 'Cruiser', type: 'cruiser', size: 3, color: '#45B7D1', placed: false },
+            { name: 'Submarine', type: 'submarine', size: 3, color: '#96CEB4', placed: false },
+            { name: 'Destroyer', type: 'destroyer', size: 2, color: '#FFEAA7', placed: false }
         ];
         
         this.gamePhase = 'placement'; // placement, playing, finished
@@ -228,9 +228,13 @@ class BattleshipGame {
         
         shipsList.innerHTML = this.ships.map((ship, index) => {
             const isPlaced = this.placedShips[0].some(placedShip => placedShip.name === ship.name);
+            const shipImagePath = window.shipImages && window.shipImages[ship.type] ? 
+                `background-image: url('Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : 
+                `background: ${ship.color}`;
+            
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="background: ${ship.color}"></div>
+                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${shipImagePath}"></div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
                         <div style="font-size: 0.8em; opacity: 0.8;">Size: ${ship.size} squares</div>
@@ -864,10 +868,20 @@ class BattleshipClient {
             stroke(200, 200, 200);
             strokeWeight(1);
         } else if (showShips && cell.ship) {
-            // Ship with gradient
-            fill(cell.ship.color);
-            stroke(255, 255, 255);
-            strokeWeight(1);
+            // Draw ship image if available, otherwise use color
+            if (window.shipImages && window.shipImages[cell.ship.type]) {
+                // Draw ship image
+                image(window.shipImages[cell.ship.type], x, y, this.gridSize, this.gridSize);
+                // Add border
+                noFill();
+                stroke(255, 255, 255);
+                strokeWeight(1);
+            } else {
+                // Fallback to colored rectangle
+                fill(cell.ship.color);
+                stroke(255, 255, 255);
+                strokeWeight(1);
+            }
         } else {
             // Water with high contrast for visibility
             fill(40, 40, 40, 220); // Darker gray for better visibility
@@ -958,17 +972,31 @@ class BattleshipClient {
                     const cellX = this.gridStartX + previewX * (this.gridSize + this.gridSpacing);
                     const cellY = this.gridStartY + previewY * (this.gridSize + this.gridSpacing);
                     
-                    // Semi-transparent preview with border
-                    fill(ship.color + 'B4'); // Add alpha to hex color
-                    stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                    strokeWeight(3);
-                    rect(cellX, cellY, this.gridSize, this.gridSize);
-                    
-                    // Add ship name in preview
-                    fill(255);
-                    textAlign(CENTER, CENTER);
-                    textSize(8);
-                    text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                    // Draw ship preview with image if available
+                    if (window.shipImages && window.shipImages[ship.type]) {
+                        // Draw semi-transparent ship image
+                        tint(255, 180); // Make image semi-transparent
+                        image(window.shipImages[ship.type], cellX, cellY, this.gridSize, this.gridSize);
+                        noTint(); // Reset tint
+                        
+                        // Add border
+                        noFill();
+                        stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
+                        strokeWeight(3);
+                        rect(cellX, cellY, this.gridSize, this.gridSize);
+                    } else {
+                        // Fallback to colored rectangle
+                        fill(ship.color + 'B4'); // Add alpha to hex color
+                        stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
+                        strokeWeight(3);
+                        rect(cellX, cellY, this.gridSize, this.gridSize);
+                        
+                        // Add ship name in preview
+                        fill(255);
+                        textAlign(CENTER, CENTER);
+                        textSize(8);
+                        text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                    }
                 }
             }
             
