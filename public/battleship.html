@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Battleship - Naval Combat</title>
+    <script>
+        // Ensure title stays set
+        document.title = 'Battleship - Naval Combat';
+        setInterval(() => {
+            if (document.title !== 'Battleship - Naval Combat') {
+                document.title = 'Battleship - Naval Combat';
+            }
+        }, 100);
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lobby-fixes.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0c4a6e 0%, #1e40af 50%, #1e3a8a 100%);
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .game-title {
+            color: #FFD700;
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            color: #ffffff;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .menu-buttons {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1001;
+        }
+
+        .menu-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: inline-block;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .battleship-menu-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .battleship-menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .game-phase {
+            color: #FFD700;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .game-info {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .ships-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .ship-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ship-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .ship-item.placed {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
+        }
+
+        .ship-visual {
+            width: 20px;
+            height: 20px;
+            background: #4CAF50;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .ship-visual.horizontal {
+            width: 40px;
+        }
+
+        .ship-visual.vertical {
+            height: 40px;
+            width: 20px;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1001;
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        .game-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-history {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .history-title {
+            color: #FFD700;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .history-entry {
+            margin: 5px 0;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .hit { color: #4CAF50; }
+        .miss { color: #f44336; }
+        .sunk { color: #FFD700; font-weight: bold; }
+
+        /* Floating ship animations */
+        .floating-ship {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 8s ease-in-out infinite;
+            font-size: 2em;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+
+        .floating-ship:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-ship:nth-child(2) { top: 20%; right: 15%; animation-delay: 2s; }
+        .floating-ship:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 4s; }
+        .floating-ship:nth-child(4) { bottom: 15%; right: 25%; animation-delay: 6s; }
+        .floating-ship:nth-child(5) { top: 50%; left: 5%; animation-delay: 8s; }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .game-title { font-size: 2.5em; }
+            .game-history { width: 250px; height: 150px; }
+        }
+        
+        @media (max-width: 768px) {
+            .game-title { font-size: 2em; }
+            .menu-buttons { flex-direction: column; }
+            .controls { flex-direction: column; }
+            .game-history { 
+                position: relative; 
+                width: 100%; 
+                height: 150px; 
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Floating ship decorations -->
+        <div class="floating-ship">🚢</div>
+        <div class="floating-ship">⚓</div>
+        <div class="floating-ship">🌊</div>
+        <div class="floating-ship">⚔️</div>
+        <div class="floating-ship">🎯</div>
+
+        <!-- Menu Buttons -->
+        <div class="menu-buttons">
+            <a href="/" class="menu-btn back-btn">← Back to Main Menu</a>
+            <a href="/battleship.html" class="menu-btn battleship-menu-btn">Battleship Menu</a>
+        </div>
+
+        <!-- Game Title -->
+        <h1 class="game-title">⚓ BATTLESHIP</h1>
+        <p class="game-subtitle">Naval Combat Strategy Game</p>
+
+        <!-- Game Phase Display -->
+        <div class="game-phase" id="gamePhase">Preparing for Battle...</div>
+
+        <!-- Game Info Panel -->
+        <div class="game-info" id="gameInfo">
+            <div>Player: <span id="playerName">You</span></div>
+            <div>Turn: <span id="currentTurn">Player 1</span></div>
+            <div>Status: <span id="gameStatus">Setting up ships</span></div>
+            <div id="instructions" style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+                Click a ship to place it, then click on the grid. Press 'R' to rotate, 'Esc' to cancel.
+            </div>
+        </div>
+
+        <!-- Ships Panel -->
+        <div class="ships-panel" id="shipsPanel">
+            <h3 style="color: #4CAF50; margin-top: 0;">Your Fleet</h3>
+            <div id="shipsList">
+                <!-- Ships will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div id="gameCanvas"></div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="control-btn start-btn" id="startGameBtn" disabled>Start Battle</button>
+            <button class="control-btn reset-btn" id="resetGameBtn">Reset Game</button>
+        </div>
+
+        <!-- Game History -->
+        <div class="game-history">
+            <div class="history-title">Battle Log</div>
+            <div id="historyContent">
+                <div class="history-entry">Welcome to Battleship! Place your ships to begin.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/battleship.js"></script>
+    <script src="js/setup.js"></script>
+</body>
+</html>

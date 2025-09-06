@@ -245,6 +245,15 @@
                 <div class="game-players">2-7 Players</div>
                 <div class="game-status status-new">FUN</div>
             </div>
+
+            <!-- BATTLESHIP -->
+            <div class="game-card" onclick="selectGame('battleship')">
+                <span class="game-icon">🚢</span>
+                <div class="game-name">BATTLESHIP</div>
+                <div class="game-description">Strategic naval combat! Place your fleet and hunt down the enemy ships. Sink them all to win!</div>
+                <div class="game-players">1-2 Players</div>
+                <div class="game-status status-new">STRATEGY</div>
+            </div>
         </div>
     </div>
 
@@ -278,6 +287,9 @@
                     break;
                 case 'crazy-eights':
                     window.location.href = '/crazy-eights';
+                    break;
+                case 'battleship':
+                    window.location.href = '/battleship';
                     break;
                 default:
                     console.error('Unknown game type:', gameType);

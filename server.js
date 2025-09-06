@@ -53,6 +53,11 @@ app.get('/crazy-eights', (req, res) => {
     res.sendFile(__dirname + '/public/crazy-eights.html');
 });
 
+app.get('/battleship', (req, res) => {
+    console.log('🚢 BATTLESHIP ROUTE: Serving battleship.html');
+    res.sendFile(__dirname + '/public/battleship.html');
+});
+
 // Static file serving (after custom routes to avoid conflicts)
 app.use(express.static('public'));
 
