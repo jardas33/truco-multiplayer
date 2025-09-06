@@ -247,39 +247,46 @@
           <button id="gameMenuBtn" onclick="window.location.reload();" style="display: none; background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 10px;">Battleship Game Menu</button>
 
           <button id="backToMainMenuBtn" style="display: none;">← Back to Battleship Menu</button>
-          <div id="playerList"></div>
+          <div id="playerList" style="display: none;"></div>
         </div>
     </div>
 
     <!-- Removed setup.js to prevent canvas interference and duplicate buttons -->
     
     <script>
-        // Instructions functionality
+        // Instructions functionality - styled like Go Fish popups
         function showInstructions() {
-            alert(`🚢 BATTLESHIP - How to Play:
-
-🎯 OBJECTIVE:
-Place your ships on the grid and try to sink all enemy ships before they sink yours!
-
-⚓ SHIP PLACEMENT:
-• Click a ship to select it, then click on the grid to place it
-• Press 'R' to rotate ships horizontally/vertically
-• Press 'Esc' to cancel placement
-• Ships cannot overlap or go off the grid
-
-🎯 ATTACK PHASE:
-• Click on the enemy grid to attack
-• Red = Hit, White = Miss
-• Sink all enemy ships to win!
-
-🚢 SHIPS:
-• Carrier (5 spaces)
-• Battleship (4 spaces)  
-• Cruiser (3 spaces)
-• Submarine (3 spaces)
-• Destroyer (2 spaces)
-
-Good luck, Admiral! 🫡`);
+            // Create popup container
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #FF9800, #F57C00);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                z-index: 10000;
+                max-width: 500px;
+                text-align: center;
+                font-family: Arial, sans-serif;
+                border: 3px solid #FFB74D;
+            `;
+            
+            popup.innerHTML = `
+                <h2 style="margin: 0 0 20px 0; color: #FFF; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🚢 BATTLESHIP - How to Play</h2>
+                <div style="text-align: left; line-height: 1.6;">
+                    <div style="margin: 10px 0;"><strong>🎯 OBJECTIVE:</strong><br>Place your ships on the grid and try to sink all enemy ships before they sink yours!</div>
+                    <div style="margin: 10px 0;"><strong>⚓ SHIP PLACEMENT:</strong><br>• Click a ship to select it, then click on the grid to place it<br>• Press 'R' to rotate ships horizontally/vertically<br>• Press 'Esc' to cancel placement<br>• Ships cannot overlap or go off the grid</div>
+                    <div style="margin: 10px 0;"><strong>🎯 ATTACK PHASE:</strong><br>• Click on the enemy grid to attack<br>• Red = Hit, White = Miss<br>• Sink all enemy ships to win!</div>
+                    <div style="margin: 10px 0;"><strong>🚢 SHIPS:</strong><br>• Carrier (5 spaces)<br>• Battleship (4 spaces)<br>• Cruiser (3 spaces)<br>• Submarine (3 spaces)<br>• Destroyer (2 spaces)</div>
+                </div>
+                <button onclick="this.parentElement.remove()" style="margin-top: 20px; background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px;">Got it! 🫡</button>
+            `;
+            
+            document.body.appendChild(popup);
         }
 
         // Room creation functionality
@@ -306,6 +313,11 @@ Good luck, Admiral! 🫡`);
             document.getElementById('startGameBtn').style.display = 'inline-block';
             document.getElementById('gameMenuBtn').style.display = 'inline-block';
             document.getElementById('playerCustomization').style.display = 'block';
+            document.getElementById('playerList').style.display = 'block';
+            
+            // Initialize player list and bot controls
+            updatePlayerList();
+            updateBotButtons();
         }
 
         function joinRoom() {
@@ -428,9 +440,7 @@ Good luck, Admiral! 🫡`);
             document.getElementById('addBotBtn').onclick = addBot;
             document.getElementById('removeBotBtn').onclick = removeBot;
             
-            // Initialize player list
-            updatePlayerList();
-            updateBotButtons();
+            // Player list and bot controls will be initialized when room is created
             
             // Auto-focus on room code input
             document.getElementById('roomCodeInput').focus();
