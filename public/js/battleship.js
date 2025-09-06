@@ -677,6 +677,7 @@ class BattleshipClient {
             console.log('✅ Canvas initialized successfully:', this.canvas);
             console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
             console.log('📏 Canvas size:', this.canvas.width, 'x', this.canvas.height);
+            console.log('🎯 Initialized flag set to:', this.initialized);
         } catch (error) {
             console.error('❌ Canvas creation failed:', error);
             // Retry after a short delay
@@ -1112,9 +1113,13 @@ function setup() {
 }
 
 function draw() {
+    console.log('🎨 Draw function called - battleshipClient:', !!battleshipClient, 'initialized:', battleshipClient?.initialized);
+    
     if (battleshipClient && battleshipClient.initialized) {
+        console.log('🎯 Drawing with battleshipClient');
         battleshipClient.draw();
     } else {
+        console.log('🔄 Drawing basic grids - client not ready');
         // Show loading message and basic grid with semi-transparent background
         background(15, 25, 45, 100);
         
@@ -1128,12 +1133,14 @@ function draw() {
         
         // Try to initialize client if not done yet
         if (battleshipGame && !battleshipClient) {
+            console.log('🔄 Creating battleshipClient...');
             battleshipClient = new BattleshipClient();
         }
     }
 }
 
 function drawBasicGrids() {
+    console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
     const gridStartX = 50;
@@ -1145,9 +1152,12 @@ function drawBasicGrids() {
     // Draw attack grid (right side)
     const attackGridX = gridStartX + 500;
     drawBasicGrid(attackGridX, gridStartY, gridSize, gridSpacing, 'Attack Grid');
+    
+    console.log('✅ Basic grids drawn');
 }
 
 function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
+    console.log(`🎨 Drawing basic grid at ${x}, ${y} with size ${gridSize}`);
     // Draw grid background with more opacity to make it visible
     fill(20, 40, 80, 200);
     stroke(100, 150, 200);
