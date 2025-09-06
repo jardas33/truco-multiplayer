@@ -2236,9 +2236,9 @@ function drawGameMenu() {
     textSize(14);
     text('← Back to Main Menu', backButtonX + backButtonWidth/2, menuY + menuButtonHeight/2);
     
-    // Draw Back to Go Fish Menu button (blue theme)
-    fill(isHoveringRestart ? 30 : 50, 100, 200, 200); // Blue background
-    stroke(70, 130, 180); // Steel blue border
+    // Draw Back to Go Fish Menu button (green theme)
+    fill(isHoveringRestart ? 50 : 80, 150, 80, 200); // Green background
+    stroke(100, 180, 100); // Light green border
     strokeWeight(2);
     rect(restartButtonX, menuY, restartButtonWidth, menuButtonHeight, 8);
     
