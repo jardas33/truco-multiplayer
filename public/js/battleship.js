@@ -675,6 +675,9 @@ class BattleshipClient {
             this.gridStartY = Math.min(300, canvasHeight - 450); // Ensure grids fit vertically
             this.initialized = true;
             
+            // Set up event listeners after canvas is ready
+            this.setupEventListeners();
+            
             console.log('✅ Canvas initialized successfully:', this.canvas);
             console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
             console.log('📏 Canvas size:', this.canvas.width, 'x', this.canvas.height);
@@ -724,6 +727,12 @@ class BattleshipClient {
     }
     
     setupEventListeners() {
+        // Only set up event listeners if canvas exists
+        if (!this.canvas) {
+            console.log('⚠️ Canvas not ready for event listeners');
+            return;
+        }
+        
         // Add mouse event listeners to trigger redraw
         this.canvas.mouseMoved(() => {
             redraw();
@@ -755,9 +764,6 @@ class BattleshipClient {
         
         // Stop continuous drawing to prevent console spam
         noLoop();
-        
-        // Add event listeners to trigger redraw when needed
-        this.setupEventListeners();
     }
     
     drawMouseHover() {

@@ -47,7 +47,6 @@ function setup() {
     window.gameCanvas = canvas;
     
     // Check if we're on the Battleship page and use the correct containers
-    const currentPath = window.location.pathname;
     if (currentPath === '/battleship') {
         // For Battleship, use gameCanvas div instead of Menu
         menuDiv = select("#gameCanvas");
