@@ -155,6 +155,12 @@ class GoFishGame {
 
     // Check for pairs in a player's hand
     checkForPairs(player) {
+        // Skip automatic pair detection for human player (Player 1)
+        if (player === this.players[0]) {
+            console.log(`🎯 Skipping automatic pair detection for human player ${player.name}`);
+            return;
+        }
+        
         const rankCounts = {};
         
         // Count cards by rank
@@ -190,6 +196,36 @@ class GoFishGame {
                 this.showGameMessage(`${player.name} found ${pairs} pair(s) of ${rank}s!`, 2000);
             }
         });
+    }
+    
+    // Manual pair making for human player
+    makePairManually(card1, card2) {
+        if (!card1 || !card2) return false;
+        if (card1.rank !== card2.rank) return false;
+        
+        const humanPlayer = this.players[0];
+        
+        // Remove both cards from hand
+        const card1Index = humanPlayer.hand.findIndex(card => card === card1);
+        const card2Index = humanPlayer.hand.findIndex(card => card === card2);
+        
+        if (card1Index === -1 || card2Index === -1) return false;
+        
+        humanPlayer.hand.splice(Math.max(card1Index, card2Index), 1);
+        humanPlayer.hand.splice(Math.min(card1Index, card2Index), 1);
+        
+        // Add to pairs count
+        humanPlayer.pairs += 1;
+        
+        console.log(`🎯 Human player made a pair of ${card1.rank}s manually`);
+        
+        // Log pair found
+        this.addToHistory(`🎯 You made a pair of ${card1.rank}s!`, 'success');
+        
+        // Show pair found message
+        this.showGameMessage(`🎉 You made a pair of ${card1.rank}s!`, 2000);
+        
+        return true;
     }
 
     // Player asks for cards
@@ -681,6 +717,11 @@ class GoFishGame {
         };
     }
 }
+
+// Global variables for drag and drop
+window.draggedCard = null;
+window.dragOffset = { x: 0, y: 0 };
+window.pairMakingArea = { cards: [] };
 
 // 🎮 GO FISH CLIENT LOGIC
 class GoFishClient {
@@ -1294,6 +1335,7 @@ function drawGameState() {
     drawModernTable();
     drawOpponentHands();
     drawMainPlayerHand();
+    drawDraggedCard();
     drawModernFishPond();
     drawModernScorePanel();
     drawGameHistoryPanel();
@@ -1392,7 +1434,7 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
-    const handY = height - 110; // Moved up more to give space from bottom
+    const handY = height - 150; // Moved up more to give space for pair-making area
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
@@ -1481,6 +1523,85 @@ function drawMainPlayerHand() {
         textStyle(BOLD);
         noStroke();
         text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
+    }
+    
+    // Draw pair-making area
+    drawPairMakingArea();
+}
+
+function drawPairMakingArea() {
+    if (!window.game.players || !window.game.players[0]) return;
+    
+    const player = window.game.players[0];
+    const pairAreaY = height - 40; // Just above the bottom
+    const pairAreaWidth = 200;
+    const pairAreaHeight = 30;
+    const pairAreaX = (width - pairAreaWidth) / 2;
+    
+    // Check if player has pairs in hand
+    const rankCounts = {};
+    player.hand.forEach(card => {
+        rankCounts[card.rank] = (rankCounts[card.rank] || 0) + 1;
+    });
+    
+    const hasPairs = Object.values(rankCounts).some(count => count >= 2);
+    
+    // Draw pair-making area background
+    fill(0, 0, 0, 150);
+    stroke(hasPairs ? 255 : 100, hasPairs ? 215 : 100, hasPairs ? 0 : 100);
+    strokeWeight(2);
+    rect(pairAreaX, pairAreaY, pairAreaWidth, pairAreaHeight, 8);
+    
+    // Draw instruction text
+    fill(hasPairs ? 255 : 150, hasPairs ? 215 : 150, hasPairs ? 0 : 150);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    noStroke();
+    
+    if (hasPairs) {
+        text('Drag cards here to make pairs', pairAreaX + pairAreaWidth/2, pairAreaY + pairAreaHeight/2);
+    } else {
+        text('No pairs available', pairAreaX + pairAreaWidth/2, pairAreaY + pairAreaHeight/2);
+    }
+    
+    // Draw any cards currently in the pair-making area
+    if (window.pairMakingArea && window.pairMakingArea.cards) {
+        const cardWidth = 40;
+        const cardHeight = 56;
+        const cardSpacing = 10;
+        
+        window.pairMakingArea.cards.forEach((card, index) => {
+            const cardX = pairAreaX + 10 + index * (cardWidth + cardSpacing);
+            const cardY = pairAreaY - cardHeight - 10;
+            
+            // Draw mini card
+            fill(255);
+            stroke(0);
+            strokeWeight(1);
+            rect(cardX, cardY, cardWidth, cardHeight, 4);
+            
+            // Draw card content
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            noStroke();
+            text(card.rank, cardX + cardWidth/2, cardY + cardHeight/2);
+        });
+    }
+}
+
+function drawDraggedCard() {
+    if (window.draggedCard) {
+        const cardWidth = 60;
+        const cardHeight = 84;
+        const cardX = mouseX - window.dragOffset.x;
+        const cardY = mouseY - window.dragOffset.y;
+        
+        // Draw dragged card with transparency
+        push();
+        tint(255, 200); // Semi-transparent
+        drawCard(cardX, cardY, window.draggedCard, cardWidth, cardHeight, true);
+        pop();
     }
 }
 
@@ -2104,7 +2225,7 @@ function mousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === 0) {
-        const handY = height - 110; // Match the new position from drawMainPlayerHand
+        const handY = height - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
         const buttonWidth = 70;
@@ -2119,6 +2240,31 @@ function mousePressed() {
         const startX = (width - totalWidth) / 2;
         const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
         const buttonY = handY + 20;
+        
+        // Check for card dragging
+        const player = window.game.players[0];
+        for (let i = 0; i < player.hand.length; i++) {
+            const cardX = startX + i * (cardWidth + spacing);
+            const cardY = handY;
+            
+            if (mouseX >= cardX && mouseX <= cardX + cardWidth &&
+                mouseY >= cardY && mouseY <= cardY + 84) {
+                
+                // Check if player has pairs in hand
+                const rankCounts = {};
+                player.hand.forEach(card => {
+                    rankCounts[card.rank] = (rankCounts[card.rank] || 0) + 1;
+                });
+                
+                const hasPairs = Object.values(rankCounts).some(count => count >= 2);
+                if (hasPairs) {
+                    window.draggedCard = player.hand[i];
+                    window.dragOffset = { x: mouseX - cardX, y: mouseY - cardY };
+                    console.log(`🎯 Started dragging card: ${window.draggedCard.name}`);
+                }
+                return;
+            }
+        }
         
         // Check if Ask button was clicked
         const askX = buttonsStartX;
@@ -2190,6 +2336,48 @@ function mousePressed() {
         console.log('🐟 Back to Go Fish Menu clicked');
         window.location.href = '/go-fish.html';
         return;
+    }
+}
+
+// Mouse release for card dropping
+function mouseReleased() {
+    if (!window.game || window.game.gameOver) return;
+    
+    if (window.draggedCard) {
+        const pairAreaY = height - 40;
+        const pairAreaWidth = 200;
+        const pairAreaHeight = 30;
+        const pairAreaX = (width - pairAreaWidth) / 2;
+        
+        // Check if dropped on pair-making area
+        if (mouseX >= pairAreaX && mouseX <= pairAreaX + pairAreaWidth &&
+            mouseY >= pairAreaY && mouseY <= pairAreaY + pairAreaHeight) {
+            
+            // Add card to pair-making area
+            if (!window.pairMakingArea.cards) {
+                window.pairMakingArea.cards = [];
+            }
+            
+            window.pairMakingArea.cards.push(window.draggedCard);
+            console.log(`🎯 Dropped card ${window.draggedCard.name} in pair-making area`);
+            
+            // Check if we can make a pair
+            if (window.pairMakingArea.cards.length >= 2) {
+                const lastTwo = window.pairMakingArea.cards.slice(-2);
+                if (lastTwo[0].rank === lastTwo[1].rank) {
+                    // Make the pair
+                    if (window.game.makePairManually(lastTwo[0], lastTwo[1])) {
+                        // Remove the paired cards from pair-making area
+                        window.pairMakingArea.cards = window.pairMakingArea.cards.filter(
+                            card => card !== lastTwo[0] && card !== lastTwo[1]
+                        );
+                    }
+                }
+            }
+        }
+        
+        window.draggedCard = null;
+        window.dragOffset = { x: 0, y: 0 };
     }
 }
 
