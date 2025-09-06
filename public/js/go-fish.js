@@ -1536,7 +1536,7 @@ function drawPairMakingArea() {
     const handY = height - 150; // Match the main player hand position
     const pairAreaWidth = 200;
     const pairAreaHeight = 100; // Taller to accommodate cards
-    const pairAreaX = width - 250; // To the right of the player box
+    const pairAreaX = width - 450; // Between player box and score box
     const pairAreaY = handY - 10; // Aligned with the player hand
     
     // Check if player has pairs in hand
@@ -2351,7 +2351,7 @@ function mouseReleased() {
         const handY = height - 150;
         const pairAreaWidth = 200;
         const pairAreaHeight = 100;
-        const pairAreaX = width - 250;
+        const pairAreaX = width - 450;
         const pairAreaY = handY - 10;
         
         // Check if dropped on pair-making area
