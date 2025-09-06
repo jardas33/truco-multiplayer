@@ -238,12 +238,14 @@ class BattleshipGame {
             console.log(`Rendering ship ${ship.name} (${ship.type}): hasImage=${hasImage}`);
             
             const shipImagePath = hasImage ? 
-                `background-image: url('Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : 
+                `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : 
                 `background: ${ship.color}`;
             
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${shipImagePath}"></div>
+                    <div class="ship-visual ${ship.orientation || 'horizontal'}" style="${hasImage ? '' : `background: ${ship.color}`}">
+                        ${hasImage ? `<img src="${window.location.origin}/Images/${ship.type}.png" alt="${ship.name}" style="width: 100%; height: 100%; object-fit: contain;">` : ''}
+                    </div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
                         <div style="font-size: 0.8em; opacity: 0.8;">Size: ${ship.size} squares</div>
