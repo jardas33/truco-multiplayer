@@ -13,7 +13,24 @@ function setup() {
     frameRate(30); // Limit to 30 FPS instead of 60
     
     let canvas = createCanvas(windowWidth, windowHeight);
-    canvas.parent('Menu');
+    
+    // Check if we're on the Battleship page and use the correct container
+    const currentPath = window.location.pathname;
+    if (currentPath === '/battleship') {
+        // For Battleship, append to gameCanvas div
+        const gameCanvasDiv = document.getElementById('gameCanvas');
+        if (gameCanvasDiv) {
+            canvas.parent(gameCanvasDiv);
+            console.log('✅ Canvas attached to gameCanvas div for Battleship');
+        } else {
+            console.error('❌ gameCanvas div not found for Battleship!');
+            canvas.parent('body'); // Fallback to body
+        }
+    } else {
+        // For other games, use Menu div
+        canvas.parent('Menu');
+    }
+    
     canvas.style('display', 'block');
     canvas.style('position', 'absolute');
     canvas.style('top', '0');
@@ -29,11 +46,23 @@ function setup() {
     // Store canvas reference globally for easy access
     window.gameCanvas = canvas;
     
-    menuDiv = select("#Menu");
-    gameDiv = select("#Game");
-    instructionsDiv = select("#Instructions");
-    valuesDiv = select("#Values");
-    console.log('Div containers initialized');
+    // Check if we're on the Battleship page and use the correct containers
+    const currentPath = window.location.pathname;
+    if (currentPath === '/battleship') {
+        // For Battleship, use gameCanvas div instead of Menu
+        menuDiv = select("#gameCanvas");
+        gameDiv = select("#Game");
+        instructionsDiv = select("#Instructions");
+        valuesDiv = select("#Values");
+        console.log('✅ Battleship div containers initialized');
+    } else {
+        // For other games, use standard containers
+        menuDiv = select("#Menu");
+        gameDiv = select("#Game");
+        instructionsDiv = select("#Instructions");
+        valuesDiv = select("#Values");
+        console.log('✅ Standard div containers initialized');
+    }
 
     // Ensure proper initial state
     if (menuDiv) {
@@ -80,21 +109,27 @@ function setup() {
             console.error('showInstructions function not found');
         }
     });
-    instructionsButton.parent('Menu');
-    instructionsButton.style('z-index', '100'); // Higher z-index
-    instructionsButton.style('position', 'absolute'); // Force absolute positioning
-    instructionsButton.style('padding', '10px 20px'); // Ensure consistent padding
-    instructionsButton.style('margin', '5px'); // Ensure consistent margin
-    instructionsButton.style('border', '2px solid #fff'); // Ensure consistent border
-    instructionsButton.style('background-color', 'rgba(0, 0, 0, 0.7) !important'); // Ensure consistent background
-    instructionsButton.style('color', 'white !important'); // Ensure consistent text color
-    instructionsButton.style('font-weight', 'bold'); // Ensure consistent font weight
-    instructionsButton.style('border-radius', '5px'); // Ensure consistent border radius
-    instructionsButton.style('text-align', 'center'); // Ensure consistent text alignment
-    instructionsButton.style('font-size', '14px !important'); // Ensure consistent font size
-    instructionsButton.style('width', 'auto !important'); // Ensure auto width
-    instructionsButton.style('height', 'auto !important'); // Ensure auto height
-    instructionsButton.show();
+    // Only create instructions button for non-Battleship games
+    if (currentPath !== '/battleship') {
+        instructionsButton.parent('Menu');
+        instructionsButton.style('z-index', '100'); // Higher z-index
+        instructionsButton.style('position', 'absolute'); // Force absolute positioning
+        instructionsButton.style('padding', '10px 20px'); // Ensure consistent padding
+        instructionsButton.style('margin', '5px'); // Ensure consistent margin
+        instructionsButton.style('border', '2px solid #fff'); // Ensure consistent border
+        instructionsButton.style('background-color', 'rgba(0, 0, 0, 0.7) !important'); // Ensure consistent background
+        instructionsButton.style('color', 'white !important'); // Ensure consistent text color
+        instructionsButton.style('font-weight', 'bold'); // Ensure consistent font weight
+        instructionsButton.style('border-radius', '5px'); // Ensure consistent border radius
+        instructionsButton.style('text-align', 'center'); // Ensure consistent text alignment
+        instructionsButton.style('font-size', '14px !important'); // Ensure consistent font size
+        instructionsButton.style('width', 'auto !important'); // Ensure auto width
+        instructionsButton.style('height', 'auto !important'); // Ensure auto height
+        instructionsButton.show();
+    } else {
+        // Hide instructions button for Battleship (it has its own)
+        instructionsButton.hide();
+    }
 
     // Only show Card Values button for Truco game
     const currentGame = window.location.pathname;
