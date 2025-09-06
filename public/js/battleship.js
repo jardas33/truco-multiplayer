@@ -242,7 +242,7 @@ class BattleshipGame {
             
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: cover; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
+                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; transform: rotate(90deg);` : `background: ${ship.color}`}">
                     </div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
@@ -877,9 +877,6 @@ class BattleshipClient {
     draw() {
         if (!this.initialized) return;
         
-        // Clear canvas with transparent background
-        clear();
-        
         // Draw grids with high visibility
         this.drawGrids();
         this.drawShips();
@@ -1075,6 +1072,9 @@ class BattleshipClient {
     
     drawShipPreview() {
         if (!this.game.currentShip) return;
+        
+        // Don't draw preview if mouse is at origin (0,0) - likely not moved yet
+        if (mouseX === 0 && mouseY === 0) return;
         
         const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));

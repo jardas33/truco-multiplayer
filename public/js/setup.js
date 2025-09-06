@@ -20,10 +20,10 @@ function setup() {
     // Wait for DOM to be ready before creating canvas
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            createCanvasSafely();
+            setTimeout(createCanvasSafely, 100);
         });
     } else {
-        createCanvasSafely();
+        setTimeout(createCanvasSafely, 100);
     }
 }
 
