@@ -446,30 +446,30 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('User disconnected');
         
-        if (roomCode) {
-            const room = rooms.get(roomCode);
+        if (socket.roomCode) {
+            const room = rooms.get(socket.roomCode);
             if (room) {
                 // ✅ CRITICAL FIX: Don't remove players during active games
                 // This was causing "Room not found" errors
                 if (!room.game || !room.game.started) {
                     room.players = room.players.filter(p => p.id !== socket.id);
                     
-                    io.to(roomCode).emit('playerLeft', {
+                    io.to(socket.roomCode).emit('playerLeft', {
                         players: room.players,
                         count: room.players.length
                     });
 
                     if (room.players.length === 0) {
-                        console.log(`🔍 DEBUG: Room ${roomCode} is empty after disconnect, checking if game is active before deletion`);
+                        console.log(`🔍 DEBUG: Room ${socket.roomCode} is empty after disconnect, checking if game is active before deletion`);
                         console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
                         console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
                         
                         // ✅ CRITICAL FIX: Don't delete room if game is active
                         if (room.game && room.game.started) {
-                            console.log(`⚠️ WARNING: Attempting to delete room ${roomCode} during active game after disconnect - PREVENTING DELETION`);
+                            console.log(`⚠️ WARNING: Attempting to delete room ${socket.roomCode} during active game after disconnect - PREVENTING DELETION`);
                         } else {
-                        rooms.delete(roomCode);
-                            console.log(`🗑️ Room ${roomCode} deleted (empty and no active game after disconnect)`);
+                        rooms.delete(socket.roomCode);
+                            console.log(`🗑️ Room ${socket.roomCode} deleted (empty and no active game after disconnect)`);
                         }
                     }
                 } else {
@@ -1673,7 +1673,7 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
         // ✅ CRITICAL FIX: Use roomCode from event data or fallback to roomCode
-        const roomCode = data.roomCode || roomCode;
+        const roomCode = data.roomCode || socket.roomCode;
         console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${roomCode})`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
@@ -1752,7 +1752,7 @@ io.on('connection', (socket) => {
 
     // ✅ Handle player nickname changes
     socket.on('changeNickname', (data) => {
-        const roomCode = data.roomCode || roomCode;
+        const roomCode = data.roomCode || socket.roomCode;
         console.log(`✏️ Nickname change requested in room: ${roomCode}`);
         
         if (!roomCode) {
@@ -1804,7 +1804,7 @@ io.on('connection', (socket) => {
 
     // ✅ Handle player team selection
     socket.on('selectTeam', (data) => {
-        const roomCode = data.roomCode || roomCode;
+        const roomCode = data.roomCode || socket.roomCode;
         console.log(`🏆 Team selection requested in room: ${roomCode}`);
         
         if (!roomCode) {
