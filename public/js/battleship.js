@@ -672,9 +672,9 @@ class BattleshipClient {
             // Set canvas background to transparent
             this.canvas.style('background', 'transparent');
             
-            // Calculate grid positions - moved to center-bottom area for clear space
-            this.gridStartX = 100; // Moved right for better centering
-            this.gridStartY = 350; // Moved much lower to avoid all HTML elements
+            // Calculate grid positions - moved to far right side for clear space
+            this.gridStartX = 700; // Moved to far right side
+            this.gridStartY = 150; // Moved up to avoid bottom elements
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -761,9 +761,10 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - adjusted spacing for new position
-        const attackGridX = this.gridStartX + 500; // Adjusted for new positioning
-        this.drawGrid(attackGridX, this.gridStartY, 1, false);
+        // Draw attack grid (right side) - stacked vertically on right side
+        const attackGridX = this.gridStartX; // Same X position
+        const attackGridY = this.gridStartY + 450; // Below the first grid
+        this.drawGrid(attackGridX, attackGridY, 1, false);
         
         // Draw grid titles with better visibility
         noStroke();
@@ -771,7 +772,7 @@ class BattleshipClient {
         textAlign(CENTER, CENTER);
         textSize(18); // Larger titles
         text('Your Fleet', this.gridStartX + 200, this.gridStartY - 40);
-        text('Attack Grid', attackGridX + 200, this.gridStartY - 40);
+        text('Attack Grid', attackGridX + 200, attackGridY - 40);
         
         // Debug info removed for cleaner look
     }
@@ -1147,15 +1148,16 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
-    const gridStartX = 100; // Moved right for better centering
-    const gridStartY = 350; // Moved much lower to avoid all HTML elements
+    const gridStartX = 700; // Moved to far right side
+    const gridStartY = 150; // Moved up to avoid bottom elements
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - adjusted spacing for new position
-    const attackGridX = gridStartX + 500; // Adjusted for new positioning
-    drawBasicGrid(attackGridX, gridStartY, gridSize, gridSpacing, 'Attack Grid');
+    // Draw attack grid (right side) - stacked vertically on right side
+    const attackGridX = gridStartX; // Same X position
+    const attackGridY = gridStartY + 450; // Below the first grid
+    drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
     console.log('✅ Basic grids drawn');
 }
