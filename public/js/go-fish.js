@@ -2463,8 +2463,8 @@ function showAskForCardsDialog() {
             </select>
         </div>
         <div>
-            <button id="askButton" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#45a049'" onmouseout="this.style.backgroundColor='#4CAF50'">Ask</button>
-            <button id="cancelButton" style="background: #f44336; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#da190b'" onmouseout="this.style.backgroundColor='#f44336'">Cancel</button>
+            <button id="askButton" style="background: #4CAF50 !important; color: white !important; border: none !important; padding: 10px 20px !important; margin: 5px !important; border-radius: 5px !important; cursor: pointer !important; font-weight: bold !important; transition: background-color 0.3s !important;" onmouseover="this.style.setProperty('background-color', '#45a049', 'important')" onmouseout="this.style.setProperty('background-color', '#4CAF50', 'important')">Ask</button>
+            <button id="cancelButton" style="background: #f44336 !important; color: white !important; border: none !important; padding: 10px 20px !important; margin: 5px !important; border-radius: 5px !important; cursor: pointer !important; font-weight: bold !important; transition: background-color 0.3s !important;" onmouseover="this.style.setProperty('background-color', '#da190b', 'important')" onmouseout="this.style.setProperty('background-color', '#f44336', 'important')">Cancel</button>
         </div>
     `;
     
