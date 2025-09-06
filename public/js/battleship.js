@@ -74,6 +74,63 @@ class BattleshipGame {
         this.updateHistoryDisplay();
     }
     
+    showGameMessage(message, duration = 2000) {
+        // Remove existing message
+        const existingMessage = document.getElementById('game-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Create new message
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'game-message';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            animation: messageSlideIn 0.3s ease-out;
+        `;
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+        
+        // Add CSS animation
+        if (!document.getElementById('message-animations')) {
+            const style = document.createElement('style');
+            style.id = 'message-animations';
+            style.textContent = `
+                @keyframes messageSlideIn {
+                    from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Remove message after duration
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.style.animation = 'messageSlideIn 0.3s ease-out reverse';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 300);
+            }
+        }, duration);
+    }
+    
     updateHistoryDisplay() {
         const historyContent = document.getElementById('historyContent');
         if (historyContent) {
@@ -276,6 +333,7 @@ class BattleshipGame {
             if (ship.hits >= ship.size) {
                 this.sinkShip(targetPlayer, ship);
                 this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
+                this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
                 
                 if (this.checkGameOver(targetPlayer)) {
                     this.endGame(player);
@@ -285,12 +343,14 @@ class BattleshipGame {
                 return { valid: true, hit: true, sunk: true, ship: ship.name };
             } else {
                 this.addToHistory(`🎯 ${player === 0 ? 'You' : 'AI'} hit the ${ship.name}!`, 'hit');
+                this.showGameMessage(`🎯 HIT! ${ship.name} damaged!`, 2000);
                 return { valid: true, hit: true, sunk: false, ship: ship.name };
             }
         } else {
             attackGrid[y][x].miss = true;
             cell.miss = true;
             this.addToHistory(`💧 ${player === 0 ? 'You' : 'AI'} missed!`, 'miss');
+            this.showGameMessage(`💧 Miss!`, 1500);
             return { valid: true, hit: false };
         }
     }
@@ -315,11 +375,64 @@ class BattleshipGame {
         
         if (winner === 0) {
             this.addToHistory('🏆 Congratulations! You won the battle!', 'success');
+            this.showGameMessage('🏆 VICTORY! You sunk all enemy ships!', 5000);
+            this.triggerVictoryEffect();
         } else {
             this.addToHistory('💥 Game Over! The AI defeated you!', 'error');
+            this.showGameMessage('💥 DEFEAT! The AI sunk all your ships!', 5000);
         }
         
         this.updateUI();
+        
+        // Auto-restart after 8 seconds
+        setTimeout(() => {
+            this.resetGame();
+        }, 8000);
+    }
+    
+    triggerVictoryEffect() {
+        // Create confetti effect
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                this.createConfetti();
+            }, i * 100);
+        }
+    }
+    
+    createConfetti() {
+        const confetti = document.createElement('div');
+        confetti.style.cssText = `
+            position: fixed;
+            top: -10px;
+            left: ${Math.random() * 100}%;
+            width: 10px;
+            height: 10px;
+            background: ${['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][Math.floor(Math.random() * 5)]};
+            z-index: 3000;
+            animation: confettiFall 3s linear forwards;
+        `;
+        
+        if (!document.getElementById('confetti-animations')) {
+            const style = document.createElement('style');
+            style.id = 'confetti-animations';
+            style.textContent = `
+                @keyframes confettiFall {
+                    to {
+                        transform: translateY(100vh) rotate(720deg);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+            if (confetti.parentNode) {
+                confetti.remove();
+            }
+        }, 3000);
     }
     
     endTurn() {
@@ -337,11 +450,32 @@ class BattleshipGame {
         let x, y;
         
         if (this.aiMode === 'hunt') {
-            // Random targeting
-            do {
-                x = Math.floor(Math.random() * this.gridSize);
-                y = Math.floor(Math.random() * this.gridSize);
-            } while (this.attackGrids[1][y][x].hit || this.attackGrids[1][y][x].miss);
+            // Smart hunting - avoid edges and corners initially
+            const candidates = [];
+            for (let i = 1; i < this.gridSize - 1; i++) {
+                for (let j = 1; j < this.gridSize - 1; j++) {
+                    if (!this.attackGrids[1][j][i].hit && !this.attackGrids[1][j][i].miss) {
+                        // Prefer positions that could hit multiple ship orientations
+                        const score = this.calculateHuntScore(i, j);
+                        candidates.push({ x: i, y: j, score });
+                    }
+                }
+            }
+            
+            if (candidates.length > 0) {
+                // Sort by score and pick randomly from top candidates
+                candidates.sort((a, b) => b.score - a.score);
+                const topCandidates = candidates.filter(c => c.score === candidates[0].score);
+                const target = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+                x = target.x;
+                y = target.y;
+            } else {
+                // Fallback to random
+                do {
+                    x = Math.floor(Math.random() * this.gridSize);
+                    y = Math.floor(Math.random() * this.gridSize);
+                } while (this.attackGrids[1][y][x].hit || this.attackGrids[1][y][x].miss);
+            }
         } else {
             // Target mode - attack around last hit
             const targets = this.getAdjacentTargets(this.aiLastHit.x, this.aiLastHit.y);
@@ -377,6 +511,26 @@ class BattleshipGame {
         } else {
             this.endTurn();
         }
+    }
+    
+    calculateHuntScore(x, y) {
+        let score = 0;
+        
+        // Check horizontal potential
+        for (let i = 0; i < 5; i++) {
+            if (x + i < this.gridSize && !this.attackGrids[1][y][x + i].hit && !this.attackGrids[1][y][x + i].miss) {
+                score++;
+            }
+        }
+        
+        // Check vertical potential
+        for (let i = 0; i < 5; i++) {
+            if (y + i < this.gridSize && !this.attackGrids[1][y + i][x].hit && !this.attackGrids[1][y + i][x].miss) {
+                score++;
+            }
+        }
+        
+        return score;
     }
     
     getAdjacentTargets(x, y) {
@@ -554,32 +708,62 @@ class BattleshipClient {
     }
     
     drawCell(x, y, cell, showShips) {
-        // Cell background
+        // Cell background with gradient effect
         if (cell.hit) {
-            fill(255, 0, 0); // Red for hit
+            // Explosion effect
+            fill(255, 100, 100);
+            stroke(255, 0, 0);
+            strokeWeight(2);
         } else if (cell.miss) {
-            fill(100, 100, 100); // Gray for miss
+            // Miss effect
+            fill(150, 150, 150);
+            stroke(200, 200, 200);
+            strokeWeight(1);
         } else if (showShips && cell.ship) {
-            fill(cell.ship.color); // Ship color
+            // Ship with gradient
+            fill(cell.ship.color);
+            stroke(255, 255, 255);
+            strokeWeight(1);
         } else {
-            fill(50, 50, 100); // Blue for water
+            // Water with wave effect
+            fill(30, 60, 120);
+            stroke(50, 100, 200);
+            strokeWeight(1);
         }
         
-        stroke(255);
-        strokeWeight(1);
         rect(x, y, this.gridSize, this.gridSize);
         
-        // Draw hit/miss indicators
+        // Draw hit/miss indicators with better visuals
         if (cell.hit) {
-            fill(255);
+            // Explosion animation
+            fill(255, 255, 0);
             textAlign(CENTER, CENTER);
-            textSize(20);
+            textSize(18);
             text('💥', x + this.gridSize/2, y + this.gridSize/2);
+            
+            // Add explosion ring
+            noFill();
+            stroke(255, 100, 0);
+            strokeWeight(2);
+            ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.8);
         } else if (cell.miss) {
-            fill(255);
+            // Miss ripple effect
+            fill(200, 200, 200);
             textAlign(CENTER, CENTER);
-            textSize(16);
-            text('✕', x + this.gridSize/2, y + this.gridSize/2);
+            textSize(14);
+            text('○', x + this.gridSize/2, y + this.gridSize/2);
+            
+            // Add ripple ring
+            noFill();
+            stroke(150, 150, 150);
+            strokeWeight(1);
+            ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.6);
+        } else if (showShips && cell.ship && cell.sunk) {
+            // Sunk ship indicator
+            fill(100, 0, 0);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            text('⚓', x + this.gridSize/2, y + this.gridSize/2);
         }
     }
     
