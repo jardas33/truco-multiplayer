@@ -36,15 +36,25 @@ function createCanvasSafely() {
         // For Battleship, append to gameCanvas div
         const gameCanvasDiv = document.getElementById('gameCanvas');
         if (gameCanvasDiv) {
-            canvas.parent(gameCanvasDiv);
-            console.log('✅ Canvas attached to gameCanvas div for Battleship');
+            try {
+                canvas.parent(gameCanvasDiv);
+                console.log('✅ Canvas attached to gameCanvas div for Battleship');
+            } catch (error) {
+                console.error('❌ Error attaching canvas to gameCanvas div:', error);
+                canvas.parent('body'); // Fallback to body
+            }
         } else {
             console.error('❌ gameCanvas div not found for Battleship!');
             canvas.parent('body'); // Fallback to body
         }
     } else {
         // For other games, use Menu div
-        canvas.parent('Menu');
+        try {
+            canvas.parent('Menu');
+        } catch (error) {
+            console.error('❌ Error attaching canvas to Menu div:', error);
+            canvas.parent('body'); // Fallback to body
+        }
     }
     
     canvas.style('display', 'block');

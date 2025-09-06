@@ -242,7 +242,7 @@ class BattleshipGame {
             
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
+                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: cover; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
                     </div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
@@ -1079,6 +1079,8 @@ class BattleshipClient {
         const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
         
+        console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
+        
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
             const ship = this.game.currentShip;
             const orientation = ship.orientation || 'horizontal';
@@ -1309,9 +1311,6 @@ function draw() {
     if (battleshipClient && battleshipClient.initialized) {
         battleshipClient.draw();
     } else {
-        // No background - let HTML background show through
-        clear();
-        
         // Draw basic grids even without full client
         if (typeof drawBasicGrids === 'function') {
             console.log('🎨 Drawing basic grids...');
