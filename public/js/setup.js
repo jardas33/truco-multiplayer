@@ -2,11 +2,16 @@ function setup() {
     console.log('Setting up p5.js canvas and UI elements...');
     
     // CRITICAL: Ensure card images are loaded before proceeding
-    if (typeof preload === 'function') {
-        console.log('Calling preload function to load card images...');
-        preload();
+    if (typeof loadGameImages === 'function') {
+        console.log('Calling loadGameImages function to load card images...');
+        try {
+            loadGameImages();
+            console.log('✅ loadGameImages function completed successfully');
+        } catch (error) {
+            console.error('❌ ERROR: loadGameImages function failed:', error);
+        }
     } else {
-        console.error('ERROR: Preload function not found! Card images may not load properly.');
+        console.error('ERROR: loadGameImages function not found! Card images may not load properly.');
     }
     
     // Set frame rate to prevent excessive rendering

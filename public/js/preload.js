@@ -1,5 +1,5 @@
 // Clean version of preload.js without emoji characters - loads all 52 standard deck cards
-function preload() {
+function loadGameImages() {
     try {
         console.log('🚢 Starting image preload...');
         
