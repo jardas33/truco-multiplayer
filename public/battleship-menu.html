@@ -6,398 +6,277 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Battleship Menu - Naval Combat</title>
+    <title>Battleship Menu</title>
     <script>
         // Ensure title stays set
-        document.title = 'Battleship Menu - Naval Combat';
+        document.title = 'Battleship Menu';
         setInterval(() => {
-            if (document.title !== 'Battleship Menu - Naval Combat') {
-                document.title = 'Battleship Menu - Naval Combat';
+            if (document.title !== 'Battleship Menu') {
+                document.title = 'Battleship Menu';
             }
         }, 100);
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: url('Images/pond.png') center center fixed;
+            background: url('Images/background.jpg') center center fixed;
             background-size: cover;
             font-family: 'Arial', sans-serif;
-            overflow-x: hidden;
-            overflow-y: auto;
-            min-height: 100vh;
+            overflow: hidden;
         }
 
-        .menu-container {
-            position: relative;
-            min-height: 100vh;
+        #Menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            padding: 20px;
         }
 
         .game-title {
             color: #FFD700;
-            font-size: 4em;
+            font-size: 2.5em;
             font-weight: bold;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
             margin-bottom: 20px;
             text-align: center;
         }
 
-        .game-subtitle {
-            color: #ffffff;
-            font-size: 1.5em;
-            margin-bottom: 40px;
-            text-align: center;
-            opacity: 0.9;
-        }
-
-        .menu-buttons {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            z-index: 1001;
-        }
-
-        .menu-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: white;
-            display: inline-block;
-        }
-
-        .back-btn {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
-        }
-
-        .back-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
-        }
-
         .room-controls {
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #FFD700;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: 15px;
             padding: 30px;
-            margin-bottom: 40px;
-            max-width: 600px;
             backdrop-filter: blur(10px);
-        }
-
-        .room-section {
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-        }
-
-        .room-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .room-section h3 {
-            color: #FFD700;
-            font-size: 1.5em;
-            margin: 0 0 15px 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             text-align: center;
+            min-width: 400px;
         }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 15px;
+        .room-controls input, .room-controls button {
+            margin: 8px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
         }
 
-        .input-group input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #4CAF50;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            text-transform: uppercase;
+        .room-controls input {
+            background: rgba(255,255,255,0.9);
+            color: #333;
         }
 
-        .input-group input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #FFD700;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-
-        .input-group button {
+        .room-controls button {
             background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
             cursor: pointer;
+            font-weight: bold;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
 
-        .input-group button:hover {
+        .room-controls button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        .bot-controls {
-            text-align: center;
+        .room-controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .bot-controls label {
-            color: #FFD700;
-            font-size: 1.2em;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .bot-controls input[type="range"] {
-            width: 100%;
-            margin: 10px 0;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 8px;
-            border-radius: 4px;
-            background: #333;
-            outline: none;
-        }
-
-        .bot-controls input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #4CAF50;
-            cursor: pointer;
-        }
-
-        .bot-info {
-            color: #4CAF50;
-            font-size: 0.9em;
-            margin-top: 10px;
-            font-style: italic;
-        }
-
-        .game-info {
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #4CAF50;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 30px;
-            color: white;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            max-width: 600px;
-        }
-
-        .game-info h3 {
-            color: #4CAF50;
-            margin-top: 0;
-            font-size: 1.5em;
-        }
-
-        .game-info ul {
+        #playerList {
+            margin-top: 20px;
             text-align: left;
-            margin: 20px 0;
         }
 
-        .game-info li {
-            margin: 10px 0;
-            font-size: 1.1em;
+        .player-item {
+            background: rgba(255,255,255,0.1);
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        /* Floating ship decorations */
-        .floating-ship {
-            position: absolute;
-            opacity: 0.1;
-            animation: float 8s ease-in-out infinite;
-            font-size: 2em;
-            pointer-events: none;
+        .player-name {
+            font-weight: bold;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-30px) rotate(5deg); }
+        .player-pairs {
+            color: #FFD700;
+            font-weight: bold;
         }
 
-        .floating-ship:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
-        .floating-ship:nth-child(2) { top: 20%; right: 15%; animation-delay: 2s; }
-        .floating-ship:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 4s; }
-        .floating-ship:nth-child(4) { bottom: 15%; right: 25%; animation-delay: 6s; }
-        .floating-ship:nth-child(5) { top: 50%; left: 5%; animation-delay: 8s; }
+        .bot-indicator {
+            color: #4CAF50;
+        }
 
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .game-title { font-size: 3em; }
-            .menu-buttons { flex-direction: column; }
-            .game-option { min-width: 250px; }
+        /* Button hiding logic when room is created */
+        .room-created #createRoomBtn,
+        .room-created #joinRoomBtn,
+        .room-created #roomCodeInput {
+            display: none !important;
+        }
+        
+        /* Ensure buttons are visible by default */
+        #createRoomBtn,
+        #joinRoomBtn,
+        #roomCodeInput {
+            display: inline-block !important;
+        }
+
+        /* AGGRESSIVE button color overrides - Maximum specificity */
+        #addBotBtn {
+            background-color: #4CAF50 !important; /* Green for add */
+            color: white !important;
+            border: none !important;
+            background: #4CAF50 !important;
+        }
+
+        #addBotBtn:hover {
+            background-color: #45a049 !important;
+            background: #45a049 !important;
+        }
+
+        #startGameBtn {
+            background-color: #FF9800 !important; /* Orange for start */
+            color: white !important;
+            border: none !important;
+            background: #FF9800 !important;
+        }
+
+        #startGameBtn:hover {
+            background-color: #F57C00 !important;
+            background: #F57C00 !important;
+        }
+
+        #removeBotBtn {
+            background-color: #f44336 !important; /* Red for remove */
+            color: white !important;
+            border: none !important;
+            background: #f44336 !important;
+        }
+
+        #removeBotBtn:hover {
+            background-color: #da190b !important;
+            background: #da190b !important;
+        }
+
+        #backToMainMenuBtn {
+            background-color: #2196F3 !important; /* Blue for navigation */
+            color: white !important;
+            border: none !important;
+            margin-top: 20px;
+        }
+
+        #gameMenuBtn {
+            background-color: #2196F3 !important; /* Blue for game menu */
+            color: white !important;
+            border: none !important;
+            background: #2196F3 !important;
+        }
+
+        #gameMenuBtn:hover {
+            background-color: #1976D2 !important;
+            background: #1976D2 !important;
         }
     </style>
 </head>
 <body>
-    <div class="menu-container">
-        <!-- Floating ship decorations -->
-        <div class="floating-ship">🚢</div>
-        <div class="floating-ship">⚓</div>
-        <div class="floating-ship">🌊</div>
-        <div class="floating-ship">⚔️</div>
-        <div class="floating-ship">🎯</div>
-
-        <!-- Menu Buttons -->
-        <div class="menu-buttons">
-            <a href="/" class="menu-btn back-btn">← Back to Main Menu</a>
-        </div>
-
-        <!-- Game Title -->
-        <h1 class="game-title">⚓ BATTLESHIP</h1>
-        <p class="game-subtitle">Naval Combat Strategy Game</p>
-
-        <!-- Room Controls -->
-        <div class="room-controls">
-            <div class="room-section">
-                <h3>🚢 Create Battle Room</h3>
-                <div class="input-group">
-                    <input type="text" id="roomCode" placeholder="Enter room code (optional)" maxlength="6">
-                    <button id="createRoomBtn" onclick="createRoom()">Create Room</button>
+    <div id="Menu">
+        <h1 class="game-title">🚢 Battleship</h1>
+        <div id="roomControls" class="room-controls">
+          <!-- Back to Main Menu Button -->
+          <button id="backToMainMenu" onclick="console.log('🔙 Back to Main Menu clicked'); window.location.replace('/');" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer; font-size: 14px;">
+            ← Back to Main Menu
+          </button>
+          
+          <!-- Room Controls -->
+          <div style="margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="roomCodeInput" placeholder="Enter room code to join" style="width: 200px; padding: 8px; border: 2px solid #FFD700; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 5px; text-align: center; font-size: 14px;">
+            <button id="joinRoomBtn">Join Room</button>
+            <button id="createRoomBtn">Create Room</button>
+          </div>
+          
+          
+          <!-- Room Code Display with Copy Button Next to Yellow Box -->
+                <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
+                  <div style="margin: 5px 0; font-size: 16px; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <div id="roomCodeText" style="background-color: #FFD700; color: black; font-family: monospace; font-size: 18px; padding: 8px 12px; border-radius: 4px; font-weight: bold;"></div>
+                    <button id="copyRoomCodeBtn" style="background-color: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">
+                      📋 Copy
+                    </button>
+                  </div>
+                  <div id="copySuccessMessage" style="display: none; color: #4CAF50; margin-top: 5px; font-weight: bold; font-size: 12px;">✅ Room code copied to clipboard!</div>
                 </div>
+          
+          <!-- Player Customization Section -->
+          <div id="playerCustomization" style="margin: 10px 0; padding: 10px; border: 2px solid #4CAF50; border-radius: 6px; background-color: rgba(76, 175, 80, 0.1); display: none;">
+            <h4 style="margin: 0 0 8px 0; font-size: 16px;">🎯 Customize Your Player</h4>
+            
+            <!-- Nickname Change -->
+            <div style="margin: 6px 0;">
+              <label for="nicknameInput" style="font-size: 14px;">Nickname (max 12 chars):</label>
+              <input type="text" id="nicknameInput" maxlength="12" placeholder="Enter nickname" style="margin-left: 8px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px;">
+              <button id="changeNicknameBtn" style="margin-left: 6px; padding: 4px 8px; background-color: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 13px;">Change</button>
             </div>
+          </div>
+          
+          <button id="addBotBtn" style="display: none;">Add Bot</button>
+          <button id="removeBotBtn" style="display: none;">Remove Bot</button>
+          <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
+          <button id="gameMenuBtn" onclick="window.location.reload();" style="display: none; background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 10px;">Battleship Game Menu</button>
 
-            <div class="room-section">
-                <h3>⚓ Join Battle Room</h3>
-                <div class="input-group">
-                    <input type="text" id="joinRoomCode" placeholder="Enter room code" maxlength="6">
-                    <button id="joinRoomBtn" onclick="joinRoom()">Join Room</button>
-                </div>
-            </div>
-
-            <div class="room-section">
-                <h3>🤖 Bot Settings</h3>
-                <div class="bot-controls">
-                    <label>Players: <span id="playerCount">2</span></label>
-                    <input type="range" id="playerSlider" min="2" max="2" value="2" oninput="updatePlayerCount()">
-                    <div class="bot-info">Battleship requires exactly 2 players</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Game Info -->
-        <div class="game-info">
-            <h3>🎯 How to Play</h3>
-            <ul>
-                <li><strong>Place Ships:</strong> Click and drag to place your 5 ships on the grid</li>
-                <li><strong>Rotate Ships:</strong> Press 'R' to rotate ships before placing</li>
-                <li><strong>Attack:</strong> Click on the enemy grid to fire at their ships</li>
-                <li><strong>Win:</strong> Sink all enemy ships before they sink yours!</li>
-                <li><strong>Ship Types:</strong> Carrier (5), Battleship (4), Cruiser (3), Submarine (3), Destroyer (2)</li>
-            </ul>
+          <button id="backToMainMenuBtn" style="display: none;">← Back to Battleship Menu</button>
+          <div id="playerList"></div>
         </div>
     </div>
 
+    <script src="js/variables.js"></script>
+    <script src="js/preload.js"></script>
+    <script src="js/setup.js"></script>
+    <script src="js/draw.js"></script>
+    <script src="js/game-framework.js"></script>
+    <script src="js/battleship.js"></script>
+    
     <script>
-        // Room management functions
-        function createRoom() {
-            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
-            const playerCount = parseInt(document.getElementById('playerCount').textContent);
-            
-            if (roomCode && roomCode.length !== 6) {
-                alert('Room code must be exactly 6 characters!');
-                return;
-            }
-            
-            // Generate room code if not provided
-            const finalRoomCode = roomCode || generateRoomCode();
-            
-            // Store room settings
-            localStorage.setItem('battleshipRoomCode', finalRoomCode);
-            localStorage.setItem('battleshipPlayerCount', playerCount.toString());
-            localStorage.setItem('battleshipGameMode', 'create');
-            
-            // Redirect to game
-            window.location.href = '/battleship';
-        }
-
-        function joinRoom() {
-            const roomCode = document.getElementById('joinRoomCode').value.trim().toUpperCase();
-            
-            if (!roomCode) {
-                alert('Please enter a room code!');
-                return;
-            }
-            
-            if (roomCode.length !== 6) {
-                alert('Room code must be exactly 6 characters!');
-                return;
-            }
-            
-            // Store room settings
-            localStorage.setItem('battleshipRoomCode', roomCode);
-            localStorage.setItem('battleshipPlayerCount', '2');
-            localStorage.setItem('battleshipGameMode', 'join');
-            
-            // Redirect to game
-            window.location.href = '/battleship';
-        }
-
-        function updatePlayerCount() {
-            const slider = document.getElementById('playerSlider');
-            const count = document.getElementById('playerCount');
-            count.textContent = slider.value;
-        }
-
-        function generateRoomCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        // Add some interactive effects
+        // Add room-created class when room is created to hide Create/Join buttons
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-focus on room code input
-            document.getElementById('roomCode').focus();
+            // Listen for room creation events
+            const createBtn = document.getElementById('createRoomBtn');
+            const joinBtn = document.getElementById('joinRoomBtn');
             
-            // Add enter key support
-            document.getElementById('roomCode').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    createRoom();
-                }
-            });
+            if (createBtn) {
+                createBtn.addEventListener('click', function() {
+                    setTimeout(() => {
+                        document.body.classList.add('room-created');
+                    }, 100);
+                });
+            }
             
-            document.getElementById('joinRoomCode').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    joinRoom();
-                }
-            });
+            if (joinBtn) {
+                joinBtn.addEventListener('click', function() {
+                    setTimeout(() => {
+                        document.body.classList.add('room-created');
+                    }, 100);
+                });
+            }
+            
+            
         });
     </script>
 </body>
