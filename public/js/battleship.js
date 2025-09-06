@@ -765,13 +765,17 @@ class BattleshipClient {
         // Also add click listeners directly to ship items after they're rendered
         setTimeout(() => {
             const shipItems = document.querySelectorAll('.ship-item');
+            console.log('🚢 Found ship items:', shipItems.length);
             shipItems.forEach((item, index) => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     console.log('🚢 Direct ship click:', index, this.game.ships[index]);
                     this.game.startShipPlacement(index);
                 });
+                console.log('🚢 Added click listener to ship item:', index);
             });
-        }, 100);
+        }, 500);
     }
     
     setupResizeHandler() {

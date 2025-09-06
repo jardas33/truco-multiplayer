@@ -1,6 +1,6 @@
 // Clean version of preload.js without emoji characters - loads all 52 standard deck cards
 function preload() {
-    console.log('Starting image preload...');
+    console.log('🚢 Starting image preload...');
     
     // Get the base URL for production environments
     const baseUrl = window.location.origin;
@@ -53,33 +53,36 @@ function preload() {
     }
     
     // Load ship images for Battleship game
+    console.log('🚢 Starting to load ship images...');
     try {
         window.shipImages = {};
+        console.log('🚢 Created shipImages object');
         
-        // Load carrier image
-        window.shipImages.carrier = loadImage(`${baseUrl}/Images/carrier.png`);
-        console.log('SUCCESS: Carrier image loaded');
+        // Load ship images using regular Image objects
+        const shipTypes = ['carrier', 'battleship', 'cruiser', 'submarine', 'destroyer'];
+        let loadedCount = 0;
         
-        // Load battleship image
-        window.shipImages.battleship = loadImage(`${baseUrl}/Images/battleship.png`);
-        console.log('SUCCESS: Battleship image loaded');
-        
-        // Load cruiser image
-        window.shipImages.cruiser = loadImage(`${baseUrl}/Images/cruiser.png`);
-        console.log('SUCCESS: Cruiser image loaded');
-        
-        // Load submarine image
-        window.shipImages.submarine = loadImage(`${baseUrl}/Images/submarine.png`);
-        console.log('SUCCESS: Submarine image loaded');
-        
-        // Load destroyer image
-        window.shipImages.destroyer = loadImage(`${baseUrl}/Images/destroyer.png`);
-        console.log('SUCCESS: Destroyer image loaded');
-        
-        // Call the callback after all images are loaded
-        setTimeout(() => {
-            window.checkShipImagesLoaded && window.checkShipImagesLoaded();
-        }, 100);
+        shipTypes.forEach(shipType => {
+            const img = new Image();
+            img.onload = () => {
+                console.log(`SUCCESS: ${shipType} image loaded`);
+                loadedCount++;
+                if (loadedCount === shipTypes.length) {
+                    console.log('🚢 All ship images loaded!');
+                    window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+                }
+            };
+            img.onerror = () => {
+                console.error(`ERROR: Failed to load ${shipType} image`);
+                loadedCount++;
+                if (loadedCount === shipTypes.length) {
+                    console.log('🚢 All ship images processed!');
+                    window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+                }
+            };
+            img.src = `${baseUrl}/Images/${shipType}.png`;
+            window.shipImages[shipType] = img;
+        });
         
     } catch (error) {
         console.error('ERROR: Error loading ship images:', error);
