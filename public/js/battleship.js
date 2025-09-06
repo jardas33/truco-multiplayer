@@ -660,8 +660,8 @@ class BattleshipClient {
         
         try {
             // Create responsive canvas
-            const canvasWidth = Math.min(1200, windowWidth - 50);
-            const canvasHeight = Math.min(900, windowHeight - 20);
+            const canvasWidth = Math.min(1400, windowWidth - 30);
+            const canvasHeight = Math.min(1000, windowHeight - 10);
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
@@ -670,9 +670,9 @@ class BattleshipClient {
             this.canvas.style('max-width', '100%');
             this.canvas.style('height', 'auto');
             
-            // Calculate grid positions - ensure grids fit within canvas
-            this.gridStartX = Math.max(30, Math.min(canvasWidth - 920, 50)); // Ensure grids fit
-            this.gridStartY = Math.min(400, canvasHeight - 450); // Ensure grids fit with larger canvas
+            // Calculate grid positions - ensure grids fit within canvas with wider spacing
+            this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50)); // Ensure grids fit with wider spacing
+            this.gridStartY = Math.min(350, canvasHeight - 550); // Ensure grids fit with larger canvas
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
@@ -717,8 +717,8 @@ class BattleshipClient {
                 // Recalculate grid positions on resize
                 const canvasWidth = this.canvas.width;
                 const canvasHeight = this.canvas.height;
-                this.gridStartX = Math.max(30, Math.min(canvasWidth - 920, 50));
-                this.gridStartY = Math.min(400, canvasHeight - 450);
+                this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50));
+                this.gridStartY = Math.min(350, canvasHeight - 550);
                 console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
                 // Redraw after resize
                 redraw();
@@ -812,8 +812,8 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - side by side with wider gap
-        const attackGridX = this.gridStartX + 550; // Much wider gap between grids
+        // Draw attack grid (right side) - side by side with much wider gap
+        const attackGridX = this.gridStartX + 600; // Much wider gap between grids
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -1074,8 +1074,8 @@ class BattleshipClient {
     }
     
     handleAttack() {
-        // Use correct attack grid position (side by side with wider gap)
-        const attackGridX = this.gridStartX + 550; // Much wider gap between grids
+        // Use correct attack grid position (side by side with much wider gap)
+        const attackGridX = this.gridStartX + 600; // Much wider gap between grids
         const attackGridY = this.gridStartY; // Same Y as player grid
         const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
@@ -1183,14 +1183,14 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 50; // Increased from 40 to 50
     const gridSpacing = 3; // Increased from 2 to 3
-    const gridStartX = Math.max(30, Math.min(windowWidth - 920, 50)); // Ensure grids fit
-    const gridStartY = Math.min(400, windowHeight - 450); // Ensure grids fit with larger canvas
+    const gridStartX = Math.max(30, Math.min(windowWidth - 1200, 50)); // Ensure grids fit with wider spacing
+    const gridStartY = Math.min(350, windowHeight - 550); // Ensure grids fit with larger canvas
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - side by side with wider gap
-    const attackGridX = gridStartX + 550; // Much wider gap between grids
+    // Draw attack grid (right side) - side by side with much wider gap
+    const attackGridX = gridStartX + 600; // Much wider gap between grids
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
