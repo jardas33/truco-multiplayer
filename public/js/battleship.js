@@ -665,13 +665,16 @@ class BattleshipClient {
         canvasDiv.innerHTML = '';
         
         try {
-            // Create new canvas
+            // Create new canvas with transparent background
             this.canvas = createCanvas(1000, 700);
             this.canvas.parent(canvasDiv);
             
-            // Calculate grid positions - moved down to avoid overlapping with HTML elements
-            this.gridStartX = 50;
-            this.gridStartY = 200; // Moved down from 150 to 200
+            // Set canvas background to transparent
+            this.canvas.style('background', 'transparent');
+            
+            // Calculate grid positions - moved to center-bottom area for clear space
+            this.gridStartX = 100; // Moved right for better centering
+            this.gridStartY = 350; // Moved much lower to avoid all HTML elements
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -710,8 +713,7 @@ class BattleshipClient {
     draw() {
         if (!this.initialized) return;
         
-        // Use semi-transparent background to show pond image
-        background(15, 25, 45, 100);
+        // No background - let HTML background show through
         this.drawGrids();
         this.drawShips();
         this.drawUI();
@@ -759,8 +761,8 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - increased spacing
-        const attackGridX = this.gridStartX + 520; // Increased from 500 to 520
+        // Draw attack grid (right side) - adjusted spacing for new position
+        const attackGridX = this.gridStartX + 500; // Adjusted for new positioning
         this.drawGrid(attackGridX, this.gridStartY, 1, false);
         
         // Draw grid titles with better visibility
@@ -1123,8 +1125,7 @@ function draw() {
         battleshipClient.draw();
     } else {
         console.log('🔄 Drawing basic grids - client not ready');
-        // Show loading message and basic grid with semi-transparent background
-        background(15, 25, 45, 100);
+        // No background - let HTML background show through
         
         // Draw basic grids even without full client
         drawBasicGrids();
@@ -1146,14 +1147,14 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
-    const gridStartX = 50;
-    const gridStartY = 200; // Moved down to match BattleshipClient
+    const gridStartX = 100; // Moved right for better centering
+    const gridStartY = 350; // Moved much lower to avoid all HTML elements
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - increased spacing
-    const attackGridX = gridStartX + 520; // Increased from 500 to 520
+    // Draw attack grid (right side) - adjusted spacing for new position
+    const attackGridX = gridStartX + 500; // Adjusted for new positioning
     drawBasicGrid(attackGridX, gridStartY, gridSize, gridSpacing, 'Attack Grid');
     
     console.log('✅ Basic grids drawn');
