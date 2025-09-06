@@ -228,7 +228,10 @@ class BattleshipGame {
         
         shipsList.innerHTML = this.ships.map((ship, index) => {
             const isPlaced = this.placedShips[0].some(placedShip => placedShip.name === ship.name);
-            const shipImagePath = window.shipImages && window.shipImages[ship.type] ? 
+            
+            // Check if ship images are loaded
+            const hasImage = window.shipImages && window.shipImages[ship.type];
+            const shipImagePath = hasImage ? 
                 `background-image: url('Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : 
                 `background: ${ship.color}`;
             
@@ -243,6 +246,19 @@ class BattleshipGame {
                 </div>
             `;
         }).join('');
+    }
+    
+    // Check if ship images are loaded and re-render if needed
+    checkAndUpdateShipImages() {
+        if (window.shipImages) {
+            // Check if all ship images are loaded
+            const allLoaded = this.ships.every(ship => window.shipImages[ship.type]);
+            if (allLoaded) {
+                this.renderShipsList();
+                return true;
+            }
+        }
+        return false;
     }
     
     startGame() {
@@ -810,8 +826,6 @@ class BattleshipClient {
     }
     
     drawGrids() {
-        console.log('🎨 BattleshipClient.drawGrids() called');
-        console.log('🎯 Grid start position:', this.gridStartX, this.gridStartY);
         
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
@@ -833,7 +847,6 @@ class BattleshipClient {
     }
     
     drawGrid(x, y, player, showShips) {
-        console.log(`🎨 Drawing grid at ${x}, ${y} for player ${player}, showShips: ${showShips}`);
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
         // Draw grid background with high contrast to make it visible
@@ -1145,6 +1158,13 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚢 Initializing Battleship game...');
     battleshipGame = new BattleshipGame();
     
+    // Set up callback for when ship images are loaded
+    window.checkShipImagesLoaded = function() {
+        if (battleshipGame && battleshipGame.checkAndUpdateShipImages) {
+            battleshipGame.checkAndUpdateShipImages();
+        }
+    };
+    
     // Wait for p5.js to be available
     const initClient = () => {
         if (typeof createCanvas !== 'undefined') {
@@ -1182,13 +1202,9 @@ function setup() {
 }
 
 function draw() {
-    console.log('🎨 Draw function called - battleshipClient:', !!battleshipClient, 'initialized:', battleshipClient?.initialized);
-    
     if (battleshipClient && battleshipClient.initialized) {
-        console.log('🎯 Drawing with battleshipClient');
         battleshipClient.draw();
     } else {
-        console.log('🔄 Drawing basic grids - client not ready');
         // No background - let HTML background show through
         
         // Draw basic grids even without full client
@@ -1201,14 +1217,17 @@ function draw() {
         
         // Try to initialize client if not done yet
         if (battleshipGame && !battleshipClient) {
-            console.log('🔄 Creating battleshipClient...');
             battleshipClient = new BattleshipClient();
         }
+    }
+    
+    // Check if ship images are loaded and update UI if needed
+    if (battleshipGame && battleshipGame.checkAndUpdateShipImages) {
+        battleshipGame.checkAndUpdateShipImages();
     }
 }
 
 function drawBasicGrids() {
-    console.log('🎨 Drawing basic grids...');
     const gridSize = 50; // Increased from 40 to 50
     const gridSpacing = 3; // Increased from 2 to 3
     const gridStartX = Math.max(30, Math.min(windowWidth - 1200, 50)); // Ensure grids fit with wider spacing
@@ -1222,11 +1241,9 @@ function drawBasicGrids() {
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
-    console.log('✅ Basic grids drawn');
 }
 
 function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
-    console.log(`🎨 Drawing basic grid at ${x}, ${y} with size ${gridSize}`);
     
     // Draw grid background with high contrast to make it visible
     fill(0, 0, 0, 220); // Dark background with high opacity

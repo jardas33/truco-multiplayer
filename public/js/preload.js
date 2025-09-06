@@ -58,31 +58,46 @@ function preload() {
         
         // Load carrier image
         window.shipImages.carrier = loadImage(`${baseUrl}/Images/carrier.png`,
-            () => console.log('SUCCESS: Carrier image loaded'),
+            () => {
+                console.log('SUCCESS: Carrier image loaded');
+                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+            },
             () => console.error('ERROR: Failed to load carrier image')
         );
         
         // Load battleship image
         window.shipImages.battleship = loadImage(`${baseUrl}/Images/battleship.png`,
-            () => console.log('SUCCESS: Battleship image loaded'),
+            () => {
+                console.log('SUCCESS: Battleship image loaded');
+                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+            },
             () => console.error('ERROR: Failed to load battleship image')
         );
         
         // Load cruiser image
         window.shipImages.cruiser = loadImage(`${baseUrl}/Images/cruiser.png`,
-            () => console.log('SUCCESS: Cruiser image loaded'),
+            () => {
+                console.log('SUCCESS: Cruiser image loaded');
+                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+            },
             () => console.error('ERROR: Failed to load cruiser image')
         );
         
         // Load submarine image
         window.shipImages.submarine = loadImage(`${baseUrl}/Images/submarine.png`,
-            () => console.log('SUCCESS: Submarine image loaded'),
+            () => {
+                console.log('SUCCESS: Submarine image loaded');
+                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+            },
             () => console.error('ERROR: Failed to load submarine image')
         );
         
         // Load destroyer image
         window.shipImages.destroyer = loadImage(`${baseUrl}/Images/destroyer.png`,
-            () => console.log('SUCCESS: Destroyer image loaded'),
+            () => {
+                console.log('SUCCESS: Destroyer image loaded');
+                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+            },
             () => console.error('ERROR: Failed to load destroyer image')
         );
         
