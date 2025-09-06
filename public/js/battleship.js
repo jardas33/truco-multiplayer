@@ -224,13 +224,19 @@ class BattleshipGame {
     
     renderShipsList() {
         const shipsList = document.getElementById('shipsList');
-        if (!shipsList) return;
+        if (!shipsList) {
+            console.log('❌ shipsList element not found');
+            return;
+        }
         
+        console.log('🎨 Rendering ships list...');
         shipsList.innerHTML = this.ships.map((ship, index) => {
             const isPlaced = this.placedShips[0].some(placedShip => placedShip.name === ship.name);
             
             // Check if ship images are loaded
             const hasImage = window.shipImages && window.shipImages[ship.type];
+            console.log(`Rendering ship ${ship.name} (${ship.type}): hasImage=${hasImage}`);
+            
             const shipImagePath = hasImage ? 
                 `background-image: url('Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : 
                 `background: ${ship.color}`;
@@ -250,13 +256,21 @@ class BattleshipGame {
     
     // Check if ship images are loaded and re-render if needed
     checkAndUpdateShipImages() {
+        console.log('🔍 Checking ship images...', window.shipImages);
         if (window.shipImages) {
             // Check if all ship images are loaded
-            const allLoaded = this.ships.every(ship => window.shipImages[ship.type]);
+            const allLoaded = this.ships.every(ship => {
+                const hasImage = window.shipImages[ship.type];
+                console.log(`Ship ${ship.type}:`, hasImage ? 'loaded' : 'not loaded');
+                return hasImage;
+            });
             if (allLoaded) {
+                console.log('✅ All ship images loaded, re-rendering UI');
                 this.renderShipsList();
                 return true;
             }
+        } else {
+            console.log('❌ window.shipImages not found');
         }
         return false;
     }
@@ -611,12 +625,24 @@ class BattleshipGame {
     
     // Ship placement methods
     startShipPlacement(shipIndex) {
-        if (this.gamePhase !== 'placement') return;
+        console.log('🚢 startShipPlacement called with index:', shipIndex);
+        console.log('Game phase:', this.gamePhase);
+        
+        if (this.gamePhase !== 'placement') {
+            console.log('❌ Not in placement phase');
+            return;
+        }
         
         const ship = this.ships[shipIndex];
-        if (ship.placed) return;
+        console.log('Selected ship:', ship);
+        
+        if (ship.placed) {
+            console.log('❌ Ship already placed');
+            return;
+        }
         
         this.currentShip = { ...ship, index: shipIndex };
+        console.log('✅ Current ship set:', this.currentShip);
         this.addToHistory(`📌 Click on the grid to place ${ship.name}`, 'info');
     }
     
@@ -725,7 +751,9 @@ class BattleshipClient {
         // Ship selection
         document.addEventListener('click', (e) => {
             if (e.target.closest('.ship-item')) {
-                const shipIndex = parseInt(e.target.closest('.ship-item').dataset.shipIndex);
+                const shipItem = e.target.closest('.ship-item');
+                const shipIndex = parseInt(shipItem.dataset.shipIndex);
+                console.log('🚢 Ship clicked:', shipIndex, this.game.ships[shipIndex]);
                 this.game.startShipPlacement(shipIndex);
             }
         });
