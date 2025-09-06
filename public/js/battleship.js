@@ -643,6 +643,7 @@ class BattleshipClient {
         
         this.setupEventListeners();
         this.initializeCanvas();
+        this.setupResizeHandler();
     }
     
     initializeCanvas() {
@@ -658,16 +659,20 @@ class BattleshipClient {
         canvasDiv.innerHTML = '';
         
         try {
-            // Create new canvas with transparent background
-            this.canvas = createCanvas(1000, 700);
+            // Create responsive canvas
+            const canvasWidth = Math.min(1000, windowWidth - 100);
+            const canvasHeight = Math.min(700, windowHeight - 100);
+            this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
             // Set canvas background to transparent
             this.canvas.style('background', 'transparent');
+            this.canvas.style('max-width', '100%');
+            this.canvas.style('height', 'auto');
             
-            // Calculate grid positions - moved to far right side for clear space
-            this.gridStartX = 700; // Moved to far right side
-            this.gridStartY = 150; // Moved up to avoid bottom elements
+            // Calculate grid positions - responsive positioning
+            this.gridStartX = Math.max(50, canvasWidth - 500); // Responsive right positioning
+            this.gridStartY = 50; // Top positioning
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -699,6 +704,18 @@ class BattleshipClient {
             if (e.target.closest('.ship-item')) {
                 const shipIndex = parseInt(e.target.closest('.ship-item').dataset.shipIndex);
                 this.game.startShipPlacement(shipIndex);
+            }
+        });
+    }
+    
+    setupResizeHandler() {
+        window.addEventListener('resize', () => {
+            if (this.canvas) {
+                // Recalculate grid positions on resize
+                const canvasWidth = this.canvas.width;
+                this.gridStartX = Math.max(50, canvasWidth - 500);
+                this.gridStartY = 50;
+                console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
             }
         });
     }
@@ -1111,8 +1128,13 @@ function setup() {
         const canvasDiv = document.getElementById('gameCanvas');
         if (canvasDiv) {
             canvasDiv.innerHTML = '';
-            const fallbackCanvas = createCanvas(1000, 700);
+            const canvasWidth = Math.min(1000, windowWidth - 100);
+            const canvasHeight = Math.min(700, windowHeight - 100);
+            const fallbackCanvas = createCanvas(canvasWidth, canvasHeight);
             fallbackCanvas.parent(canvasDiv);
+            fallbackCanvas.style('background', 'transparent');
+            fallbackCanvas.style('max-width', '100%');
+            fallbackCanvas.style('height', 'auto');
             console.log('✅ Fallback canvas created');
         }
     }
@@ -1148,8 +1170,8 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
-    const gridStartX = 700; // Moved to far right side
-    const gridStartY = 150; // Moved up to avoid bottom elements
+    const gridStartX = Math.max(50, windowWidth - 500); // Responsive right positioning
+    const gridStartY = 50; // Top positioning
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
