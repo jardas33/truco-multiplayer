@@ -342,4 +342,25 @@ function setup() {
     
     console.log('Setup complete - canvas and UI elements initialized');
 }
+
+// Handle window resize events (like when console opens/closes)
+function windowResized() {
+    console.log('Window resized - updating canvas dimensions');
+    
+    // Update canvas size to match new window dimensions
+    resizeCanvas(windowWidth, windowHeight);
+    
+    // Update canvas styling to match new dimensions
+    if (window.gameCanvas) {
+        window.gameCanvas.style('width', windowWidth + 'px');
+        window.gameCanvas.style('height', windowHeight + 'px');
+    }
+    
+    // Force a redraw after resize
+    setTimeout(function() {
+        if (typeof draw === 'function') {
+            draw();
+        }
+    }, 50);
+}
   
