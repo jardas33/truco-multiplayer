@@ -670,9 +670,9 @@ class BattleshipClient {
             this.canvas.style('max-width', '100%');
             this.canvas.style('height', 'auto');
             
-            // Calculate grid positions - side by side and lower
-            this.gridStartX = Math.max(50, canvasWidth - 900); // Left grid position
-            this.gridStartY = 250; // Moved even lower
+            // Calculate grid positions - side by side, lower and slightly left
+            this.gridStartX = Math.max(30, canvasWidth - 920); // Moved slightly left
+            this.gridStartY = 300; // Moved lower
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -713,8 +713,8 @@ class BattleshipClient {
             if (this.canvas) {
                 // Recalculate grid positions on resize
                 const canvasWidth = this.canvas.width;
-                this.gridStartX = Math.max(50, canvasWidth - 900);
-                this.gridStartY = 250;
+                this.gridStartX = Math.max(30, canvasWidth - 920);
+                this.gridStartY = 300;
                 console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
             }
         });
@@ -774,8 +774,8 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - side by side
-        const attackGridX = this.gridStartX + 450; // Next to the first grid
+        // Draw attack grid (right side) - side by side with more space
+        const attackGridX = this.gridStartX + 480; // More space between grids
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -1064,8 +1064,8 @@ class BattleshipClient {
     }
     
     handleAttack() {
-        // Use correct attack grid position (side by side)
-        const attackGridX = this.gridStartX + 450; // Next to player grid
+        // Use correct attack grid position (side by side with more space)
+        const attackGridX = this.gridStartX + 480; // More space between grids
         const attackGridY = this.gridStartY; // Same Y as player grid
         const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
@@ -1173,14 +1173,14 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
-    const gridStartX = Math.max(50, windowWidth - 900); // Left grid position
-    const gridStartY = 250; // Moved even lower
+    const gridStartX = Math.max(30, windowWidth - 920); // Moved slightly left
+    const gridStartY = 300; // Moved lower
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - side by side
-    const attackGridX = gridStartX + 450; // Next to the first grid
+    // Draw attack grid (right side) - side by side with more space
+    const attackGridX = gridStartX + 480; // More space between grids
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
