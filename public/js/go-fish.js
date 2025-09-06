@@ -193,43 +193,53 @@ class GoFishGame {
         
         console.log(`🎯 ${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s`);
         
-        // Find cards of the requested rank
-        const requestedCards = targetPlayer.hand.filter(card => card.rank === rank);
+        // Show asking message first
+        this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s...`, 1500);
         
-        if (requestedCards.length > 0) {
-            // Target player has the cards
-            targetPlayer.hand = targetPlayer.hand.filter(card => card.rank !== rank);
-            askingPlayer.hand.push(...requestedCards);
+        // Add delay to make the game flow more natural
+        setTimeout(() => {
+            // Find cards of the requested rank
+            const requestedCards = targetPlayer.hand.filter(card => card.rank === rank);
             
-            console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
-            
-            // Log successful ask
-            this.addToHistory(`✅ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s and got ${requestedCards.length} card(s)`, 'success');
-            
-            // Show success message
-            this.showGameMessage(`${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 2500);
-            
-            // Check for new pairs
-            this.checkForPairs(askingPlayer);
-            
-            this.emitEvent('cardsGiven', {
-                askingPlayer: askingPlayer.name,
-                targetPlayer: targetPlayer.name,
-                rank: rank,
-                cardsGiven: requestedCards.length,
-                players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
-                currentPlayer: this.currentPlayer
-            });
-            
-            // Asking player gets another turn
-            return true;
-        } else {
-            // Target player doesn't have the cards - Go Fish!
-            this.addToHistory(`❌ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s but got "Go Fish!"`, 'warning');
-            this.showGameMessage(`${targetPlayer.name} says "Go Fish!"`, 2000);
-            this.goFish(askingPlayer);
-            return false;
-        }
+            if (requestedCards.length > 0) {
+                // Target player has the cards
+                targetPlayer.hand = targetPlayer.hand.filter(card => card.rank !== rank);
+                askingPlayer.hand.push(...requestedCards);
+                
+                console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
+                
+                // Log successful ask
+                this.addToHistory(`✅ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s and got ${requestedCards.length} card(s)`, 'success');
+                
+                // Show success message with celebration
+                this.showGameMessage(`🎉 ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 3000);
+                
+                // Check for new pairs
+                this.checkForPairs(askingPlayer);
+                
+                this.emitEvent('cardsGiven', {
+                    askingPlayer: askingPlayer.name,
+                    targetPlayer: targetPlayer.name,
+                    rank: rank,
+                    cardsGiven: requestedCards.length,
+                    players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
+                    currentPlayer: this.currentPlayer
+                });
+                
+                // Asking player gets another turn
+                return true;
+            } else {
+                // Target player doesn't have the cards - Go Fish!
+                this.addToHistory(`❌ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s but got "Go Fish!"`, 'warning');
+                this.showGameMessage(`🐟 ${targetPlayer.name} says "Go Fish!"`, 2000);
+                
+                // Add delay before Go Fish animation
+                setTimeout(() => {
+                    this.goFish(askingPlayer);
+                }, 1000);
+                return false;
+            }
+        }, 1500); // 1.5 second delay for natural flow
     }
 
     // Player goes fishing
@@ -243,40 +253,149 @@ class GoFishGame {
             return;
         }
         
-        // Draw a card from pond
-        const drawnCard = this.pond.pop();
-        player.hand.push(drawnCard);
+        // Show fishing animation message
+        this.showGameMessage(`🎣 ${player.name} is fishing in the pond...`, 2000);
         
-        console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
+        // Add fishing animation delay
+        setTimeout(() => {
+            // Draw a card from pond
+            const drawnCard = this.pond.pop();
+            player.hand.push(drawnCard);
+            
+            console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
+            
+            // Log the draw
+            this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
+            
+            // Show what was drawn with excitement
+            this.showGameMessage(`🎉 ${player.name} caught ${drawnCard.name}!`, 2500);
+            
+            // Trigger fishing visual effect
+            this.triggerFishingEffect();
+            
+            // Check for pairs
+            const pairsBefore = player.pairs;
+            this.checkForPairs(player);
+            const pairsAfter = player.pairs;
+            const foundPairs = pairsAfter - pairsBefore;
+            
+            this.emitEvent('goFish', {
+                player: player.name,
+                drawnCard: drawnCard,
+                players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
+                pond: this.pond,
+                currentPlayer: this.currentPlayer
+            });
+            
+            // If player found pairs, they get another turn
+            if (foundPairs > 0) {
+                console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
+                this.addToHistory(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing!`, 'success');
+                this.showGameMessage(`🎉 ${player.name} found ${foundPairs} pair(s)!`, 2000);
+                // Don't end turn - player gets another turn
+            } else {
+                console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
+                // No pairs found, end turn
+                this.endTurn();
+            }
+        }, 2000); // 2 second delay for fishing animation
+    }
+    
+    // Trigger fishing visual effect
+    triggerFishingEffect() {
+        // Create fishing splash effect
+        const splash = document.createElement('div');
+        splash.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(0, 150, 255, 0.8) 0%, rgba(0, 100, 200, 0.4) 50%, transparent 100%);
+            border-radius: 50%;
+            z-index: 999;
+            pointer-events: none;
+            animation: splashEffect 1.5s ease-out forwards;
+        `;
         
-        // Log the draw
-        this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
+        // Add splash animation keyframes
+        if (!document.getElementById('splash-animation')) {
+            const style = document.createElement('style');
+            style.id = 'splash-animation';
+            style.textContent = `
+                @keyframes splashEffect {
+                    0% {
+                        transform: translate(-50%, -50%) scale(0);
+                        opacity: 1;
+                    }
+                    50% {
+                        transform: translate(-50%, -50%) scale(1.5);
+                        opacity: 0.8;
+                    }
+                    100% {
+                        transform: translate(-50%, -50%) scale(3);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
         
-        // Show what was drawn
-        this.showGameMessage(`${player.name} drew ${drawnCard.name}`, 2000);
+        document.body.appendChild(splash);
         
-        // Check for pairs
-        const pairsBefore = player.pairs;
-        this.checkForPairs(player);
-        const pairsAfter = player.pairs;
-        const foundPairs = pairsAfter - pairsBefore;
+        // Remove splash after animation
+        setTimeout(() => {
+            if (splash.parentNode) {
+                splash.parentNode.removeChild(splash);
+            }
+        }, 1500);
         
-        this.emitEvent('goFish', {
-            player: player.name,
-            drawnCard: drawnCard,
-            players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
-            pond: this.pond,
-            currentPlayer: this.currentPlayer
-        });
+        // Create water ripples
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                const ripple = document.createElement('div');
+                ripple.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid rgba(0, 150, 255, 0.6);
+                    border-radius: 50%;
+                    z-index: 998;
+                    pointer-events: none;
+                    animation: rippleEffect 1s ease-out forwards;
+                `;
+                
+                document.body.appendChild(ripple);
+                
+                setTimeout(() => {
+                    if (ripple.parentNode) {
+                        ripple.parentNode.removeChild(ripple);
+                    }
+                }, 1000);
+            }, i * 200);
+        }
         
-        // If player found pairs, they get another turn
-        if (foundPairs > 0) {
-            console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
-            // Don't end turn - player gets another turn
-        } else {
-            console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
-            // No pairs found, end turn
-        this.endTurn();
+        // Add ripple animation keyframes
+        if (!document.getElementById('ripple-animation')) {
+            const style = document.createElement('style');
+            style.id = 'ripple-animation';
+            style.textContent = `
+                @keyframes rippleEffect {
+                    0% {
+                        transform: translate(-50%, -50%) scale(0);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translate(-50%, -50%) scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
 
@@ -313,8 +432,8 @@ class GoFishGame {
         // If it's a bot's turn, make them play after a delay
         const currentPlayer = this.players[this.currentPlayer];
         if (currentPlayer.isBot) {
-            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 3 seconds`);
-            setTimeout(() => this.botPlay(), 3000); // 3 second delay for bot thinking
+            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 4 seconds`);
+            setTimeout(() => this.botPlay(), 4000); // 4 second delay for bot thinking
         } else {
             console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
         }
@@ -358,7 +477,7 @@ class GoFishGame {
             setTimeout(() => {
                 console.log(`🤖 ${bot.name} continuing their turn...`);
                 this.botPlay();
-            }, 2000); // 2 second delay for bot thinking
+            }, 3000); // 3 second delay for bot thinking
         } else {
             console.log(`🤖 ${bot.name} ask failed - Go Fish scenario handled by game`);
         }
