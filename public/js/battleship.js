@@ -59,6 +59,22 @@ class BattleshipGame {
     }
     
     initializeGame() {
+        // Check for room settings from menu
+        const roomCode = localStorage.getItem('battleshipRoomCode');
+        const playerCount = localStorage.getItem('battleshipPlayerCount');
+        const gameMode = localStorage.getItem('battleshipGameMode');
+        
+        if (roomCode) {
+            this.addToHistory(`🚢 Room Code: ${roomCode}`, 'info');
+            this.addToHistory(`👥 Players: ${playerCount || 2}`, 'info');
+            this.addToHistory(`🎮 Mode: ${gameMode || 'create'}`, 'info');
+            
+            // Clear localStorage after reading
+            localStorage.removeItem('battleshipRoomCode');
+            localStorage.removeItem('battleshipPlayerCount');
+            localStorage.removeItem('battleshipGameMode');
+        }
+        
         this.addToHistory('🎮 Game initialized. Place your ships to begin!', 'info');
         this.updateUI();
         this.renderShipsList();

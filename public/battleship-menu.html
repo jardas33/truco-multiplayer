@@ -91,61 +91,119 @@
             box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
         }
 
-        .game-options {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .game-option {
-            background: rgba(0, 0, 0, 0.7);
+        .room-controls {
+            background: rgba(0, 0, 0, 0.8);
             border: 2px solid #FFD700;
             border-radius: 15px;
             padding: 30px;
-            text-align: center;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 300px;
+            margin-bottom: 40px;
+            max-width: 600px;
             backdrop-filter: blur(10px);
         }
 
-        .game-option:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
-            border-color: #FFA500;
+        .room-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
         }
 
-        .game-option h3 {
+        .room-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .room-section h3 {
             color: #FFD700;
-            font-size: 1.8em;
+            font-size: 1.5em;
             margin: 0 0 15px 0;
+            text-align: center;
         }
 
-        .game-option p {
-            font-size: 1.1em;
-            margin: 0 0 20px 0;
-            opacity: 0.9;
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
-        .play-btn {
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .input-group button {
             background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 12px 20px;
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
 
-        .play-btn:hover {
+        .input-group button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .bot-controls {
+            text-align: center;
+        }
+
+        .bot-controls label {
+            color: #FFD700;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .bot-controls input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #333;
+            outline: none;
+        }
+
+        .bot-controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .bot-info {
+            color: #4CAF50;
+            font-size: 0.9em;
+            margin-top: 10px;
+            font-style: italic;
         }
 
         .game-info {
@@ -222,18 +280,31 @@
         <h1 class="game-title">⚓ BATTLESHIP</h1>
         <p class="game-subtitle">Naval Combat Strategy Game</p>
 
-        <!-- Game Options -->
-        <div class="game-options">
-            <div class="game-option" onclick="startSinglePlayer()">
-                <h3>🎮 Single Player</h3>
-                <p>Play against the AI opponent</p>
-                <button class="play-btn">Start Game</button>
+        <!-- Room Controls -->
+        <div class="room-controls">
+            <div class="room-section">
+                <h3>🚢 Create Battle Room</h3>
+                <div class="input-group">
+                    <input type="text" id="roomCode" placeholder="Enter room code (optional)" maxlength="6">
+                    <button id="createRoomBtn" onclick="createRoom()">Create Room</button>
+                </div>
             </div>
 
-            <div class="game-option" onclick="startMultiplayer()">
-                <h3>👥 Multiplayer</h3>
-                <p>Play against other players online</p>
-                <button class="play-btn">Coming Soon</button>
+            <div class="room-section">
+                <h3>⚓ Join Battle Room</h3>
+                <div class="input-group">
+                    <input type="text" id="joinRoomCode" placeholder="Enter room code" maxlength="6">
+                    <button id="joinRoomBtn" onclick="joinRoom()">Join Room</button>
+                </div>
+            </div>
+
+            <div class="room-section">
+                <h3>🤖 Bot Settings</h3>
+                <div class="bot-controls">
+                    <label>Players: <span id="playerCount">2</span></label>
+                    <input type="range" id="playerSlider" min="2" max="2" value="2" oninput="updatePlayerCount()">
+                    <div class="bot-info">Battleship requires exactly 2 players</div>
+                </div>
             </div>
         </div>
 
@@ -251,25 +322,81 @@
     </div>
 
     <script>
-        function startSinglePlayer() {
+        // Room management functions
+        function createRoom() {
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            const playerCount = parseInt(document.getElementById('playerCount').textContent);
+            
+            if (roomCode && roomCode.length !== 6) {
+                alert('Room code must be exactly 6 characters!');
+                return;
+            }
+            
+            // Generate room code if not provided
+            const finalRoomCode = roomCode || generateRoomCode();
+            
+            // Store room settings
+            localStorage.setItem('battleshipRoomCode', finalRoomCode);
+            localStorage.setItem('battleshipPlayerCount', playerCount.toString());
+            localStorage.setItem('battleshipGameMode', 'create');
+            
+            // Redirect to game
             window.location.href = '/battleship';
         }
 
-        function startMultiplayer() {
-            alert('Multiplayer mode coming soon! For now, enjoy single player mode.');
+        function joinRoom() {
+            const roomCode = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+            
+            if (!roomCode) {
+                alert('Please enter a room code!');
+                return;
+            }
+            
+            if (roomCode.length !== 6) {
+                alert('Room code must be exactly 6 characters!');
+                return;
+            }
+            
+            // Store room settings
+            localStorage.setItem('battleshipRoomCode', roomCode);
+            localStorage.setItem('battleshipPlayerCount', '2');
+            localStorage.setItem('battleshipGameMode', 'join');
+            
+            // Redirect to game
+            window.location.href = '/battleship';
+        }
+
+        function updatePlayerCount() {
+            const slider = document.getElementById('playerSlider');
+            const count = document.getElementById('playerCount');
+            count.textContent = slider.value;
+        }
+
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
         }
 
         // Add some interactive effects
         document.addEventListener('DOMContentLoaded', function() {
-            const options = document.querySelectorAll('.game-option');
-            options.forEach(option => {
-                option.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px) scale(1.02)';
-                });
-                
-                option.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
+            // Auto-focus on room code input
+            document.getElementById('roomCode').focus();
+            
+            // Add enter key support
+            document.getElementById('roomCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    createRoom();
+                }
+            });
+            
+            document.getElementById('joinRoomCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    joinRoom();
+                }
             });
         });
     </script>
