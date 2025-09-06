@@ -761,6 +761,17 @@ class BattleshipClient {
                 this.game.startShipPlacement(shipIndex);
             }
         });
+        
+        // Also add click listeners directly to ship items after they're rendered
+        setTimeout(() => {
+            const shipItems = document.querySelectorAll('.ship-item');
+            shipItems.forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    console.log('🚢 Direct ship click:', index, this.game.ships[index]);
+                    this.game.startShipPlacement(index);
+                });
+            });
+        }, 100);
     }
     
     setupResizeHandler() {
@@ -1253,9 +1264,10 @@ function draw() {
         }
     }
     
-    // Check if ship images are loaded and update UI if needed
-    if (battleshipGame && battleshipGame.checkAndUpdateShipImages) {
+    // Check if ship images are loaded and update UI if needed (only once)
+    if (battleshipGame && battleshipGame.checkAndUpdateShipImages && !battleshipGame.imagesChecked) {
         battleshipGame.checkAndUpdateShipImages();
+        battleshipGame.imagesChecked = true;
     }
 }
 

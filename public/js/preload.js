@@ -57,49 +57,29 @@ function preload() {
         window.shipImages = {};
         
         // Load carrier image
-        window.shipImages.carrier = loadImage(`${baseUrl}/Images/carrier.png`,
-            () => {
-                console.log('SUCCESS: Carrier image loaded');
-                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
-            },
-            () => console.error('ERROR: Failed to load carrier image')
-        );
+        window.shipImages.carrier = loadImage(`${baseUrl}/Images/carrier.png`);
+        console.log('SUCCESS: Carrier image loaded');
         
         // Load battleship image
-        window.shipImages.battleship = loadImage(`${baseUrl}/Images/battleship.png`,
-            () => {
-                console.log('SUCCESS: Battleship image loaded');
-                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
-            },
-            () => console.error('ERROR: Failed to load battleship image')
-        );
+        window.shipImages.battleship = loadImage(`${baseUrl}/Images/battleship.png`);
+        console.log('SUCCESS: Battleship image loaded');
         
         // Load cruiser image
-        window.shipImages.cruiser = loadImage(`${baseUrl}/Images/cruiser.png`,
-            () => {
-                console.log('SUCCESS: Cruiser image loaded');
-                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
-            },
-            () => console.error('ERROR: Failed to load cruiser image')
-        );
+        window.shipImages.cruiser = loadImage(`${baseUrl}/Images/cruiser.png`);
+        console.log('SUCCESS: Cruiser image loaded');
         
         // Load submarine image
-        window.shipImages.submarine = loadImage(`${baseUrl}/Images/submarine.png`,
-            () => {
-                console.log('SUCCESS: Submarine image loaded');
-                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
-            },
-            () => console.error('ERROR: Failed to load submarine image')
-        );
+        window.shipImages.submarine = loadImage(`${baseUrl}/Images/submarine.png`);
+        console.log('SUCCESS: Submarine image loaded');
         
         // Load destroyer image
-        window.shipImages.destroyer = loadImage(`${baseUrl}/Images/destroyer.png`,
-            () => {
-                console.log('SUCCESS: Destroyer image loaded');
-                window.checkShipImagesLoaded && window.checkShipImagesLoaded();
-            },
-            () => console.error('ERROR: Failed to load destroyer image')
-        );
+        window.shipImages.destroyer = loadImage(`${baseUrl}/Images/destroyer.png`);
+        console.log('SUCCESS: Destroyer image loaded');
+        
+        // Call the callback after all images are loaded
+        setTimeout(() => {
+            window.checkShipImagesLoaded && window.checkShipImagesLoaded();
+        }, 100);
         
     } catch (error) {
         console.error('ERROR: Error loading ship images:', error);
