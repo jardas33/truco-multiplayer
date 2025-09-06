@@ -83,14 +83,17 @@ function setup() {
     console.log('Menu div made visible, others hidden');
 
     // Ensure the room controls (HTML buttons) are visible above the canvas
-    const roomControls = document.getElementById('roomControls');
-    if (roomControls) {
-        roomControls.style.display = 'block';
-        roomControls.style.zIndex = '20'; // Above canvas
-        roomControls.style.position = 'relative';
-        console.log('Room controls made visible with z-index 20');
-    } else {
-        console.error('roomControls div not found!');
+    // Only check for roomControls on pages that have it (not Battleship)
+    if (currentPath !== '/battleship') {
+        const roomControls = document.getElementById('roomControls');
+        if (roomControls) {
+            roomControls.style.display = 'block';
+            roomControls.style.zIndex = '20'; // Above canvas
+            roomControls.style.position = 'relative';
+            console.log('Room controls made visible with z-index 20');
+        } else {
+            console.log('roomControls div not found on this page (this is normal for some games)');
+        }
     }
 
     // Create p5.js buttons with proper z-index and identical styling
