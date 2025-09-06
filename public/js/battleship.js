@@ -630,19 +630,38 @@ class BattleshipClient {
         this.gridStartY = 0;
         this.isDragging = false;
         this.dragStart = { x: 0, y: 0 };
+        this.initialized = false;
         
-        this.initializeCanvas();
         this.setupEventListeners();
+        this.initializeCanvas();
     }
     
     initializeCanvas() {
+        // Wait for p5.js to be ready
+        if (typeof createCanvas === 'undefined') {
+            console.log('⏳ Waiting for p5.js to load...');
+            setTimeout(() => this.initializeCanvas(), 100);
+            return;
+        }
+        
         const canvasDiv = document.getElementById('gameCanvas');
         if (canvasDiv) {
-            this.canvas = createCanvas(800, 600);
+            // Clear any existing canvas
+            canvasDiv.innerHTML = '';
+            
+            // Create new canvas
+            this.canvas = createCanvas(1000, 700);
             this.canvas.parent(canvasDiv);
             
-            this.gridStartX = (width - (this.gridSize * 10 + this.gridSpacing * 9)) / 2;
-            this.gridStartY = 100;
+            // Calculate grid positions
+            this.gridStartX = 50;
+            this.gridStartY = 150;
+            this.initialized = true;
+            
+            console.log('🎨 Canvas initialized:', this.canvas);
+            console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
+        } else {
+            console.error('❌ Canvas div not found!');
         }
     }
     
@@ -669,6 +688,8 @@ class BattleshipClient {
     }
     
     draw() {
+        if (!this.initialized) return;
+        
         background(15, 25, 45);
         this.drawGrids();
         this.drawShips();
@@ -676,10 +697,10 @@ class BattleshipClient {
     }
     
     drawGrids() {
-        // Draw player grid
+        // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid
+        // Draw attack grid (right side)
         const attackGridX = this.gridStartX + 500;
         this.drawGrid(attackGridX, this.gridStartY, 1, false);
         
@@ -689,6 +710,13 @@ class BattleshipClient {
         textSize(16);
         text('Your Fleet', this.gridStartX + 200, this.gridStartY - 30);
         text('Attack Grid', attackGridX + 200, this.gridStartY - 30);
+        
+        // Debug info
+        fill(255, 0, 0);
+        textSize(12);
+        text(`Grid 1: ${this.gridStartX}, ${this.gridStartY}`, 10, 20);
+        text(`Grid 2: ${attackGridX}, ${this.gridStartY}`, 10, 40);
+        text(`Canvas: ${width}x${height}`, 10, 60);
     }
     
     drawGrid(x, y, player, showShips) {
@@ -876,18 +904,32 @@ let battleshipClient;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚢 Initializing Battleship game...');
     battleshipGame = new BattleshipGame();
-    battleshipClient = new BattleshipClient();
+    
+    // Wait a bit for DOM to be fully ready
+    setTimeout(() => {
+        battleshipClient = new BattleshipClient();
+        console.log('🎮 Battleship client initialized');
+    }, 100);
 });
 
 // p5.js functions
 function setup() {
-    // Canvas setup is handled in BattleshipClient constructor
+    console.log('🎨 p5.js setup called');
+    // Canvas will be created by BattleshipClient
 }
 
 function draw() {
-    if (battleshipClient) {
+    if (battleshipClient && battleshipClient.initialized && battleshipClient.canvas) {
         battleshipClient.draw();
+    } else {
+        // Show loading message
+        background(15, 25, 45);
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        text('Loading Battleship Game...', width/2, height/2);
     }
 }
 

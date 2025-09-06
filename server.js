@@ -53,6 +53,11 @@ app.get('/crazy-eights', (req, res) => {
     res.sendFile(__dirname + '/public/crazy-eights.html');
 });
 
+app.get('/battleship-menu', (req, res) => {
+    console.log('🚢 BATTLESHIP MENU ROUTE: Serving battleship-menu.html');
+    res.sendFile(__dirname + '/public/battleship-menu.html');
+});
+
 app.get('/battleship', (req, res) => {
     console.log('🚢 BATTLESHIP ROUTE: Serving battleship.html');
     res.sendFile(__dirname + '/public/battleship.html');

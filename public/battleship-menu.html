@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Battleship Menu - Naval Combat</title>
+    <script>
+        // Ensure title stays set
+        document.title = 'Battleship Menu - Naval Combat';
+        setInterval(() => {
+            if (document.title !== 'Battleship Menu - Naval Combat') {
+                document.title = 'Battleship Menu - Naval Combat';
+            }
+        }, 100);
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lobby-fixes.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0c4a6e 0%, #1e40af 50%, #1e3a8a 100%);
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+
+        .menu-container {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .game-title {
+            color: #FFD700;
+            font-size: 4em;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            color: #ffffff;
+            font-size: 1.5em;
+            margin-bottom: 40px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .menu-buttons {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1001;
+        }
+
+        .menu-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: inline-block;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .game-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .game-option {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+            border-color: #FFA500;
+        }
+
+        .game-option h3 {
+            color: #FFD700;
+            font-size: 1.8em;
+            margin: 0 0 15px 0;
+        }
+
+        .game-option p {
+            font-size: 1.1em;
+            margin: 0 0 20px 0;
+            opacity: 0.9;
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .game-info {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #4CAF50;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+        }
+
+        .game-info h3 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .game-info ul {
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .game-info li {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        /* Floating ship decorations */
+        .floating-ship {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 8s ease-in-out infinite;
+            font-size: 2em;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+
+        .floating-ship:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-ship:nth-child(2) { top: 20%; right: 15%; animation-delay: 2s; }
+        .floating-ship:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 4s; }
+        .floating-ship:nth-child(4) { bottom: 15%; right: 25%; animation-delay: 6s; }
+        .floating-ship:nth-child(5) { top: 50%; left: 5%; animation-delay: 8s; }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .game-title { font-size: 3em; }
+            .menu-buttons { flex-direction: column; }
+            .game-option { min-width: 250px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <!-- Floating ship decorations -->
+        <div class="floating-ship">🚢</div>
+        <div class="floating-ship">⚓</div>
+        <div class="floating-ship">🌊</div>
+        <div class="floating-ship">⚔️</div>
+        <div class="floating-ship">🎯</div>
+
+        <!-- Menu Buttons -->
+        <div class="menu-buttons">
+            <a href="/" class="menu-btn back-btn">← Back to Main Menu</a>
+        </div>
+
+        <!-- Game Title -->
+        <h1 class="game-title">⚓ BATTLESHIP</h1>
+        <p class="game-subtitle">Naval Combat Strategy Game</p>
+
+        <!-- Game Options -->
+        <div class="game-options">
+            <div class="game-option" onclick="startSinglePlayer()">
+                <h3>🎮 Single Player</h3>
+                <p>Play against the AI opponent</p>
+                <button class="play-btn">Start Game</button>
+            </div>
+
+            <div class="game-option" onclick="startMultiplayer()">
+                <h3>👥 Multiplayer</h3>
+                <p>Play against other players online</p>
+                <button class="play-btn">Coming Soon</button>
+            </div>
+        </div>
+
+        <!-- Game Info -->
+        <div class="game-info">
+            <h3>🎯 How to Play</h3>
+            <ul>
+                <li><strong>Place Ships:</strong> Click and drag to place your 5 ships on the grid</li>
+                <li><strong>Rotate Ships:</strong> Press 'R' to rotate ships before placing</li>
+                <li><strong>Attack:</strong> Click on the enemy grid to fire at their ships</li>
+                <li><strong>Win:</strong> Sink all enemy ships before they sink yours!</li>
+                <li><strong>Ship Types:</strong> Carrier (5), Battleship (4), Cruiser (3), Submarine (3), Destroyer (2)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function startSinglePlayer() {
+            window.location.href = '/battleship';
+        }
+
+        function startMultiplayer() {
+            alert('Multiplayer mode coming soon! For now, enjoy single player mode.');
+        }
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const options = document.querySelectorAll('.game-option');
+            options.forEach(option => {
+                option.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                option.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
