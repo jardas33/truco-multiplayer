@@ -1533,10 +1533,11 @@ function drawPairMakingArea() {
     if (!window.game.players || !window.game.players[0]) return;
     
     const player = window.game.players[0];
-    const pairAreaY = height - 40; // Just above the bottom
+    const handY = height - 150; // Match the main player hand position
     const pairAreaWidth = 200;
-    const pairAreaHeight = 30;
-    const pairAreaX = (width - pairAreaWidth) / 2;
+    const pairAreaHeight = 100; // Taller to accommodate cards
+    const pairAreaX = width - 250; // To the right of the player box
+    const pairAreaY = handY - 10; // Aligned with the player hand
     
     // Check if player has pairs in hand
     const rankCounts = {};
@@ -1569,10 +1570,13 @@ function drawPairMakingArea() {
         const cardWidth = 40;
         const cardHeight = 56;
         const cardSpacing = 10;
+        const maxCardsPerRow = 3;
         
         window.pairMakingArea.cards.forEach((card, index) => {
-            const cardX = pairAreaX + 10 + index * (cardWidth + cardSpacing);
-            const cardY = pairAreaY - cardHeight - 10;
+            const row = Math.floor(index / maxCardsPerRow);
+            const col = index % maxCardsPerRow;
+            const cardX = pairAreaX + 10 + col * (cardWidth + cardSpacing);
+            const cardY = pairAreaY + 40 + row * (cardHeight + 5);
             
             // Draw mini card
             fill(255);
@@ -2344,10 +2348,11 @@ function mouseReleased() {
     if (!window.game || window.game.gameOver) return;
     
     if (window.draggedCard) {
-        const pairAreaY = height - 40;
+        const handY = height - 150;
         const pairAreaWidth = 200;
-        const pairAreaHeight = 30;
-        const pairAreaX = (width - pairAreaWidth) / 2;
+        const pairAreaHeight = 100;
+        const pairAreaX = width - 250;
+        const pairAreaY = handY - 10;
         
         // Check if dropped on pair-making area
         if (mouseX >= pairAreaX && mouseX <= pairAreaX + pairAreaWidth &&
