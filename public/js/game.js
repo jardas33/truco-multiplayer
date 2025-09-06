@@ -334,6 +334,10 @@ function createDeck() {
         try {
           console.log('🔄 Emitting multiplayer card play to server - waiting for confirmation');
           
+          // ✅ CRITICAL FIX: Get the correct room code from window.roomId
+          const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+          console.log('🔍 DEBUG: Using room code for card play:', roomCode);
+          
           // ✅ CRITICAL FIX: Create a clean, serializable card object to prevent circular references
           const cleanCard = {
             name: removedCard.name,
@@ -343,7 +347,7 @@ function createDeck() {
           };
           
           socket.emit('playCard', {
-            roomCode: window.roomId,
+            roomCode: roomCode,
             cardIndex: cardIndex,
             card: cleanCard,
             playerIndex: this.currentPlayerIndex
@@ -681,8 +685,13 @@ function createDeck() {
   
       if (window.isMultiplayerMode && socket && window.roomId) { // Use global isMultiplayerMode
         console.log('Emitting multiplayer Truco request');
+        
+        // ✅ CRITICAL FIX: Get the correct room code from window.roomId
+        const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+        console.log('🔍 DEBUG: Using room code for truco request:', roomCode);
+        
         socket.emit('requestTruco', {
-          roomCode: window.roomId,
+          roomCode: roomCode,
           playerId: playerId
         });
       }
@@ -856,8 +865,13 @@ function createDeck() {
        // Emit to multiplayer if needed
        if (window.isMultiplayerMode && socket && window.roomId) { // Use global isMultiplayerMode
          console.log('Emitting multiplayer Truco response');
+         
+         // ✅ CRITICAL FIX: Get the correct room code from window.roomId
+         const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+         console.log('🔍 DEBUG: Using room code for truco response:', roomCode);
+         
          socket.emit('respondTruco', {
-           roomCode: window.roomId,
+           roomCode: roomCode,
            playerId: playerId,
            response: response
          });

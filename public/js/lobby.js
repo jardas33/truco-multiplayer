@@ -223,8 +223,9 @@ function initSocket() {
                                         bot.hasPlayedThisTurn = true;
                                         
                                         // Emit playCard event
+                                        const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                                         socket.emit('playCard', {
-                                            roomCode: window.roomId,
+                                            roomCode: roomCode,
                                             cardIndex: cardIndex,
                                             playerIndex: data.currentPlayer
                                         });
@@ -235,8 +236,9 @@ function initSocket() {
                                         setTimeout(() => {
                                             try {
                                                 console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                                const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                                                 socket.emit('botTurnComplete', {
-                                                    roomCode: window.roomId
+                                                    roomCode: roomCode
                                                 });
                                             console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
                                             } catch (turnCompleteError) {
@@ -1028,7 +1030,8 @@ function setupSocketListeners() {
             if (!hasCards) {
                 console.log('🚨 CRITICAL: No cards in hands detected, manually requesting new game from server');
                 if (socket && socket.connected) {
-                    socket.emit('requestNewGame', { roomCode: window.roomId });
+                    const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+                    socket.emit('requestNewGame', { roomCode: roomCode });
                 } else {
                     console.log('❌ Socket not connected, cannot request new game');
                 }
@@ -3009,8 +3012,9 @@ function triggerBotPlay(botPlayerIndex) {
                     console.log(`🤖 Bot ${botPlayer.name} calling Truco!`);
                     
                     // ✅ CRITICAL FIX: Emit requestTruco event for the bot with bot player index
+                    const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                     socket.emit('requestTruco', {
-                        roomCode: window.roomId,
+                        roomCode: roomCode,
                         botPlayerIndex: botPlayerIndex  // Include bot's player index for server validation
                     });
                     
@@ -3028,16 +3032,18 @@ function triggerBotPlay(botPlayerIndex) {
                             console.log(`🤖 Bot ${botPlayer.name} playing fallback card at index ${cardIndex}`);
                             
                             // Emit card play event
+                            const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                             socket.emit('playCard', {
-                                roomCode: window.roomId,
+                                roomCode: roomCode,
                                 playerIndex: botPlayerIndex,
                                 cardIndex: cardIndex
                             });
                             
                             // Mark as played and complete turn
                             botPlayer.hasPlayedThisTurn = true;
+                            const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                             socket.emit('botTurnComplete', {
-                                roomCode: window.roomId
+                                roomCode: roomCode
                             });
                         }
                     }, 2000); // 2 second timeout for Truco response
@@ -3051,8 +3057,9 @@ function triggerBotPlay(botPlayerIndex) {
                         if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco call successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
+                            const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                             socket.emit('botTurnComplete', {
-                                roomCode: window.roomId
+                                roomCode: roomCode
                             });
                             // Remove the fallback timeout since Truco was successful
                             clearTimeout(trucoFallbackTimeout);
@@ -3068,8 +3075,9 @@ function triggerBotPlay(botPlayerIndex) {
                         if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco raise successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
+                            const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                             socket.emit('botTurnComplete', {
-                                roomCode: window.roomId
+                                roomCode: roomCode
                             });
                             // Remove the fallback timeout since Truco raise was successful
                             clearTimeout(trucoFallbackTimeout);
@@ -3099,8 +3107,9 @@ function triggerBotPlay(botPlayerIndex) {
                                 console.log(`🤖 Bot ${botPlayer.name} playing fallback card at index ${cardIndex}`);
                                 
                                 // Emit card play event
+                                const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                                 socket.emit('playCard', {
-                                    roomCode: window.roomId,
+                                    roomCode: roomCode,
                                     playerIndex: botPlayerIndex,
                                     cardIndex: cardIndex
                                 });
@@ -3149,8 +3158,9 @@ function triggerBotPlay(botPlayerIndex) {
                 console.log(`🤖 Bot ${botPlayer.name} playing card: ${selectedCard.name} (index: ${randomCardIndex})`);
                 
                 // ✅ CRITICAL FIX: Emit playCard event for the bot
+                const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
                 socket.emit('playCard', {
-                    roomCode: window.roomId,
+                    roomCode: roomCode,
                     playerIndex: botPlayerIndex,
                     cardIndex: randomCardIndex
                 });
