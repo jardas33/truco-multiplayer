@@ -694,6 +694,41 @@ class BattleshipClient {
         this.drawGrids();
         this.drawShips();
         this.drawUI();
+        this.drawMouseHover();
+    }
+    
+    drawMouseHover() {
+        // Draw hover effect on grids
+        if (this.game.gamePhase === 'placement') {
+            const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
+            const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+            
+            if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX < this.gridStartX + 500) {
+                const cellX = this.gridStartX + gridX * (this.gridSize + this.gridSpacing);
+                const cellY = this.gridStartY + gridY * (this.gridSize + this.gridSpacing);
+                
+                // Draw hover highlight
+                fill(255, 255, 255, 50);
+                stroke(255, 255, 255);
+                strokeWeight(2);
+                rect(cellX, cellY, this.gridSize, this.gridSize);
+            }
+        } else if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 0) {
+            const attackGridX = this.gridStartX + 500;
+            const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
+            const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+            
+            if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX >= attackGridX) {
+                const cellX = attackGridX + gridX * (this.gridSize + this.gridSpacing);
+                const cellY = this.gridStartY + gridY * (this.gridSize + this.gridSpacing);
+                
+                // Draw hover highlight
+                fill(255, 255, 255, 50);
+                stroke(255, 255, 255);
+                strokeWeight(2);
+                rect(cellX, cellY, this.gridSize, this.gridSize);
+            }
+        }
     }
     
     drawGrids() {
@@ -721,6 +756,12 @@ class BattleshipClient {
     
     drawGrid(x, y, player, showShips) {
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
+        
+        // Draw grid background
+        fill(20, 40, 80);
+        stroke(100, 150, 200);
+        strokeWeight(2);
+        rect(x - 5, y - 5, (this.gridSize + this.gridSpacing) * 10 + 10, (this.gridSize + this.gridSpacing) * 10 + 10);
         
         for (let row = 0; row < 10; row++) {
             for (let col = 0; col < 10; col++) {
@@ -830,7 +871,7 @@ class BattleshipClient {
             const orientation = ship.orientation || 'horizontal';
             const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
             
-            // Draw preview cells
+            // Draw preview cells with better visibility
             for (let i = 0; i < ship.size; i++) {
                 const previewX = gridX + (orientation === 'horizontal' ? i : 0);
                 const previewY = gridY + (orientation === 'vertical' ? i : 0);
@@ -839,18 +880,120 @@ class BattleshipClient {
                     const cellX = this.gridStartX + previewX * (this.gridSize + this.gridSpacing);
                     const cellY = this.gridStartY + previewY * (this.gridSize + this.gridSpacing);
                     
-                    // Semi-transparent preview
-                    fill(red(ship.color), green(ship.color), blue(ship.color), 150);
+                    // Semi-transparent preview with border
+                    fill(red(ship.color), green(ship.color), blue(ship.color), 180);
                     stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                    strokeWeight(2);
+                    strokeWeight(3);
                     rect(cellX, cellY, this.gridSize, this.gridSize);
+                    
+                    // Add ship name in preview
+                    fill(255);
+                    textAlign(CENTER, CENTER);
+                    textSize(8);
+                    text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
                 }
             }
+            
+            // Draw placement instructions
+            fill(255);
+            textAlign(LEFT, TOP);
+            textSize(14);
+            text(`Placing: ${ship.name} (${ship.size} squares)`, 10, height - 100);
+            text(`Orientation: ${orientation}`, 10, height - 80);
+            text(`Press R to rotate, Esc to cancel`, 10, height - 60);
         }
     }
     
     drawUI() {
-        // Draw any additional UI elements
+        // Draw current ship being placed
+        if (this.game.currentShip) {
+            this.drawCurrentShipInfo();
+        }
+        
+        // Draw game phase indicator
+        this.drawGamePhaseIndicator();
+    }
+    
+    drawCurrentShipInfo() {
+        const ship = this.game.currentShip;
+        if (!ship) return;
+        
+        // Draw ship info box
+        fill(0, 0, 0, 200);
+        stroke(255, 215, 0);
+        strokeWeight(2);
+        rect(10, height - 150, 300, 140);
+        
+        // Draw ship info text
+        fill(255, 215, 0);
+        textAlign(LEFT, TOP);
+        textSize(16);
+        text(`Placing: ${ship.name}`, 20, height - 140);
+        
+        fill(255);
+        textSize(14);
+        text(`Size: ${ship.size} squares`, 20, height - 120);
+        text(`Orientation: ${ship.orientation || 'horizontal'}`, 20, height - 100);
+        text(`Click on the left grid to place`, 20, height - 80);
+        text(`Press R to rotate, Esc to cancel`, 20, height - 60);
+        
+        // Draw ship preview
+        const shipWidth = ship.orientation === 'horizontal' ? ship.size * 15 : 15;
+        const shipHeight = ship.orientation === 'vertical' ? ship.size * 15 : 15;
+        
+        fill(red(ship.color), green(ship.color), blue(ship.color));
+        stroke(255);
+        strokeWeight(1);
+        rect(20, height - 40, shipWidth, shipHeight);
+    }
+    
+    drawGamePhaseIndicator() {
+        if (this.game.gamePhase === 'placement') {
+            // Draw placement progress
+            const placedCount = this.game.placedShips[0].length;
+            const totalShips = 5;
+            
+            fill(0, 0, 0, 200);
+            stroke(76, 175, 80);
+            strokeWeight(2);
+            rect(width - 250, 10, 240, 80);
+            
+            fill(76, 175, 80);
+            textAlign(LEFT, TOP);
+            textSize(16);
+            text(`Ships Placed: ${placedCount}/${totalShips}`, width - 240, 20);
+            
+            // Draw progress bar
+            const progressWidth = 200;
+            const progressHeight = 20;
+            const progress = placedCount / totalShips;
+            
+            fill(50, 50, 50);
+            rect(width - 240, 40, progressWidth, progressHeight);
+            
+            fill(76, 175, 80);
+            rect(width - 240, 40, progressWidth * progress, progressHeight);
+            
+            fill(255);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            text(`${Math.round(progress * 100)}%`, width - 140, 50);
+        } else if (this.game.gamePhase === 'playing') {
+            // Draw turn indicator
+            fill(0, 0, 0, 200);
+            stroke(this.game.currentPlayer === 0 ? 76 : 255, 175, 80);
+            strokeWeight(2);
+            rect(width - 250, 10, 240, 60);
+            
+            fill(this.game.currentPlayer === 0 ? 76 : 255, 175, 80);
+            textAlign(LEFT, TOP);
+            textSize(16);
+            text(`Turn: ${this.game.currentPlayer === 0 ? 'Your Turn' : 'AI Turn'}`, width - 240, 20);
+            
+            fill(255);
+            textSize(14);
+            text(this.game.currentPlayer === 0 ? 'Click on the right grid to attack!' : 'AI is thinking...', width - 240, 40);
+        }
     }
     
     mousePressed() {
@@ -865,9 +1008,15 @@ class BattleshipClient {
         const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
         
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
+        // Only handle clicks on the left grid (player grid)
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX < this.gridStartX + 500) {
             if (this.game.currentShip) {
-                this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
+                const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
+                if (success) {
+                    console.log(`✅ Placed ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
+                } else {
+                    console.log(`❌ Cannot place ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
+                }
             }
         }
     }
@@ -877,10 +1026,14 @@ class BattleshipClient {
         const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
         
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && this.game.currentPlayer === 0) {
+        // Only handle clicks on the right grid (attack grid) and only on player's turn
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX >= attackGridX && this.game.currentPlayer === 0) {
             const result = this.game.attack(0, gridX, gridY);
             if (result.valid) {
+                console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
+            } else {
+                console.log(`❌ Invalid attack: ${result.message}`);
             }
         }
     }
