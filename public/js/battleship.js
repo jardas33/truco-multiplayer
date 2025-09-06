@@ -637,18 +637,18 @@ class BattleshipClient {
     }
     
     initializeCanvas() {
-        // Wait for p5.js to be ready
-        if (typeof createCanvas === 'undefined') {
-            console.log('⏳ Waiting for p5.js to load...');
-            setTimeout(() => this.initializeCanvas(), 100);
+        console.log('🎨 Initializing canvas...');
+        
+        const canvasDiv = document.getElementById('gameCanvas');
+        if (!canvasDiv) {
+            console.error('❌ Canvas div not found!');
             return;
         }
         
-        const canvasDiv = document.getElementById('gameCanvas');
-        if (canvasDiv) {
-            // Clear any existing canvas
-            canvasDiv.innerHTML = '';
-            
+        // Clear any existing canvas
+        canvasDiv.innerHTML = '';
+        
+        try {
             // Create new canvas
             this.canvas = createCanvas(1000, 700);
             this.canvas.parent(canvasDiv);
@@ -658,10 +658,13 @@ class BattleshipClient {
             this.gridStartY = 150;
             this.initialized = true;
             
-            console.log('🎨 Canvas initialized:', this.canvas);
+            console.log('✅ Canvas initialized successfully:', this.canvas);
             console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
-        } else {
-            console.error('❌ Canvas div not found!');
+            console.log('📏 Canvas size:', this.canvas.width, 'x', this.canvas.height);
+        } catch (error) {
+            console.error('❌ Canvas creation failed:', error);
+            // Retry after a short delay
+            setTimeout(() => this.initializeCanvas(), 200);
         }
     }
     
@@ -1060,30 +1063,114 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚢 Initializing Battleship game...');
     battleshipGame = new BattleshipGame();
     
-    // Wait a bit for DOM to be fully ready
-    setTimeout(() => {
-        battleshipClient = new BattleshipClient();
-        console.log('🎮 Battleship client initialized');
-    }, 100);
+    // Wait for p5.js to be available
+    const initClient = () => {
+        if (typeof createCanvas !== 'undefined') {
+            battleshipClient = new BattleshipClient();
+            console.log('🎮 Battleship client initialized');
+        } else {
+            console.log('⏳ Waiting for p5.js...');
+            setTimeout(initClient, 100);
+        }
+    };
+    
+    setTimeout(initClient, 200);
 });
 
 // p5.js functions
 function setup() {
     console.log('🎨 p5.js setup called');
-    // Canvas will be created by BattleshipClient
+    
+    // Create a fallback canvas if BattleshipClient hasn't created one
+    if (!battleshipClient || !battleshipClient.canvas) {
+        console.log('🔄 Creating fallback canvas...');
+        const canvasDiv = document.getElementById('gameCanvas');
+        if (canvasDiv) {
+            canvasDiv.innerHTML = '';
+            const fallbackCanvas = createCanvas(1000, 700);
+            fallbackCanvas.parent(canvasDiv);
+            console.log('✅ Fallback canvas created');
+        }
+    }
 }
 
 function draw() {
-    if (battleshipClient && battleshipClient.initialized && battleshipClient.canvas) {
+    if (battleshipClient && battleshipClient.initialized) {
         battleshipClient.draw();
     } else {
-        // Show loading message
+        // Show loading message and basic grid
         background(15, 25, 45);
+        
+        // Draw basic grids even without full client
+        drawBasicGrids();
+        
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(24);
         text('Loading Battleship Game...', width/2, height/2);
+        
+        // Try to initialize client if not done yet
+        if (battleshipGame && !battleshipClient) {
+            battleshipClient = new BattleshipClient();
+        }
     }
+}
+
+function drawBasicGrids() {
+    const gridSize = 40;
+    const gridSpacing = 2;
+    const gridStartX = 50;
+    const gridStartY = 150;
+    
+    // Draw player grid (left side)
+    drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
+    
+    // Draw attack grid (right side)
+    const attackGridX = gridStartX + 500;
+    drawBasicGrid(attackGridX, gridStartY, gridSize, gridSpacing, 'Attack Grid');
+}
+
+function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
+    // Draw grid background
+    fill(20, 40, 80);
+    stroke(100, 150, 200);
+    strokeWeight(2);
+    rect(x - 5, y - 5, (gridSize + gridSpacing) * 10 + 10, (gridSize + gridSpacing) * 10 + 10);
+    
+    // Draw grid cells
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+            const cellX = x + col * (gridSize + gridSpacing);
+            const cellY = y + row * (gridSize + gridSpacing);
+            
+            fill(30, 60, 120);
+            stroke(50, 100, 200);
+            strokeWeight(1);
+            rect(cellX, cellY, gridSize, gridSize);
+        }
+    }
+    
+    // Draw grid labels
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    
+    // Numbers (1-10)
+    for (let i = 1; i <= 10; i++) {
+        text(i, x + (i-1) * (gridSize + gridSpacing) + gridSize/2, y - 10);
+    }
+    
+    // Letters (A-J)
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    for (let i = 0; i < 10; i++) {
+        text(letters[i], x - 20, y + i * (gridSize + gridSpacing) + gridSize/2);
+    }
+    
+    // Draw title
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text(title, x + 200, y - 30);
 }
 
 function mousePressed() {
