@@ -215,7 +215,16 @@ class GoFishGame {
                 this.showGameMessage(`🎉 ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 3000);
                 
                 // Check for new pairs
+                const pairsBefore = askingPlayer.pairs;
                 this.checkForPairs(askingPlayer);
+                const pairsAfter = askingPlayer.pairs;
+                const foundPairs = pairsAfter - pairsBefore;
+                
+                // If pairs were found, show message
+                if (foundPairs > 0) {
+                    this.addToHistory(`🎯 ${askingPlayer.name} found ${foundPairs} pair(s) after getting cards!`, 'success');
+                    this.showGameMessage(`🎉 ${askingPlayer.name} found ${foundPairs} pair(s)!`, 2000);
+                }
                 
                 this.emitEvent('cardsGiven', {
                     askingPlayer: askingPlayer.name,
@@ -225,6 +234,14 @@ class GoFishGame {
                     players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
                     currentPlayer: this.currentPlayer
                 });
+                
+                // If it's a bot, schedule another bot play
+                if (askingPlayer.isBot) {
+                    console.log(`🤖 ${askingPlayer.name} will continue their turn after getting cards`);
+                    setTimeout(() => {
+                        this.botPlay();
+                    }, 3000); // 3 second delay for bot continuation
+                }
                 
                 // Asking player gets another turn
                 return true;
@@ -292,6 +309,14 @@ class GoFishGame {
                 console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
                 this.addToHistory(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing!`, 'success');
                 this.showGameMessage(`🎉 ${player.name} found ${foundPairs} pair(s)!`, 2000);
+                
+                // If it's a bot, schedule another bot play
+                if (player.isBot) {
+                    console.log(`🤖 ${player.name} will continue their turn after finding pairs`);
+                    setTimeout(() => {
+                        this.botPlay();
+                    }, 3000); // 3 second delay for bot continuation
+                }
                 // Don't end turn - player gets another turn
             } else {
                 console.log(`🎯 ${player.name} found no pairs after fishing - ending turn`);
