@@ -290,11 +290,12 @@ class BattleshipGame {
     }
     
     setupAIShips() {
-        // AI places ships randomly
+        // AI places ships randomly using the same rules as human player
         const aiShips = [...this.ships];
         let attempts = 0;
+        const maxAttempts = 2000; // Increased for better success rate with adjacent checking
         
-        while (this.placedShips[1].length < 5 && attempts < 1000) {
+        while (this.placedShips[1].length < 5 && attempts < maxAttempts) {
             const ship = aiShips[this.placedShips[1].length];
             const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
             const x = Math.floor(Math.random() * (this.gridSize - (orientation === 'horizontal' ? ship.size - 1 : 0)));
@@ -306,7 +307,11 @@ class BattleshipGame {
             attempts++;
         }
         
-        this.addToHistory('🤖 AI has placed all ships. Battle begins!', 'info');
+        if (this.placedShips[1].length < 5) {
+            this.addToHistory('⚠️ AI had difficulty placing all ships. Game may be unbalanced.', 'warning');
+        } else {
+            this.addToHistory('🤖 AI has placed all ships. Battle begins!', 'info');
+        }
     }
     
     canPlaceShip(player, x, y, size, orientation) {
@@ -322,6 +327,22 @@ class BattleshipGame {
             
             // Check if cell is already occupied
             if (grid[checkY][checkX].ship !== null) return false;
+            
+            // Check adjacent cells (Battleship rules: ships cannot touch)
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const adjX = checkX + dx;
+                    const adjY = checkY + dy;
+                    
+                    // Skip the current cell and out-of-bounds
+                    if ((dx === 0 && dy === 0) || adjX < 0 || adjY < 0 || adjX >= this.gridSize || adjY >= this.gridSize) {
+                        continue;
+                    }
+                    
+                    // Check if adjacent cell has a ship
+                    if (grid[adjY][adjX].ship !== null) return false;
+                }
+            }
         }
         
         return true;
@@ -358,6 +379,10 @@ class BattleshipGame {
     }
     
     attack(player, x, y) {
+        if (this.gameOver) {
+            return { valid: false, message: 'Game is already over!' };
+        }
+        
         const targetPlayer = 1 - player;
         const grid = this.playerGrids[targetPlayer];
         const attackGrid = this.attackGrids[player];
@@ -403,6 +428,8 @@ class BattleshipGame {
     
     sinkShip(player, ship) {
         const grid = this.playerGrids[player];
+        ship.sunk = true; // Mark ship as sunk
+        
         for (let i = 0; i < ship.size; i++) {
             const x = ship.orientation === 'horizontal' ? ship.x + i : ship.x;
             const y = ship.orientation === 'vertical' ? ship.y + i : ship.y;
@@ -411,6 +438,7 @@ class BattleshipGame {
     }
     
     checkGameOver(player) {
+        if (this.gameOver) return true; // Already over
         return this.placedShips[player].every(ship => ship.hits >= ship.size);
     }
     
@@ -491,7 +519,7 @@ class BattleshipGame {
     }
     
     aiTurn() {
-        if (this.gamePhase !== 'playing' || this.currentPlayer !== 1) return;
+        if (this.gamePhase !== 'playing' || this.currentPlayer !== 1 || this.gameOver) return;
         
         let x, y;
         
@@ -655,7 +683,7 @@ class BattleshipGame {
     }
     
     placeShipAt(x, y, orientation = 'horizontal') {
-        if (!this.currentShip) return false;
+        if (!this.currentShip || this.gamePhase !== 'placement') return false;
         
         if (this.canPlaceShip(0, x, y, this.currentShip.size, orientation)) {
             this.placeShip(0, x, y, this.currentShip, orientation);
@@ -857,7 +885,7 @@ class BattleshipClient {
                 rect(cellX, cellY, this.gridSize, this.gridSize);
             }
         } else if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 0) {
-            const attackGridX = this.gridStartX + 500;
+            const attackGridX = this.gridStartX + 600; // Fixed to match actual attack grid position
             const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
             const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
             
