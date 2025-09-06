@@ -1,10 +1,11 @@
 // Clean version of preload.js without emoji characters - loads all 52 standard deck cards
 function preload() {
-    console.log('🚢 Starting image preload...');
-    
-    // Get the base URL for production environments
-    const baseUrl = window.location.origin;
-    console.log('Base URL:', baseUrl);
+    try {
+        console.log('🚢 Starting image preload...');
+        
+        // Get the base URL for production environments
+        const baseUrl = window.location.origin;
+        console.log('Base URL:', baseUrl);
     
     // Initialize cardImages object if it doesn't exist
     if (typeof cardImages === 'undefined') {
@@ -93,6 +94,10 @@ function preload() {
     
     // Load all card images
     loadAllCardImages(baseUrl);
+    
+    } catch (error) {
+        console.error('ERROR: Error in preload function:', error);
+    }
 }
 
 function loadAllCardImages(baseUrl) {
