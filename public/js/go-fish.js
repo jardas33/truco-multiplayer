@@ -1537,7 +1537,7 @@ function drawPairMakingArea() {
     const pairAreaWidth = 200;
     const pairAreaHeight = 100; // Taller to accommodate cards
     const pairAreaX = width - 500; // More to the left to avoid score box overlap
-    const pairAreaY = handY - 10; // Aligned with the player hand
+    const pairAreaY = handY - 20; // 10px higher than before
     
     // Check if player has pairs in hand
     const rankCounts = {};
@@ -1578,18 +1578,24 @@ function drawPairMakingArea() {
             const cardX = pairAreaX + 10 + col * (cardWidth + cardSpacing);
             const cardY = pairAreaY + 40 + row * (cardHeight + 5);
             
-            // Draw mini card
+            // Draw mini card with image
             fill(255);
             stroke(0);
             strokeWeight(1);
             rect(cardX, cardY, cardWidth, cardHeight, 4);
             
-            // Draw card content
-            fill(0);
-            textAlign(CENTER, CENTER);
-            textSize(8);
-            noStroke();
-            text(card.rank, cardX + cardWidth/2, cardY + cardHeight/2);
+            // Draw card image if available
+            const imageKey = getCardImageKey(card);
+            if (window.cardImages && window.cardImages[imageKey]) {
+                image(window.cardImages[imageKey], cardX + 2, cardY + 2, cardWidth - 4, cardHeight - 4);
+            } else {
+                // Fallback to text if image not loaded
+                fill(0);
+                textAlign(CENTER, CENTER);
+                textSize(8);
+                noStroke();
+                text(card.rank, cardX + cardWidth/2, cardY + cardHeight/2);
+            }
         });
     }
 }
@@ -2352,7 +2358,7 @@ function mouseReleased() {
         const pairAreaWidth = 200;
         const pairAreaHeight = 100;
         const pairAreaX = width - 500;
-        const pairAreaY = handY - 10;
+        const pairAreaY = handY - 20;
         
         // Check if dropped on pair-making area
         if (mouseX >= pairAreaX && mouseX <= pairAreaX + pairAreaWidth &&
