@@ -764,6 +764,11 @@ class BattleshipClient {
         
         // Stop continuous drawing to prevent console spam
         noLoop();
+        
+        // Force an initial redraw to show grids
+        setTimeout(() => {
+            redraw();
+        }, 100);
     }
     
     drawMouseHover() {
@@ -832,6 +837,12 @@ class BattleshipClient {
         stroke(255, 255, 0); // Yellow border for maximum visibility
         strokeWeight(3);
         rect(x - 8, y - 8, (this.gridSize + this.gridSpacing) * 10 + 16, (this.gridSize + this.gridSpacing) * 10 + 16);
+        
+        // Add debug rectangle to make sure something is visible
+        fill(255, 0, 0, 150); // Red debug rectangle
+        stroke(255, 0, 0);
+        strokeWeight(2);
+        rect(x, y, 100, 100);
         
         for (let row = 0; row < 10; row++) {
             for (let col = 0; col < 10; col++) {
