@@ -251,11 +251,7 @@
         </div>
     </div>
 
-    <script src="js/variables.js"></script>
-    <script src="js/preload.js"></script>
-    <script src="js/setup.js"></script>
-    <script src="js/draw.js"></script>
-    <script src="js/game-framework.js"></script>
+    <!-- Removed setup.js to prevent canvas interference and duplicate buttons -->
     
     <script>
         // Instructions functionality
@@ -350,6 +346,78 @@ Good luck, Admiral! 🫡`);
             window.location.href = '/battleship';
         }
 
+        // Bot management
+        let playerCount = 1; // Start with 1 human player
+        const maxPlayers = 2; // Battleship requires exactly 2 players
+
+        function addBot() {
+            if (playerCount < maxPlayers) {
+                playerCount++;
+                updatePlayerList();
+                updateBotButtons();
+                console.log('🤖 Bot added. Players:', playerCount);
+            }
+        }
+
+        function removeBot() {
+            if (playerCount > 1) {
+                playerCount--;
+                updatePlayerList();
+                updateBotButtons();
+                console.log('🤖 Bot removed. Players:', playerCount);
+            }
+        }
+
+        function updatePlayerList() {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            
+            // Add human player
+            const humanPlayer = document.createElement('div');
+            humanPlayer.className = 'player-item';
+            humanPlayer.innerHTML = `
+                <span class="player-name">You (Human)</span>
+                <span class="bot-indicator">👤</span>
+            `;
+            playerList.appendChild(humanPlayer);
+            
+            // Add bots
+            for (let i = 1; i < playerCount; i++) {
+                const botPlayer = document.createElement('div');
+                botPlayer.className = 'player-item';
+                botPlayer.innerHTML = `
+                    <span class="player-name">Bot ${i}</span>
+                    <span class="bot-indicator">🤖</span>
+                `;
+                playerList.appendChild(botPlayer);
+            }
+        }
+
+        function updateBotButtons() {
+            const addBtn = document.getElementById('addBotBtn');
+            const removeBtn = document.getElementById('removeBotBtn');
+            const startBtn = document.getElementById('startGameBtn');
+            
+            if (playerCount >= maxPlayers) {
+                addBtn.style.display = 'none';
+            } else {
+                addBtn.style.display = 'inline-block';
+            }
+            
+            if (playerCount <= 1) {
+                removeBtn.style.display = 'none';
+            } else {
+                removeBtn.style.display = 'inline-block';
+            }
+            
+            // Enable start button when we have exactly 2 players
+            if (playerCount === maxPlayers) {
+                startBtn.disabled = false;
+            } else {
+                startBtn.disabled = true;
+            }
+        }
+
         // Add room-created class when room is created to hide Create/Join buttons
         document.addEventListener('DOMContentLoaded', function() {
             // Set up event listeners
@@ -357,6 +425,12 @@ Good luck, Admiral! 🫡`);
             document.getElementById('joinRoomBtn').onclick = joinRoom;
             document.getElementById('copyRoomCodeBtn').onclick = copyRoomCode;
             document.getElementById('startGameBtn').onclick = startGame;
+            document.getElementById('addBotBtn').onclick = addBot;
+            document.getElementById('removeBotBtn').onclick = removeBot;
+            
+            // Initialize player list
+            updatePlayerList();
+            updateBotButtons();
             
             // Auto-focus on room code input
             document.getElementById('roomCodeInput').focus();
