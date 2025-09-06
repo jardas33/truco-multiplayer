@@ -59,17 +59,18 @@ function loadGameImages() {
         window.shipImages = {};
         console.log('🚢 Created shipImages object');
         
-        // Load ship images using regular Image objects
+        // Load ship images using p5.js loadImage function
         const shipTypes = ['carrier', 'battleship', 'cruiser', 'submarine', 'destroyer'];
         let loadedCount = 0;
         
         shipTypes.forEach(shipType => {
-            const img = new Image();
             const imageUrl = `${baseUrl}/Images/${shipType}.png`;
             console.log(`🚢 Attempting to load: ${imageUrl}`);
             
-            img.onload = () => {
+            // Use p5.js loadImage function
+            loadImage(imageUrl, (img) => {
                 console.log(`SUCCESS: ${shipType} image loaded`);
+                window.shipImages[shipType] = img;
                 loadedCount++;
                 if (loadedCount === shipTypes.length) {
                     console.log('🚢 All ship images loaded!');
@@ -78,8 +79,7 @@ function loadGameImages() {
                         window.checkShipImagesLoaded && window.checkShipImagesLoaded();
                     }, 100);
                 }
-            };
-            img.onerror = (error) => {
+            }, (error) => {
                 console.error(`ERROR: Failed to load ${shipType} image from ${imageUrl}:`, error);
                 loadedCount++;
                 if (loadedCount === shipTypes.length) {
@@ -89,9 +89,7 @@ function loadGameImages() {
                         window.checkShipImagesLoaded && window.checkShipImagesLoaded();
                     }, 100);
                 }
-            };
-            img.src = imageUrl;
-            window.shipImages[shipType] = img;
+            });
         });
         
     } catch (error) {
