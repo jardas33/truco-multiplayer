@@ -79,19 +79,31 @@
 
         .game-title {
             color: #FFD700;
-            font-size: 3em;
+            font-size: 2.5em;
             font-weight: bold;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
-            margin-bottom: 20px;
+            margin: 20px 0 10px 0;
             text-align: center;
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            width: 100%;
         }
 
         .game-subtitle {
             color: #ffffff;
-            font-size: 1.2em;
+            font-size: 1.1em;
             margin-bottom: 30px;
             text-align: center;
             opacity: 0.9;
+            position: absolute;
+            top: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            width: 100%;
         }
 
         .menu-buttons {
@@ -151,7 +163,7 @@
             border: 2px solid #FFD700;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
+            margin: 180px 0 20px 0;
             color: white;
             text-align: center;
             backdrop-filter: blur(10px);

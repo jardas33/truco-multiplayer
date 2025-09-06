@@ -671,8 +671,8 @@ class BattleshipClient {
             this.canvas.style('height', 'auto');
             
             // Calculate grid positions - responsive positioning
-            this.gridStartX = Math.max(50, canvasWidth - 500); // Responsive right positioning
-            this.gridStartY = 50; // Top positioning
+            this.gridStartX = Math.max(100, canvasWidth - 450); // Moved slightly left
+            this.gridStartY = 100; // Moved down
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -713,8 +713,8 @@ class BattleshipClient {
             if (this.canvas) {
                 // Recalculate grid positions on resize
                 const canvasWidth = this.canvas.width;
-                this.gridStartX = Math.max(50, canvasWidth - 500);
-                this.gridStartY = 50;
+                this.gridStartX = Math.max(100, canvasWidth - 450);
+                this.gridStartY = 100;
                 console.log('🔄 Grid repositioned on resize:', this.gridStartX, this.gridStartY);
             }
         });
@@ -1170,8 +1170,8 @@ function drawBasicGrids() {
     console.log('🎨 Drawing basic grids...');
     const gridSize = 40;
     const gridSpacing = 2;
-    const gridStartX = Math.max(50, windowWidth - 500); // Responsive right positioning
-    const gridStartY = 50; // Top positioning
+    const gridStartX = Math.max(100, windowWidth - 450); // Moved slightly left
+    const gridStartY = 100; // Moved down
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
