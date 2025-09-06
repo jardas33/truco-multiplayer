@@ -367,6 +367,7 @@ class BattleshipGame {
             
             grid[placeY][placeX].ship = shipData;
             grid[placeY][placeX].shipId = this.placedShips[player].length;
+            grid[placeY][placeX].isFirstCell = (i === 0); // Mark first cell
         }
         
         this.placedShips[player].push(shipData);
@@ -979,19 +980,28 @@ class BattleshipClient {
             stroke(200, 200, 200);
             strokeWeight(1);
         } else if (showShips && cell.ship) {
-            // Draw ship image if available, otherwise use color
-            if (window.shipImages && window.shipImages[cell.ship.type]) {
-                // Draw ship image
-                image(window.shipImages[cell.ship.type], x, y, this.gridSize, this.gridSize);
+            // Only draw ship if this is the first cell of the ship
+            if (cell.ship.isFirstCell) {
+                const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                
+                if (window.shipImages && window.shipImages[cell.ship.type]) {
+                    // Draw ship image
+                    image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
+                } else {
+                    // Fallback to colored rectangle
+                    fill(cell.ship.color);
+                    rect(x, y, shipWidth, shipHeight);
+                }
+                
                 // Add border
                 noFill();
                 stroke(255, 255, 255);
                 strokeWeight(1);
+                rect(x, y, shipWidth, shipHeight);
             } else {
-                // Fallback to colored rectangle
-                fill(cell.ship.color);
-                stroke(255, 255, 255);
-                strokeWeight(1);
+                // For non-first cells, just draw a subtle indicator
+                fill(40, 40, 40, 100);
             }
         } else {
             // Water with high contrast for visibility
@@ -1075,28 +1085,34 @@ class BattleshipClient {
             const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
             
             // Draw preview cells with better visibility
-            for (let i = 0; i < ship.size; i++) {
-                const previewX = gridX + (orientation === 'horizontal' ? i : 0);
-                const previewY = gridY + (orientation === 'vertical' ? i : 0);
+            const startX = this.gridStartX + gridX * (this.gridSize + this.gridSpacing);
+            const startY = this.gridStartY + gridY * (this.gridSize + this.gridSpacing);
+            
+            if (window.shipImages && window.shipImages[ship.type]) {
+                // Draw ship as one continuous image
+                const shipWidth = orientation === 'horizontal' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                const shipHeight = orientation === 'vertical' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
                 
-                if (previewX < 10 && previewY < 10) {
-                    const cellX = this.gridStartX + previewX * (this.gridSize + this.gridSpacing);
-                    const cellY = this.gridStartY + previewY * (this.gridSize + this.gridSpacing);
+                // Draw semi-transparent ship image
+                tint(255, 180); // Make image semi-transparent
+                image(window.shipImages[ship.type], startX, startY, shipWidth, shipHeight);
+                noTint(); // Reset tint
+                
+                // Add border around the entire ship
+                noFill();
+                stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
+                strokeWeight(3);
+                rect(startX, startY, shipWidth, shipHeight);
+            } else {
+                // Fallback to colored rectangles for each cell
+                for (let i = 0; i < ship.size; i++) {
+                    const previewX = gridX + (orientation === 'horizontal' ? i : 0);
+                    const previewY = gridY + (orientation === 'vertical' ? i : 0);
                     
-                    // Draw ship preview with image if available
-                    if (window.shipImages && window.shipImages[ship.type]) {
-                        // Draw semi-transparent ship image
-                        tint(255, 180); // Make image semi-transparent
-                        image(window.shipImages[ship.type], cellX, cellY, this.gridSize, this.gridSize);
-                        noTint(); // Reset tint
+                    if (previewX < 10 && previewY < 10) {
+                        const cellX = this.gridStartX + previewX * (this.gridSize + this.gridSpacing);
+                        const cellY = this.gridStartY + previewY * (this.gridSize + this.gridSpacing);
                         
-                        // Add border
-                        noFill();
-                        stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                        strokeWeight(3);
-                        rect(cellX, cellY, this.gridSize, this.gridSize);
-                    } else {
-                        // Fallback to colored rectangle
                         fill(ship.color + 'B4'); // Add alpha to hex color
                         stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
                         strokeWeight(3);
