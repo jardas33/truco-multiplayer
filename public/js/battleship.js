@@ -881,6 +881,7 @@ class BattleshipClient {
         if (!this.initialized) return;
         
         // Draw grids with high visibility
+        console.log('🎨 Drawing grids...');
         this.drawGrids();
         this.drawShips();
         this.drawUI();
@@ -1313,6 +1314,7 @@ function draw() {
     // console.log('🎨 Global draw() called - battleshipClient:', battleshipClient, 'initialized:', battleshipClient?.initialized);
     
     if (battleshipClient && battleshipClient.initialized) {
+        console.log('🎨 Drawing with battleshipClient...');
         battleshipClient.draw();
     } else {
         // Draw basic grids even without full client

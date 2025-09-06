@@ -427,11 +427,15 @@ function windowResized() {
         window.gameCanvas.style.height = windowHeight + 'px';
     }
     
-    // Force a redraw after resize
+    // Force a redraw after resize to restore grids
     setTimeout(function() {
         if (typeof draw === 'function') {
             draw();
         }
-    }, 50);
+        // Also trigger battleship client redraw if available
+        if (battleshipClient && battleshipClient.initialized) {
+            battleshipClient.draw();
+        }
+    }, 100);
 }
   
