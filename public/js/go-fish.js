@@ -1453,7 +1453,7 @@ function drawModernFishPond() {
     const textY = stackY + (cardHeight / 2); // Vertically centered with cards
     
     fill(255, 255, 255);
-    textSize(14);
+        textSize(14);
     textAlign(LEFT, CENTER);
     text(`${window.game.pond ? window.game.pond.length : 0} cards`, textX, textY);
 }
@@ -1969,18 +1969,19 @@ function mousePressed() {
     }
     
     // Check if menu buttons were clicked (top center)
-    const menuButtonWidth = 120;
+    const backButtonWidth = 160; // Wider for "Back to Main Menu" text
+    const restartButtonWidth = 120; // Standard width for "Go Fish Menu"
     const menuButtonHeight = 40;
     const menuButtonSpacing = 20;
-    const totalWidth = (menuButtonWidth * 2) + menuButtonSpacing;
+    const totalWidth = backButtonWidth + restartButtonWidth + menuButtonSpacing;
     const menuX = (width - totalWidth) / 2; // Center horizontally
     const menuY = 20;
     
     const backButtonX = menuX;
-    const restartButtonX = menuX + menuButtonWidth + menuButtonSpacing;
+    const restartButtonX = menuX + backButtonWidth + menuButtonSpacing;
     
     // Check if Back to Main Menu button was clicked
-    if (mouseX >= backButtonX && mouseX <= backButtonX + menuButtonWidth &&
+    if (mouseX >= backButtonX && mouseX <= backButtonX + backButtonWidth &&
         mouseY >= menuY && mouseY <= menuY + menuButtonHeight) {
         console.log('🔙 Back to Main Menu clicked');
         window.location.href = '/';
@@ -1988,7 +1989,7 @@ function mousePressed() {
     }
     
     // Check if Back to Go Fish Menu button was clicked
-    if (mouseX >= restartButtonX && mouseX <= restartButtonX + menuButtonWidth &&
+    if (mouseX >= restartButtonX && mouseX <= restartButtonX + restartButtonWidth &&
         mouseY >= menuY && mouseY <= menuY + menuButtonHeight) {
         console.log('🐟 Back to Go Fish Menu clicked');
         window.location.href = '/go-fish.html';
@@ -2205,46 +2206,47 @@ function drawGameMenu() {
     if (!window.game || !window.game.players || window.game.players.length === 0) return;
     
     // Menu buttons in top center
-    const menuButtonWidth = 120;
+    const backButtonWidth = 160; // Wider for "Back to Main Menu" text
+    const restartButtonWidth = 120; // Standard width for "Go Fish Menu"
     const menuButtonHeight = 40;
     const menuButtonSpacing = 20;
-    const totalWidth = (menuButtonWidth * 2) + menuButtonSpacing;
+    const totalWidth = backButtonWidth + restartButtonWidth + menuButtonSpacing;
     const menuX = (width - totalWidth) / 2; // Center horizontally
     const menuY = 20;
     
     // Check if mouse is hovering over buttons
     const backButtonX = menuX;
-    const restartButtonX = menuX + menuButtonWidth + menuButtonSpacing;
+    const restartButtonX = menuX + backButtonWidth + menuButtonSpacing;
     
-    const isHoveringBack = mouseX >= backButtonX && mouseX <= backButtonX + menuButtonWidth &&
+    const isHoveringBack = mouseX >= backButtonX && mouseX <= backButtonX + backButtonWidth &&
                           mouseY >= menuY && mouseY <= menuY + menuButtonHeight;
     
-    const isHoveringRestart = mouseX >= restartButtonX && mouseX <= restartButtonX + menuButtonWidth &&
+    const isHoveringRestart = mouseX >= restartButtonX && mouseX <= restartButtonX + restartButtonWidth &&
                              mouseY >= menuY && mouseY <= menuY + menuButtonHeight;
     
-    // Draw Back to Main Menu button
-    fill(isHoveringBack ? 50 : 30, 100, 150, 200);
-    stroke(100, 150, 200);
+    // Draw Back to Main Menu button (wider, orange theme)
+    fill(isHoveringBack ? 255 : 255, 140, 0, 200); // Orange background
+    stroke(255, 165, 0); // Orange border
     strokeWeight(2);
-    rect(backButtonX, menuY, menuButtonWidth, menuButtonHeight, 8);
+    rect(backButtonX, menuY, backButtonWidth, menuButtonHeight, 8);
     
     fill(255, 255, 255);
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(14);
-    text('← Back to Main Menu', backButtonX + menuButtonWidth/2, menuY + menuButtonHeight/2);
+    text('← Back to Main Menu', backButtonX + backButtonWidth/2, menuY + menuButtonHeight/2);
     
-    // Draw Back to Go Fish Menu button
-    fill(isHoveringRestart ? 50 : 30, 100, 150, 200);
-    stroke(100, 150, 200);
+    // Draw Back to Go Fish Menu button (blue theme)
+    fill(isHoveringRestart ? 30 : 50, 100, 200, 200); // Blue background
+    stroke(70, 130, 180); // Steel blue border
     strokeWeight(2);
-    rect(restartButtonX, menuY, menuButtonWidth, menuButtonHeight, 8);
+    rect(restartButtonX, menuY, restartButtonWidth, menuButtonHeight, 8);
     
     fill(255, 255, 255);
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(14);
-    text('🐟 Go Fish Menu', restartButtonX + menuButtonWidth/2, menuY + menuButtonHeight/2);
+    text('🐟 Go Fish Menu', restartButtonX + restartButtonWidth/2, menuY + menuButtonHeight/2);
 }
 
 // Initialize when page loads
