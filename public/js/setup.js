@@ -20,15 +20,16 @@ function setup() {
     // Wait for DOM to be ready before creating canvas
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(createCanvasSafely, 100);
+            setTimeout(createCanvasSafely, 500);
         });
     } else {
-        setTimeout(createCanvasSafely, 100);
+        setTimeout(createCanvasSafely, 500);
     }
 }
 
 function createCanvasSafely() {
-    let canvas = createCanvas(windowWidth, windowHeight);
+    try {
+        let canvas = createCanvas(windowWidth, windowHeight);
     
     // Check if we're on the Battleship page and use the correct container
     const currentPath = window.location.pathname;
@@ -408,6 +409,9 @@ function createCanvasSafely() {
     noLoop();
     
     console.log('Setup complete - canvas and UI elements initialized');
+    } catch (error) {
+        console.error('❌ Error creating canvas:', error);
+    }
 }
 
 // Handle window resize events (like when console opens/closes)

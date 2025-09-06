@@ -242,7 +242,7 @@ class BattleshipGame {
             
             return `
                 <div class="ship-item ${isPlaced ? 'placed' : ''}" data-ship-index="${index}">
-                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; transform: rotate(90deg);` : `background: ${ship.color}`}">
+                    <div class="ship-visual horizontal" style="${hasImage ? `background-image: url('${window.location.origin}/Images/${ship.type}.png'); background-size: contain; background-repeat: no-repeat; background-position: center;` : `background: ${ship.color}`}">
                     </div>
                     <div>
                         <div style="font-weight: bold;">${ship.name}</div>
@@ -882,9 +882,6 @@ class BattleshipClient {
         this.drawShips();
         this.drawUI();
         this.drawMouseHover();
-        
-        // Stop continuous drawing to prevent performance issues
-        noLoop();
     }
     
     drawMouseHover() {
@@ -1079,7 +1076,7 @@ class BattleshipClient {
         const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
         
-        console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
+        // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
         
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
             const ship = this.game.currentShip;
@@ -1306,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // p5.js functions - setup() is handled in setup.js
 
 function draw() {
-    console.log('🎨 Global draw() called - battleshipClient:', battleshipClient, 'initialized:', battleshipClient?.initialized);
+    // console.log('🎨 Global draw() called - battleshipClient:', battleshipClient, 'initialized:', battleshipClient?.initialized);
     
     if (battleshipClient && battleshipClient.initialized) {
         battleshipClient.draw();
@@ -1336,9 +1333,6 @@ function draw() {
         battleshipGame.checkAndUpdateShipImages();
         battleshipGame.imagesChecked = true;
     }
-    
-    // Stop continuous drawing to prevent performance issues
-    noLoop();
 }
 
 function drawBasicGrids() {
