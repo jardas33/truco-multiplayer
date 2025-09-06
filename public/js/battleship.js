@@ -77,7 +77,9 @@ class BattleshipGame {
         
         this.addToHistory('🎮 Game initialized. Place your ships to begin!', 'info');
         this.updateUI();
+        console.log('🎨 About to render ships list...');
         this.renderShipsList();
+        console.log('✅ Ships list rendered');
     }
     
     addToHistory(message, type = 'info') {
@@ -750,10 +752,10 @@ class BattleshipClient {
             resetBtn.addEventListener('click', () => this.game.resetGame());
         }
         
-        // Ship selection
+        // Ship selection - use event delegation
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.ship-item')) {
-                const shipItem = e.target.closest('.ship-item');
+            const shipItem = e.target.closest('.ship-item');
+            if (shipItem) {
                 const shipIndex = parseInt(shipItem.dataset.shipIndex);
                 console.log('🚢 Ship clicked:', shipIndex, this.game.ships[shipIndex]);
                 this.game.startShipPlacement(shipIndex);
