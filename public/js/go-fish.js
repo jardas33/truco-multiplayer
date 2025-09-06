@@ -399,7 +399,7 @@ class GoFishGame {
                     }
                 } else {
                     console.log(`🎯 ${player.name} ending turn`);
-                    this.endTurn();
+        this.endTurn();
                 }
             }
         }, 2000); // 2 second delay for fishing animation
@@ -1581,7 +1581,7 @@ function drawPairMakingArea() {
     // Draw instruction text
     fill(hasPairs ? 255 : 150, hasPairs ? 215 : 150, hasPairs ? 0 : 150);
     textAlign(CENTER, CENTER);
-    textSize(12);
+        textSize(12);
     noStroke();
     
     if (hasPairs) {
@@ -1613,7 +1613,7 @@ function drawPairMakingArea() {
             const imageKey = getCardImageKey(card);
             if (window.cardImages && window.cardImages[imageKey]) {
                 image(window.cardImages[imageKey], cardX + 2, cardY + 2, cardWidth - 4, cardHeight - 4);
-            } else {
+        } else {
                 // Fallback to text if image not loaded
                 fill(0);
                 textAlign(CENTER, CENTER);

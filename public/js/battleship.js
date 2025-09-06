@@ -693,7 +693,8 @@ class BattleshipClient {
     draw() {
         if (!this.initialized) return;
         
-        background(15, 25, 45);
+        // Use semi-transparent background to show pond image
+        background(15, 25, 45, 100);
         this.drawGrids();
         this.drawShips();
         this.drawUI();
@@ -760,8 +761,8 @@ class BattleshipClient {
     drawGrid(x, y, player, showShips) {
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
-        // Draw grid background
-        fill(20, 40, 80);
+        // Draw grid background with transparency to show pond image
+        fill(20, 40, 80, 150);
         stroke(100, 150, 200);
         strokeWeight(2);
         rect(x - 5, y - 5, (this.gridSize + this.gridSpacing) * 10 + 10, (this.gridSize + this.gridSpacing) * 10 + 10);
@@ -797,8 +798,8 @@ class BattleshipClient {
             stroke(255, 255, 255);
             strokeWeight(1);
         } else {
-            // Water with wave effect
-            fill(30, 60, 120);
+            // Water with wave effect - more transparent to show pond
+            fill(30, 60, 120, 120);
             stroke(50, 100, 200);
             strokeWeight(1);
         }
@@ -1098,8 +1099,8 @@ function draw() {
     if (battleshipClient && battleshipClient.initialized) {
         battleshipClient.draw();
     } else {
-        // Show loading message and basic grid
-        background(15, 25, 45);
+        // Show loading message and basic grid with semi-transparent background
+        background(15, 25, 45, 100);
         
         // Draw basic grids even without full client
         drawBasicGrids();
@@ -1131,8 +1132,8 @@ function drawBasicGrids() {
 }
 
 function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
-    // Draw grid background
-    fill(20, 40, 80);
+    // Draw grid background with transparency to show pond image
+    fill(20, 40, 80, 150);
     stroke(100, 150, 200);
     strokeWeight(2);
     rect(x - 5, y - 5, (gridSize + gridSpacing) * 10 + 10, (gridSize + gridSpacing) * 10 + 10);
@@ -1143,7 +1144,7 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
             const cellX = x + col * (gridSize + gridSpacing);
             const cellY = y + row * (gridSize + gridSpacing);
             
-            fill(30, 60, 120);
+            fill(30, 60, 120, 120);
             stroke(50, 100, 200);
             strokeWeight(1);
             rect(cellX, cellY, gridSize, gridSize);
