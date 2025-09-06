@@ -777,10 +777,10 @@ class BattleshipClient {
     drawGrid(x, y, player, showShips) {
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
-        // Draw grid background with transparency to show pond image
-        fill(20, 40, 80, 150);
+        // Draw grid background with more opacity to make it visible
+        fill(20, 40, 80, 200);
         stroke(100, 150, 200);
-        strokeWeight(2);
+        strokeWeight(3);
         rect(x - 5, y - 5, (this.gridSize + this.gridSpacing) * 10 + 10, (this.gridSize + this.gridSpacing) * 10 + 10);
         
         for (let row = 0; row < 10; row++) {
@@ -1148,10 +1148,10 @@ function drawBasicGrids() {
 }
 
 function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
-    // Draw grid background with transparency to show pond image
-    fill(20, 40, 80, 150);
+    // Draw grid background with more opacity to make it visible
+    fill(20, 40, 80, 200);
     stroke(100, 150, 200);
-    strokeWeight(2);
+    strokeWeight(3);
     rect(x - 5, y - 5, (gridSize + gridSpacing) * 10 + 10, (gridSize + gridSpacing) * 10 + 10);
     
     // Draw grid cells
@@ -1160,9 +1160,9 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
             const cellX = x + col * (gridSize + gridSpacing);
             const cellY = y + row * (gridSize + gridSpacing);
             
-            fill(30, 60, 120, 120);
+            fill(30, 60, 120, 180);
             stroke(50, 100, 200);
-            strokeWeight(1);
+            strokeWeight(2);
             rect(cellX, cellY, gridSize, gridSize);
         }
     }
