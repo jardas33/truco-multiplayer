@@ -437,6 +437,13 @@ class GoFishGame {
             },
             finalScores: this.players.map(p => ({ name: p.name, pairs: p.pairs }))
         });
+        
+        // ✅ AUTO-START NEW GAME: Start a new game after 5 seconds
+        setTimeout(() => {
+            console.log('🔄 Auto-starting new Go Fish game...');
+            this.addToHistory('🔄 Starting new game in 5 seconds...', 'info');
+            this.startNewGame();
+        }, 5000);
     }
 
     // Get available ranks for a player

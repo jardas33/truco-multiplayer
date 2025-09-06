@@ -436,6 +436,12 @@ class HeartsGame {
             },
             finalScores: this.players.map(p => ({ name: p.name, score: p.score }))
         });
+        
+        // ✅ AUTO-START NEW GAME: Start a new game after 5 seconds
+        setTimeout(() => {
+            console.log('🔄 Auto-starting new Hearts game...');
+            this.startNewHand();
+        }, 5000);
     }
 
     // Emit event to server

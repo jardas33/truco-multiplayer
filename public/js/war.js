@@ -315,6 +315,12 @@ class WarGame {
             },
             finalScores: this.players.map(p => ({ name: p.name, cards: p.hand.length }))
         });
+        
+        // ✅ AUTO-START NEW GAME: Start a new game after 5 seconds
+        setTimeout(() => {
+            console.log('🔄 Auto-starting new War game...');
+            this.startNewGame();
+        }, 5000);
     }
 
     // Emit event to server
