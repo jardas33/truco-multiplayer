@@ -481,27 +481,27 @@ io.on('connection', (socket) => {
 
     // Handle game events
     socket.on('playCard', (data) => {
-        console.log(`🃏 Card played in room: ${roomCode}`);
+        console.log(`🃏 Card played in room: ${socket.roomCode}`);
         console.log(`🃏 Play data:`, data);
         
-        if (!roomCode) {
+        if (!socket.roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
             socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(roomCode);
+        const room = rooms.get(socket.roomCode);
         if (!room) {
-            console.log(`❌ Room ${roomCode} not found for card play`);
+            console.log(`❌ Room ${socket.roomCode} not found for card play`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
-            console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
+            console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
             console.log(`🔍 DEBUG: Socket ID:`, socket.id);
             socket.emit('error', 'Room not found');
             return;
         }
 
         if (!room.game) {
-            console.log(`❌ No active game in room ${roomCode}`);
+            console.log(`❌ No active game in room ${socket.roomCode}`);
             socket.emit('error', 'No active game');
             return;
         }
