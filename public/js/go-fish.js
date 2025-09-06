@@ -208,13 +208,11 @@ class GoFishGame {
         
         console.log(`🎯 ${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s`);
         
-        // Show asking message first - hide specific rank from human player if they're not the one asking
+        // Show asking message first - show specific rank for strategy purposes
         if (askingPlayer === this.players[0]) { // Human player asking
             this.showGameMessage(`You ask ${targetPlayer.name} for ${rank}s...`, 1500);
-        } else if (targetPlayer === this.players[0]) { // Bot asking human player
-            this.showGameMessage(`${askingPlayer.name} asks you for a card...`, 1500);
-        } else { // Bot asking bot
-            this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for a card...`, 1500);
+        } else { // Bot asking (show what they're asking for)
+            this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s...`, 1500);
         }
         
         // Add delay to make the game flow more natural
@@ -519,12 +517,8 @@ class GoFishGame {
         
         console.log(`🤖 ${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
         
-        // Show bot action popup - don't reveal specific card rank to human player
-        if (targetPlayer === this.players[0]) { // Asking human player
-            this.showGameMessage(`${bot.name} asks you for a card`);
-        } else { // Bot asking another bot
-            this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for a card`);
-        }
+        // Show bot action popup - show specific card rank for strategy
+        this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
         
         // Execute the ask
         const success = this.askForCards(this.currentPlayer, targetIndex, targetRank);
