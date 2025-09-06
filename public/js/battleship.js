@@ -669,9 +669,9 @@ class BattleshipClient {
             this.canvas = createCanvas(1000, 700);
             this.canvas.parent(canvasDiv);
             
-            // Calculate grid positions
+            // Calculate grid positions - moved down to avoid overlapping with HTML elements
             this.gridStartX = 50;
-            this.gridStartY = 150;
+            this.gridStartY = 200; // Moved down from 150 to 200
             this.initialized = true;
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
@@ -759,39 +759,29 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side)
-        const attackGridX = this.gridStartX + 500;
+        // Draw attack grid (right side) - increased spacing
+        const attackGridX = this.gridStartX + 520; // Increased from 500 to 520
         this.drawGrid(attackGridX, this.gridStartY, 1, false);
         
-        // Draw labels
-        fill(255);
+        // Draw grid titles with better visibility
+        noStroke();
+        fill(255, 255, 0); // Yellow titles
         textAlign(CENTER, CENTER);
-        textSize(16);
-        text('Your Fleet', this.gridStartX + 200, this.gridStartY - 30);
-        text('Attack Grid', attackGridX + 200, this.gridStartY - 30);
+        textSize(18); // Larger titles
+        text('Your Fleet', this.gridStartX + 200, this.gridStartY - 40);
+        text('Attack Grid', attackGridX + 200, this.gridStartY - 40);
         
-        // Debug info
-        fill(255, 0, 0);
-        textSize(12);
-        text(`Grid 1: ${this.gridStartX}, ${this.gridStartY}`, 10, 20);
-        text(`Grid 2: ${attackGridX}, ${this.gridStartY}`, 10, 40);
-        text(`Canvas: ${width}x${height}`, 10, 60);
+        // Debug info removed for cleaner look
     }
     
     drawGrid(x, y, player, showShips) {
         console.log(`🎨 Drawing grid at ${x}, ${y} for player ${player}, showShips: ${showShips}`);
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
         
-        // Draw a very visible test rectangle first
-        fill(255, 0, 0, 255); // Bright red
-        stroke(255, 255, 0); // Yellow border
-        strokeWeight(5);
-        rect(x - 10, y - 10, 200, 200); // Large test rectangle
-        
-        // Draw grid background with more opacity to make it visible
-        fill(20, 40, 80, 200);
-        stroke(100, 150, 200);
-        strokeWeight(3);
+        // Draw grid background with high contrast to make it visible
+        fill(0, 0, 0, 220); // Dark background with high opacity
+        stroke(255, 255, 255); // White border
+        strokeWeight(2);
         rect(x - 5, y - 5, (this.gridSize + this.gridSpacing) * 10 + 10, (this.gridSize + this.gridSpacing) * 10 + 10);
         
         for (let row = 0; row < 10; row++) {
@@ -825,9 +815,9 @@ class BattleshipClient {
             stroke(255, 255, 255);
             strokeWeight(1);
         } else {
-            // Water with wave effect - more transparent to show pond
-            fill(30, 60, 120, 120);
-            stroke(50, 100, 200);
+            // Water with high contrast for visibility
+            fill(60, 60, 60, 200); // Dark gray for visibility
+            stroke(255, 255, 255); // White grid lines
             strokeWeight(1);
         }
         
@@ -868,19 +858,22 @@ class BattleshipClient {
     }
     
     drawGridLabels(x, y) {
-        fill(255);
+        // Draw grid labels with better visibility
+        fill(255, 255, 255); // White text
         textAlign(CENTER, CENTER);
-        textSize(12);
+        textSize(14); // Slightly larger
+        stroke(0, 0, 0); // Black outline
+        strokeWeight(1);
         
-        // Numbers (1-10)
+        // Numbers (1-10) - positioned above grid
         for (let i = 1; i <= 10; i++) {
-            text(i, x + (i-1) * (this.gridSize + this.gridSpacing) + this.gridSize/2, y - 10);
+            text(i, x + (i-1) * (this.gridSize + this.gridSpacing) + this.gridSize/2, y - 15);
         }
         
-        // Letters (A-J)
+        // Letters (A-J) - positioned to the left of grid
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
         for (let i = 0; i < 10; i++) {
-            text(letters[i], x - 20, y + i * (this.gridSize + this.gridSpacing) + this.gridSize/2);
+            text(letters[i], x - 25, y + i * (this.gridSize + this.gridSpacing) + this.gridSize/2);
         }
     }
     
@@ -1154,13 +1147,13 @@ function drawBasicGrids() {
     const gridSize = 40;
     const gridSpacing = 2;
     const gridStartX = 50;
-    const gridStartY = 150;
+    const gridStartY = 200; // Moved down to match BattleshipClient
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side)
-    const attackGridX = gridStartX + 500;
+    // Draw attack grid (right side) - increased spacing
+    const attackGridX = gridStartX + 520; // Increased from 500 to 520
     drawBasicGrid(attackGridX, gridStartY, gridSize, gridSpacing, 'Attack Grid');
     
     console.log('✅ Basic grids drawn');
@@ -1169,16 +1162,10 @@ function drawBasicGrids() {
 function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
     console.log(`🎨 Drawing basic grid at ${x}, ${y} with size ${gridSize}`);
     
-    // Draw a very visible test rectangle first
-    fill(0, 255, 0, 255); // Bright green
-    stroke(255, 0, 255); // Magenta border
-    strokeWeight(5);
-    rect(x - 10, y - 10, 200, 200); // Large test rectangle
-    
-    // Draw grid background with more opacity to make it visible
-    fill(20, 40, 80, 200);
-    stroke(100, 150, 200);
-    strokeWeight(3);
+    // Draw grid background with high contrast to make it visible
+    fill(0, 0, 0, 220); // Dark background with high opacity
+    stroke(255, 255, 255); // White border
+    strokeWeight(2);
     rect(x - 5, y - 5, (gridSize + gridSpacing) * 10 + 10, (gridSize + gridSpacing) * 10 + 10);
     
     // Draw grid cells
@@ -1187,34 +1174,37 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
             const cellX = x + col * (gridSize + gridSpacing);
             const cellY = y + row * (gridSize + gridSpacing);
             
-            fill(30, 60, 120, 180);
-            stroke(50, 100, 200);
-            strokeWeight(2);
+            fill(60, 60, 60, 200); // Dark gray for visibility
+            stroke(255, 255, 255); // White grid lines
+            strokeWeight(1);
             rect(cellX, cellY, gridSize, gridSize);
         }
     }
     
-    // Draw grid labels
-    fill(255);
+    // Draw grid labels with better visibility
+    fill(255, 255, 255); // White text
     textAlign(CENTER, CENTER);
-    textSize(12);
+    textSize(14); // Slightly larger
+    stroke(0, 0, 0); // Black outline
+    strokeWeight(1);
     
-    // Numbers (1-10)
+    // Numbers (1-10) - positioned above grid
     for (let i = 1; i <= 10; i++) {
-        text(i, x + (i-1) * (gridSize + gridSpacing) + gridSize/2, y - 10);
+        text(i, x + (i-1) * (gridSize + gridSpacing) + gridSize/2, y - 15);
     }
     
-    // Letters (A-J)
+    // Letters (A-J) - positioned to the left of grid
     const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     for (let i = 0; i < 10; i++) {
-        text(letters[i], x - 20, y + i * (gridSize + gridSpacing) + gridSize/2);
+        text(letters[i], x - 25, y + i * (gridSize + gridSpacing) + gridSize/2);
     }
     
-    // Draw title
-    fill(255);
+    // Draw title with better positioning
+    noStroke(); // Remove stroke for title
+    fill(255, 255, 0); // Yellow title
     textAlign(CENTER, CENTER);
-    textSize(16);
-    text(title, x + 200, y - 30);
+    textSize(18); // Larger title
+    text(title, x + 200, y - 40); // Moved up more
 }
 
 function mousePressed() {
