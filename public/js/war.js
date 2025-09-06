@@ -298,6 +298,47 @@ class WarGame {
         return playersWithCards.length <= 1;
     }
 
+    // Show game message popup
+    showGameMessage(message, duration = 2000) {
+        // Remove existing message
+        const existingMessage = document.getElementById('game-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Create new message
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'game-message';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 140, 0, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #ff8c00;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
+            max-width: 400px;
+            word-wrap: break-word;
+        `;
+        messageDiv.textContent = message;
+        
+        document.body.appendChild(messageDiv);
+        
+        // Auto-remove after duration
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, duration);
+    }
+
     // End the game
     endGame() {
         console.log('🏆 Game over!');
@@ -307,6 +348,9 @@ class WarGame {
         this.winner = this.players.reduce((max, player) => 
             player.hand.length > max.hand.length ? player : max
         );
+        
+        // ✅ WINNER ANNOUNCEMENT POPUP
+        this.showGameMessage(`🏆 ${this.winner.name} wins with ${this.winner.hand.length} cards!`, 4000);
         
         this.emitEvent('gameOver', {
             winner: {

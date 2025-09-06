@@ -430,6 +430,9 @@ class GoFishGame {
         this.addToHistory(`🏆 ${this.winner.name} wins the game with ${this.winner.pairs} pairs!`, 'success');
         this.addToHistory(`🎮 Game Over! ${this.winner.name} now has ${this.winner.overallWins} total wins`, 'info');
         
+        // ✅ WINNER ANNOUNCEMENT POPUP
+        this.showGameMessage(`🏆 ${this.winner.name} wins with ${this.winner.pairs} pairs!`, 4000);
+        
         this.emitEvent('gameOver', {
             winner: {
                 name: this.winner.name,
