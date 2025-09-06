@@ -111,10 +111,13 @@ class Player {
           console.log(`🔍 DEBUG: About to emit respondTruco event to server...`);
           
           // ✅ CRITICAL FIX: Try emitting with explicit room context
+          // Extract room code from window.roomId (could be object or string)
+          const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+          
           const eventData = { 
             response: decision,
             botPlayerIndex: botPlayerIndex,  // Include bot's player index for server validation
-            roomCode: window.roomId  // ✅ CRITICAL FIX: Include room code in the event data
+            roomCode: roomCode  // ✅ CRITICAL FIX: Include room code as string
           };
           
           console.log(`🔍 DEBUG: Event data:`, JSON.stringify(eventData, null, 2));

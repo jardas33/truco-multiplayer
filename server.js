@@ -1701,13 +1701,13 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: respondTruco event handler called`);
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         console.log(`🔍 DEBUG: Socket ID:`, socket.id);
-        console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
+        console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
         console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
         console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
-        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to roomCode
-        const roomCode = data.roomCode || roomCode;
-        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${roomCode})`);
+        // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
         
