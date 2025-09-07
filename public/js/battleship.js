@@ -1372,9 +1372,10 @@ class BattleshipClient {
         const fleetGridY = this.gridStartY;
         
         // Calculate grid coordinates to match exactly how cells are drawn
+        // Apply offset correction based on debug data: 13px right, 15px down
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-        const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        const gridX = Math.floor((mouseX - fleetGridX - 13) / cellSize);
+        const gridY = Math.floor((mouseY - fleetGridY - 15) / cellSize);
         
         // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
@@ -1400,9 +1401,10 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y as player grid
         
         // Calculate grid coordinates to match exactly how cells are drawn
+        // Apply offset correction based on debug data: 13px right, 15px down
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - attackGridX) / cellSize);
-        const gridY = Math.floor((mouseY - attackGridY) / cellSize);
+        const gridX = Math.floor((mouseX - attackGridX - 13) / cellSize);
+        const gridY = Math.floor((mouseY - attackGridY - 15) / cellSize);
         
         // Debug coordinate calculation
         console.log(`🎯 Click Debug - mouseX: ${mouseX}, mouseY: ${mouseY}`);

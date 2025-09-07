@@ -410,8 +410,8 @@ function createCanvasSafely() {
         window.gameState = gameStateEnum.Menu;
     }
     
-    // Start the draw loop to ensure continuous rendering
-    loop();
+    // Don't start the draw loop - let individual games control their own rendering
+    // loop();
     
     console.log('Setup complete - canvas and UI elements initialized');
     } catch (error) {
