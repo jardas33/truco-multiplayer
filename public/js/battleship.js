@@ -758,8 +758,8 @@ class BattleshipClient {
             canvasDiv.style.visibility = 'visible';
             
             // Create responsive canvas with better sizing
-            const canvasWidth = Math.min(1000, windowWidth - 100);
-            const canvasHeight = Math.min(600, windowHeight - 200);
+            const canvasWidth = Math.min(800, windowWidth - 100);
+            const canvasHeight = Math.min(500, windowHeight - 200);
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
@@ -777,7 +777,7 @@ class BattleshipClient {
             console.log('🎨 Canvas parent display style:', canvasDiv.style.display);
             
             // Calculate grid positions - ensure grids fit within canvas with proper spacing
-            this.gridStartX = 50;
+            this.gridStartX = 20;
             this.gridStartY = 200;
             this.initialized = true;
             
@@ -854,7 +854,7 @@ class BattleshipClient {
                     resizeCanvas(newWidth, newHeight);
                     
                     // Recalculate grid positions - keep consistent positioning
-                    this.gridStartX = 50;
+                    this.gridStartX = 20;
                     this.gridStartY = 200;
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
@@ -946,8 +946,8 @@ class BattleshipClient {
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - side by side with much wider gap
-        const attackGridX = this.gridStartX + 600; // Much wider gap between grids
+        // Draw attack grid (right side) - side by side with smaller gap
+        const attackGridX = this.gridStartX + 400; // Smaller gap between grids
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -1395,14 +1395,14 @@ function draw() {
 function drawBasicGrids() {
     const gridSize = 30; // Smaller grid size for better fit
     const gridSpacing = 1; // Smaller spacing for better fit
-    const gridStartX = 50; // Fixed positioning
+    const gridStartX = 20; // Fixed positioning
     const gridStartY = 200; // Fixed positioning
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - side by side with much wider gap
-    const attackGridX = gridStartX + 600; // Much wider gap between grids
+    // Draw attack grid (right side) - side by side with smaller gap
+    const attackGridX = gridStartX + 400; // Smaller gap between grids
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
