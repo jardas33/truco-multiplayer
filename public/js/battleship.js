@@ -936,8 +936,10 @@ class BattleshipClient {
             const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
             const fleetGridY = this.gridStartY;
             
-            const gridX = Math.floor((mouseX - fleetGridX) / (this.gridSize + this.gridSpacing));
-            const gridY = Math.floor((mouseY - fleetGridY) / (this.gridSize + this.gridSpacing));
+            // Calculate grid coordinates with proper rounding to match visual grid
+            const cellSize = this.gridSize + this.gridSpacing;
+            const gridX = Math.round((mouseX - fleetGridX) / cellSize);
+            const gridY = Math.round((mouseY - fleetGridY) / cellSize);
             
             if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
                 mouseX >= fleetGridX && mouseX < fleetGridX + 420 && 
@@ -954,8 +956,11 @@ class BattleshipClient {
         } else if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 0) {
             const attackGridX = this.gridStartX + 500; // Fixed to match actual attack grid position
             const attackGridY = this.gridStartY;
-            const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
-            const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
+            
+            // Calculate grid coordinates with proper rounding to match visual grid
+            const cellSize = this.gridSize + this.gridSpacing;
+            const gridX = Math.round((mouseX - attackGridX) / cellSize);
+            const gridY = Math.round((mouseY - attackGridY) / cellSize);
             
             if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX >= attackGridX) {
                 const cellX = attackGridX + gridX * (this.gridSize + this.gridSpacing);
@@ -1165,8 +1170,10 @@ class BattleshipClient {
         if (mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
             mouseY < fleetGridY || mouseY > fleetGridY + 420) return;
         
-        const gridX = Math.floor((mouseX - fleetGridX) / (this.gridSize + this.gridSpacing));
-        const gridY = Math.floor((mouseY - fleetGridY) / (this.gridSize + this.gridSpacing));
+        // Calculate grid coordinates with proper rounding to match visual grid
+        const cellSize = this.gridSize + this.gridSpacing;
+        const gridX = Math.round((mouseX - fleetGridX) / cellSize);
+        const gridY = Math.round((mouseY - fleetGridY) / cellSize);
         
         // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
         
@@ -1313,8 +1320,10 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
-        const gridX = Math.floor((mouseX - fleetGridX) / (this.gridSize + this.gridSpacing));
-        const gridY = Math.floor((mouseY - fleetGridY) / (this.gridSize + this.gridSpacing));
+        // Calculate grid coordinates with proper rounding to match visual grid
+        const cellSize = this.gridSize + this.gridSpacing;
+        const gridX = Math.round((mouseX - fleetGridX) / cellSize);
+        const gridY = Math.round((mouseY - fleetGridY) / cellSize);
         
         // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
@@ -1338,8 +1347,11 @@ class BattleshipClient {
         // Use correct attack grid position (must match drawGrids)
         const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
-        const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
-        const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
+        
+        // Calculate grid coordinates with proper rounding to match visual grid
+        const cellSize = this.gridSize + this.gridSpacing;
+        const gridX = Math.round((mouseX - attackGridX) / cellSize);
+        const gridY = Math.round((mouseY - attackGridY) / cellSize);
         
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
