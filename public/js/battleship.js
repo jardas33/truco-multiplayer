@@ -766,8 +766,8 @@ class BattleshipClient {
             // Set canvas background to transparent
             this.canvas.style('background', 'transparent');
             this.canvas.style('display', 'block');
-            this.canvas.style('position', 'absolute');
-            this.canvas.style('top', '100px'); // Move canvas down to avoid menu buttons
+            this.canvas.style('position', 'relative');
+            this.canvas.style('top', '0');
             this.canvas.style('left', '0');
             this.canvas.style('z-index', '1');
             
@@ -944,11 +944,11 @@ class BattleshipClient {
     
     drawGrids() {
         // Draw player grid (centered)
-        const fleetGridX = this.gridStartX + 100; // Center the fleet grid
+        const fleetGridX = this.gridStartX + 50; // Center the fleet grid more
         this.drawGrid(fleetGridX, this.gridStartY, 0, true);
         
         // Draw attack grid (right side)
-        const attackGridX = this.gridStartX + 500; // Position attack grid on the right
+        const attackGridX = this.gridStartX + 400; // Position attack grid on the right
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -1400,11 +1400,11 @@ function drawBasicGrids() {
     const gridStartY = 300; // Fixed positioning
     
     // Draw player grid (centered)
-    const fleetGridX = gridStartX + 100; // Center the fleet grid
+    const fleetGridX = gridStartX + 50; // Center the fleet grid more
     drawBasicGrid(fleetGridX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
     // Draw attack grid (right side)
-    const attackGridX = gridStartX + 500; // Position attack grid on the right
+    const attackGridX = gridStartX + 400; // Position attack grid on the right
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
