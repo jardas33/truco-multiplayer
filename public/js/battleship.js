@@ -663,6 +663,11 @@ class BattleshipGame {
         this.initializeGame();
     }
     
+    // Add cleanup method for the client
+    cleanup() {
+        this.cleanupEventListeners();
+    }
+    
     // Ship placement methods
     startShipPlacement(shipIndex) {
         console.log('🚢 startShipPlacement called with index:', shipIndex);
@@ -890,13 +895,22 @@ class BattleshipClient {
             loop();
         });
         
-        // Add keyboard event listeners
-        document.addEventListener('keydown', (e) => {
+        // Add keyboard event listeners with proper cleanup
+        this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
                 // Restart loop to handle keyboard events
                 loop();
             }
-        });
+        };
+        document.addEventListener('keydown', this.keydownHandler);
+    }
+    
+    cleanupEventListeners() {
+        // Remove keyboard event listener to prevent memory leaks
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler);
+            this.keydownHandler = null;
+        }
     }
     
     draw() {
@@ -1010,7 +1024,7 @@ class BattleshipClient {
             stroke(200, 200, 200);
             strokeWeight(1);
         } else if (showShips && cell.ship) {
-            // Only draw ship if this is the first cell of the ship
+            // Draw ship on all cells it occupies
             if (cell.ship.isFirstCell) {
                 const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
                 const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
@@ -1030,8 +1044,11 @@ class BattleshipClient {
                 strokeWeight(1);
                 rect(x, y, shipWidth, shipHeight);
             } else {
-                // For non-first cells, just draw a subtle indicator
-                fill(40, 40, 40, 100);
+                // For non-first cells, draw a subtle ship indicator
+                fill(cell.ship.color + '80'); // Add transparency
+                stroke(cell.ship.color);
+                strokeWeight(1);
+                rect(x, y, this.gridSize, this.gridSize);
             }
         } else {
             // Water with high contrast for visibility
@@ -1156,6 +1173,14 @@ class BattleshipClient {
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
             const ship = this.game.currentShip;
             const orientation = ship.orientation || 'horizontal';
+            
+            // Check if ship would fit within bounds
+            const wouldFit = orientation === 'horizontal' ? 
+                (gridX + ship.size <= 10) : 
+                (gridY + ship.size <= 10);
+            
+            if (!wouldFit) return; // Don't draw preview if ship would go out of bounds
+            
             const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
             
             // Draw preview cells with better visibility
@@ -1310,8 +1335,8 @@ class BattleshipClient {
     }
     
     handleAttack() {
-        // Use correct attack grid position (side by side with much wider gap)
-        const attackGridX = this.gridStartX + 600; // Much wider gap between grids
+        // Use correct attack grid position (must match drawGrids)
+        const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
         const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
         const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
