@@ -1101,16 +1101,17 @@ class BattleshipClient {
     }
     
     drawShipOnGrid(ship, player) {
-        const gridX = this.gridStartX;
-        const gridY = this.gridStartY;
+        // Use the correct grid position for the fleet grid
+        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
+        const fleetGridY = this.gridStartY;
         
         // Draw ship on the grid
         fill(0, 255, 0, 150); // Green with transparency
         stroke(0, 255, 0);
         strokeWeight(2);
         
-        const cellX = gridX + ship.x * (this.gridSize + this.gridSpacing);
-        const cellY = gridY + ship.y * (this.gridSize + this.gridSpacing);
+        const cellX = fleetGridX + ship.x * (this.gridSize + this.gridSpacing);
+        const cellY = fleetGridY + ship.y * (this.gridSize + this.gridSpacing);
         
         if (ship.orientation === 'horizontal') {
             rect(cellX, cellY, ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing, this.gridSize);
@@ -1122,15 +1123,19 @@ class BattleshipClient {
     drawShipPreview() {
         if (!this.game.currentShip) return;
         
+        // Use the correct fleet grid position
+        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
+        const fleetGridY = this.gridStartY;
+        
         // Don't draw preview if mouse is at origin (0,0) - likely not moved yet
         if (mouseX === 0 && mouseY === 0) return;
         
-        // Don't draw preview if mouse is outside the grid area
-        if (mouseX < this.gridStartX || mouseX > this.gridStartX + 420 || 
-            mouseY < this.gridStartY || mouseY > this.gridStartY + 420) return;
+        // Don't draw preview if mouse is outside the fleet grid area
+        if (mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
+            mouseY < fleetGridY || mouseY > fleetGridY + 420) return;
         
-        const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
-        const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+        const gridX = Math.floor((mouseX - fleetGridX) / (this.gridSize + this.gridSpacing));
+        const gridY = Math.floor((mouseY - fleetGridY) / (this.gridSize + this.gridSpacing));
         
         // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
         
@@ -1140,8 +1145,8 @@ class BattleshipClient {
             const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
             
             // Draw preview cells with better visibility
-            const startX = this.gridStartX + gridX * (this.gridSize + this.gridSpacing);
-            const startY = this.gridStartY + gridY * (this.gridSize + this.gridSpacing);
+            const startX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
+            const startY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
             
             if (window.shipImages && window.shipImages[ship.type]) {
                 // Draw ship as one continuous image
@@ -1165,8 +1170,8 @@ class BattleshipClient {
                     const previewY = gridY + (orientation === 'vertical' ? i : 0);
                     
                     if (previewX < 10 && previewY < 10) {
-                        const cellX = this.gridStartX + previewX * (this.gridSize + this.gridSpacing);
-                        const cellY = this.gridStartY + previewY * (this.gridSize + this.gridSpacing);
+                        const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
+                        const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
                         
                         fill(ship.color + 'B4'); // Add alpha to hex color
                         stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
@@ -1265,13 +1270,17 @@ class BattleshipClient {
     }
     
     handleShipPlacement() {
-        const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
-        const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+        // Use the correct fleet grid position
+        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
+        const fleetGridY = this.gridStartY;
         
-        // Only handle clicks on the player grid (top grid)
+        const gridX = Math.floor((mouseX - fleetGridX) / (this.gridSize + this.gridSpacing));
+        const gridY = Math.floor((mouseY - fleetGridY) / (this.gridSize + this.gridSpacing));
+        
+        // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
-            mouseX >= this.gridStartX && mouseX < this.gridStartX + 420 && 
-            mouseY >= this.gridStartY && mouseY < this.gridStartY + 420) {
+            mouseX >= fleetGridX && mouseX < fleetGridX + 420 && 
+            mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
             if (this.game.currentShip) {
                 const shipName = this.game.currentShip.name;
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
