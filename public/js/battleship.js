@@ -279,6 +279,7 @@ class BattleshipGame {
     }
     
     startGame() {
+        console.log('🚀 Start game clicked! Placed ships:', this.placedShips[0].length);
         if (this.placedShips[0].length !== 5) {
             this.addToHistory('❌ Please place all ships before starting!', 'error');
             return;
@@ -289,6 +290,7 @@ class BattleshipGame {
         this.addToHistory('🚀 Battle started! Your turn to attack!', 'success');
         this.updateUI();
         this.setupAIShips();
+        console.log('✅ Game started successfully!');
     }
     
     setupAIShips() {
@@ -804,7 +806,12 @@ class BattleshipClient {
         // Start game button
         const startBtn = document.getElementById('startGameBtn');
         if (startBtn) {
-            startBtn.addEventListener('click', () => this.game.startGame());
+            startBtn.addEventListener('click', () => {
+                console.log('🎮 Start button clicked!');
+                this.game.startGame();
+            });
+        } else {
+            console.log('❌ Start button not found!');
         }
         
         // Reset game button
@@ -911,12 +918,18 @@ class BattleshipClient {
     drawMouseHover() {
         // Draw hover effect on grids
         if (this.game.gamePhase === 'placement') {
-            const gridX = Math.floor((mouseX - this.gridStartX) / (this.gridSize + this.gridSpacing));
-            const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+            // Use the correct fleet grid position
+            const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
+            const fleetGridY = this.gridStartY;
             
-            if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX < this.gridStartX + 500) {
-                const cellX = this.gridStartX + gridX * (this.gridSize + this.gridSpacing);
-                const cellY = this.gridStartY + gridY * (this.gridSize + this.gridSpacing);
+            const gridX = Math.floor((mouseX - fleetGridX) / (this.gridSize + this.gridSpacing));
+            const gridY = Math.floor((mouseY - fleetGridY) / (this.gridSize + this.gridSpacing));
+            
+            if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
+                mouseX >= fleetGridX && mouseX < fleetGridX + 420 && 
+                mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
+                const cellX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
+                const cellY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
                 
                 // Draw hover highlight
                 fill(255, 255, 255, 50);
@@ -925,13 +938,14 @@ class BattleshipClient {
                 rect(cellX, cellY, this.gridSize, this.gridSize);
             }
         } else if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 0) {
-            const attackGridX = this.gridStartX + 600; // Fixed to match actual attack grid position
+            const attackGridX = this.gridStartX + 500; // Fixed to match actual attack grid position
+            const attackGridY = this.gridStartY;
             const gridX = Math.floor((mouseX - attackGridX) / (this.gridSize + this.gridSpacing));
-            const gridY = Math.floor((mouseY - this.gridStartY) / (this.gridSize + this.gridSpacing));
+            const gridY = Math.floor((mouseY - attackGridY) / (this.gridSize + this.gridSpacing));
             
             if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX >= attackGridX) {
                 const cellX = attackGridX + gridX * (this.gridSize + this.gridSpacing);
-                const cellY = this.gridStartY + gridY * (this.gridSize + this.gridSpacing);
+                const cellY = attackGridY + gridY * (this.gridSize + this.gridSpacing);
                 
                 // Draw hover highlight
                 fill(255, 255, 255, 50);
