@@ -1409,6 +1409,12 @@ class BattleshipClient {
         console.log(`🎯 Calculated - gridX: ${gridX}, gridY: ${gridY}`);
         console.log(`🎯 Cell Size: ${cellSize}`);
         
+        // Calculate what the actual cell position should be
+        const expectedCellX = attackGridX + gridX * cellSize;
+        const expectedCellY = attackGridY + gridY * cellSize;
+        console.log(`🎯 Expected cell position - X: ${expectedCellX}, Y: ${expectedCellY}`);
+        console.log(`🎯 Mouse offset from cell - X: ${mouseX - expectedCellX}, Y: ${mouseY - expectedCellY}`);
+        
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
             mouseX >= attackGridX && mouseX < attackGridX + 420 && 
