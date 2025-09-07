@@ -721,8 +721,8 @@ class BattleshipClient {
     constructor() {
         this.game = new BattleshipGame();
         this.canvas = null;
-        this.gridSize = 50; // Increased from 40 to 50
-        this.gridSpacing = 3; // Increased from 2 to 3
+        this.gridSize = 35; // Smaller grid size for better fit
+        this.gridSpacing = 2; // Smaller spacing for better fit
         this.gridStartX = 0;
         this.gridStartY = 0;
         this.isDragging = false;
@@ -758,8 +758,8 @@ class BattleshipClient {
             canvasDiv.style.visibility = 'visible';
             
             // Create responsive canvas with better sizing
-            const canvasWidth = Math.min(1400, windowWidth - 30);
-            const canvasHeight = Math.min(1000, windowHeight - 10);
+            const canvasWidth = Math.min(1200, windowWidth - 100);
+            const canvasHeight = Math.min(800, windowHeight - 200);
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
@@ -768,17 +768,19 @@ class BattleshipClient {
             this.canvas.style('max-width', '100%');
             this.canvas.style('height', 'auto');
             this.canvas.style('display', 'block');
-            this.canvas.style('position', 'relative');
-            this.canvas.style('z-index', '10');
+            this.canvas.style('position', 'absolute');
+            this.canvas.style('top', '0');
+            this.canvas.style('left', '0');
+            this.canvas.style('z-index', '1');
             
             console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
             console.log('🎨 Canvas parent div:', canvasDiv);
             console.log('🎨 Canvas element:', this.canvas);
             console.log('🎨 Canvas parent display style:', canvasDiv.style.display);
             
-            // Calculate grid positions - ensure grids fit within canvas with wider spacing
-            this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50));
-            this.gridStartY = Math.min(350, canvasHeight - 550);
+            // Calculate grid positions - ensure grids fit within canvas with proper spacing
+            this.gridStartX = 50;
+            this.gridStartY = 100;
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
@@ -1242,13 +1244,14 @@ class BattleshipClient {
             mouseX >= this.gridStartX && mouseX < this.gridStartX + 420 && 
             mouseY >= this.gridStartY && mouseY < this.gridStartY + 420) {
             if (this.game.currentShip) {
+                const shipName = this.game.currentShip.name;
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
-                    console.log(`✅ Placed ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
+                    console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Ship placement successful - restart loop to show updated grid
                     loop();
                 } else {
-                    console.log(`❌ Cannot place ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
+                    console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
             }
         }
@@ -1362,8 +1365,8 @@ function draw() {
 }
 
 function drawBasicGrids() {
-    const gridSize = 50; // Increased from 40 to 50
-    const gridSpacing = 3; // Increased from 2 to 3
+    const gridSize = 35; // Smaller grid size for better fit
+    const gridSpacing = 2; // Smaller spacing for better fit
     const gridStartX = Math.max(30, Math.min(windowWidth - 1200, 50)); // Ensure grids fit with wider spacing
     const gridStartY = Math.min(350, windowHeight - 550); // Ensure grids fit with larger canvas
     
