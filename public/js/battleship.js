@@ -944,11 +944,11 @@ class BattleshipClient {
     
     drawGrids() {
         // Draw player grid (centered)
-        const fleetGridX = this.gridStartX + 50; // Center the fleet grid more
+        const fleetGridX = this.gridStartX + 80; // Center the fleet grid at X=80
         this.drawGrid(fleetGridX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side)
-        const attackGridX = this.gridStartX + 400; // Position attack grid on the right
+        // Draw attack grid (far right side)
+        const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -1400,11 +1400,11 @@ function drawBasicGrids() {
     const gridStartY = 300; // Fixed positioning
     
     // Draw player grid (centered)
-    const fleetGridX = gridStartX + 50; // Center the fleet grid more
+    const fleetGridX = gridStartX + 80; // Center the fleet grid at X=80
     drawBasicGrid(fleetGridX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side)
-    const attackGridX = gridStartX + 400; // Position attack grid on the right
+    // Draw attack grid (far right side)
+    const attackGridX = gridStartX + 500; // Position attack grid far to the right
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
