@@ -23,14 +23,28 @@
     <link rel="stylesheet" href="css/lobby-fixes.css">
     <style>
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
             background: url('Images/battleships.png') center center fixed;
             background-size: cover;
             font-family: 'Arial', sans-serif;
             overflow-x: hidden;
             overflow-y: auto;
             min-height: 100vh;
+        }
+        
+        html {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Force no space at top of page */
+        * {
+            box-sizing: border-box;
+        }
+        
+        .menu-buttons {
+            top: 0px !important;
         }
 
         #gameContainer {
@@ -41,7 +55,8 @@
             align-items: flex-start;
             justify-content: flex-start;
             z-index: 1000;
-            padding: 0;
+            padding: 0 !important;
+            margin: 0 !important;
             max-width: 100vw;
             overflow-x: hidden;
         }
@@ -84,9 +99,10 @@
             font-weight: bold;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
             margin: 0;
+            padding: 0;
             text-align: center;
             position: absolute;
-            top: 60px;
+            top: 50px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1001;
@@ -97,10 +113,11 @@
             color: #ffffff;
             font-size: 1.1em;
             margin: 0;
+            padding: 0;
             text-align: center;
             opacity: 0.9;
             position: absolute;
-            top: 100px;
+            top: 85px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1001;
@@ -109,13 +126,15 @@
 
         .menu-buttons {
             position: absolute;
-            top: 20px;
+            top: 5px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 10px;
             z-index: 1001;
             width: auto;
+            margin: 0;
+            padding: 0;
         }
 
         .menu-btn {
