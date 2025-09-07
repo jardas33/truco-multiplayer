@@ -1027,13 +1027,14 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Center the fleet grid at X=80
         this.drawGrid(fleetGridX, this.gridStartY, 0, true);
         
-        // Draw attack grid (far right side)
+        // Draw attack grid (far right side) - MUST match drawBasicGrids exactly
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
         // Debug grid positions
         console.log(`🎨 Drawing grids - fleetGridX: ${fleetGridX}, attackGridX: ${attackGridX}, gridStartY: ${this.gridStartY}`);
+        console.log(`🎨 Grid dimensions - gridSize: ${this.gridSize}, gridSpacing: ${this.gridSpacing}`);
         
         // Draw grid titles with better visibility
         noStroke();
@@ -1535,10 +1536,13 @@ function drawBasicGrids() {
     const fleetGridX = gridStartX + 80; // Center the fleet grid at X=80
     drawBasicGrid(fleetGridX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (far right side)
+    // Draw attack grid (far right side) - MUST match BattleshipClient exactly
     const attackGridX = gridStartX + 500; // Position attack grid far to the right
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
+    
+    // Debug to ensure coordinates match
+    console.log(`🎨 drawBasicGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridSize: ${gridSize}, gridSpacing: ${gridSpacing}`);
     
 }
 
