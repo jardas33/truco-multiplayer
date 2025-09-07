@@ -108,31 +108,47 @@
         }
 
         .menu-buttons {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: inline-flex;
-            gap: 10px;
+            position: fixed !important;
+            top: 10px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            display: inline-block !important;
             z-index: 1001;
-            width: auto;
-            max-width: none;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         .menu-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 6px 12px !important;
+            border: none !important;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
             color: white;
-            display: inline-block;
-            margin: 0;
-            flex-shrink: 0;
+            display: inline-block !important;
+            margin: 0 2px !important;
             white-space: nowrap;
+            line-height: 1;
+            box-sizing: border-box;
+        }
+        
+        /* Ensure no interference with button area */
+        .menu-buttons * {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Force button container to be minimal */
+        .menu-buttons {
+            min-width: 0 !important;
+            min-height: 0 !important;
+            max-width: none !important;
+            max-height: none !important;
         }
 
         .back-btn {
