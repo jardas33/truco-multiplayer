@@ -112,17 +112,18 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
+            display: inline-flex;
+            gap: 10px;
             z-index: 1001;
-            width: fit-content;
+            width: auto;
+            max-width: none;
         }
 
         .menu-btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -131,6 +132,7 @@
             display: inline-block;
             margin: 0;
             flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .back-btn {
@@ -293,8 +295,10 @@
         }
 
         .game-history {
-            position: relative;
-            width: 100%;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
             height: 200px;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #FFD700;
@@ -303,7 +307,7 @@
             color: white;
             overflow-y: auto;
             backdrop-filter: blur(10px);
-            margin-top: 20px;
+            z-index: 1000;
         }
 
         .history-title {
@@ -438,19 +442,20 @@
                 <button class="control-btn reset-btn" id="resetGameBtn">Reset Game</button>
             </div>
 
-            <!-- Game History -->
-            <div class="game-history">
-                <div class="history-title">Battle Log</div>
-                <div id="historyContent">
-                    <div class="history-entry">Welcome to Battleship! Place your ships to begin.</div>
-                </div>
-            </div>
         </div>
 
         <!-- Right Panel - Game Canvas -->
         <div class="right-panel">
             <!-- Game Canvas -->
             <div id="gameCanvas"></div>
+        </div>
+    </div>
+
+    <!-- Battle Log - Fixed to bottom right -->
+    <div class="game-history">
+        <div class="history-title">Battle Log</div>
+        <div id="historyContent">
+            <div class="history-entry">Welcome to Battleship! Place your ships to begin.</div>
         </div>
     </div>
 
