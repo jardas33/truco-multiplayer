@@ -1032,6 +1032,9 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
+        // Debug grid positions
+        console.log(`🎨 Drawing grids - fleetGridX: ${fleetGridX}, attackGridX: ${attackGridX}, gridStartY: ${this.gridStartY}`);
+        
         // Draw grid titles with better visibility
         noStroke();
         fill(255, 255, 0); // Yellow titles
@@ -1399,6 +1402,12 @@ class BattleshipClient {
         const cellSize = this.gridSize + this.gridSpacing;
         const gridX = Math.floor((mouseX - attackGridX) / cellSize);
         const gridY = Math.floor((mouseY - attackGridY) / cellSize);
+        
+        // Debug coordinate calculation
+        console.log(`🎯 Click Debug - mouseX: ${mouseX}, mouseY: ${mouseY}`);
+        console.log(`🎯 Grid Position - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}`);
+        console.log(`🎯 Calculated - gridX: ${gridX}, gridY: ${gridY}`);
+        console.log(`🎯 Cell Size: ${cellSize}`);
         
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
