@@ -97,7 +97,12 @@ function createCanvasSafely() {
     }
     if (gameDiv) {
         gameDiv.removeClass('active');
-        gameDiv.style('display', 'none');
+        // Don't hide gameDiv for battleship - it's the gameCanvas container
+        if (currentPath !== '/battleship') {
+            gameDiv.style('display', 'none');
+        } else {
+            gameDiv.style('display', 'block'); // Make sure battleship canvas is visible
+        }
     }
     if (instructionsDiv) {
         instructionsDiv.removeClass('active');

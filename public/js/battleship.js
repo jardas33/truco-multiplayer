@@ -753,6 +753,10 @@ class BattleshipClient {
         canvasDiv.innerHTML = '';
         
         try {
+            // Ensure the canvas container is visible
+            canvasDiv.style.display = 'block';
+            canvasDiv.style.visibility = 'visible';
+            
             // Create responsive canvas with better sizing
             const canvasWidth = Math.min(1400, windowWidth - 30);
             const canvasHeight = Math.min(1000, windowHeight - 10);
@@ -770,6 +774,7 @@ class BattleshipClient {
             console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
             console.log('🎨 Canvas parent div:', canvasDiv);
             console.log('🎨 Canvas element:', this.canvas);
+            console.log('🎨 Canvas parent display style:', canvasDiv.style.display);
             
             // Calculate grid positions - ensure grids fit within canvas with wider spacing
             this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50));
