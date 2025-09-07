@@ -764,6 +764,12 @@ class BattleshipClient {
             this.canvas.style('max-width', '100%');
             this.canvas.style('height', 'auto');
             this.canvas.style('display', 'block');
+            this.canvas.style('position', 'relative');
+            this.canvas.style('z-index', '10');
+            
+            console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
+            console.log('🎨 Canvas parent div:', canvasDiv);
+            console.log('🎨 Canvas element:', this.canvas);
             
             // Calculate grid positions - ensure grids fit within canvas with wider spacing
             this.gridStartX = Math.max(30, Math.min(canvasWidth - 1200, 50));
@@ -773,8 +779,7 @@ class BattleshipClient {
             // Set up event listeners after canvas is ready
             this.setupCanvasEventListeners();
             
-            // Force immediate redraw
-            redraw();
+            // Canvas is ready for drawing
             
             console.log('✅ Canvas initialized successfully:', this.canvas);
             console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
@@ -846,8 +851,7 @@ class BattleshipClient {
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
                     
-                    // Force redraw after resize
-                    redraw();
+                    // Canvas resized successfully
                 }
             }, 100); // 100ms debounce
         });
@@ -860,19 +864,19 @@ class BattleshipClient {
             return;
         }
         
-        // Add mouse event listeners to trigger redraw
+        // Add mouse event listeners (no need to call redraw() as p5.js handles this automatically)
         this.canvas.mouseMoved(() => {
-            redraw();
+            // Mouse movement is handled by the draw loop automatically
         });
         
         this.canvas.mousePressed(() => {
-            redraw();
+            // Mouse press is handled by the draw loop automatically
         });
         
         // Add keyboard event listeners
         document.addEventListener('keydown', (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                redraw();
+                // Keyboard events are handled by the draw loop automatically
             }
         });
     }
@@ -881,7 +885,6 @@ class BattleshipClient {
         if (!this.initialized) return;
         
         // Draw grids with high visibility
-        console.log('🎨 Drawing grids...');
         this.drawGrids();
         this.drawShips();
         this.drawUI();
@@ -923,6 +926,7 @@ class BattleshipClient {
     }
     
     drawGrids() {
+        console.log('🎨 drawGrids called - gridStartX:', this.gridStartX, 'gridStartY:', this.gridStartY);
         
         // Draw player grid (left side)
         this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
@@ -940,11 +944,13 @@ class BattleshipClient {
         text('Your Fleet', this.gridStartX + 200, this.gridStartY - 40);
         text('Attack Grid', attackGridX + 200, attackGridY - 40);
         
-        // Debug info removed for cleaner look
+        console.log('🎨 Grids drawn successfully');
     }
     
     drawGrid(x, y, player, showShips) {
         const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
+        
+        console.log('🎨 drawGrid called - x:', x, 'y:', y, 'player:', player, 'showShips:', showShips);
         
         // Draw grid background with high contrast to make it visible
         fill(0, 0, 0, 250); // Very dark background with high opacity
@@ -963,6 +969,8 @@ class BattleshipClient {
         
         // Draw grid labels
         this.drawGridLabels(x, y);
+        
+        console.log('🎨 drawGrid completed for player', player);
     }
     
     drawCell(x, y, cell, showShips) {
@@ -1228,8 +1236,7 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
-                    // Force redraw after successful placement
-                    redraw();
+                    // Ship placement successful - draw loop will handle redraw
                 } else {
                     console.log(`❌ Cannot place ${this.game.currentShip.name} at (${gridX}, ${gridY})`);
                 }
@@ -1253,8 +1260,7 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Force redraw after attack
-                redraw();
+                // Attack completed - draw loop will handle redraw
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
@@ -1265,12 +1271,12 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                redraw(); // Force redraw after rotation
+                // Ship rotated - draw loop will handle redraw
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                redraw(); // Force redraw after cancellation
+                // Ship placement cancelled - draw loop will handle redraw
             }
         }
     }
@@ -1314,12 +1320,10 @@ function draw() {
     // console.log('🎨 Global draw() called - battleshipClient:', battleshipClient, 'initialized:', battleshipClient?.initialized);
     
     if (battleshipClient && battleshipClient.initialized) {
-        console.log('🎨 Drawing with battleshipClient...');
         battleshipClient.draw();
     } else {
         // Draw basic grids even without full client
         if (typeof drawBasicGrids === 'function') {
-            console.log('🎨 Drawing basic grids...');
             drawBasicGrids();
         } else {
             console.log('❌ drawBasicGrids function not found!');
