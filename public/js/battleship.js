@@ -526,6 +526,10 @@ class BattleshipGame {
     aiTurn() {
         if (this.gamePhase !== 'playing' || this.currentPlayer !== 1 || this.gameOver) return;
         
+        // Show AI thinking message
+        this.addToHistory('🤖 AI is thinking...', 'info');
+        this.showGameMessage('🤖 AI is choosing target...', 1000);
+        
         let x, y;
         
         if (this.aiMode === 'hunt') {
@@ -571,6 +575,10 @@ class BattleshipGame {
             }
         }
         
+        // Show AI attack message
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        this.addToHistory(`🤖 AI attacks ${letters[y]}${x + 1}`, 'info');
+        
         const result = this.attack(1, x, y);
         
         if (result.hit) {
@@ -579,8 +587,10 @@ class BattleshipGame {
             this.aiHits.push({ x, y });
             
             if (!result.sunk) {
-                // Continue targeting if not sunk
-                setTimeout(() => this.aiTurn(), 1500);
+                // Continue targeting if not sunk - but only if it's still AI's turn
+                if (this.currentPlayer === 1 && this.gamePhase === 'playing') {
+                    setTimeout(() => this.aiTurn(), 2000);
+                }
             } else {
                 // Ship sunk, go back to hunt mode
                 this.aiMode = 'hunt';
@@ -922,11 +932,46 @@ class BattleshipClient {
         // Draw grids with high visibility
         this.drawGrids();
         this.drawShips();
-        this.drawUI();
+        this.drawTurnIndicator();
         this.drawMouseHover();
         
         // Stop the loop after drawing - we'll restart it when needed
         noLoop();
+    }
+    
+    drawTurnIndicator() {
+        const fleetGridX = this.gridStartX + 80;
+        const attackGridX = this.gridStartX + 500;
+        const gridY = this.gridStartY + 350; // Below the grids
+        
+        // Draw turn indicator background
+        fill(0, 0, 0, 200);
+        stroke(255, 255, 0);
+        strokeWeight(2);
+        rect(fleetGridX - 10, gridY, 420, 40);
+        rect(attackGridX - 10, gridY, 420, 40);
+        
+        // Draw turn text
+        fill(255, 255, 255);
+        textAlign(CENTER, CENTER);
+        textSize(16);
+        
+        if (this.game.gamePhase === 'playing') {
+            if (this.game.currentPlayer === 0) {
+                text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
+                text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
+            } else {
+                text('🤖 AI TURN - AI is attacking...', attackGridX + 200, gridY + 20);
+                text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
+            }
+        } else if (this.game.gamePhase === 'placement') {
+            text('⚓ Place your ships!', attackGridX + 200, gridY + 20);
+            text('📋 Your Fleet', fleetGridX + 200, gridY + 20);
+        } else if (this.game.gamePhase === 'finished') {
+            const winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 AI WON!';
+            text(winnerText, attackGridX + 200, gridY + 20);
+            text(winnerText, fleetGridX + 200, gridY + 20);
+        }
     }
     
     drawMouseHover() {
@@ -1357,7 +1402,17 @@ class BattleshipClient {
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
             mouseX >= attackGridX && mouseX < attackGridX + 420 && 
             mouseY >= attackGridY && mouseY < attackGridY + 420 && 
-            this.game.currentPlayer === 0) {
+            this.game.currentPlayer === 0 && this.game.gamePhase === 'playing') {
+            
+            // Check if this position has already been attacked
+            if (this.game.attackGrids[0][gridY][gridX].hit || this.game.attackGrids[0][gridY][gridX].miss) {
+                this.game.addToHistory('❌ You already attacked this position!', 'error');
+                return;
+            }
+            
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+            this.game.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
+            
             const result = this.game.attack(0, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
