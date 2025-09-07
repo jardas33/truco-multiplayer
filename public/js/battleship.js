@@ -778,7 +778,7 @@ class BattleshipClient {
             
             // Calculate grid positions - ensure grids fit within canvas with proper spacing
             this.gridStartX = 20;
-            this.gridStartY = 200;
+            this.gridStartY = 300;
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
@@ -855,7 +855,7 @@ class BattleshipClient {
                     
                     // Recalculate grid positions - keep consistent positioning
                     this.gridStartX = 20;
-                    this.gridStartY = 200;
+                    this.gridStartY = 300;
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
                     
@@ -943,11 +943,12 @@ class BattleshipClient {
     }
     
     drawGrids() {
-        // Draw player grid (left side)
-        this.drawGrid(this.gridStartX, this.gridStartY, 0, true);
+        // Draw player grid (centered)
+        const fleetGridX = this.gridStartX + 100; // Center the fleet grid
+        this.drawGrid(fleetGridX, this.gridStartY, 0, true);
         
-        // Draw attack grid (right side) - side by side with smaller gap
-        const attackGridX = this.gridStartX + 400; // Smaller gap between grids
+        // Draw attack grid (right side)
+        const attackGridX = this.gridStartX + 500; // Position attack grid on the right
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
@@ -956,7 +957,7 @@ class BattleshipClient {
         fill(255, 255, 0); // Yellow titles
         textAlign(CENTER, CENTER);
         textSize(22); // Much larger titles
-        text('Your Fleet', this.gridStartX + 200, this.gridStartY - 40);
+        text('Your Fleet', fleetGridX + 150, this.gridStartY - 40);
         text('Attack Grid', attackGridX + 200, attackGridY - 40);
     }
     
@@ -1396,13 +1397,14 @@ function drawBasicGrids() {
     const gridSize = 30; // Smaller grid size for better fit
     const gridSpacing = 1; // Smaller spacing for better fit
     const gridStartX = 20; // Fixed positioning
-    const gridStartY = 200; // Fixed positioning
+    const gridStartY = 300; // Fixed positioning
     
-    // Draw player grid (left side)
-    drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
+    // Draw player grid (centered)
+    const fleetGridX = gridStartX + 100; // Center the fleet grid
+    drawBasicGrid(fleetGridX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
     
-    // Draw attack grid (right side) - side by side with smaller gap
-    const attackGridX = gridStartX + 400; // Smaller gap between grids
+    // Draw attack grid (right side)
+    const attackGridX = gridStartX + 500; // Position attack grid on the right
     const attackGridY = gridStartY; // Same Y position
     drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
     
