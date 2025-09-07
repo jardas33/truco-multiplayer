@@ -780,7 +780,7 @@ class BattleshipClient {
             
             // Calculate grid positions - ensure grids fit within canvas with proper spacing
             this.gridStartX = 50;
-            this.gridStartY = 100;
+            this.gridStartY = 200;
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
@@ -855,9 +855,9 @@ class BattleshipClient {
                     // Resize canvas
                     resizeCanvas(newWidth, newHeight);
                     
-                    // Recalculate grid positions
-                    this.gridStartX = Math.max(30, Math.min(newWidth - 1200, 50));
-                    this.gridStartY = Math.min(350, newHeight - 550);
+                    // Recalculate grid positions - keep consistent positioning
+                    this.gridStartX = 50;
+                    this.gridStartY = 200;
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
                     
@@ -1087,6 +1087,36 @@ class BattleshipClient {
         // Draw ships being placed
         if (this.game.currentShip) {
             this.drawShipPreview();
+        }
+        
+        // Draw placed ships on the player grid
+        this.drawPlacedShips();
+    }
+    
+    drawPlacedShips() {
+        // Draw all placed ships on the player grid
+        for (let i = 0; i < this.game.placedShips[0].length; i++) {
+            const ship = this.game.placedShips[0][i];
+            this.drawShipOnGrid(ship, 0);
+        }
+    }
+    
+    drawShipOnGrid(ship, player) {
+        const gridX = this.gridStartX;
+        const gridY = this.gridStartY;
+        
+        // Draw ship on the grid
+        fill(0, 255, 0, 150); // Green with transparency
+        stroke(0, 255, 0);
+        strokeWeight(2);
+        
+        const cellX = gridX + ship.x * (this.gridSize + this.gridSpacing);
+        const cellY = gridY + ship.y * (this.gridSize + this.gridSpacing);
+        
+        if (ship.orientation === 'horizontal') {
+            rect(cellX, cellY, ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing, this.gridSize);
+        } else {
+            rect(cellX, cellY, this.gridSize, ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing);
         }
     }
     
@@ -1367,8 +1397,8 @@ function draw() {
 function drawBasicGrids() {
     const gridSize = 35; // Smaller grid size for better fit
     const gridSpacing = 2; // Smaller spacing for better fit
-    const gridStartX = Math.max(30, Math.min(windowWidth - 1200, 50)); // Ensure grids fit with wider spacing
-    const gridStartY = Math.min(350, windowHeight - 550); // Ensure grids fit with larger canvas
+    const gridStartX = 50; // Fixed positioning
+    const gridStartY = 200; // Fixed positioning
     
     // Draw player grid (left side)
     drawBasicGrid(gridStartX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
