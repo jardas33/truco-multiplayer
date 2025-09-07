@@ -721,8 +721,8 @@ class BattleshipClient {
     constructor() {
         this.game = new BattleshipGame();
         this.canvas = null;
-        this.gridSize = 35; // Smaller grid size for better fit
-        this.gridSpacing = 2; // Smaller spacing for better fit
+        this.gridSize = 30; // Smaller grid size for better fit
+        this.gridSpacing = 1; // Smaller spacing for better fit
         this.gridStartX = 0;
         this.gridStartY = 0;
         this.isDragging = false;
@@ -758,18 +758,16 @@ class BattleshipClient {
             canvasDiv.style.visibility = 'visible';
             
             // Create responsive canvas with better sizing
-            const canvasWidth = Math.min(1200, windowWidth - 100);
-            const canvasHeight = Math.min(800, windowHeight - 200);
+            const canvasWidth = Math.min(1000, windowWidth - 100);
+            const canvasHeight = Math.min(600, windowHeight - 200);
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
             // Set canvas background to transparent
             this.canvas.style('background', 'transparent');
-            this.canvas.style('max-width', '100%');
-            this.canvas.style('height', 'auto');
             this.canvas.style('display', 'block');
             this.canvas.style('position', 'absolute');
-            this.canvas.style('top', '0');
+            this.canvas.style('top', '100px'); // Move canvas down to avoid menu buttons
             this.canvas.style('left', '0');
             this.canvas.style('z-index', '1');
             
@@ -1395,8 +1393,8 @@ function draw() {
 }
 
 function drawBasicGrids() {
-    const gridSize = 35; // Smaller grid size for better fit
-    const gridSpacing = 2; // Smaller spacing for better fit
+    const gridSize = 30; // Smaller grid size for better fit
+    const gridSpacing = 1; // Smaller spacing for better fit
     const gridStartX = 50; // Fixed positioning
     const gridStartY = 200; // Fixed positioning
     
