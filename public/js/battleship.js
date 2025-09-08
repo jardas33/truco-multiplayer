@@ -1551,6 +1551,12 @@ class BattleshipClient {
         console.log(`🎯 Expected cell position - X: ${expectedCellX}, Y: ${expectedCellY}`);
         console.log(`🎯 Mouse offset from cell - X: ${mouseX - expectedCellX}, Y: ${mouseY - expectedCellY}`);
         
+        // Debug: Show actual cell positions for A1, B1, A2, B2
+        console.log(`🎯 A1 should be at: (${attackGridX + 0 * cellSize}, ${attackGridY + 0 * cellSize})`);
+        console.log(`🎯 B1 should be at: (${attackGridX + 0 * cellSize}, ${attackGridY + 1 * cellSize})`);
+        console.log(`🎯 A2 should be at: (${attackGridX + 1 * cellSize}, ${attackGridY + 0 * cellSize})`);
+        console.log(`🎯 B2 should be at: (${attackGridX + 1 * cellSize}, ${attackGridY + 1 * cellSize})`);
+        
         // Convert grid coordinates to letters/numbers for debugging
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
         const clickedPosition = `${letters[gridY]}${gridX + 1}`;
