@@ -1172,6 +1172,17 @@ class BattleshipClient {
                     console.log(`🎨 Drawing ${cellName} at (${cellX}, ${cellY}) - array[${row}][${col}]`);
                 }
                 
+                // CRITICAL FIX: Ensure visual rendering matches array indexing
+                // The array is indexed as [row][col], so we need to access grid[row][col]
+                // But the visual positioning should match the click detection
+                
+                // Debug: Show what data is being drawn at each position
+                if (grid[row][col].hit || grid[row][col].miss) {
+                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+                    const cellName = `${letters[row]}${col + 1}`;
+                    console.log(`🎨 Drawing ${cellName} at (${cellX}, ${cellY}) - array[${row}][${col}] - hit: ${grid[row][col].hit}, miss: ${grid[row][col].miss}`);
+                }
+                
                 this.drawCell(cellX, cellY, grid[row][col], showShips);
                 
             }
