@@ -1174,13 +1174,6 @@ class BattleshipClient {
                 
                 this.drawCell(cellX, cellY, grid[row][col], showShips);
                 
-                // Debug: Draw clickable cell boundaries for A1, B1, A2, B2
-                if ((row === 0 && col === 0) || (row === 1 && col === 0) || (row === 0 && col === 1) || (row === 1 && col === 1)) {
-                    stroke(255, 0, 0); // Red border for debugging
-                    strokeWeight(2);
-                    noFill();
-                    rect(cellX, cellY, this.gridSize, this.gridSize);
-                }
             }
         }
         
@@ -1291,30 +1284,6 @@ class BattleshipClient {
             text(letters[i], x - 25, cellY);
         }
         
-        // Debug: Draw visual indicators for A1, B1, A2, B2 to show exact positions
-        fill(255, 0, 0); // Red for debugging
-        textSize(12);
-        textAlign(LEFT, TOP);
-        
-        // A1 indicator
-        const a1X = x + 0 * (this.gridSize + this.gridSpacing);
-        const a1Y = y + 0 * (this.gridSize + this.gridSpacing);
-        text('A1', a1X + 2, a1Y + 2);
-        
-        // B1 indicator  
-        const b1X = x + 0 * (this.gridSize + this.gridSpacing);
-        const b1Y = y + 1 * (this.gridSize + this.gridSpacing);
-        text('B1', b1X + 2, b1Y + 2);
-        
-        // A2 indicator
-        const a2X = x + 1 * (this.gridSize + this.gridSpacing);
-        const a2Y = y + 0 * (this.gridSize + this.gridSpacing);
-        text('A2', a2X + 2, a2Y + 2);
-        
-        // B2 indicator
-        const b2X = x + 1 * (this.gridSize + this.gridSpacing);
-        const b2Y = y + 1 * (this.gridSize + this.gridSpacing);
-        text('B2', b2X + 2, b2Y + 2);
     }
     
     drawShips() {

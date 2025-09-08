@@ -2121,8 +2121,7 @@ function joinRoom() {
     
     const roomCode = document.getElementById('roomInput').value;
     if (roomCode) {
-        // Che
-        // ck if we're already in this room
+        // Check if we're already in this room
         if (window.roomId === roomCode) {
             console.log('Already in room:', roomCode);
             return;
