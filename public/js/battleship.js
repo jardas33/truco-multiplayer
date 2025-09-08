@@ -1176,10 +1176,6 @@ class BattleshipClient {
                 const cellX = x + col * (this.gridSize + this.gridSpacing);
                 const cellY = y + row * (this.gridSize + this.gridSpacing);
                 
-                // Debug: Log A1 coordinates
-                if (row === 0 && col === 0) {
-                    console.log('🔍 Grid A1 cell drawn at - cellX:', cellX, 'cellY:', cellY, 'gridStartX:', x, 'gridStartY:', y);
-                }
                 
                 this.drawCell(cellX, cellY, grid[row][col], showShips);
             }
@@ -1359,7 +1355,8 @@ class BattleshipClient {
         const fleetGridY = this.gridStartY;
         
         // Calculate grid cell coordinates
-        const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
+        // Fix the 71-pixel offset by adjusting the coordinate calculation
+        const gridX = Math.floor((mouseCanvasX - fleetGridX + 71) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
         // Debug: Show preview coordinates
@@ -1514,13 +1511,12 @@ class BattleshipClient {
         console.log('🔍 handleShipPlacement - mouseX:', mouseX, 'mouseY:', mouseY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'gridStartX:', this.gridStartX, 'gridStartY:', this.gridStartY);
         
         // Calculate grid coordinates to match exactly how cells are drawn
+        // Fix the 71-pixel offset by adjusting the coordinate calculation
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
+        const gridX = Math.floor((mouseX - fleetGridX + 71) / cellSize);
         const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
         console.log('🔍 Calculated grid coordinates - gridX:', gridX, 'gridY:', gridY, 'cellSize:', cellSize);
-        console.log('🔍 For A1, expected gridX=0, but got gridX=' + gridX + '. This means there is a ' + gridX + '-column offset.');
-        console.log('🔍 A1 should be at mouseX=' + fleetGridX + ', but you clicked at mouseX=' + mouseX);
         
         // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
