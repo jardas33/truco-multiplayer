@@ -987,8 +987,8 @@ class BattleshipClient {
         noLoop();
     }
     
-    // Trigger a single draw cycle - only call when explicitly needed
-    triggerDraw() {
+    // Force a single draw cycle - only call when explicitly needed
+    forceSingleDraw() {
         if (this.initialized) {
             // Force a single draw cycle
             loop();
@@ -997,6 +997,9 @@ class BattleshipClient {
             }, 50);
         }
     }
+    
+    // REMOVED: triggerDraw() method to eliminate infinite loops
+    // NO drawing calls - grids will be updated on next draw cycle
     
     // REMOVED: forceDraw() method to eliminate infinite loops
     // NO drawing calls - grids will be updated on next draw cycle
@@ -1490,8 +1493,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Trigger draw after ship placement
-                    this.triggerDraw();
+                    // Force single draw after ship placement
+                    this.forceSingleDraw();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1583,15 +1586,15 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Trigger draw after attack
-                this.triggerDraw();
+                // Force single draw after attack
+                this.forceSingleDraw();
                 
                 // Start AI turn after a short delay
                 if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
-                        // Trigger draw after AI attack
-                        this.triggerDraw();
+                        // Force single draw after AI attack
+                        this.forceSingleDraw();
                     }, 1000);
                 }
             } else {
@@ -1604,14 +1607,14 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Trigger draw after ship rotation
-                this.triggerDraw();
+                // Force single draw after ship rotation
+                this.forceSingleDraw();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Trigger draw after cancellation
-                this.triggerDraw();
+                // Force single draw after cancellation
+                this.forceSingleDraw();
             }
         }
     }
