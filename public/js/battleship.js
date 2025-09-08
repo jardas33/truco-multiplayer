@@ -809,7 +809,7 @@ class BattleshipClient {
             console.log('🎯 Initialized flag set to:', this.initialized);
             
             // Draw the initial grids
-            loop();
+            redraw();
         } catch (error) {
             console.error('❌ Canvas creation failed:', error);
             // Retry after a short delay
@@ -896,20 +896,20 @@ class BattleshipClient {
         
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
-            // Restart loop to show hover effects
-            loop();
+            // Just redraw for hover effects - no need to restart loop
+            redraw();
         });
         
         this.canvas.mousePressed(() => {
-            // Restart loop to handle mouse clicks
-            loop();
+            // Just redraw for mouse clicks - no need to restart loop
+            redraw();
         });
         
         // Add keyboard event listeners with proper cleanup
         this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                // Restart loop to handle keyboard events
-                loop();
+                // Just redraw for keyboard events
+                redraw();
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
@@ -1372,10 +1372,9 @@ class BattleshipClient {
         const fleetGridY = this.gridStartY;
         
         // Calculate grid coordinates to match exactly how cells are drawn
-        // Apply offset correction based on debug data: 13px right, 15px down
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - fleetGridX - 13) / cellSize);
-        const gridY = Math.floor((mouseY - fleetGridY - 15) / cellSize);
+        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
+        const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
         // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
@@ -1386,8 +1385,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Ship placement successful - restart loop to show updated grid
-                    loop();
+                    // Ship placement successful - just redraw
+                    redraw();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1401,10 +1400,9 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y as player grid
         
         // Calculate grid coordinates to match exactly how cells are drawn
-        // Apply offset correction based on debug data: 13px right, 15px down
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - attackGridX - 13) / cellSize);
-        const gridY = Math.floor((mouseY - attackGridY - 15) / cellSize);
+        const gridX = Math.floor((mouseX - attackGridX) / cellSize);
+        const gridY = Math.floor((mouseY - attackGridY) / cellSize);
         
         // Debug coordinate calculation
         console.log(`🎯 Click Debug - mouseX: ${mouseX}, mouseY: ${mouseY}`);
@@ -1437,8 +1435,8 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Attack completed - restart loop to show updated grid
-                loop();
+                // Attack completed - just redraw
+                redraw();
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
@@ -1449,14 +1447,14 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Ship rotated - restart loop to show updated ship
-                loop();
+                // Ship rotated - just redraw
+                redraw();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Ship placement cancelled - restart loop to show updated state
-                loop();
+                // Ship placement cancelled - just redraw
+                redraw();
             }
         }
     }
