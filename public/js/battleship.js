@@ -1362,34 +1362,47 @@ class BattleshipClient {
         // Debug: Show preview coordinates
         console.log('🔍 Ship preview coordinates - mouseCanvasX:', mouseCanvasX, 'mouseCanvasY:', mouseCanvasY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'cellSize:', cellSize, 'gridX:', gridX, 'gridY:', gridY);
         
-        // Always draw ship preview following mouse cursor with correct size
+        // Check if the ship can be placed at the current grid position
+        const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
+        
+        // Draw preview squares snapped to grid cells (only when over the grid)
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
+            // Calculate the actual grid cell positions
+            const gridStartX = adjustedFleetGridX + gridX * cellSize;
+            const gridStartY = fleetGridY + gridY * cellSize;
+            
+            // Draw individual squares snapped to grid
+            for (let i = 0; i < ship.size; i++) {
+                let cellX = gridStartX + (orientation === 'horizontal' ? i * cellSize : 0);
+                let cellY = gridStartY + (orientation === 'vertical' ? i * cellSize : 0);
+                
+                // Use red if can't place, green if can place
+                if (canPlace) {
+                    fill(0, 255, 0, 150); // Green - can place
+                } else {
+                    fill(255, 0, 0, 150); // Red - can't place
+                }
+                stroke(255, 255, 255); // White border
+                strokeWeight(2);
+                rect(cellX, cellY, this.gridSize, this.gridSize);
+                
+                // Add ship name on first cell only
+                if (i === 0) {
+                    fill(255);
+                    textAlign(CENTER, CENTER);
+                    textSize(8);
+                    text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                }
+            }
+        }
+        
+        // Always draw ship image following mouse cursor
         const totalWidth = orientation === 'horizontal' ? ship.size * cellSize : cellSize;
         const totalHeight = orientation === 'vertical' ? ship.size * cellSize : cellSize;
         
         // Calculate the top-left corner position to center the ship on mouse cursor
         const startX = mouseCanvasX - totalWidth / 2;
         const startY = mouseCanvasY - totalHeight / 2;
-        
-        // First, draw the individual squares to show the exact grid cells
-        for (let i = 0; i < ship.size; i++) {
-            let cellX = startX + (orientation === 'horizontal' ? i * cellSize : 0);
-            let cellY = startY + (orientation === 'vertical' ? i * cellSize : 0);
-            
-            // Make preview visible with ship color
-            const shipColor = ship.color || '#FFEAA7';
-            fill(red(shipColor), green(shipColor), blue(shipColor), 150); // Semi-transparent ship color
-            stroke(255, 255, 255); // White border
-            strokeWeight(2);
-            rect(cellX, cellY, this.gridSize, this.gridSize);
-            
-            // Add ship name on first cell only
-            if (i === 0) {
-                fill(255);
-                textAlign(CENTER, CENTER);
-                textSize(8);
-                text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
-            }
-        }
         
         // Then, draw the ship image on top if available
         const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
