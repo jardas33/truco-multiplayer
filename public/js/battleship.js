@@ -728,7 +728,9 @@ class BattleshipGame {
             }
             this.updateUI();
             this.renderShipsList(); // Force re-render of ships list
-            this.staticRender(); // Force redraw to show placed ship
+            if (window.battleshipClient) {
+                window.battleshipClient.staticRender(); // Force redraw to show placed ship
+            }
             return true;
         } else {
             this.addToHistory(`❌ Cannot place ${this.currentShip.name} there!`, 'error');
@@ -1349,9 +1351,13 @@ class BattleshipClient {
         
         // Draw preview cells following mouse cursor
         for (let i = 0; i < ship.size; i++) {
-            // Calculate position relative to mouse cursor
-            const cellX = mouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-            const cellY = mouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+            // Calculate position relative to mouse cursor - ensure it's always visible
+            let cellX = mouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
+            let cellY = mouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+            
+            // Ensure preview stays within screen bounds
+            cellX = Math.max(10, Math.min(cellX, width - this.gridSize - 10));
+            cellY = Math.max(10, Math.min(cellY, height - this.gridSize - 10));
             
             // Make preview EXTREMELY visible with bright colors
             fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 255); // Fully opaque bright green or red
@@ -1443,6 +1449,13 @@ class BattleshipClient {
         // Prevent clicks during resize events
         if (this.isResizing) {
             console.log(`🎯 Click ignored - window is resizing`);
+            return;
+        }
+        
+        // Check if click was on a ship item - if so, don't handle placement
+        const clickedElement = document.elementFromPoint(mouseX, mouseY);
+        if (clickedElement && clickedElement.closest('.ship-item')) {
+            console.log('🎯 Click on ship item - skipping placement handling');
             return;
         }
         
