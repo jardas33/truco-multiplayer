@@ -1317,13 +1317,16 @@ class BattleshipClient {
         const orientation = ship.orientation || 'horizontal';
         const cellSize = this.gridSize + this.gridSpacing;
         
-        // Get the actual canvas dimensions (not window dimensions)
+        // Get the actual canvas dimensions
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         
-        // Get mouse position relative to canvas using proper p5.js mouse functions
-        const mouseCanvasX = mouseX;
-        const mouseCanvasY = mouseY;
+        // Get canvas position on the page
+        const canvasRect = this.canvas.getBoundingClientRect();
+        
+        // Convert screen mouse coordinates to canvas coordinates
+        const mouseCanvasX = mouseX - canvasRect.left;
+        const mouseCanvasY = mouseY - canvasRect.top;
         
         // Debug: Draw a small red dot at mouse position to verify coordinates
         fill(255, 0, 0, 255);

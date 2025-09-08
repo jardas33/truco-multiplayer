@@ -1045,8 +1045,8 @@ class GoFishClient {
         // Update UI
         this.updateUI();
         
-        // End the turn after going fishing
-        this.game.endTurn();
+        // DON'T call endTurn() here - let the game's goFish method handle turn progression
+        // The goFish method will call endTurn() after the fishing animation completes
         
         // Emit to server if connected
         if (window.gameFramework && window.gameFramework.socket) {
