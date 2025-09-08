@@ -1284,25 +1284,20 @@ class BattleshipClient {
             text(letters[i], x - 25, cellY);
         }
         
-        // Debug: Draw visual indicators to show exact cell positions
+        // CRITICAL FIX: Draw visual indicators to show exact cell positions
         fill(255, 0, 0); // Red for debugging
-        textSize(12);
+        textSize(10);
         textAlign(LEFT, TOP);
         
-        // A1 indicator - show exactly where A1 cell is
-        const a1X = x + 0 * (this.gridSize + this.gridSpacing);
-        const a1Y = y + 0 * (this.gridSize + this.gridSpacing);
-        text('A1', a1X + 2, a1Y + 2);
-        
-        // B2 indicator - show exactly where B2 cell is
-        const b2X = x + 1 * (this.gridSize + this.gridSpacing);
-        const b2Y = y + 1 * (this.gridSize + this.gridSpacing);
-        text('B2', b2X + 2, b2Y + 2);
-        
-        // C2 indicator - show exactly where C2 cell is
-        const c2X = x + 1 * (this.gridSize + this.gridSpacing);
-        const c2Y = y + 2 * (this.gridSize + this.gridSpacing);
-        text('C2', c2X + 2, c2Y + 2);
+        // Draw A1, B1, A2, B2 indicators inside actual clickable cells
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 4; col++) {
+                const cellX = x + col * (this.gridSize + this.gridSpacing);
+                const cellY = y + row * (this.gridSize + this.gridSpacing);
+                const cellName = letters[row] + (col + 1);
+                text(cellName, cellX + 2, cellY + 2);
+            }
+        }
     }
     
     drawShips() {
