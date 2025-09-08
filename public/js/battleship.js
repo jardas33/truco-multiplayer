@@ -757,6 +757,9 @@ class BattleshipClient {
         this.lastClickTime = 0;
         this.clickDebounceMs = 500; // Prevent multiple clicks within 500ms
         this.isResizing = false; // Prevent clicks during resize
+        this.hoverX = 0;
+        this.hoverY = 0;
+        this.hoverRedrawScheduled = false;
         
         this.setupEventListeners();
         this.initializeCanvas();
@@ -917,9 +920,10 @@ class BattleshipClient {
         
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
-            // Redraw for hover effects during ship placement only
+            // Update hover position for ship placement preview
             if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
-                redraw();
+                // Just update the hover position, don't redraw yet
+                this.updateHoverPosition();
             }
         });
         
@@ -989,6 +993,25 @@ class BattleshipClient {
             setTimeout(() => {
                 noLoop();
             }, 100);
+        }
+    }
+    
+    updateHoverPosition() {
+        // Update hover position for ship placement preview
+        // This method just updates internal state, doesn't trigger redraw
+        if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
+            // Store current mouse position for hover preview
+            this.hoverX = mouseX;
+            this.hoverY = mouseY;
+            
+            // Trigger a single controlled redraw for hover effect
+            if (!this.hoverRedrawScheduled) {
+                this.hoverRedrawScheduled = true;
+                setTimeout(() => {
+                    this.forceDraw();
+                    this.hoverRedrawScheduled = false;
+                }, 16); // ~60fps
+            }
         }
     }
     
@@ -1453,8 +1476,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Redraw to show updated grid after ship placement
-                    redraw();
+                    // Trigger controlled redraw after ship placement
+                    this.forceDraw();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1546,15 +1569,15 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Redraw to show updated grid after attack
-                redraw();
+                // Trigger controlled redraw after attack
+                this.forceDraw();
                 
                 // Start AI turn after a short delay
                 if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
-                        // Redraw to show AI attack result
-                        redraw();
+                        // Trigger controlled redraw after AI attack
+                        this.forceDraw();
                     }, 1000);
                 }
             } else {
@@ -1567,14 +1590,14 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Redraw to show updated ship orientation
-                redraw();
+                // Trigger controlled redraw after ship rotation
+                this.forceDraw();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Redraw to show updated state after cancellation
-                redraw();
+                // Trigger controlled redraw after cancellation
+                this.forceDraw();
             }
         }
     }
