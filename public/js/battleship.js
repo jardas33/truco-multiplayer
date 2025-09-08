@@ -1355,7 +1355,7 @@ class BattleshipClient {
         const fleetGridY = this.gridStartY;
         
         // Calculate grid cell coordinates with 2-column offset fix
-        const adjustedFleetGridX = fleetGridX - 62; // Subtract 2 columns worth of offset
+        const adjustedFleetGridX = fleetGridX + 62; // Add 2 columns worth of offset
         const gridX = Math.floor((mouseCanvasX - adjustedFleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
@@ -1513,7 +1513,7 @@ class BattleshipClient {
         // Calculate grid coordinates to match exactly how cells are drawn
         // Fix the 2-column offset by adjusting fleetGridX
         const cellSize = this.gridSize + this.gridSpacing;
-        const adjustedFleetGridX = fleetGridX - 62; // Subtract 2 columns worth of offset
+        const adjustedFleetGridX = fleetGridX + 62; // Add 2 columns worth of offset
         const gridX = Math.floor((mouseX - adjustedFleetGridX) / cellSize);
         const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
