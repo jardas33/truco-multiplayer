@@ -1167,11 +1167,6 @@ class BattleshipClient {
             fill(255, 100, 100);
             stroke(255, 0, 0);
             strokeWeight(2);
-        } else if (cell.miss) {
-            // Miss effect
-            fill(150, 150, 150);
-            stroke(200, 200, 200);
-            strokeWeight(1);
         } else if (showShips && cell.ship) {
             // Draw ship on all cells it occupies
             if (cell.ship.isFirstCell) {
@@ -1211,7 +1206,7 @@ class BattleshipClient {
         // Draw hit/miss indicators LAST (so they appear on top of everything)
         if (cell.hit) {
             // RED square for hits (whole square) - covers ship squares
-            fill(255, 100, 100, 150);
+            fill(255, 100, 100, 200); // More opaque to cover green
             noStroke();
             rect(x, y, this.gridSize, this.gridSize);
             
@@ -1222,7 +1217,7 @@ class BattleshipClient {
             text('💥', x + this.gridSize/2, y + this.gridSize/2);
         } else if (cell.miss) {
             // BLUE square for misses (whole square) - covers ship squares
-            fill(100, 150, 255, 150);
+            fill(100, 150, 255, 200); // More opaque to cover green
             noStroke();
             rect(x, y, this.gridSize, this.gridSize);
             
@@ -1299,6 +1294,7 @@ class BattleshipClient {
     }
     
     drawShipPreview() {
+        console.log('🚢 drawShipPreview called, currentShip:', this.game.currentShip);
         if (!this.game.currentShip) return;
         
         console.log('🚢 Drawing ship preview for:', this.game.currentShip.name);
