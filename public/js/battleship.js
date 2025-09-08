@@ -812,9 +812,13 @@ class BattleshipClient {
             console.log('📏 Canvas size:', this.canvas.width, 'x', this.canvas.height);
             console.log('🎯 Initialized flag set to:', this.initialized);
             
-            // Draw the initial grids once
-            loop();
-            setTimeout(() => noLoop(), 100);
+            // Draw the initial grids once after canvas is fully ready
+            setTimeout(() => {
+                if (this.initialized && this.canvas) {
+                    loop();
+                    setTimeout(() => noLoop(), 100);
+                }
+            }, 300);
         } catch (error) {
             console.error('❌ Canvas creation failed:', error);
             // Retry after a short delay
@@ -915,6 +919,14 @@ class BattleshipClient {
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
+        
+        // Add window resize handler to redraw when console opens/closes
+        this.resizeHandler = () => {
+            if (this.initialized) {
+                this.forceDraw();
+            }
+        };
+        window.addEventListener('resize', this.resizeHandler);
     }
     
     cleanupEventListeners() {
@@ -922,6 +934,12 @@ class BattleshipClient {
         if (this.keydownHandler) {
             document.removeEventListener('keydown', this.keydownHandler);
             this.keydownHandler = null;
+        }
+        
+        // Remove resize event listener
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = null;
         }
     }
     
@@ -939,6 +957,14 @@ class BattleshipClient {
         
         // ALWAYS stop the loop after drawing - no continuous drawing
         noLoop();
+    }
+    
+    // Force draw the grids - call this when needed
+    forceDraw() {
+        if (this.initialized) {
+            loop();
+            setTimeout(() => noLoop(), 50);
+        }
     }
     
     drawTurnIndicator() {
