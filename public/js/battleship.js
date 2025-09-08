@@ -703,7 +703,11 @@ class BattleshipGame {
         
         this.currentShip = { ...ship, index: shipIndex };
         console.log('✅ Current ship set:', this.currentShip);
+        console.log('✅ Current ship name:', this.currentShip.name);
         this.addToHistory(`📌 Click on the grid to place ${ship.name}`, 'info');
+        
+        // Force a redraw to show the preview
+        this.staticRender();
     }
     
     placeShipAt(x, y, orientation = 'horizontal') {
@@ -1290,6 +1294,8 @@ class BattleshipClient {
     
     drawShipPreview() {
         console.log('🚢 drawShipPreview called, currentShip:', this.currentShip);
+        console.log('🚢 drawShipPreview - this context:', this);
+        console.log('🚢 drawShipPreview - this.currentShip type:', typeof this.currentShip);
         if (!this.currentShip) {
             console.log('❌ No current ship, returning');
             return;
