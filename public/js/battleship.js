@@ -787,9 +787,10 @@ class BattleshipGame {
             return;
         }
         
-        this.currentShip = { ...ship, index: shipIndex };
+        this.currentShip = { ...ship, index: shipIndex, orientation: 'horizontal' };
         console.log('✅ Current ship set:', this.currentShip);
         console.log('✅ Current ship name:', this.currentShip.name);
+        console.log('✅ Current ship orientation:', this.currentShip.orientation);
         this.addToHistory(`📌 Click on the grid to place ${ship.name}`, 'info');
         
         // Also set currentShip on the client instance for preview
@@ -833,7 +834,13 @@ class BattleshipGame {
     rotateCurrentShip() {
         if (!this.currentShip) return;
         
+        // Ensure orientation is initialized if undefined
+        if (!this.currentShip.orientation) {
+            this.currentShip.orientation = 'horizontal';
+        }
+        
         this.currentShip.orientation = this.currentShip.orientation === 'horizontal' ? 'vertical' : 'horizontal';
+        console.log(`🔄 Rotated ${this.currentShip.name} to ${this.currentShip.orientation}`);
         this.addToHistory(`🔄 Rotated ${this.currentShip.name} to ${this.currentShip.orientation}`, 'info');
         this.updateUI();
     }
