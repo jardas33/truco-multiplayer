@@ -914,17 +914,26 @@ class BattleshipClient {
         
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
-            // No redraw on mouse move - causes infinite loop
+            // Redraw for hover effects during ship placement only
+            if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
+                redraw();
+            }
         });
         
         this.canvas.mousePressed(() => {
-            // No redraw on mouse press - handled in mousePressed()
+            // Redraw after mouse press for ship placement only
+            if (this.game && this.game.gamePhase === 'placement') {
+                redraw();
+            }
         });
         
         // Add keyboard event listeners with proper cleanup
         this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                // No redraw - handled in keyPressed()
+                // Redraw for ship rotation and cancellation during placement
+                if (this.game && this.game.gamePhase === 'placement') {
+                    redraw();
+                }
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
@@ -1422,7 +1431,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Ship placement successful - no redraw needed
+                    // Ship placement successful - redraw to show updated grid
+                    redraw();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1497,12 +1507,14 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Ship rotated - no redraw needed
+                // Ship rotated - redraw to show updated ship
+                redraw();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Ship placement cancelled - no redraw needed
+                // Ship placement cancelled - redraw to show updated state
+                redraw();
             }
         }
     }
