@@ -1352,6 +1352,27 @@ class BattleshipClient {
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
         // Always draw ship preview following mouse cursor with correct size
+        // First, draw the individual squares to show the exact grid cells
+        for (let i = 0; i < ship.size; i++) {
+            let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
+            let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+            
+            // Make preview visible with ship color
+            fill(ship.color || '#FFEAA7', 150); // Semi-transparent ship color
+            stroke(255, 255, 255); // White border
+            strokeWeight(2);
+            rect(cellX, cellY, this.gridSize, this.gridSize);
+            
+            // Add ship name on first cell only
+            if (i === 0) {
+                fill(255);
+                textAlign(CENTER, CENTER);
+                textSize(8);
+                text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+            }
+        }
+        
+        // Then, draw the ship image on top if available
         const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
         
         if (shipImage) {
@@ -1373,26 +1394,6 @@ class BattleshipClient {
                 pop();
             } else {
                 image(shipImage, mouseCanvasX + offsetX, mouseCanvasY + offsetY, totalWidth, totalHeight);
-            }
-        } else {
-            // Fallback: draw colored rectangles following mouse with correct size
-            for (let i = 0; i < ship.size; i++) {
-                let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-                let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
-                
-                // Make preview visible with ship color
-                fill(ship.color || '#FFEAA7', 200); // Semi-transparent ship color
-                stroke(255, 255, 255); // White border
-                strokeWeight(2);
-                rect(cellX, cellY, this.gridSize, this.gridSize);
-                
-                // Add ship name on first cell only
-                if (i === 0) {
-                    fill(255);
-                    textAlign(CENTER, CENTER);
-                    textSize(8);
-                    text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
-                }
             }
         }
         
