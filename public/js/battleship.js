@@ -706,8 +706,13 @@ class BattleshipGame {
         console.log('✅ Current ship name:', this.currentShip.name);
         this.addToHistory(`📌 Click on the grid to place ${ship.name}`, 'info');
         
-        // Force a redraw to show the preview
-        this.staticRender();
+        // Also set currentShip on the client instance for preview
+        if (window.battleshipClient) {
+            window.battleshipClient.currentShip = this.currentShip;
+            console.log('✅ Current ship also set on client:', window.battleshipClient.currentShip);
+            // Force a redraw to show the preview
+            window.battleshipClient.staticRender();
+        }
     }
     
     placeShipAt(x, y, orientation = 'horizontal') {
@@ -717,6 +722,10 @@ class BattleshipGame {
             this.placeShip(0, x, y, this.currentShip, orientation);
             this.ships[this.currentShip.index].placed = true;
             this.currentShip = null; // Clear current ship after placement
+            // Also clear currentShip on the client instance
+            if (window.battleshipClient) {
+                window.battleshipClient.currentShip = null;
+            }
             this.updateUI();
             this.renderShipsList(); // Force re-render of ships list
             this.staticRender(); // Force redraw to show placed ship
