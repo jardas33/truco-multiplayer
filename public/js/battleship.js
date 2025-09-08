@@ -1347,9 +1347,6 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80;
         const fleetGridY = this.gridStartY;
         
-        // Calculate cell size for preview
-        const cellSize = this.gridSize + this.gridSpacing;
-        
         // Calculate grid cell coordinates
         const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
