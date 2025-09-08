@@ -1305,6 +1305,13 @@ class BattleshipClient {
         console.log('🚢 drawShipPreview called, currentShip:', this.currentShip);
         console.log('🚢 drawShipPreview - this context:', this);
         console.log('🚢 drawShipPreview - this.currentShip type:', typeof this.currentShip);
+        
+        // If no currentShip on client, try to get it from the game instance
+        if (!this.currentShip && this.game && this.game.currentShip) {
+            console.log('🔄 Syncing currentShip from game to client');
+            this.currentShip = this.game.currentShip;
+        }
+        
         if (!this.currentShip) {
             console.log('❌ No current ship, returning');
             return;
@@ -1615,6 +1622,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof createCanvas !== 'undefined') {
             if (!battleshipClient) {
                 battleshipClient = new BattleshipClient();
+                window.battleshipClient = battleshipClient; // Make it globally accessible
                 console.log('🎮 Battleship client initialized');
             }
         } else {
@@ -1644,6 +1652,7 @@ function draw() {
         if (battleshipGame && !battleshipClient) {
             console.log('🎮 Initializing battleship client...');
             battleshipClient = new BattleshipClient();
+            window.battleshipClient = battleshipClient; // Make it globally accessible
         }
     }
     
