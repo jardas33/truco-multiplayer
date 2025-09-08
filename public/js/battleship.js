@@ -1161,13 +1161,8 @@ class BattleshipClient {
     }
     
     drawCell(x, y, cell, showShips) {
-        // Cell background with gradient effect
-        if (cell.hit) {
-            // Explosion effect
-            fill(255, 100, 100);
-            stroke(255, 0, 0);
-            strokeWeight(2);
-        } else if (showShips && cell.ship) {
+        // First, draw the base cell (water or ship)
+        if (showShips && cell.ship) {
             // Draw ship on all cells it occupies
             if (cell.ship.isFirstCell) {
                 const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
@@ -1199,11 +1194,10 @@ class BattleshipClient {
             fill(40, 40, 40, 220); // Darker gray for better visibility
             stroke(255, 255, 255); // White grid lines
             strokeWeight(2); // Thicker lines for visibility
+            rect(x, y, this.gridSize, this.gridSize);
         }
         
-        rect(x, y, this.gridSize, this.gridSize);
-        
-        // Draw hit/miss indicators LAST (so they appear on top of everything)
+        // Then, draw hit/miss indicators ON TOP of everything
         if (cell.hit) {
             // RED square for hits (whole square) - covers ship squares
             fill(255, 100, 100, 255); // Fully opaque to cover green
@@ -1295,7 +1289,10 @@ class BattleshipClient {
     
     drawShipPreview() {
         console.log('🚢 drawShipPreview called, currentShip:', this.currentShip);
-        if (!this.currentShip) return;
+        if (!this.currentShip) {
+            console.log('❌ No current ship, returning');
+            return;
+        }
         
         console.log('🚢 Drawing ship preview for:', this.currentShip.name);
         
@@ -1307,18 +1304,11 @@ class BattleshipClient {
         const cellSize = this.gridSize + this.gridSpacing;
         let gridX, gridY;
         
-        // If mouse is outside grid or at origin, show preview at A1
-        if (mouseX === 0 && mouseY === 0 || 
-            mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
-            mouseY < fleetGridY || mouseY > fleetGridY + 420) {
-            gridX = 0;
-            gridY = 0;
-        } else {
-            gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-            gridY = Math.floor((mouseY - fleetGridY) / cellSize);
-        }
+        // Always show preview at A1 for now to make it visible
+        gridX = 0;
+        gridY = 0;
         
-        // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
+        console.log('🎯 Ship preview - gridX:', gridX, 'gridY:', gridY);
         
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
             const ship = this.currentShip;
@@ -1329,61 +1319,50 @@ class BattleshipClient {
                 (gridX + ship.size <= 10) : 
                 (gridY + ship.size <= 10);
             
-            if (!wouldFit) return; // Don't draw preview if ship would go out of bounds
+            if (!wouldFit) {
+                console.log('❌ Ship would not fit, returning');
+                return; // Don't draw preview if ship would go out of bounds
+            }
             
             const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
+            console.log('🎯 Can place ship:', canPlace);
             
-            // Draw preview cells with better visibility
+            // Draw preview cells with MAXIMUM visibility
             const startX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
             const startY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
             
-            if (window.shipImages && window.shipImages[ship.type]) {
-                // Draw ship as one continuous image
-                const shipWidth = orientation === 'horizontal' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
-                const shipHeight = orientation === 'vertical' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+            console.log('🎯 Drawing preview at:', startX, startY);
+            
+            // Always use colored rectangles for maximum visibility
+            for (let i = 0; i < ship.size; i++) {
+                const previewX = gridX + (orientation === 'horizontal' ? i : 0);
+                const previewY = gridY + (orientation === 'vertical' ? i : 0);
                 
-                // Draw semi-transparent ship image
-                tint(255, 180); // Make image semi-transparent
-                image(window.shipImages[ship.type], startX, startY, shipWidth, shipHeight);
-                noTint(); // Reset tint
-                
-                // Add border around the entire ship
-                noFill();
-                stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                strokeWeight(3);
-                rect(startX, startY, shipWidth, shipHeight);
-            } else {
-                // Fallback to colored rectangles for each cell
-                for (let i = 0; i < ship.size; i++) {
-                    const previewX = gridX + (orientation === 'horizontal' ? i : 0);
-                    const previewY = gridY + (orientation === 'vertical' ? i : 0);
+                if (previewX < 10 && previewY < 10) {
+                    const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
+                    const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
                     
-                    if (previewX < 10 && previewY < 10) {
-                        const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
-                        const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
-                        
-                        // Make preview very visible with bright colors
-                        fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 200); // Bright green or red
-                        stroke(255, 255, 255); // White border
-                        strokeWeight(4); // Thicker border
-                        rect(cellX, cellY, this.gridSize, this.gridSize);
-                        
-                        // Add ship name in preview
-                        fill(255);
-                        textAlign(CENTER, CENTER);
-                        textSize(8);
-                        text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
-                    }
+                    // Make preview EXTREMELY visible with bright colors
+                    fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 255); // Fully opaque bright green or red
+                    stroke(255, 255, 255); // White border
+                    strokeWeight(6); // Very thick border
+                    rect(cellX, cellY, this.gridSize, this.gridSize);
+                    
+                    // Add ship name in preview
+                    fill(255);
+                    textAlign(CENTER, CENTER);
+                    textSize(12);
+                    text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
                 }
             }
             
             // Draw placement instructions
             fill(255);
             textAlign(LEFT, TOP);
-            textSize(14);
-            text(`Placing: ${ship.name} (${ship.size} squares)`, 10, height - 100);
-            text(`Orientation: ${orientation}`, 10, height - 80);
-            text(`Press R to rotate, Esc to cancel`, 10, height - 60);
+            textSize(16);
+            text(`PLACING: ${ship.name.toUpperCase()} (${ship.size} squares)`, 10, height - 100);
+            text(`ORIENTATION: ${orientation.toUpperCase()}`, 10, height - 80);
+            text(`PRESS R TO ROTATE, ESC TO CANCEL`, 10, height - 60);
         }
     }
     
