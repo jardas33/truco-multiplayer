@@ -1080,6 +1080,9 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
+        // Debug grid positions
+        console.log(`🎨 drawGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
+        
         // Draw grids without excessive logging
         
         // Draw grid titles with better visibility
@@ -1455,12 +1458,18 @@ class BattleshipClient {
         console.log(`🎯 Grid Position - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}`);
         console.log(`🎯 Calculated - gridX: ${gridX}, gridY: ${gridY}`);
         console.log(`🎯 Cell Size: ${cellSize}`);
+        console.log(`🎯 gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
         
         // Calculate what the actual cell position should be
         const expectedCellX = attackGridX + gridX * cellSize;
         const expectedCellY = attackGridY + gridY * cellSize;
         console.log(`🎯 Expected cell position - X: ${expectedCellX}, Y: ${expectedCellY}`);
         console.log(`🎯 Mouse offset from cell - X: ${mouseX - expectedCellX}, Y: ${mouseY - expectedCellY}`);
+        
+        // Convert grid coordinates to letters/numbers for debugging
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const clickedPosition = `${letters[gridY]}${gridX + 1}`;
+        console.log(`🎯 Clicked position: ${clickedPosition}`);
         
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
