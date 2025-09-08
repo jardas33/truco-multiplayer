@@ -1210,29 +1210,27 @@ class BattleshipClient {
         
         // Draw hit/miss indicators with better visuals
         if (cell.hit) {
-            // Explosion animation
-            fill(255, 255, 0);
+            // RED square for hits (whole square)
+            fill(255, 100, 100, 150);
+            noStroke();
+            rect(x, y, this.gridSize, this.gridSize);
+            
+            // White explosion symbol
+            fill(255, 255, 255);
             textAlign(CENTER, CENTER);
-            textSize(18);
+            textSize(16);
             text('💥', x + this.gridSize/2, y + this.gridSize/2);
-            
-            // Add explosion ring
-            noFill();
-            stroke(255, 100, 0);
-            strokeWeight(2);
-            ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.8);
         } else if (cell.miss) {
-            // Miss ripple effect - BLUE instead of grey
-            fill(100, 150, 255);
-            textAlign(CENTER, CENTER);
-            textSize(14);
-            text('○', x + this.gridSize/2, y + this.gridSize/2);
+            // BLUE square for misses (whole square)
+            fill(100, 150, 255, 150);
+            noStroke();
+            rect(x, y, this.gridSize, this.gridSize);
             
-            // Add ripple ring - BLUE instead of grey
-            noFill();
-            stroke(50, 100, 255);
-            strokeWeight(1);
-            ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.6);
+            // White X symbol
+            fill(255, 255, 255);
+            textAlign(CENTER, CENTER);
+            textSize(16);
+            text('✕', x + this.gridSize/2, y + this.gridSize/2);
         } else if (showShips && cell.ship && cell.sunk) {
             // Sunk ship indicator
             fill(100, 0, 0);
@@ -1310,17 +1308,20 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
-        // Don't draw preview if mouse is at origin (0,0) - likely not moved yet
-        if (mouseX === 0 && mouseY === 0) return;
-        
-        // Don't draw preview if mouse is outside the fleet grid area
-        if (mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
-            mouseY < fleetGridY || mouseY > fleetGridY + 420) return;
-        
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-        const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        let gridX, gridY;
+        
+        // If mouse is outside grid or at origin, show preview at A1
+        if (mouseX === 0 && mouseY === 0 || 
+            mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
+            mouseY < fleetGridY || mouseY > fleetGridY + 420) {
+            gridX = 0;
+            gridY = 0;
+        } else {
+            gridX = Math.floor((mouseX - fleetGridX) / cellSize);
+            gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        }
         
         // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
         
