@@ -756,6 +756,7 @@ class BattleshipClient {
         this.initialized = false;
         this.lastClickTime = 0;
         this.clickDebounceMs = 500; // Prevent multiple clicks within 500ms
+        this.isResizing = false; // Prevent clicks during resize
         
         this.setupEventListeners();
         this.initializeCanvas();
@@ -938,7 +939,11 @@ class BattleshipClient {
         // Add window resize handler to redraw when console opens/closes
         this.resizeHandler = () => {
             if (this.initialized) {
+                this.isResizing = true; // Prevent clicks during resize
                 this.forceDraw();
+                setTimeout(() => {
+                    this.isResizing = false; // Re-enable clicks after resize
+                }, 200); // Delay to prevent clicks during resize
             }
         };
         window.addEventListener('resize', this.resizeHandler);
@@ -1402,6 +1407,12 @@ class BattleshipClient {
     }
     
     mousePressed() {
+        // Prevent clicks during resize events
+        if (this.isResizing) {
+            console.log(`🎯 Click ignored - window is resizing`);
+            return;
+        }
+        
         if (this.game.gamePhase === 'placement') {
             this.handleShipPlacement();
             // Redraw for ship placement visual feedback
@@ -1480,6 +1491,12 @@ class BattleshipClient {
         // STRICT BOUNDS CHECKING - only allow clicks within the actual attack grid
         const maxGridX = attackGridX + (10 * cellSize);
         const maxGridY = attackGridY + (10 * cellSize);
+        
+        // Additional validation: reject clicks that are clearly outside reasonable bounds
+        if (mouseX < 0 || mouseY < 0 || mouseX > windowWidth || mouseY > windowHeight) {
+            console.log(`🎯 Click rejected - outside window bounds`);
+            return;
+        }
         
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
