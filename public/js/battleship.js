@@ -285,6 +285,10 @@ class BattleshipGame {
             return;
         }
         
+        // Draw once when game starts, then stop
+        loop();
+        setTimeout(() => noLoop(), 100);
+        
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
         this.addToHistory('🚀 Battle started! Your turn to attack!', 'success');
@@ -809,7 +813,7 @@ class BattleshipClient {
             console.log('🎯 Initialized flag set to:', this.initialized);
             
             // Draw the initial grids
-            redraw();
+            // No need to redraw - draw() will be called when needed
         } catch (error) {
             console.error('❌ Canvas creation failed:', error);
             // Retry after a short delay
@@ -896,20 +900,17 @@ class BattleshipClient {
         
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
-            // Just redraw for hover effects - no need to restart loop
-            redraw();
+            // No need to redraw on mouse move - too expensive
         });
         
         this.canvas.mousePressed(() => {
-            // Just redraw for mouse clicks - no need to restart loop
-            redraw();
+            // No need to redraw on mouse press - handled in mousePressed()
         });
         
         // Add keyboard event listeners with proper cleanup
         this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                // Just redraw for keyboard events
-                redraw();
+                // No need to redraw - handled in keyPressed()
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
@@ -935,7 +936,7 @@ class BattleshipClient {
         this.drawTurnIndicator();
         this.drawMouseHover();
         
-        // Stop the loop after drawing - we'll restart it when needed
+        // ALWAYS stop the loop after drawing - no continuous drawing
         noLoop();
     }
     
@@ -1385,8 +1386,7 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Ship placement successful - just redraw
-                    redraw();
+                    // Ship placement successful - no need to redraw
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1435,8 +1435,7 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Attack completed - just redraw
-                redraw();
+                // Attack completed - no need to redraw
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
@@ -1447,14 +1446,12 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Ship rotated - just redraw
-                redraw();
+                // Ship rotated - no need to redraw
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Ship placement cancelled - just redraw
-                redraw();
+                // Ship placement cancelled - no need to redraw
             }
         }
     }
