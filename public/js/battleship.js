@@ -290,9 +290,7 @@ class BattleshipGame {
             return;
         }
         
-        // Draw once when game starts, then stop
-        loop();
-        setTimeout(() => noLoop(), 100);
+        // NO drawing calls - grid will be updated on next draw cycle
         
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
@@ -824,11 +822,8 @@ class BattleshipClient {
             setTimeout(() => {
                 if (this.initialized && this.canvas) {
                     console.log('🎨 Initial grid draw starting...');
-                    loop();
-                    setTimeout(() => {
-                        noLoop();
-                        console.log('🎨 Initial grid draw completed');
-                    }, 100);
+                    // NO drawing calls - grid will be updated on next draw cycle
+                    console.log('🎨 Initial grid draw completed');
                 }
             }, 500);
         } catch (error) {
@@ -987,6 +982,17 @@ class BattleshipClient {
         noLoop();
     }
     
+    // Static rendering method - only call when explicitly needed
+    staticRender() {
+        if (this.initialized) {
+            // Force a single draw cycle
+            loop();
+            setTimeout(() => {
+                noLoop();
+            }, 50);
+        }
+    }
+    
     // REMOVED: forceSingleDraw() method to eliminate infinite loops
     // NO drawing calls - grids will be updated on next draw cycle
     
@@ -999,15 +1005,8 @@ class BattleshipClient {
     // REMOVED: staticRender() method to eliminate infinite loops
     // NO drawing calls - grids will be updated on next draw cycle
     
-    // Force draw the grids - call this when needed
-    forceDraw() {
-        if (this.initialized) {
-            loop();
-            setTimeout(() => {
-                noLoop();
-            }, 100);
-        }
-    }
+    // REMOVED: forceDraw() method to eliminate infinite loops
+    // NO drawing calls - grids will be updated on next draw cycle
     
     updateHoverPosition() {
         // Update hover position for ship placement preview
@@ -1485,7 +1484,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // NO drawing calls - grid will be updated on next draw cycle
+                    // Static render after ship placement
+                    this.staticRender();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1583,13 +1583,15 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // NO drawing calls - grid will be updated on next draw cycle
+                // Static render after attack
+                this.staticRender();
                 
                 // Start AI turn after a short delay
                 if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
-                        // NO drawing calls - grid will be updated on next draw cycle
+                        // Static render after AI attack
+                        this.staticRender();
                     }, 1000);
                 }
             } else {
@@ -1602,12 +1604,14 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // NO drawing calls - grid will be updated on next draw cycle
+                // Static render after ship rotation
+                this.staticRender();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // NO drawing calls - grid will be updated on next draw cycle
+                // Static render after cancellation
+                this.staticRender();
             }
         }
     }
