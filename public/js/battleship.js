@@ -1301,8 +1301,13 @@ class BattleshipClient {
         stroke(0, 255, 0);
         strokeWeight(2);
         
+        // Debug: Log ship coordinates
+        console.log('🔍 drawShipOnGrid - ship.x:', ship.x, 'ship.y:', ship.y, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY);
+        
         const cellX = fleetGridX + ship.x * (this.gridSize + this.gridSpacing);
         const cellY = fleetGridY + ship.y * (this.gridSize + this.gridSpacing);
+        
+        console.log('🔍 drawShipOnGrid - cellX:', cellX, 'cellY:', cellY, 'ship.size:', ship.size);
         
         if (ship.orientation === 'horizontal') {
             rect(cellX, cellY, ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing, this.gridSize);
