@@ -1320,22 +1320,29 @@ class BattleshipClient {
         }
         
         console.log('🚢 Drawing ship preview for:', this.currentShip.name);
-        console.log('🎯 Mouse position:', mouseX, mouseY);
-        console.log('🎯 Canvas size:', width, height);
         
         const ship = this.currentShip;
         const orientation = ship.orientation || 'horizontal';
         const cellSize = this.gridSize + this.gridSpacing;
         
+        // Get mouse position relative to canvas
+        const canvasMouseX = mouseX;
+        const canvasMouseY = mouseY;
+        
+        console.log('🎯 Canvas mouse position:', canvasMouseX, canvasMouseY);
+        console.log('🎯 Canvas size:', width, height);
+        
         // Draw preview cells following mouse cursor directly
         for (let i = 0; i < ship.size; i++) {
             // Calculate position relative to mouse cursor - center on mouse
-            let cellX = mouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-            let cellY = mouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+            let cellX = canvasMouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
+            let cellY = canvasMouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
             
-            // Ensure preview stays within screen bounds
+            // Ensure preview stays within canvas bounds
             cellX = Math.max(10, Math.min(cellX, width - this.gridSize - 10));
             cellY = Math.max(10, Math.min(cellY, height - this.gridSize - 10));
+            
+            console.log(`🎯 Drawing cell ${i} at:`, cellX, cellY);
             
             // Make preview EXTREMELY visible with bright colors
             fill(0, 255, 0, 255); // Bright green for visibility
@@ -1349,6 +1356,16 @@ class BattleshipClient {
             textSize(12);
             text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
         }
+        
+        // TEST: Draw a fixed preview at top-left to verify drawing works
+        fill(255, 0, 0, 255); // Red for test
+        stroke(255, 255, 255);
+        strokeWeight(3);
+        rect(50, 50, this.gridSize, this.gridSize);
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(10);
+        text('TEST', 50 + this.gridSize/2, 50 + this.gridSize/2);
         
         // Draw placement instructions
         fill(255);
