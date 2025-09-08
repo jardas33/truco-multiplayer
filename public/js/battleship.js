@@ -1320,38 +1320,16 @@ class BattleshipClient {
         }
         
         console.log('🚢 Drawing ship preview for:', this.currentShip.name);
-        
-        // Use the correct fleet grid position
-        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
-        const fleetGridY = this.gridStartY;
-        
-        // Calculate grid coordinates to match exactly how cells are drawn
-        const cellSize = this.gridSize + this.gridSpacing;
-        let gridX, gridY;
-        
-        // Always calculate based on mouse position for following behavior
-        gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-        gridY = Math.floor((mouseY - fleetGridY) / cellSize);
-        
-        console.log('🎯 Ship preview - gridX:', gridX, 'gridY:', gridY);
+        console.log('🎯 Mouse position:', mouseX, mouseY);
+        console.log('🎯 Canvas size:', width, height);
         
         const ship = this.currentShip;
         const orientation = ship.orientation || 'horizontal';
+        const cellSize = this.gridSize + this.gridSpacing;
         
-        // Check if ship would fit within bounds
-        const wouldFit = orientation === 'horizontal' ? 
-            (gridX + ship.size <= 10) : 
-            (gridY + ship.size <= 10);
-        
-        // Check if position is within grid bounds
-        const withinBounds = gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10;
-        
-        const canPlace = withinBounds && wouldFit && this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
-        console.log('🎯 Can place ship:', canPlace, 'withinBounds:', withinBounds, 'wouldFit:', wouldFit);
-        
-        // Draw preview cells following mouse cursor
+        // Draw preview cells following mouse cursor directly
         for (let i = 0; i < ship.size; i++) {
-            // Calculate position relative to mouse cursor - ensure it's always visible
+            // Calculate position relative to mouse cursor - center on mouse
             let cellX = mouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
             let cellY = mouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
             
@@ -1360,7 +1338,7 @@ class BattleshipClient {
             cellY = Math.max(10, Math.min(cellY, height - this.gridSize - 10));
             
             // Make preview EXTREMELY visible with bright colors
-            fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 255); // Fully opaque bright green or red
+            fill(0, 255, 0, 255); // Bright green for visibility
             stroke(255, 255, 255); // White border
             strokeWeight(6); // Very thick border
             rect(cellX, cellY, this.gridSize, this.gridSize);
