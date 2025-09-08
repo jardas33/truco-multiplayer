@@ -270,10 +270,7 @@ class BattleshipGame {
                 setTimeout(() => {
                     this.renderShipsList();
                     
-                    // Force redraw grids after all images are loaded
-                    if (this.forceDraw) {
-                        this.staticRender();
-                    }
+                    // NO drawing calls - grid will be updated on next draw cycle
                 }, 100);
                 return true;
             }
@@ -290,8 +287,7 @@ class BattleshipGame {
             return;
         }
         
-        // Force initial draw to show grids
-        this.staticRender();
+        // NO drawing calls - grid will be updated on next draw cycle
         
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
