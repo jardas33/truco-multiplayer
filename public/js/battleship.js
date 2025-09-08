@@ -1358,7 +1358,8 @@ class BattleshipClient {
             let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
             
             // Make preview visible with ship color
-            fill(ship.color || '#FFEAA7', 150); // Semi-transparent ship color
+            const shipColor = ship.color || '#FFEAA7';
+            fill(red(shipColor), green(shipColor), blue(shipColor), 150); // Semi-transparent ship color
             stroke(255, 255, 255); // White border
             strokeWeight(2);
             rect(cellX, cellY, this.gridSize, this.gridSize);
