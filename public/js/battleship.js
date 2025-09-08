@@ -1549,17 +1549,22 @@ class BattleshipClient {
             return;
         }
         
-        // Check if click was on a ship item - if so, don't handle placement
-        const clickedElement = document.elementFromPoint(mouseX, mouseY);
-        if (clickedElement && clickedElement.closest('.ship-item')) {
-            console.log('🎯 Click on ship item - skipping placement handling');
-            return;
-        }
-        
         if (this.game.gamePhase === 'placement') {
+            // In placement mode, always try to place the ship first
+            // Only check for ship item clicks if placement fails
             this.handleShipPlacement();
             // Redraw for ship placement visual feedback
             redraw();
+            return;
+        }
+        
+        // Check if click was on a ship item for ship selection (only when not placing)
+        const clickedElement = document.elementFromPoint(mouseX, mouseY);
+        if (clickedElement && clickedElement.closest('.ship-item')) {
+            console.log('🎯 Click on ship item - handling ship selection');
+            // Ship selection is handled by the event listeners in setupShipPlacement
+            // No need to do anything here as the click will be handled by the ship item's click listener
+            return;
         } else if (this.game.gamePhase === 'playing') {
             this.handleAttack();
         }
@@ -1605,19 +1610,23 @@ class BattleshipClient {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Static render after ship placement
                     this.staticRender();
+                    return true; // Placement successful
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY}) - checking adjacent cells...`);
                     // Debug: Check what's preventing placement
                     this.debugShipPlacement(gridX, gridY, this.currentShip.size, orientation);
+                    return false; // Placement failed
                 }
             } else {
                 console.log(`❌ No current ship selected for placement`);
+                return false; // No ship selected
             }
         } else {
             console.log(`❌ Click outside fleet grid: gridX=${gridX}, gridY=${gridY}, mouseX=${mouseX}, mouseY=${mouseY}`);
             console.log(`❌ Bounds check failed - inBounds: ${inBounds}, inMouseBounds: ${inMouseBounds}`);
             console.log(`❌ Grid position - fleetGridX: ${fleetGridX}, fleetGridY: ${fleetGridY}`);
             console.log(`❌ Grid size - gridWidth: ${gridWidth}, gridHeight: ${gridHeight}`);
+            return false; // Click outside grid
         }
     }
     
