@@ -1284,6 +1284,20 @@ class BattleshipClient {
             text(letters[i], x - 25, cellY);
         }
         
+        // Debug: Draw visual indicators to show exact cell positions
+        fill(255, 0, 0); // Red for debugging
+        textSize(12);
+        textAlign(LEFT, TOP);
+        
+        // A1 indicator - show exactly where A1 cell is
+        const a1X = x + 0 * (this.gridSize + this.gridSpacing);
+        const a1Y = y + 0 * (this.gridSize + this.gridSpacing);
+        text('A1', a1X + 2, a1Y + 2);
+        
+        // D3 indicator - show exactly where D3 cell is (this is what you're seeing)
+        const d3X = x + 2 * (this.gridSize + this.gridSpacing);
+        const d3Y = y + 3 * (this.gridSize + this.gridSpacing);
+        text('D3', d3X + 2, d3Y + 2);
     }
     
     drawShips() {
