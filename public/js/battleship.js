@@ -1351,27 +1351,31 @@ class BattleshipClient {
         const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
-        // Always draw ship image following mouse cursor
+        // Always draw ship preview following mouse cursor with correct size
         const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
         
         if (shipImage) {
-            // Draw ship image following mouse cursor
-            const imageSize = 40; // Size of the ship image
-            const offsetX = orientation === 'horizontal' ? -imageSize/2 : -imageSize/2;
-            const offsetY = orientation === 'horizontal' ? -imageSize/2 : -imageSize/2;
+            // Draw ship image following mouse cursor with correct size
+            const cellSize = this.gridSize + this.gridSpacing;
+            const totalWidth = orientation === 'horizontal' ? ship.size * cellSize : cellSize;
+            const totalHeight = orientation === 'vertical' ? ship.size * cellSize : cellSize;
+            
+            // Calculate offset to center the ship on mouse cursor
+            const offsetX = -totalWidth / 2;
+            const offsetY = -totalHeight / 2;
             
             // Rotate image if vertical
             if (orientation === 'vertical') {
                 push();
                 translate(mouseCanvasX, mouseCanvasY);
                 rotate(PI/2); // 90 degrees
-                image(shipImage, offsetX, offsetY, imageSize, imageSize);
+                image(shipImage, offsetX, offsetY, totalWidth, totalHeight);
                 pop();
             } else {
-                image(shipImage, mouseCanvasX + offsetX, mouseCanvasY + offsetY, imageSize, imageSize);
+                image(shipImage, mouseCanvasX + offsetX, mouseCanvasY + offsetY, totalWidth, totalHeight);
             }
         } else {
-            // Fallback: draw colored rectangles following mouse
+            // Fallback: draw colored rectangles following mouse with correct size
             for (let i = 0; i < ship.size; i++) {
                 let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
                 let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
@@ -1382,11 +1386,13 @@ class BattleshipClient {
                 strokeWeight(2);
                 rect(cellX, cellY, this.gridSize, this.gridSize);
                 
-                // Add ship name
-                fill(255);
-                textAlign(CENTER, CENTER);
-                textSize(8);
-                text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                // Add ship name on first cell only
+                if (i === 0) {
+                    fill(255);
+                    textAlign(CENTER, CENTER);
+                    textSize(8);
+                    text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                }
             }
         }
         
