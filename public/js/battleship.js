@@ -760,6 +760,7 @@ class BattleshipClient {
         this.hoverX = 0;
         this.hoverY = 0;
         this.hoverRedrawScheduled = false;
+        this.drawScheduled = false;
         
         this.setupEventListeners();
         this.initializeCanvas();
@@ -924,6 +925,8 @@ class BattleshipClient {
             if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
                 // Just update the hover position, don't redraw yet
                 this.updateHoverPosition();
+                // Trigger a single controlled redraw for hover effect
+                this.triggerSingleDraw();
             }
         });
         
@@ -998,20 +1001,29 @@ class BattleshipClient {
     
     updateHoverPosition() {
         // Update hover position for ship placement preview
-        // This method just updates internal state, doesn't trigger redraw
+        // This method just updates internal state, NO redraw calls
         if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
             // Store current mouse position for hover preview
             this.hoverX = mouseX;
             this.hoverY = mouseY;
             
-            // Trigger a single controlled redraw for hover effect
-            if (!this.hoverRedrawScheduled) {
-                this.hoverRedrawScheduled = true;
-                setTimeout(() => {
-                    this.forceDraw();
-                    this.hoverRedrawScheduled = false;
-                }, 16); // ~60fps
-            }
+            // NO redraw calls - hover will be drawn by the main draw() function
+        }
+    }
+    
+    triggerSingleDraw() {
+        // Trigger a single controlled redraw without infinite loops
+        if (!this.drawScheduled) {
+            this.drawScheduled = true;
+            setTimeout(() => {
+                if (this.initialized) {
+                    loop();
+                    setTimeout(() => {
+                        noLoop();
+                        this.drawScheduled = false;
+                    }, 50);
+                }
+            }, 16); // ~60fps max
         }
     }
     
@@ -1477,7 +1489,7 @@ class BattleshipClient {
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Trigger controlled redraw after ship placement
-                    this.forceDraw();
+                    this.triggerSingleDraw();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1570,14 +1582,14 @@ class BattleshipClient {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
                 // Trigger controlled redraw after attack
-                this.forceDraw();
+                this.triggerSingleDraw();
                 
                 // Start AI turn after a short delay
                 if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
                         // Trigger controlled redraw after AI attack
-                        this.forceDraw();
+                        this.triggerSingleDraw();
                     }, 1000);
                 }
             } else {
@@ -1591,13 +1603,13 @@ class BattleshipClient {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
                 // Trigger controlled redraw after ship rotation
-                this.forceDraw();
+                this.triggerSingleDraw();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
                 // Trigger controlled redraw after cancellation
-                this.forceDraw();
+                this.triggerSingleDraw();
             }
         }
     }
