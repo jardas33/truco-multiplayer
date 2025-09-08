@@ -327,6 +327,20 @@ class BattleshipGame {
         
         console.log(`🔍 canPlaceShip - player: ${player}, x: ${x}, y: ${y}, size: ${size}, orientation: ${orientation}`);
         
+        // Debug: Show current grid state
+        console.log(`🔍 Current grid state:`);
+        for (let row = 0; row < 10; row++) {
+            let rowStr = '';
+            for (let col = 0; col < 10; col++) {
+                if (grid[row][col].ship) {
+                    rowStr += grid[row][col].ship.name.substring(0, 1) + ' ';
+                } else {
+                    rowStr += '. ';
+                }
+            }
+            console.log(`🔍 Row ${row}: ${rowStr}`);
+        }
+        
         for (let i = 0; i < size; i++) {
             const checkX = orientation === 'horizontal' ? x + i : x;
             const checkY = orientation === 'vertical' ? y + i : y;
@@ -363,6 +377,7 @@ class BattleshipGame {
                     // Check if adjacent cell has a ship
                     if (grid[adjY][adjX].ship !== null) {
                         console.log(`❌ Adjacent cell (${adjX}, ${adjY}) has ship: ${grid[adjY][adjX].ship.name}`);
+                        console.log(`❌ This prevents placing ship at (${x}, ${y}) with orientation ${orientation}`);
                         return false;
                     }
                 }
@@ -1441,8 +1456,12 @@ class BattleshipClient {
         if (shipImage) {
             if (orientation === 'vertical') {
                 push();
-                translate(startX + totalWidth / 2, startY + totalHeight / 2);
-                rotate(PI/2); // 90 degrees
+                // For vertical ships, we need to rotate around the center of the ship
+                const centerX = startX + totalWidth / 2;
+                const centerY = startY + totalHeight / 2;
+                translate(centerX, centerY);
+                rotate(PI/2); // 90 degrees clockwise
+                // Draw the image centered at the rotation point
                 image(shipImage, -totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
                 pop();
             } else {
