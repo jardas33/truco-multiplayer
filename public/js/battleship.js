@@ -1165,39 +1165,7 @@ class BattleshipClient {
                 const cellX = x + col * (this.gridSize + this.gridSpacing);
                 const cellY = y + row * (this.gridSize + this.gridSpacing);
                 
-                // Debug: Show actual cell positions for A1, B1, A2, B2
-                if ((row === 0 && col === 0) || (row === 1 && col === 0) || (row === 0 && col === 1) || (row === 1 && col === 1)) {
-                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-                    const cellName = `${letters[row]}${col + 1}`;
-                    console.log(`🎨 Drawing ${cellName} at (${cellX}, ${cellY}) - array[${row}][${col}]`);
-                }
-                
-                // CRITICAL FIX: Ensure visual rendering matches array indexing
-                // The array is indexed as [row][col], so we need to access grid[row][col]
-                // But the visual positioning should match the click detection
-                
-                // Debug: Show what data is being drawn at each position
-                if (grid[row][col].hit || grid[row][col].miss) {
-                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-                    const cellName = `${letters[row]}${col + 1}`;
-                    console.log(`🎨 Drawing ${cellName} at (${cellX}, ${cellY}) - array[${row}][${col}] - hit: ${grid[row][col].hit}, miss: ${grid[row][col].miss}`);
-                }
-                
-                // CRITICAL FIX: Ensure visual rendering matches click detection
-                // The click detection uses (x, y) = (col, row) but visual rendering uses (row, col)
-                // We need to ensure the visual position matches the click position
-                
-                // Debug: Show the exact coordinate mapping
-                if (grid[row][col].hit || grid[row][col].miss) {
-                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-                    const cellName = `${letters[row]}${col + 1}`;
-                    console.log(`🎨 COORDINATE MAPPING: ${cellName} = array[${row}][${col}] = visual(${cellX}, ${cellY})`);
-                    console.log(`🎨 Click detection: (x=${col}, y=${row}) maps to array[${row}][${col}]`);
-                    console.log(`🎨 Visual rendering: array[${row}][${col}] draws at (${cellX}, ${cellY})`);
-                }
-                
                 this.drawCell(cellX, cellY, grid[row][col], showShips);
-                
             }
         }
         
@@ -1308,33 +1276,6 @@ class BattleshipClient {
             text(letters[i], x - 25, cellY);
         }
         
-        // CRITICAL FIX: Draw visual indicators to show exact cell positions
-        fill(255, 0, 0); // Red for debugging
-        textSize(6);
-        textAlign(LEFT, TOP);
-        noStroke();
-        
-        // Draw ALL cell indicators to show exact positions
-        for (let row = 0; row < 10; row++) {
-            for (let col = 0; col < 10; col++) {
-                const cellX = x + col * (this.gridSize + this.gridSpacing);
-                const cellY = y + row * (this.gridSize + this.gridSpacing);
-                const cellName = letters[row] + (col + 1);
-                text(cellName, cellX + 1, cellY + 1);
-            }
-        }
-        
-        // Draw red borders around cells to show exact boundaries
-        stroke(255, 0, 0);
-        strokeWeight(1);
-        noFill();
-        for (let row = 0; row < 10; row++) {
-            for (let col = 0; col < 10; col++) {
-                const cellX = x + col * (this.gridSize + this.gridSpacing);
-                const cellY = y + row * (this.gridSize + this.gridSpacing);
-                rect(cellX, cellY, this.gridSize, this.gridSize);
-            }
-        }
     }
     
     drawShips() {
