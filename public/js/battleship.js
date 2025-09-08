@@ -812,10 +812,7 @@ class BattleshipClient {
             
             // Canvas is ready for drawing
             
-            console.log('✅ Canvas initialized successfully:', this.canvas);
-            console.log('📐 Grid start position:', this.gridStartX, this.gridStartY);
-            console.log('📏 Canvas size:', this.canvas.width, 'x', this.canvas.height);
-            console.log('🎯 Initialized flag set to:', this.initialized);
+            console.log('✅ Canvas initialized successfully');
             
             // Draw the initial grids once after canvas is fully ready
             setTimeout(() => {
@@ -917,26 +914,17 @@ class BattleshipClient {
         
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
-            // Redraw for hover effects during ship placement
-            if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
-                redraw();
-            }
+            // No redraw on mouse move - too expensive
         });
         
         this.canvas.mousePressed(() => {
-            // Redraw after mouse press for ship placement
-            if (this.game && this.game.gamePhase === 'placement') {
-                redraw();
-            }
+            // No redraw on mouse press - handled in mousePressed()
         });
         
         // Add keyboard event listeners with proper cleanup
         this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                // Redraw for ship rotation and cancellation
-                if (this.game && this.game.gamePhase === 'placement') {
-                    redraw();
-                }
+                // No redraw - handled in keyPressed()
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
@@ -983,11 +971,9 @@ class BattleshipClient {
     // Force draw the grids - call this when needed
     forceDraw() {
         if (this.initialized) {
-            console.log('🎨 Force drawing grids...');
             loop();
             setTimeout(() => {
                 noLoop();
-                console.log('🎨 Force draw completed');
             }, 100);
         }
     }
@@ -1085,9 +1071,7 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
-        // Debug grid positions
-        console.log(`🎨 Drawing grids - fleetGridX: ${fleetGridX}, attackGridX: ${attackGridX}, gridStartY: ${this.gridStartY}`);
-        console.log(`🎨 Grid dimensions - gridSize: ${this.gridSize}, gridSpacing: ${this.gridSpacing}`);
+        // Draw grids without excessive logging
         
         // Draw grid titles with better visibility
         noStroke();
@@ -1438,8 +1422,7 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Ship placement successful - redraw to show updated grid
-                    redraw();
+                    // Ship placement successful - no redraw needed
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1488,9 +1471,16 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Attack completed - draw once to show updated grid
-                loop();
-                setTimeout(() => noLoop(), 50);
+                // Attack completed - redraw to show updated grid
+                redraw();
+                
+                // Start AI turn after a short delay
+                if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
+                    setTimeout(() => {
+                        this.game.aiTurn();
+                        redraw();
+                    }, 1000);
+                }
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
@@ -1501,14 +1491,12 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Ship rotated - redraw to show updated ship
-                redraw();
+                // Ship rotated - no redraw needed
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Ship placement cancelled - redraw to show updated state
-                redraw();
+                // Ship placement cancelled - no redraw needed
             }
         }
     }
