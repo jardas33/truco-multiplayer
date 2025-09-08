@@ -1084,6 +1084,8 @@ class BattleshipClient {
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
         console.log(`🎨 drawGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
+        console.log(`🎨 drawGrids - Canvas dimensions: ${width} x ${height}`);
+        console.log(`🎨 drawGrids - Grid size: ${this.gridSize}, spacing: ${this.gridSpacing}`);
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
         // Draw grids without excessive logging
@@ -1481,6 +1483,8 @@ class BattleshipClient {
         console.log(`🎯 Cell Size: ${cellSize}`);
         console.log(`🎯 gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
         console.log(`🎯 Window dimensions - width: ${windowWidth}, height: ${windowHeight}`);
+        console.log(`🎯 Canvas dimensions - width: ${width}, height: ${height}`);
+        console.log(`🎯 Mouse position relative to canvas - mouseX: ${mouseX}, mouseY: ${mouseY}`);
         
         // Calculate what the actual cell position should be
         const expectedCellX = attackGridX + gridX * cellSize;
