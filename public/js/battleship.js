@@ -1176,6 +1176,11 @@ class BattleshipClient {
                 const cellX = x + col * (this.gridSize + this.gridSpacing);
                 const cellY = y + row * (this.gridSize + this.gridSpacing);
                 
+                // Debug: Log A1 coordinates
+                if (row === 0 && col === 0) {
+                    console.log('🔍 Grid A1 cell drawn at - cellX:', cellX, 'cellY:', cellY, 'gridStartX:', x, 'gridStartY:', y);
+                }
+                
                 this.drawCell(cellX, cellY, grid[row][col], showShips);
             }
         }
