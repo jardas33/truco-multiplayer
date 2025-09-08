@@ -1206,7 +1206,7 @@ class BattleshipClient {
         // Draw hit/miss indicators LAST (so they appear on top of everything)
         if (cell.hit) {
             // RED square for hits (whole square) - covers ship squares
-            fill(255, 100, 100, 200); // More opaque to cover green
+            fill(255, 100, 100, 255); // Fully opaque to cover green
             noStroke();
             rect(x, y, this.gridSize, this.gridSize);
             
@@ -1217,7 +1217,7 @@ class BattleshipClient {
             text('💥', x + this.gridSize/2, y + this.gridSize/2);
         } else if (cell.miss) {
             // BLUE square for misses (whole square) - covers ship squares
-            fill(100, 150, 255, 200); // More opaque to cover green
+            fill(100, 150, 255, 255); // Fully opaque to cover green
             noStroke();
             rect(x, y, this.gridSize, this.gridSize);
             
@@ -1294,10 +1294,10 @@ class BattleshipClient {
     }
     
     drawShipPreview() {
-        console.log('🚢 drawShipPreview called, currentShip:', this.game.currentShip);
-        if (!this.game.currentShip) return;
+        console.log('🚢 drawShipPreview called, currentShip:', this.currentShip);
+        if (!this.currentShip) return;
         
-        console.log('🚢 Drawing ship preview for:', this.game.currentShip.name);
+        console.log('🚢 Drawing ship preview for:', this.currentShip.name);
         
         // Use the correct fleet grid position
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
@@ -1321,7 +1321,7 @@ class BattleshipClient {
         // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
         
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
-            const ship = this.game.currentShip;
+            const ship = this.currentShip;
             const orientation = ship.orientation || 'horizontal';
             
             // Check if ship would fit within bounds
