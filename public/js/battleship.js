@@ -973,6 +973,7 @@ class BattleshipClient {
         // Draw grids with high visibility
         this.drawGrids();
         this.drawShips();
+        this.drawShipPreview(); // Add ship preview during placement
         this.drawTurnIndicator();
         this.drawMouseHover();
         
@@ -1221,15 +1222,15 @@ class BattleshipClient {
             strokeWeight(2);
             ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.8);
         } else if (cell.miss) {
-            // Miss ripple effect
-            fill(200, 200, 200);
+            // Miss ripple effect - BLUE instead of grey
+            fill(100, 150, 255);
             textAlign(CENTER, CENTER);
             textSize(14);
             text('○', x + this.gridSize/2, y + this.gridSize/2);
             
-            // Add ripple ring
+            // Add ripple ring - BLUE instead of grey
             noFill();
-            stroke(150, 150, 150);
+            stroke(50, 100, 255);
             strokeWeight(1);
             ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.6);
         } else if (showShips && cell.ship && cell.sunk) {
