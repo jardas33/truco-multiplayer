@@ -1210,29 +1210,27 @@ class BattleshipClient {
         
         // Draw hit/miss indicators with better visuals
         if (cell.hit) {
-            // Explosion animation
-            fill(255, 255, 0);
+            // Hit effect - RED square background
+            fill(255, 100, 100, 150); // Semi-transparent red
+            noStroke();
+            rect(x, y, this.gridSize, this.gridSize);
+            
+            // Add white explosion symbol
+            fill(255, 255, 255);
             textAlign(CENTER, CENTER);
-            textSize(18);
+            textSize(16);
             text('💥', x + this.gridSize/2, y + this.gridSize/2);
-            
-            // Add explosion ring
-            noFill();
-            stroke(255, 100, 0);
-            strokeWeight(2);
-            ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.8);
         } else if (cell.miss) {
-            // Miss ripple effect - BLUE instead of grey
-            fill(100, 150, 255);
-            textAlign(CENTER, CENTER);
-            textSize(14);
-            text('○', x + this.gridSize/2, y + this.gridSize/2);
+            // Miss effect - BLUE square background
+            fill(100, 150, 255, 150); // Semi-transparent blue
+            noStroke();
+            rect(x, y, this.gridSize, this.gridSize);
             
-            // Add ripple ring - BLUE instead of grey
-            noFill();
-            stroke(50, 100, 255);
-            strokeWeight(1);
-            ellipse(x + this.gridSize/2, y + this.gridSize/2, this.gridSize * 0.6);
+            // Add white X in the center
+            fill(255, 255, 255);
+            textAlign(CENTER, CENTER);
+            textSize(16);
+            text('✕', x + this.gridSize/2, y + this.gridSize/2);
         } else if (showShips && cell.ship && cell.sunk) {
             // Sunk ship indicator
             fill(100, 0, 0);
@@ -1310,84 +1308,84 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
-        // Don't draw preview if mouse is at origin (0,0) - likely not moved yet
-        if (mouseX === 0 && mouseY === 0) return;
-        
-        // Don't draw preview if mouse is outside the fleet grid area
-        if (mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
-            mouseY < fleetGridY || mouseY > fleetGridY + 420) return;
+        // Always draw preview when ship is selected, regardless of mouse position
+        // This ensures the preview is visible when you first select a ship
         
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-        const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        let gridX = Math.floor((mouseX - fleetGridX) / cellSize);
+        let gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
-        // console.log('🎯 Ship preview - mouseX:', mouseX, 'mouseY:', mouseY, 'gridX:', gridX, 'gridY:', gridY);
+        // If mouse is outside the grid, show preview at a default position (A1)
+        if (gridX < 0 || gridX >= 10 || gridY < 0 || gridY >= 10) {
+            gridX = 0;
+            gridY = 0;
+        }
         
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
-            const ship = this.game.currentShip;
-            const orientation = ship.orientation || 'horizontal';
+        // Always show preview when ship is selected
+        const ship = this.game.currentShip;
+        const orientation = ship.orientation || 'horizontal';
+        
+        // Check if ship would fit within bounds
+        const wouldFit = orientation === 'horizontal' ? 
+            (gridX + ship.size <= 10) : 
+            (gridY + ship.size <= 10);
             
-            // Check if ship would fit within bounds
-            const wouldFit = orientation === 'horizontal' ? 
-                (gridX + ship.size <= 10) : 
-                (gridY + ship.size <= 10);
+        if (!wouldFit) return; // Don't draw preview if ship would go out of bounds
+        
+        const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
+        
+        // Draw preview cells with better visibility
+        const startX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
+        const startY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
+        
+        if (window.shipImages && window.shipImages[ship.type]) {
+            // Draw ship as one continuous image
+            const shipWidth = orientation === 'horizontal' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+            const shipHeight = orientation === 'vertical' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
             
-            if (!wouldFit) return; // Don't draw preview if ship would go out of bounds
+            // Draw semi-transparent ship image
+            tint(255, 180); // Make image semi-transparent
+            image(window.shipImages[ship.type], startX, startY, shipWidth, shipHeight);
+            noTint(); // Reset tint
             
-            const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
-            
-            // Draw preview cells with better visibility
-            const startX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
-            const startY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
-            
-            if (window.shipImages && window.shipImages[ship.type]) {
-                // Draw ship as one continuous image
-                const shipWidth = orientation === 'horizontal' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
-                const shipHeight = orientation === 'vertical' ? ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+            // Add border around the entire ship
+            noFill();
+            stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
+            strokeWeight(3);
+            rect(startX, startY, shipWidth, shipHeight);
+        } else {
+            // Fallback to colored rectangles for each cell
+            for (let i = 0; i < ship.size; i++) {
+                const previewX = gridX + (orientation === 'horizontal' ? i : 0);
+                const previewY = gridY + (orientation === 'vertical' ? i : 0);
                 
-                // Draw semi-transparent ship image
-                tint(255, 180); // Make image semi-transparent
-                image(window.shipImages[ship.type], startX, startY, shipWidth, shipHeight);
-                noTint(); // Reset tint
-                
-                // Add border around the entire ship
-                noFill();
-                stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                strokeWeight(3);
-                rect(startX, startY, shipWidth, shipHeight);
-            } else {
-                // Fallback to colored rectangles for each cell
-                for (let i = 0; i < ship.size; i++) {
-                    const previewX = gridX + (orientation === 'horizontal' ? i : 0);
-                    const previewY = gridY + (orientation === 'vertical' ? i : 0);
+                if (previewX < 10 && previewY < 10) {
+                    const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
+                    const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
                     
-                    if (previewX < 10 && previewY < 10) {
-                        const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
-                        const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
-                        
-                        fill(ship.color + 'B4'); // Add alpha to hex color
-                        stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                        strokeWeight(3);
-                        rect(cellX, cellY, this.gridSize, this.gridSize);
-                        
-                        // Add ship name in preview
-                        fill(255);
-                        textAlign(CENTER, CENTER);
-                        textSize(8);
-                        text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
-                    }
+                    fill(ship.color + 'B4'); // Add alpha to hex color
+                    stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
+                    strokeWeight(3);
+                    rect(cellX, cellY, this.gridSize, this.gridSize);
+                    
+                    // Add ship name in preview
+                    fill(255);
+                    textAlign(CENTER, CENTER);
+                    textSize(8);
+                    text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
                 }
             }
-            
-            // Draw placement instructions
-            fill(255);
-            textAlign(LEFT, TOP);
-            textSize(14);
-            text(`Placing: ${ship.name} (${ship.size} squares)`, 10, height - 100);
-            text(`Orientation: ${orientation}`, 10, height - 80);
-            text(`Press R to rotate, Esc to cancel`, 10, height - 60);
         }
+        
+        // Draw placement instructions
+        fill(255);
+        textAlign(LEFT, TOP);
+        textSize(14);
+        text(`Placing: ${ship.name} (${ship.size} squares)`, 10, height - 100);
+        text(`Orientation: ${orientation}`, 10, height - 80);
+        text(`Press R to rotate, Esc to cancel`, 10, height - 60);
+    }
     }
     
     drawUI() {
