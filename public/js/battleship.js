@@ -987,16 +987,8 @@ class BattleshipClient {
         noLoop();
     }
     
-    // Force a single draw cycle - only call when explicitly needed
-    forceSingleDraw() {
-        if (this.initialized) {
-            // Force a single draw cycle
-            loop();
-            setTimeout(() => {
-                noLoop();
-            }, 50);
-        }
-    }
+    // REMOVED: forceSingleDraw() method to eliminate infinite loops
+    // NO drawing calls - grids will be updated on next draw cycle
     
     // REMOVED: triggerDraw() method to eliminate infinite loops
     // NO drawing calls - grids will be updated on next draw cycle
@@ -1493,8 +1485,7 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Force single draw after ship placement
-                    this.forceSingleDraw();
+                    // NO drawing calls - grid will be updated on next draw cycle
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1521,6 +1512,12 @@ class BattleshipClient {
         const cellSize = this.gridSize + this.gridSpacing;
         const gridX = Math.floor((mouseX - attackGridX) / cellSize);
         const gridY = Math.floor((mouseY - attackGridY) / cellSize);
+        
+        // CRITICAL FIX: Ensure coordinates are within valid bounds
+        if (gridX < 0 || gridX >= 10 || gridY < 0 || gridY >= 10) {
+            console.log(`🎯 Click rejected - coordinates out of bounds: (${gridX}, ${gridY})`);
+            return;
+        }
         
         // Debug coordinate calculation
         console.log(`🎯 Click Debug - mouseX: ${mouseX}, mouseY: ${mouseY}`);
@@ -1586,15 +1583,13 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Force single draw after attack
-                this.forceSingleDraw();
+                // NO drawing calls - grid will be updated on next draw cycle
                 
                 // Start AI turn after a short delay
                 if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
-                        // Force single draw after AI attack
-                        this.forceSingleDraw();
+                        // NO drawing calls - grid will be updated on next draw cycle
                     }, 1000);
                 }
             } else {
@@ -1607,14 +1602,12 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Force single draw after ship rotation
-                this.forceSingleDraw();
+                // NO drawing calls - grid will be updated on next draw cycle
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Force single draw after cancellation
-                this.forceSingleDraw();
+                // NO drawing calls - grid will be updated on next draw cycle
             }
         }
     }
