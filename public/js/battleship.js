@@ -1301,9 +1301,30 @@ class BattleshipClient {
                         // Horizontal ships - draw normally
                         image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
                     }
+                    
+                    // Draw hit overlay if ship is hit or sunk
+                    if (cell.ship.hits > 0) {
+                        push();
+                        if (cell.ship.sunk) {
+                            // Ship is sunk - dark red overlay
+                            fill(139, 0, 0, 150);
+                        } else {
+                            // Ship is hit but not sunk - bright red overlay
+                            fill(255, 0, 0, 120);
+                        }
+                        noStroke();
+                        rect(x, y, shipWidth, shipHeight);
+                        pop();
+                    }
                 } else {
-                    // Fallback to colored rectangle
-                    fill(cell.ship.color);
+                    // Fallback to colored rectangle with hit status
+                    if (cell.ship.sunk) {
+                        fill(139, 0, 0); // Dark red for sunk ships
+                    } else if (cell.ship.hits > 0) {
+                        fill(255, 0, 0); // Bright red for hit ships
+                    } else {
+                        fill(cell.ship.color); // Original color for unhit ships
+                    }
                     rect(x, y, shipWidth, shipHeight);
                 }
                 
@@ -1402,13 +1423,29 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
-        // Draw ship on the grid
-        fill(0, 255, 0, 150); // Green with transparency
-        stroke(0, 255, 0);
+        // Determine ship color based on hit status
+        let shipColor, strokeColor;
+        if (ship.sunk) {
+            // Ship is completely sunk - dark red
+            shipColor = [139, 0, 0, 200]; // Dark red
+            strokeColor = [255, 0, 0]; // Bright red border
+        } else if (ship.hits > 0) {
+            // Ship is hit but not sunk - bright red
+            shipColor = [255, 0, 0, 200]; // Bright red
+            strokeColor = [255, 100, 100]; // Light red border
+        } else {
+            // Ship is unhit - green
+            shipColor = [0, 255, 0, 150]; // Green
+            strokeColor = [0, 255, 0]; // Green border
+        }
+        
+        // Set colors
+        fill(shipColor[0], shipColor[1], shipColor[2], shipColor[3]);
+        stroke(strokeColor[0], strokeColor[1], strokeColor[2]);
         strokeWeight(2);
         
-        // Debug: Log ship coordinates
-        console.log('🔍 drawShipOnGrid - ship.x:', ship.x, 'ship.y:', ship.y, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY);
+        // Debug: Log ship coordinates and status
+        console.log('🔍 drawShipOnGrid - ship.x:', ship.x, 'ship.y:', ship.y, 'hits:', ship.hits, 'sunk:', ship.sunk, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY);
         
         const cellX = fleetGridX + ship.x * (this.gridSize + this.gridSpacing);
         const cellY = fleetGridY + ship.y * (this.gridSize + this.gridSpacing);
