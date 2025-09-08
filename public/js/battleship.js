@@ -1321,39 +1321,51 @@ class BattleshipClient {
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         
-        // Get canvas position on the page
-        const canvasRect = this.canvas.getBoundingClientRect();
-        
-        // Convert screen mouse coordinates to canvas coordinates
-        const mouseCanvasX = mouseX - canvasRect.left;
-        const mouseCanvasY = mouseY - canvasRect.top;
+        // In p5.js, mouseX and mouseY are already in canvas coordinates
+        const mouseCanvasX = mouseX;
+        const mouseCanvasY = mouseY;
         
         // Debug: Draw a small red dot at mouse position to verify coordinates
         fill(255, 0, 0, 255);
         noStroke();
         ellipse(mouseCanvasX, mouseCanvasY, 8, 8);
         
-        // Draw preview cells following mouse cursor
-        for (let i = 0; i < ship.size; i++) {
-            // Calculate position relative to mouse cursor - center on mouse
-            let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-            let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+        // Calculate which grid cell the mouse is over
+        const fleetGridX = this.gridStartX + 80;
+        const fleetGridY = this.gridStartY;
+        
+        // Calculate grid cell coordinates
+        const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
+        const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
+        
+        // Only show preview if mouse is over the fleet grid
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
+            mouseCanvasX >= fleetGridX && mouseCanvasX < fleetGridX + 420 && 
+            mouseCanvasY >= fleetGridY && mouseCanvasY < fleetGridY + 420) {
             
-            // Ensure preview stays within canvas bounds
-            cellX = Math.max(5, Math.min(cellX, canvasWidth - this.gridSize - 5));
-            cellY = Math.max(5, Math.min(cellY, canvasHeight - this.gridSize - 5));
-            
-            // Make preview EXTREMELY visible with bright colors
-            fill(0, 255, 0, 200); // Semi-transparent bright green
-            stroke(255, 255, 255); // White border
-            strokeWeight(3); // Thick border
-            rect(cellX, cellY, this.gridSize, this.gridSize);
-            
-            // Add ship name in preview
-            fill(255);
-            textAlign(CENTER, CENTER);
-            textSize(10);
-            text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+            // Draw preview cells on the grid
+            for (let i = 0; i < ship.size; i++) {
+                // Calculate position on the grid
+                let cellX = fleetGridX + (orientation === 'horizontal' ? (gridX + i) * cellSize : gridX * cellSize);
+                let cellY = fleetGridY + (orientation === 'vertical' ? (gridY + i) * cellSize : gridY * cellSize);
+                
+                // Make preview EXTREMELY visible with bright colors
+                fill(0, 255, 0, 200); // Semi-transparent bright green
+                stroke(255, 255, 255); // White border
+                strokeWeight(3); // Thick border
+                rect(cellX, cellY, this.gridSize, this.gridSize);
+                
+                // Add ship name and orientation in preview
+                fill(255);
+                textAlign(CENTER, CENTER);
+                textSize(10);
+                text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                
+                // Add orientation indicator
+                fill(255, 255, 0);
+                textSize(8);
+                text(orientation === 'horizontal' ? 'H' : 'V', cellX + this.gridSize/2, cellY + this.gridSize/2 + 8);
+            }
         }
         
         // Draw placement instructions
@@ -1468,16 +1480,71 @@ class BattleshipClient {
             mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
             if (this.currentShip) {
                 const shipName = this.currentShip.name;
-                const success = this.game.placeShipAt(gridX, gridY, this.currentShip.orientation || 'horizontal');
+                const orientation = this.currentShip.orientation || 'horizontal';
+                console.log(`🚢 Attempting to place ${shipName} at (${gridX}, ${gridY}) with orientation ${orientation}`);
+                const success = this.game.placeShipAt(gridX, gridY, orientation);
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Static render after ship placement
                     this.staticRender();
                 } else {
-                    console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
+                    console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY}) - checking adjacent cells...`);
+                    // Debug: Check what's preventing placement
+                    this.debugShipPlacement(gridX, gridY, this.currentShip.size, orientation);
+                }
+            } else {
+                console.log(`❌ No current ship selected for placement`);
+            }
+        } else {
+            console.log(`❌ Click outside fleet grid: gridX=${gridX}, gridY=${gridY}, mouseX=${mouseX}, mouseY=${mouseY}`);
+        }
+    }
+    
+    debugShipPlacement(x, y, size, orientation) {
+        console.log(`🔍 Debug ship placement at (${x}, ${y}) with size ${size} and orientation ${orientation}`);
+        const grid = this.game.playerGrids[0];
+        
+        for (let i = 0; i < size; i++) {
+            const checkX = orientation === 'horizontal' ? x + i : x;
+            const checkY = orientation === 'vertical' ? y + i : y;
+            
+            console.log(`🔍 Checking cell (${checkX}, ${checkY}):`);
+            
+            // Check bounds
+            if (checkX >= this.game.gridSize || checkY >= this.game.gridSize) {
+                console.log(`❌ Out of bounds: checkX=${checkX}, checkY=${checkY}, gridSize=${this.game.gridSize}`);
+                return;
+            }
+            if (checkX < 0 || checkY < 0) {
+                console.log(`❌ Negative coordinates: checkX=${checkX}, checkY=${checkY}`);
+                return;
+            }
+            
+            // Check if cell is already occupied
+            if (grid[checkY][checkX].ship !== null) {
+                console.log(`❌ Cell (${checkX}, ${checkY}) already occupied by ship: ${grid[checkY][checkX].ship}`);
+                return;
+            }
+            
+            // Check adjacent cells
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const adjX = checkX + dx;
+                    const adjY = checkY + dy;
+                    
+                    if ((dx === 0 && dy === 0) || adjX < 0 || adjY < 0 || adjX >= this.game.gridSize || adjY >= this.game.gridSize) {
+                        continue;
+                    }
+                    
+                    if (grid[adjY][adjX].ship !== null) {
+                        console.log(`❌ Adjacent cell (${adjX}, ${adjY}) has ship: ${grid[adjY][adjX].ship}`);
+                        return;
+                    }
                 }
             }
         }
+        
+        console.log(`✅ All checks passed - ship should be placeable`);
     }
     
     handleAttack() {
