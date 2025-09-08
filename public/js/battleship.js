@@ -1080,6 +1080,7 @@ class BattleshipClient {
         // Draw attack grid (far right side) - MUST match drawBasicGrids exactly
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
+        console.log(`🎨 drawGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
         // Draw grids without excessive logging
@@ -1476,6 +1477,7 @@ class BattleshipClient {
         console.log(`🎯 Calculated - gridX: ${gridX}, gridY: ${gridY}`);
         console.log(`🎯 Cell Size: ${cellSize}`);
         console.log(`🎯 gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
+        console.log(`🎯 Window dimensions - width: ${windowWidth}, height: ${windowHeight}`);
         
         // Calculate what the actual cell position should be
         const expectedCellX = attackGridX + gridX * cellSize;
