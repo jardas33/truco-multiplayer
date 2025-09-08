@@ -1606,13 +1606,7 @@ function draw() {
     if (battleshipClient && battleshipClient.initialized) {
         battleshipClient.draw();
     } else {
-        // Draw basic grids even without full client
-        if (typeof drawBasicGrids === 'function') {
-            drawBasicGrids();
-        } else {
-            console.log('❌ drawBasicGrids function not found!');
-        }
-        
+        // Don't draw grids until client is ready to prevent coordinate mismatch
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(24);
@@ -1632,74 +1626,9 @@ function draw() {
     }
 }
 
-function drawBasicGrids() {
-    const gridSize = 30; // Smaller grid size for better fit
-    const gridSpacing = 1; // Smaller spacing for better fit
-    const gridStartX = 20; // Fixed positioning
-    const gridStartY = 300; // Fixed positioning
-    
-    // Draw player grid (centered)
-    const fleetGridX = gridStartX + 80; // Center the fleet grid at X=80
-    drawBasicGrid(fleetGridX, gridStartY, gridSize, gridSpacing, 'Your Fleet');
-    
-    // Draw attack grid (far right side) - MUST match BattleshipClient exactly
-    const attackGridX = gridStartX + 500; // Position attack grid far to the right
-    const attackGridY = gridStartY; // Same Y position
-    drawBasicGrid(attackGridX, attackGridY, gridSize, gridSpacing, 'Attack Grid');
-    
-    // Debug to ensure coordinates match
-    console.log(`🎨 drawBasicGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridSize: ${gridSize}, gridSpacing: ${gridSpacing}`);
-    
-}
+// drawBasicGrids function removed - using only BattleshipClient.drawGrids() to prevent coordinate mismatch
 
-function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
-    
-    // Draw grid background with high contrast to make it visible
-    fill(0, 0, 0, 220); // Dark background with high opacity
-    stroke(255, 255, 255); // White border
-    strokeWeight(2);
-    rect(x - 5, y - 5, (gridSize + gridSpacing) * 10 + 10, (gridSize + gridSpacing) * 10 + 10);
-    
-    console.log('🎨 Drawing grid at:', x, y, 'size:', gridSize, 'spacing:', gridSpacing);
-    
-    // Draw grid cells
-    for (let row = 0; row < 10; row++) {
-        for (let col = 0; col < 10; col++) {
-            const cellX = x + col * (gridSize + gridSpacing);
-            const cellY = y + row * (gridSize + gridSpacing);
-            
-            fill(60, 60, 60, 200); // Dark gray for visibility
-            stroke(255, 255, 255); // White grid lines
-            strokeWeight(1);
-            rect(cellX, cellY, gridSize, gridSize);
-        }
-    }
-    
-    // Draw grid labels with better visibility
-    fill(255, 255, 255); // White text
-    textAlign(CENTER, CENTER);
-    textSize(18); // Much larger for better visibility
-    stroke(0, 0, 0); // Black outline
-    strokeWeight(2); // Thicker outline
-    
-    // Numbers (1-10) - positioned above grid
-    for (let i = 1; i <= 10; i++) {
-        text(i, x + (i-1) * (gridSize + gridSpacing) + gridSize/2, y - 15);
-    }
-    
-    // Letters (A-J) - positioned to the left of grid
-    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    for (let i = 0; i < 10; i++) {
-        text(letters[i], x - 25, y + i * (gridSize + gridSpacing) + gridSize/2);
-    }
-    
-    // Draw title with better positioning
-    noStroke(); // Remove stroke for title
-    fill(255, 255, 0); // Yellow title
-    textAlign(CENTER, CENTER);
-    textSize(22); // Much larger title
-    text(title, x + 200, y - 40); // Moved up more
-}
+// drawBasicGrid function removed - using only BattleshipClient.drawGrid() to prevent coordinate mismatch
 
 function mousePressed() {
     console.log(`🎯 Global mousePressed called`);
