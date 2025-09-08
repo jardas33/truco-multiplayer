@@ -1351,6 +1351,9 @@ class BattleshipClient {
         const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
+        // Debug: Show preview coordinates
+        console.log('🔍 Ship preview coordinates - mouseCanvasX:', mouseCanvasX, 'mouseCanvasY:', mouseCanvasY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'cellSize:', cellSize, 'gridX:', gridX, 'gridY:', gridY);
+        
         // Always draw ship preview following mouse cursor with correct size
         const totalWidth = orientation === 'horizontal' ? ship.size * cellSize : cellSize;
         const totalHeight = orientation === 'vertical' ? ship.size * cellSize : cellSize;
