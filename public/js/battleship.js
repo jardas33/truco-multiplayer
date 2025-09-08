@@ -712,9 +712,10 @@ class BattleshipGame {
         if (this.canPlaceShip(0, x, y, this.currentShip.size, orientation)) {
             this.placeShip(0, x, y, this.currentShip, orientation);
             this.ships[this.currentShip.index].placed = true;
-            this.currentShip = null;
+            this.currentShip = null; // Clear current ship after placement
             this.updateUI();
             this.renderShipsList(); // Force re-render of ships list
+            this.staticRender(); // Force redraw to show placed ship
             return true;
         } else {
             this.addToHistory(`❌ Cannot place ${this.currentShip.name} there!`, 'error');
@@ -1304,9 +1305,16 @@ class BattleshipClient {
         const cellSize = this.gridSize + this.gridSpacing;
         let gridX, gridY;
         
-        // Always show preview at A1 for now to make it visible
-        gridX = 0;
-        gridY = 0;
+        // If mouse is outside grid or at origin, show preview at A1
+        if (mouseX === 0 && mouseY === 0 || 
+            mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
+            mouseY < fleetGridY || mouseY > fleetGridY + 420) {
+            gridX = 0;
+            gridY = 0;
+        } else {
+            gridX = Math.floor((mouseX - fleetGridX) / cellSize);
+            gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        }
         
         console.log('🎯 Ship preview - gridX:', gridX, 'gridY:', gridY);
         
@@ -1460,9 +1468,9 @@ class BattleshipClient {
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
             mouseX >= fleetGridX && mouseX < fleetGridX + 420 && 
             mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
-            if (this.game.currentShip) {
-                const shipName = this.game.currentShip.name;
-                const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
+            if (this.currentShip) {
+                const shipName = this.currentShip.name;
+                const success = this.placeShipAt(gridX, gridY, this.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Static render after ship placement
