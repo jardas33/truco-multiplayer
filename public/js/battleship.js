@@ -1326,6 +1326,7 @@ class BattleshipClient {
         const cellSize = this.gridSize + this.gridSpacing;
         
         // Get mouse position relative to canvas
+        // In p5.js, mouseX and mouseY should already be canvas-relative
         const canvasMouseX = mouseX;
         const canvasMouseY = mouseY;
         
@@ -1334,13 +1335,10 @@ class BattleshipClient {
         
         // Draw preview cells following mouse cursor directly
         for (let i = 0; i < ship.size; i++) {
-            // Calculate position relative to mouse cursor - center on mouse
-            let cellX = canvasMouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-            let cellY = canvasMouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
-            
-            // Ensure preview stays within canvas bounds
-            cellX = Math.max(10, Math.min(cellX, width - this.gridSize - 10));
-            cellY = Math.max(10, Math.min(cellY, height - this.gridSize - 10));
+            // For now, draw at a fixed position to test if drawing works
+            // TODO: Fix mouse coordinates to make it follow cursor
+            let cellX = 100 + (orientation === 'horizontal' ? i * cellSize : 0);
+            let cellY = 100 + (orientation === 'vertical' ? i * cellSize : 0);
             
             console.log(`🎯 Drawing cell ${i} at:`, cellX, cellY);
             
