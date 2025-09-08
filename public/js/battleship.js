@@ -1294,10 +1294,15 @@ class BattleshipClient {
         const a1Y = y + 0 * (this.gridSize + this.gridSpacing);
         text('A1', a1X + 2, a1Y + 2);
         
-        // D3 indicator - show exactly where D3 cell is (this is what you're seeing)
-        const d3X = x + 2 * (this.gridSize + this.gridSpacing);
-        const d3Y = y + 3 * (this.gridSize + this.gridSpacing);
-        text('D3', d3X + 2, d3Y + 2);
+        // B2 indicator - show exactly where B2 cell is
+        const b2X = x + 1 * (this.gridSize + this.gridSpacing);
+        const b2Y = y + 1 * (this.gridSize + this.gridSpacing);
+        text('B2', b2X + 2, b2Y + 2);
+        
+        // C2 indicator - show exactly where C2 cell is
+        const c2X = x + 1 * (this.gridSize + this.gridSpacing);
+        const c2Y = y + 2 * (this.gridSize + this.gridSpacing);
+        text('C2', c2X + 2, c2Y + 2);
     }
     
     drawShips() {
