@@ -812,8 +812,9 @@ class BattleshipClient {
             console.log('📏 Canvas size:', this.canvas.width, 'x', this.canvas.height);
             console.log('🎯 Initialized flag set to:', this.initialized);
             
-            // Draw the initial grids
-            // No need to redraw - draw() will be called when needed
+            // Draw the initial grids once
+            loop();
+            setTimeout(() => noLoop(), 100);
         } catch (error) {
             console.error('❌ Canvas creation failed:', error);
             // Retry after a short delay
@@ -1386,7 +1387,9 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Ship placement successful - no need to redraw
+                    // Ship placement successful - draw once to show updated grid
+                    loop();
+                    setTimeout(() => noLoop(), 50);
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1435,7 +1438,9 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Attack completed - no need to redraw
+                // Attack completed - draw once to show updated grid
+                loop();
+                setTimeout(() => noLoop(), 50);
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
