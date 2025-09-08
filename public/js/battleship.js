@@ -939,11 +939,14 @@ class BattleshipClient {
         // Add window resize handler to redraw when console opens/closes
         this.resizeHandler = () => {
             if (this.initialized) {
-                this.isResizing = true; // Prevent clicks during resize
+                // Set flag immediately to prevent any clicks during resize
+                this.isResizing = true;
+                console.log(`🔄 Resize started - blocking clicks`);
                 this.forceDraw();
                 setTimeout(() => {
                     this.isResizing = false; // Re-enable clicks after resize
-                }, 200); // Delay to prevent clicks during resize
+                    console.log(`🔄 Resize completed - clicks enabled`);
+                }, 300); // Increased delay to prevent clicks during resize
             }
         };
         window.addEventListener('resize', this.resizeHandler);
@@ -1497,6 +1500,13 @@ class BattleshipClient {
         // Additional validation: reject clicks that are clearly outside reasonable bounds
         if (mouseX < 0 || mouseY < 0 || mouseX > windowWidth || mouseY > windowHeight) {
             console.log(`🎯 Click rejected - outside window bounds`);
+            return;
+        }
+        
+        // Reject clicks that are clearly outside the attack grid area (more aggressive bounds checking)
+        if (mouseX < attackGridX - 50 || mouseX > attackGridX + 400 || 
+            mouseY < attackGridY - 50 || mouseY > attackGridY + 400) {
+            console.log(`🎯 Click rejected - way outside attack grid area`);
             return;
         }
         
