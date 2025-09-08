@@ -1309,28 +1309,14 @@ class BattleshipClient {
                         image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
                     }
                     
-                    // Draw hit overlay only for individual hit cells, not entire ship
-                    if (cell.hit) {
-                        push();
-                        if (cell.ship.sunk) {
-                            // Ship is sunk - dark red overlay
-                            fill(139, 0, 0, 150);
-                        } else {
-                            // Individual cell is hit - bright red overlay
-                            fill(255, 0, 0, 120);
-                        }
-                        noStroke();
-                        rect(x, y, this.gridSize, this.gridSize);
-                        pop();
-                    }
+                    // Don't draw hit overlay here - let the hit symbol rendering handle it
+                    // This prevents double red overlay that makes hit symbols invisible
                 } else {
-                    // Fallback to colored rectangle - only show red for individual hit cells
+                    // Fallback to colored rectangle - don't show red for hit cells, let hit symbol handle it
                     if (cell.ship.sunk) {
                         fill(139, 0, 0); // Dark red for sunk ships
-                    } else if (cell.hit) {
-                        fill(255, 0, 0); // Bright red for individual hit cells
                     } else {
-                        fill(cell.ship.color); // Original color for unhit cells
+                        fill(cell.ship.color); // Original color for all cells (hit symbol will show hit status)
                     }
                     rect(x, y, shipWidth, shipHeight);
                 }
@@ -1455,18 +1441,14 @@ class BattleshipClient {
             const gridY = ship.y + (ship.orientation === 'vertical' ? i : 0);
             const cell = this.game.playerGrids[player][gridY][gridX];
             
-            // Determine color based on individual cell hit status
+            // Determine color based on ship status - let hit symbol rendering handle individual hits
             let cellColor, strokeColor;
             if (ship.sunk) {
                 // Ship is completely sunk - dark red
                 cellColor = [139, 0, 0, 200]; // Dark red
                 strokeColor = [255, 0, 0]; // Bright red border
-            } else if (cell.hit) {
-                // This specific cell is hit - bright red
-                cellColor = [255, 0, 0, 200]; // Bright red
-                strokeColor = [255, 100, 100]; // Light red border
             } else {
-                // This cell is unhit - green
+                // Ship is not sunk - green (hit symbol will show individual hit status)
                 cellColor = [0, 255, 0, 150]; // Green
                 strokeColor = [0, 255, 0]; // Green border
             }
