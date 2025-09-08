@@ -998,8 +998,10 @@ class BattleshipClient {
         this.drawTurnIndicator();
         this.drawMouseHover();
         
-        // ALWAYS stop the loop after drawing - no continuous drawing
-        noLoop();
+        // Only stop the loop if we're not in placement phase with a current ship
+        if (this.game.gamePhase !== 'placement' || !this.currentShip) {
+            noLoop();
+        }
     }
     
     // Static rendering method - only call when explicitly needed
@@ -1657,6 +1659,14 @@ class BattleshipClient {
             }
         }
     }
+    
+    mouseMoved() {
+        // Redraw when mouse moves during ship placement to update preview
+        if (this.game.gamePhase === 'placement' && this.currentShip) {
+            console.log('🔍 mouseMoved - mouseX:', mouseX, 'mouseY:', mouseY);
+            redraw();
+        }
+    }
 }
 
 // Global game instance
@@ -1729,6 +1739,12 @@ function mousePressed() {
     console.log(`🎯 Global mousePressed called`);
     if (battleshipClient) {
         battleshipClient.mousePressed();
+    }
+}
+
+function mouseMoved() {
+    if (battleshipClient) {
+        battleshipClient.mouseMoved();
     }
 }
 
