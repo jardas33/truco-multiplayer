@@ -981,7 +981,12 @@ class BattleshipClient {
     }
     
     draw() {
-        if (!this.initialized) return;
+        if (!this.initialized) {
+            console.log('🔍 draw() called but not initialized');
+            return;
+        }
+        
+        console.log('🔍 draw() called - gamePhase:', this.game.gamePhase, 'currentShip:', this.currentShip);
         
         // Clear the canvas first to ensure clean drawing
         clear();
@@ -1304,14 +1309,20 @@ class BattleshipClient {
     }
     
     drawShipPreview() {
+        console.log('🔍 drawShipPreview called - gamePhase:', this.game.gamePhase, 'currentShip:', this.currentShip);
+        
         // If no currentShip on client, try to get it from the game instance
         if (!this.currentShip && this.game && this.game.currentShip) {
+            console.log('🔍 Syncing currentShip from game instance');
             this.currentShip = this.game.currentShip;
         }
         
         if (!this.currentShip) {
+            console.log('🔍 drawShipPreview: No current ship selected');
             return;
         }
+        
+        console.log('🔍 drawShipPreview: Drawing preview for ship:', this.currentShip.name);
         
         const ship = this.currentShip;
         const orientation = ship.orientation || 'horizontal';
@@ -1469,10 +1480,14 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
+        console.log('🔍 handleShipPlacement - mouseX:', mouseX, 'mouseY:', mouseY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY);
+        
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
         const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        
+        console.log('🔍 Calculated grid coordinates - gridX:', gridX, 'gridY:', gridY, 'cellSize:', cellSize);
         
         // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
