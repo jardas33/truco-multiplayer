@@ -39,6 +39,15 @@ class BattleshipGame {
         this.aiMode = 'hunt'; // hunt, target
         this.aiLastHit = null;
         
+        // Scoreboard tracking
+        this.playerScore = 0;
+        this.aiScore = 0;
+        this.playerHits = 0;
+        this.playerMisses = 0;
+        this.aiHitsCount = 0;
+        this.aiMisses = 0;
+        this.shipsSunk = 0;
+        
         this.initializeGame();
         this.imagesChecked = false; // Initialize images checked flag
     }
@@ -168,6 +177,9 @@ class BattleshipGame {
         const startBtn = document.getElementById('startGameBtn');
         const instructions = document.getElementById('instructions');
         
+        // Update scoreboard
+        this.updateScoreboard();
+        
         if (gamePhase) {
             switch (this.gamePhase) {
                 case 'placement':
@@ -222,6 +234,23 @@ class BattleshipGame {
         if (startBtn) {
             const allShipsPlaced = this.placedShips[0].length === 5;
             startBtn.disabled = !allShipsPlaced || this.gamePhase !== 'placement';
+        }
+    }
+    
+    updateScoreboard() {
+        const playerScoreEl = document.getElementById('playerScore');
+        const aiScoreEl = document.getElementById('aiScore');
+        const shipsSunkEl = document.getElementById('shipsSunk');
+        const accuracyEl = document.getElementById('accuracy');
+        
+        if (playerScoreEl) playerScoreEl.textContent = this.playerScore;
+        if (aiScoreEl) aiScoreEl.textContent = this.aiScore;
+        if (shipsSunkEl) shipsSunkEl.textContent = `${this.shipsSunk}/5`;
+        
+        if (accuracyEl) {
+            const totalShots = this.playerHits + this.playerMisses;
+            const accuracy = totalShots > 0 ? Math.round((this.playerHits / totalShots) * 100) : 0;
+            accuracyEl.textContent = `${accuracy}%`;
         }
     }
     
@@ -442,10 +471,27 @@ class BattleshipGame {
             const ship = cell.ship;
             ship.hits++;
             
+            // Update scoreboard
+            if (player === 0) {
+                this.playerHits++;
+                this.playerScore += 10; // 10 points per hit
+            } else {
+                this.aiHitsCount++;
+                this.aiScore += 10;
+            }
+            
             if (ship.hits >= ship.size) {
                 this.sinkShip(targetPlayer, ship);
+                this.shipsSunk++;
                 this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
                 this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
+                
+                // Bonus points for sinking a ship
+                if (player === 0) {
+                    this.playerScore += 50; // 50 bonus points for sinking
+                } else {
+                    this.aiScore += 50;
+                }
                 
                 if (this.checkGameOver(targetPlayer)) {
                     this.endGame(player);
@@ -461,6 +507,14 @@ class BattleshipGame {
         } else {
             attackGrid[y][x].miss = true;
             cell.miss = true;
+            
+            // Update scoreboard
+            if (player === 0) {
+                this.playerMisses++;
+            } else {
+                this.aiMisses++;
+            }
+            
             this.addToHistory(`💧 ${player === 0 ? 'You' : 'AI'} missed!`, 'miss');
             this.showGameMessage(`💧 Miss!`, 1500);
             return { valid: true, hit: false };

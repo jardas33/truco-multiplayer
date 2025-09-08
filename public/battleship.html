@@ -29,7 +29,7 @@
             background-size: cover;
             font-family: 'Arial', sans-serif;
             overflow-x: hidden;
-            overflow-y: auto;
+            overflow-y: hidden;
             min-height: 100vh;
         }
         
@@ -121,6 +121,82 @@
             transform: translateX(-50%);
             z-index: 1001;
             width: auto;
+        }
+
+        .scoreboard {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 250px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #FFD700;
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .scoreboard-title {
+            color: #FFD700;
+            font-size: 1.3em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .scoreboard-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .player-score {
+            text-align: center;
+            color: white;
+        }
+
+        .player-name {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .vs-divider {
+            color: #FFD700;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        .game-stats {
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+            padding-top: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #4CAF50;
         }
 
         .menu-buttons {
@@ -326,8 +402,8 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 300px;
-            height: 200px;
+            width: 280px;
+            height: 180px;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #FFD700;
             border-radius: 10px;
@@ -394,6 +470,14 @@
                 max-width: 800px;
                 min-width: auto;
             }
+            .scoreboard {
+                position: relative;
+                top: auto;
+                right: auto;
+                width: 100%;
+                max-width: 400px;
+                margin: 20px auto;
+            }
         }
         
         @media (max-width: 1200px) {
@@ -442,6 +526,32 @@
         <!-- Game Title -->
         <h1 class="game-title">⚓ BATTLESHIP</h1>
         <p class="game-subtitle">Naval Combat Strategy Game</p>
+
+        <!-- Scoreboard -->
+        <div class="scoreboard">
+            <div class="scoreboard-title">Scoreboard</div>
+            <div class="scoreboard-content">
+                <div class="player-score">
+                    <div class="player-name">You</div>
+                    <div class="score-value" id="playerScore">0</div>
+                </div>
+                <div class="vs-divider">VS</div>
+                <div class="player-score">
+                    <div class="player-name">AI</div>
+                    <div class="score-value" id="aiScore">0</div>
+                </div>
+            </div>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Ships Sunk:</span>
+                    <span class="stat-value" id="shipsSunk">0/5</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Accuracy:</span>
+                    <span class="stat-value" id="accuracy">0%</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Left Panel - Game Controls and Info -->
         <div class="left-panel">
