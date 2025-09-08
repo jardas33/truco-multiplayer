@@ -914,26 +914,17 @@ class BattleshipClient {
         
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
-            // Redraw for hover effects during ship placement
-            if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
-                redraw();
-            }
+            // No redraw on mouse move - causes infinite loop
         });
         
         this.canvas.mousePressed(() => {
-            // Redraw after mouse press for ship placement
-            if (this.game && this.game.gamePhase === 'placement') {
-                redraw();
-            }
+            // No redraw on mouse press - handled in mousePressed()
         });
         
         // Add keyboard event listeners with proper cleanup
         this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                // Redraw for ship rotation and cancellation
-                if (this.game && this.game.gamePhase === 'placement') {
-                    redraw();
-                }
+                // No redraw - handled in keyPressed()
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
@@ -1079,9 +1070,6 @@ class BattleshipClient {
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
         this.drawGrid(attackGridX, attackGridY, 1, false);
-        
-        // Debug grid positions
-        console.log(`🎨 drawGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
         
         // Draw grids without excessive logging
         
@@ -1434,8 +1422,7 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Ship placement successful - redraw to show updated grid
-                    redraw();
+                    // Ship placement successful - no redraw needed
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1510,14 +1497,12 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Ship rotated - redraw to show updated ship
-                redraw();
+                // Ship rotated - no redraw needed
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Ship placement cancelled - redraw to show updated state
-                redraw();
+                // Ship placement cancelled - no redraw needed
             }
         }
     }
