@@ -1286,8 +1286,9 @@ class BattleshipClient {
         
         // CRITICAL FIX: Draw visual indicators to show exact cell positions
         fill(255, 0, 0); // Red for debugging
-        textSize(8);
+        textSize(6);
         textAlign(LEFT, TOP);
+        noStroke();
         
         // Draw ALL cell indicators to show exact positions
         for (let row = 0; row < 10; row++) {
@@ -1296,6 +1297,18 @@ class BattleshipClient {
                 const cellY = y + row * (this.gridSize + this.gridSpacing);
                 const cellName = letters[row] + (col + 1);
                 text(cellName, cellX + 1, cellY + 1);
+            }
+        }
+        
+        // Draw red borders around cells to show exact boundaries
+        stroke(255, 0, 0);
+        strokeWeight(1);
+        noFill();
+        for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 10; col++) {
+                const cellX = x + col * (this.gridSize + this.gridSpacing);
+                const cellY = y + row * (this.gridSize + this.gridSpacing);
+                rect(cellX, cellY, this.gridSize, this.gridSize);
             }
         }
     }
