@@ -1519,6 +1519,8 @@ class BattleshipClient {
         const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
         console.log('🔍 Calculated grid coordinates - gridX:', gridX, 'gridY:', gridY, 'cellSize:', cellSize);
+        console.log('🔍 For A1, expected gridX=0, but got gridX=' + gridX + '. This means there is a ' + gridX + '-column offset.');
+        console.log('🔍 A1 should be at mouseX=' + fleetGridX + ', but you clicked at mouseX=' + mouseX);
         
         // Only handle clicks on the fleet grid
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
