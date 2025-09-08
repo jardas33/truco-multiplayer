@@ -1165,6 +1165,13 @@ class BattleshipClient {
                 const cellX = x + col * (this.gridSize + this.gridSpacing);
                 const cellY = y + row * (this.gridSize + this.gridSpacing);
                 
+                // Debug: Show actual cell positions for A1, B1, A2, B2
+                if ((row === 0 && col === 0) || (row === 1 && col === 0) || (row === 0 && col === 1) || (row === 1 && col === 1)) {
+                    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+                    const cellName = `${letters[row]}${col + 1}`;
+                    console.log(`🎨 Drawing ${cellName} at (${cellX}, ${cellY}) - array[${row}][${col}]`);
+                }
+                
                 this.drawCell(cellX, cellY, grid[row][col], showShips);
             }
         }
@@ -1562,6 +1569,10 @@ class BattleshipClient {
         console.log(`🎯 B1 should be at: (${attackGridX + 0 * cellSize}, ${attackGridY + 1 * cellSize})`);
         console.log(`🎯 A2 should be at: (${attackGridX + 1 * cellSize}, ${attackGridY + 0 * cellSize})`);
         console.log(`🎯 B2 should be at: (${attackGridX + 1 * cellSize}, ${attackGridY + 1 * cellSize})`);
+        
+        // Debug: Show what the visual A1 actually corresponds to in game logic
+        console.log(`🎯 Visual A1 at (${attackGridX}, ${attackGridY}) maps to array [${gridY}][${gridX}]`);
+        console.log(`🎯 This should be A1 but might be showing as F6 due to coordinate mismatch`);
         
         // Convert grid coordinates to letters/numbers for debugging
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
