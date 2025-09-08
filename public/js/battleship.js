@@ -1327,73 +1327,52 @@ class BattleshipClient {
         const cellSize = this.gridSize + this.gridSpacing;
         let gridX, gridY;
         
-        // If mouse is outside grid or at origin, show preview at A1
-        if (mouseX === 0 && mouseY === 0 || 
-            mouseX < fleetGridX || mouseX > fleetGridX + 420 || 
-            mouseY < fleetGridY || mouseY > fleetGridY + 420) {
-            gridX = 0;
-            gridY = 0;
-        } else {
-            gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-            gridY = Math.floor((mouseY - fleetGridY) / cellSize);
-        }
+        // Always calculate based on mouse position for following behavior
+        gridX = Math.floor((mouseX - fleetGridX) / cellSize);
+        gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
         console.log('🎯 Ship preview - gridX:', gridX, 'gridY:', gridY);
         
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
-            const ship = this.currentShip;
-            const orientation = ship.orientation || 'horizontal';
+        const ship = this.currentShip;
+        const orientation = ship.orientation || 'horizontal';
+        
+        // Check if ship would fit within bounds
+        const wouldFit = orientation === 'horizontal' ? 
+            (gridX + ship.size <= 10) : 
+            (gridY + ship.size <= 10);
+        
+        // Check if position is within grid bounds
+        const withinBounds = gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10;
+        
+        const canPlace = withinBounds && wouldFit && this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
+        console.log('🎯 Can place ship:', canPlace, 'withinBounds:', withinBounds, 'wouldFit:', wouldFit);
+        
+        // Draw preview cells following mouse cursor
+        for (let i = 0; i < ship.size; i++) {
+            // Calculate position relative to mouse cursor
+            const cellX = mouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
+            const cellY = mouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
             
-            // Check if ship would fit within bounds
-            const wouldFit = orientation === 'horizontal' ? 
-                (gridX + ship.size <= 10) : 
-                (gridY + ship.size <= 10);
+            // Make preview EXTREMELY visible with bright colors
+            fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 255); // Fully opaque bright green or red
+            stroke(255, 255, 255); // White border
+            strokeWeight(6); // Very thick border
+            rect(cellX, cellY, this.gridSize, this.gridSize);
             
-            if (!wouldFit) {
-                console.log('❌ Ship would not fit, returning');
-                return; // Don't draw preview if ship would go out of bounds
-            }
-            
-            const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
-            console.log('🎯 Can place ship:', canPlace);
-            
-            // Draw preview cells with MAXIMUM visibility
-            const startX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
-            const startY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
-            
-            console.log('🎯 Drawing preview at:', startX, startY);
-            
-            // Always use colored rectangles for maximum visibility
-            for (let i = 0; i < ship.size; i++) {
-                const previewX = gridX + (orientation === 'horizontal' ? i : 0);
-                const previewY = gridY + (orientation === 'vertical' ? i : 0);
-                
-                if (previewX < 10 && previewY < 10) {
-                    const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
-                    const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
-                    
-                    // Make preview EXTREMELY visible with bright colors
-                    fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 255); // Fully opaque bright green or red
-                    stroke(255, 255, 255); // White border
-                    strokeWeight(6); // Very thick border
-                    rect(cellX, cellY, this.gridSize, this.gridSize);
-                    
-                    // Add ship name in preview
-                    fill(255);
-                    textAlign(CENTER, CENTER);
-                    textSize(12);
-                    text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
-                }
-            }
-            
-            // Draw placement instructions
+            // Add ship name in preview
             fill(255);
-            textAlign(LEFT, TOP);
-            textSize(16);
-            text(`PLACING: ${ship.name.toUpperCase()} (${ship.size} squares)`, 10, height - 100);
-            text(`ORIENTATION: ${orientation.toUpperCase()}`, 10, height - 80);
-            text(`PRESS R TO ROTATE, ESC TO CANCEL`, 10, height - 60);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
         }
+        
+        // Draw placement instructions
+        fill(255);
+        textAlign(LEFT, TOP);
+        textSize(16);
+        text(`PLACING: ${ship.name.toUpperCase()} (${ship.size} squares)`, 10, height - 100);
+        text(`ORIENTATION: ${orientation.toUpperCase()}`, 10, height - 80);
+        text(`PRESS R TO ROTATE, ESC TO CANCEL`, 10, height - 60);
     }
     
     drawUI() {
@@ -1492,7 +1471,7 @@ class BattleshipClient {
             mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
             if (this.currentShip) {
                 const shipName = this.currentShip.name;
-                const success = this.placeShipAt(gridX, gridY, this.currentShip.orientation || 'horizontal');
+                const success = this.game.placeShipAt(gridX, gridY, this.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Static render after ship placement
