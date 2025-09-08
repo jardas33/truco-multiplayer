@@ -1354,9 +1354,8 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80;
         const fleetGridY = this.gridStartY;
         
-        // Calculate grid cell coordinates with 2-column offset fix
-        const adjustedFleetGridX = fleetGridX + 62; // Add 2 columns worth of offset
-        const gridX = Math.floor((mouseCanvasX - adjustedFleetGridX) / cellSize);
+        // Calculate grid cell coordinates - use exact fleetGridX position
+        const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
         // Debug: Show preview coordinates
@@ -1368,7 +1367,7 @@ class BattleshipClient {
         // Draw preview squares snapped to grid cells (only when over the grid)
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
             // Calculate the actual grid cell positions
-            const gridStartX = adjustedFleetGridX + gridX * cellSize;
+            const gridStartX = fleetGridX + gridX * cellSize;
             const gridStartY = fleetGridY + gridY * cellSize;
             
             // Draw individual squares snapped to grid
@@ -1396,22 +1395,32 @@ class BattleshipClient {
             }
         }
         
-        // Always draw ship image following mouse cursor
+        // Draw ship image - snap to grid when over grid, follow mouse otherwise
         const totalWidth = orientation === 'horizontal' ? ship.size * cellSize : cellSize;
         const totalHeight = orientation === 'vertical' ? ship.size * cellSize : cellSize;
         
-        // Calculate the top-left corner position to center the ship on mouse cursor
-        const startX = mouseCanvasX - totalWidth / 2;
-        const startY = mouseCanvasY - totalHeight / 2;
+        // Calculate ship image position
+        let startX, startY;
         
-        // Then, draw the ship image on top if available
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
+            // Snap to grid when over the grid area
+            const gridStartX = fleetGridX + gridX * cellSize;
+            const gridStartY = fleetGridY + gridY * cellSize;
+            startX = gridStartX;
+            startY = gridStartY;
+        } else {
+            // Follow mouse cursor when outside grid
+            startX = mouseCanvasX - totalWidth / 2;
+            startY = mouseCanvasY - totalHeight / 2;
+        }
+        
+        // Draw the ship image
         const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
         
         if (shipImage) {
-            // Draw ship image at the same position as the squares
             if (orientation === 'vertical') {
                 push();
-                translate(mouseCanvasX, mouseCanvasY);
+                translate(startX + totalWidth / 2, startY + totalHeight / 2);
                 rotate(PI/2); // 90 degrees
                 image(shipImage, -totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
                 pop();
@@ -1524,10 +1533,8 @@ class BattleshipClient {
         console.log('🔍 handleShipPlacement - mouseX:', mouseX, 'mouseY:', mouseY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'gridStartX:', this.gridStartX, 'gridStartY:', this.gridStartY);
         
         // Calculate grid coordinates to match exactly how cells are drawn
-        // Fix the 2-column offset by adjusting fleetGridX
         const cellSize = this.gridSize + this.gridSpacing;
-        const adjustedFleetGridX = fleetGridX + 62; // Add 2 columns worth of offset
-        const gridX = Math.floor((mouseX - adjustedFleetGridX) / cellSize);
+        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
         console.log('🔍 Calculated grid coordinates - gridX:', gridX, 'gridY:', gridY, 'cellSize:', cellSize);
