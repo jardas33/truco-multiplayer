@@ -1230,8 +1230,23 @@ class BattleshipClient {
                 const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
                 
                 if (window.shipImages && window.shipImages[cell.ship.type]) {
-                    // Draw ship image
-                    image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
+                    // Draw ship image with proper rotation handling
+                    if (cell.ship.orientation === 'vertical') {
+                        push();
+                        // For vertical ships, rotate around the center
+                        const centerX = x + shipWidth / 2;
+                        const centerY = y + shipHeight / 2;
+                        translate(centerX, centerY);
+                        rotate(PI/2); // 90 degrees clockwise
+                        // Use original horizontal dimensions to prevent stretching
+                        const imageWidth = cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing;
+                        const imageHeight = this.gridSize;
+                        image(window.shipImages[cell.ship.type], -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
+                        pop();
+                    } else {
+                        // Horizontal ships - draw normally
+                        image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
+                    }
                 } else {
                     // Fallback to colored rectangle
                     fill(cell.ship.color);
@@ -1461,8 +1476,11 @@ class BattleshipClient {
                 const centerY = startY + totalHeight / 2;
                 translate(centerX, centerY);
                 rotate(PI/2); // 90 degrees clockwise
-                // Draw the image centered at the rotation point
-                image(shipImage, -totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
+                // Draw the image with swapped dimensions to prevent stretching
+                // The image should be drawn with the original horizontal dimensions
+                const imageWidth = ship.size * cellSize;  // Original horizontal width
+                const imageHeight = cellSize;             // Original horizontal height
+                image(shipImage, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
                 pop();
             } else {
                 image(shipImage, startX, startY, totalWidth, totalHeight);
