@@ -272,7 +272,7 @@ class BattleshipGame {
                     
                     // Force redraw grids after all images are loaded
                     if (this.forceDraw) {
-                        this.forceDraw();
+                        this.staticRender();
                     }
                 }, 100);
                 return true;
@@ -291,7 +291,7 @@ class BattleshipGame {
         }
         
         // Force initial draw to show grids
-        this.initialDraw();
+        this.staticRender();
         
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
@@ -824,7 +824,7 @@ class BattleshipClient {
                 if (this.initialized && this.canvas) {
                     console.log('🎨 Initial grid draw starting...');
                     // Force initial draw to show grids
-                    this.initialDraw();
+                    this.staticRender();
                     console.log('🎨 Initial grid draw completed');
                 }
             }, 500);
@@ -900,7 +900,7 @@ class BattleshipClient {
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
                     
                     // Redraw after resize to ensure grids are visible
-                    this.forceDraw();
+                    this.staticRender();
                     
                     // Canvas resized successfully
                 }
@@ -944,7 +944,7 @@ class BattleshipClient {
                 // Set flag immediately to prevent any clicks during resize
                 this.isResizing = true;
                 console.log(`🔄 Resize started - blocking clicks`);
-                this.forceDraw();
+                this.staticRender();
                 setTimeout(() => {
                     this.isResizing = false; // Re-enable clicks after resize
                     console.log(`🔄 Resize completed - clicks enabled`);
