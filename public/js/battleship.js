@@ -987,6 +987,17 @@ class BattleshipClient {
         noLoop();
     }
     
+    // Static rendering method - only call when explicitly needed
+    staticRender() {
+        if (this.initialized) {
+            // Force a single draw cycle
+            loop();
+            setTimeout(() => {
+                noLoop();
+            }, 50);
+        }
+    }
+    
     // Force draw the grids - call this when needed
     forceDraw() {
         if (this.initialized) {
@@ -1009,12 +1020,8 @@ class BattleshipClient {
         }
     }
     
-    // Manual drawing method - only call when explicitly needed
-    manualDraw() {
-        if (this.initialized) {
-            this.draw();
-        }
-    }
+    // REMOVED: manualDraw() method to eliminate infinite loops
+    // NO drawing calls - grids will be updated on next draw cycle
     
     drawTurnIndicator() {
         const fleetGridX = this.gridStartX + 80;
@@ -1477,8 +1484,8 @@ class BattleshipClient {
                 const success = this.game.placeShipAt(gridX, gridY, this.game.currentShip.orientation || 'horizontal');
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
-                    // Manual draw after ship placement
-                    this.manualDraw();
+                    // Static render after ship placement
+                    this.staticRender();
                 } else {
                     console.log(`❌ Cannot place ${shipName} at (${gridX}, ${gridY})`);
                 }
@@ -1570,15 +1577,15 @@ class BattleshipClient {
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
-                // Manual draw after attack
-                this.manualDraw();
+                // Static render after attack
+                this.staticRender();
                 
                 // Start AI turn after a short delay
                 if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
-                        // Manual draw after AI attack
-                        this.manualDraw();
+                        // Static render after AI attack
+                        this.staticRender();
                     }, 1000);
                 }
             } else {
@@ -1591,14 +1598,14 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
-                // Manual draw after ship rotation
-                this.manualDraw();
+                // Static render after ship rotation
+                this.staticRender();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
-                // Manual draw after cancellation
-                this.manualDraw();
+                // Static render after cancellation
+                this.staticRender();
             }
         }
     }
