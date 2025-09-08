@@ -1352,10 +1352,18 @@ class BattleshipClient {
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
         // Always draw ship preview following mouse cursor with correct size
+        const cellSize = this.gridSize + this.gridSpacing;
+        const totalWidth = orientation === 'horizontal' ? ship.size * cellSize : cellSize;
+        const totalHeight = orientation === 'vertical' ? ship.size * cellSize : cellSize;
+        
+        // Calculate the top-left corner position to center the ship on mouse cursor
+        const startX = mouseCanvasX - totalWidth / 2;
+        const startY = mouseCanvasY - totalHeight / 2;
+        
         // First, draw the individual squares to show the exact grid cells
         for (let i = 0; i < ship.size; i++) {
-            let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-            let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+            let cellX = startX + (orientation === 'horizontal' ? i * cellSize : 0);
+            let cellY = startY + (orientation === 'vertical' ? i * cellSize : 0);
             
             // Make preview visible with ship color
             const shipColor = ship.color || '#FFEAA7';
@@ -1377,24 +1385,15 @@ class BattleshipClient {
         const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
         
         if (shipImage) {
-            // Draw ship image following mouse cursor with correct size
-            const cellSize = this.gridSize + this.gridSpacing;
-            const totalWidth = orientation === 'horizontal' ? ship.size * cellSize : cellSize;
-            const totalHeight = orientation === 'vertical' ? ship.size * cellSize : cellSize;
-            
-            // Calculate offset to center the ship on mouse cursor
-            const offsetX = -totalWidth / 2;
-            const offsetY = -totalHeight / 2;
-            
-            // Rotate image if vertical
+            // Draw ship image at the same position as the squares
             if (orientation === 'vertical') {
                 push();
                 translate(mouseCanvasX, mouseCanvasY);
                 rotate(PI/2); // 90 degrees
-                image(shipImage, offsetX, offsetY, totalWidth, totalHeight);
+                image(shipImage, -totalWidth / 2, -totalHeight / 2, totalWidth, totalHeight);
                 pop();
             } else {
-                image(shipImage, mouseCanvasX + offsetX, mouseCanvasY + offsetY, totalWidth, totalHeight);
+                image(shipImage, startX, startY, totalWidth, totalHeight);
             }
         }
         
