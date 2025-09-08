@@ -269,6 +269,11 @@ class BattleshipGame {
                 // Add a small delay to ensure images are fully processed
                 setTimeout(() => {
                     this.renderShipsList();
+                    
+                    // Force redraw grids after all images are loaded
+                    if (this.forceDraw) {
+                        this.forceDraw();
+                    }
                 }, 100);
                 return true;
             }
@@ -815,10 +820,14 @@ class BattleshipClient {
             // Draw the initial grids once after canvas is fully ready
             setTimeout(() => {
                 if (this.initialized && this.canvas) {
+                    console.log('🎨 Initial grid draw starting...');
                     loop();
-                    setTimeout(() => noLoop(), 100);
+                    setTimeout(() => {
+                        noLoop();
+                        console.log('🎨 Initial grid draw completed');
+                    }, 100);
                 }
-            }, 300);
+            }, 500);
         } catch (error) {
             console.error('❌ Canvas creation failed:', error);
             // Retry after a short delay
@@ -889,6 +898,9 @@ class BattleshipClient {
                     this.gridStartY = 300;
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
+                    
+                    // Redraw after resize to ensure grids are visible
+                    this.forceDraw();
                     
                     // Canvas resized successfully
                 }
@@ -962,8 +974,12 @@ class BattleshipClient {
     // Force draw the grids - call this when needed
     forceDraw() {
         if (this.initialized) {
+            console.log('🎨 Force drawing grids...');
             loop();
-            setTimeout(() => noLoop(), 50);
+            setTimeout(() => {
+                noLoop();
+                console.log('🎨 Force draw completed');
+            }, 100);
         }
     }
     
