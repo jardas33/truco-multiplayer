@@ -1574,6 +1574,12 @@ class BattleshipClient {
         console.log(`🎯 Visual A1 at (${attackGridX}, ${attackGridY}) maps to array [${gridY}][${gridX}]`);
         console.log(`🎯 This should be A1 but might be showing as F6 due to coordinate mismatch`);
         
+        // Debug: Show the actual clickable cell boundaries
+        const actualCellX = attackGridX + gridX * cellSize;
+        const actualCellY = attackGridY + gridY * cellSize;
+        console.log(`🎯 Actual clickable A1 cell: (${actualCellX}, ${actualCellY}) to (${actualCellX + this.gridSize}, ${actualCellY + this.gridSize})`);
+        console.log(`🎯 Your click at (${mouseX}, ${mouseY}) is ${mouseX - actualCellX}px right, ${mouseY - actualCellY}px down from cell top-left`);
+        
         // Convert grid coordinates to letters/numbers for debugging
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
         const clickedPosition = `${letters[gridY]}${gridX + 1}`;
