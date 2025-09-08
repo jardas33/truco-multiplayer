@@ -1208,9 +1208,9 @@ class BattleshipClient {
         
         rect(x, y, this.gridSize, this.gridSize);
         
-        // Draw hit/miss indicators with better visuals
+        // Draw hit/miss indicators LAST (so they appear on top of everything)
         if (cell.hit) {
-            // RED square for hits (whole square)
+            // RED square for hits (whole square) - covers ship squares
             fill(255, 100, 100, 150);
             noStroke();
             rect(x, y, this.gridSize, this.gridSize);
@@ -1221,7 +1221,7 @@ class BattleshipClient {
             textSize(16);
             text('💥', x + this.gridSize/2, y + this.gridSize/2);
         } else if (cell.miss) {
-            // BLUE square for misses (whole square)
+            // BLUE square for misses (whole square) - covers ship squares
             fill(100, 150, 255, 150);
             noStroke();
             rect(x, y, this.gridSize, this.gridSize);
@@ -1264,10 +1264,7 @@ class BattleshipClient {
     }
     
     drawShips() {
-        // Draw ships being placed
-        if (this.game.currentShip) {
-            this.drawShipPreview();
-        }
+        // Draw ships being placed - preview is handled in main draw()
         
         // Draw placed ships on the player grid
         this.drawPlacedShips();
@@ -1303,6 +1300,8 @@ class BattleshipClient {
     
     drawShipPreview() {
         if (!this.game.currentShip) return;
+        
+        console.log('🚢 Drawing ship preview for:', this.game.currentShip.name);
         
         // Use the correct fleet grid position
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
@@ -1367,9 +1366,10 @@ class BattleshipClient {
                         const cellX = fleetGridX + previewX * (this.gridSize + this.gridSpacing);
                         const cellY = fleetGridY + previewY * (this.gridSize + this.gridSpacing);
                         
-                        fill(ship.color + 'B4'); // Add alpha to hex color
-                        stroke(canPlace ? 0 : 255, canPlace ? 255 : 0, 0);
-                        strokeWeight(3);
+                        // Make preview very visible with bright colors
+                        fill(canPlace ? 0 : 255, canPlace ? 255 : 0, 0, 200); // Bright green or red
+                        stroke(255, 255, 255); // White border
+                        strokeWeight(4); // Thicker border
                         rect(cellX, cellY, this.gridSize, this.gridSize);
                         
                         // Add ship name in preview
