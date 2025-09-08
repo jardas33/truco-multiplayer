@@ -325,16 +325,29 @@ class BattleshipGame {
     canPlaceShip(player, x, y, size, orientation) {
         const grid = this.playerGrids[player];
         
+        console.log(`🔍 canPlaceShip - player: ${player}, x: ${x}, y: ${y}, size: ${size}, orientation: ${orientation}`);
+        
         for (let i = 0; i < size; i++) {
             const checkX = orientation === 'horizontal' ? x + i : x;
             const checkY = orientation === 'vertical' ? y + i : y;
             
+            console.log(`🔍 Checking cell (${checkX}, ${checkY}) for ship part ${i}`);
+            
             // Check bounds
-            if (checkX >= this.gridSize || checkY >= this.gridSize) return false;
-            if (checkX < 0 || checkY < 0) return false;
+            if (checkX >= this.gridSize || checkY >= this.gridSize) {
+                console.log(`❌ Out of bounds: checkX=${checkX}, checkY=${checkY}, gridSize=${this.gridSize}`);
+                return false;
+            }
+            if (checkX < 0 || checkY < 0) {
+                console.log(`❌ Negative coordinates: checkX=${checkX}, checkY=${checkY}`);
+                return false;
+            }
             
             // Check if cell is already occupied
-            if (grid[checkY][checkX].ship !== null) return false;
+            if (grid[checkY][checkX].ship !== null) {
+                console.log(`❌ Cell (${checkX}, ${checkY}) already occupied by ship: ${grid[checkY][checkX].ship.name}`);
+                return false;
+            }
             
             // Check adjacent cells (Battleship rules: ships cannot touch)
             for (let dx = -1; dx <= 1; dx++) {
@@ -348,11 +361,15 @@ class BattleshipGame {
                     }
                     
                     // Check if adjacent cell has a ship
-                    if (grid[adjY][adjX].ship !== null) return false;
+                    if (grid[adjY][adjX].ship !== null) {
+                        console.log(`❌ Adjacent cell (${adjX}, ${adjY}) has ship: ${grid[adjY][adjX].ship.name}`);
+                        return false;
+                    }
                 }
             }
         }
         
+        console.log(`✅ Ship can be placed at (${x}, ${y}) with orientation ${orientation}`);
         return true;
     }
     
@@ -1105,9 +1122,13 @@ class BattleshipClient {
             const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
             const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
             
+            // Calculate correct grid bounds
+            const gridWidth = 10 * cellSize;
+            const gridHeight = 10 * cellSize;
+            
             if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
-                mouseX >= fleetGridX && mouseX < fleetGridX + 420 && 
-                mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
+                mouseX >= fleetGridX && mouseX < fleetGridX + gridWidth && 
+                mouseY >= fleetGridY && mouseY < fleetGridY + gridHeight) {
                 const cellX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
                 const cellY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
                 
@@ -1538,11 +1559,24 @@ class BattleshipClient {
         const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
         
         console.log('🔍 Calculated grid coordinates - gridX:', gridX, 'gridY:', gridY, 'cellSize:', cellSize);
+        console.log('🔍 Mouse position relative to grid - relX:', mouseX - fleetGridX, 'relY:', mouseY - fleetGridY);
+        console.log('🔍 Grid cell size calculation - gridSize:', this.gridSize, 'gridSpacing:', this.gridSpacing, 'cellSize:', cellSize);
+        
+        // Calculate correct grid bounds
+        const gridWidth = 10 * cellSize;
+        const gridHeight = 10 * cellSize;
         
         // Only handle clicks on the fleet grid
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
-            mouseX >= fleetGridX && mouseX < fleetGridX + 420 && 
-            mouseY >= fleetGridY && mouseY < fleetGridY + 420) {
+        const inBounds = gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10;
+        const inMouseBounds = mouseX >= fleetGridX && mouseX < fleetGridX + gridWidth && 
+                             mouseY >= fleetGridY && mouseY < fleetGridY + gridHeight;
+        
+        console.log('🔍 Bounds checking - inBounds:', inBounds, 'inMouseBounds:', inMouseBounds);
+        console.log('🔍 Grid bounds - gridWidth:', gridWidth, 'gridHeight:', gridHeight);
+        console.log('🔍 Mouse bounds check - mouseX >= fleetGridX:', mouseX >= fleetGridX, 'mouseX < fleetGridX + gridWidth:', mouseX < fleetGridX + gridWidth);
+        console.log('🔍 Mouse bounds check - mouseY >= fleetGridY:', mouseY >= fleetGridY, 'mouseY < fleetGridY + gridHeight:', mouseY < fleetGridY + gridHeight);
+        
+        if (inBounds && inMouseBounds) {
             if (this.currentShip) {
                 const shipName = this.currentShip.name;
                 const orientation = this.currentShip.orientation || 'horizontal';
@@ -1562,6 +1596,9 @@ class BattleshipClient {
             }
         } else {
             console.log(`❌ Click outside fleet grid: gridX=${gridX}, gridY=${gridY}, mouseX=${mouseX}, mouseY=${mouseY}`);
+            console.log(`❌ Bounds check failed - inBounds: ${inBounds}, inMouseBounds: ${inMouseBounds}`);
+            console.log(`❌ Grid position - fleetGridX: ${fleetGridX}, fleetGridY: ${fleetGridY}`);
+            console.log(`❌ Grid size - gridWidth: ${gridWidth}, gridHeight: ${gridHeight}`);
         }
     }
     
@@ -1696,12 +1733,16 @@ class BattleshipClient {
         if (key === 'r' || key === 'R') {
             if (this.game.currentShip) {
                 this.game.rotateCurrentShip();
+                // Sync client's currentShip with game's currentShip after rotation
+                this.currentShip = this.game.currentShip;
                 // Static render after ship rotation
                 this.staticRender();
             }
         } else if (key === 'Escape') {
             if (this.game.currentShip) {
                 this.game.cancelShipPlacement();
+                // Clear client's currentShip after cancellation
+                this.currentShip = null;
                 // Static render after cancellation
                 this.staticRender();
             }
