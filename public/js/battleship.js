@@ -388,6 +388,8 @@ class BattleshipGame {
     }
     
     attack(player, x, y) {
+        console.log(`🎯 attack() called with player=${player}, x=${x}, y=${y}`);
+        
         if (this.gameOver) {
             return { valid: false, message: 'Game is already over!' };
         }
@@ -395,6 +397,10 @@ class BattleshipGame {
         const targetPlayer = 1 - player;
         const grid = this.playerGrids[targetPlayer];
         const attackGrid = this.attackGrids[player];
+        
+        console.log(`🎯 Target player: ${targetPlayer}, grid size: ${grid.length}x${grid[0].length}`);
+        console.log(`🎯 Attack grid size: ${attackGrid.length}x${attackGrid[0].length}`);
+        console.log(`🎯 Checking attackGrid[${y}][${x}] - hit: ${attackGrid[y][x].hit}, miss: ${attackGrid[y][x].miss}`);
         
         if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
             return { valid: false, message: 'Already attacked this position!' };
