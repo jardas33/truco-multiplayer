@@ -1304,78 +1304,62 @@ class BattleshipClient {
     }
     
     drawShipPreview() {
-        console.log('🚢 drawShipPreview called, currentShip:', this.currentShip);
-        console.log('🚢 drawShipPreview - this context:', this);
-        console.log('🚢 drawShipPreview - this.currentShip type:', typeof this.currentShip);
-        
         // If no currentShip on client, try to get it from the game instance
         if (!this.currentShip && this.game && this.game.currentShip) {
-            console.log('🔄 Syncing currentShip from game to client');
             this.currentShip = this.game.currentShip;
         }
         
         if (!this.currentShip) {
-            console.log('❌ No current ship, returning');
             return;
         }
-        
-        console.log('🚢 Drawing ship preview for:', this.currentShip.name);
         
         const ship = this.currentShip;
         const orientation = ship.orientation || 'horizontal';
         const cellSize = this.gridSize + this.gridSpacing;
         
-        // Get mouse position relative to canvas
-        // Try to get proper canvas-relative mouse coordinates
-        const canvasRect = this.canvas.elt.getBoundingClientRect();
-        const canvasMouseX = mouseX - canvasRect.left;
-        const canvasMouseY = mouseY - canvasRect.top;
+        // Get the actual canvas dimensions (not window dimensions)
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
         
-        console.log('🎯 Canvas mouse position:', canvasMouseX, canvasMouseY);
-        console.log('🎯 Canvas size:', width, height);
+        // Get mouse position relative to canvas using proper p5.js mouse functions
+        const mouseCanvasX = mouseX;
+        const mouseCanvasY = mouseY;
         
-        // Draw preview cells following mouse cursor directly
+        // Debug: Draw a small red dot at mouse position to verify coordinates
+        fill(255, 0, 0, 255);
+        noStroke();
+        ellipse(mouseCanvasX, mouseCanvasY, 8, 8);
+        
+        // Draw preview cells following mouse cursor
         for (let i = 0; i < ship.size; i++) {
             // Calculate position relative to mouse cursor - center on mouse
-            let cellX = canvasMouseX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
-            let cellY = canvasMouseY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+            let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
+            let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
             
             // Ensure preview stays within canvas bounds
-            cellX = Math.max(10, Math.min(cellX, width - this.gridSize - 10));
-            cellY = Math.max(10, Math.min(cellY, height - this.gridSize - 10));
-            
-            console.log(`🎯 Drawing cell ${i} at:`, cellX, cellY);
+            cellX = Math.max(5, Math.min(cellX, canvasWidth - this.gridSize - 5));
+            cellY = Math.max(5, Math.min(cellY, canvasHeight - this.gridSize - 5));
             
             // Make preview EXTREMELY visible with bright colors
-            fill(0, 255, 0, 255); // Bright green for visibility
+            fill(0, 255, 0, 200); // Semi-transparent bright green
             stroke(255, 255, 255); // White border
-            strokeWeight(6); // Very thick border
+            strokeWeight(3); // Thick border
             rect(cellX, cellY, this.gridSize, this.gridSize);
             
             // Add ship name in preview
             fill(255);
             textAlign(CENTER, CENTER);
-            textSize(12);
-            text(ship.name.substring(0, 3), cellX + this.gridSize/2, cellY + this.gridSize/2);
+            textSize(10);
+            text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
         }
-        
-        // TEST: Draw a fixed preview at top-left to verify drawing works
-        fill(255, 0, 0, 255); // Red for test
-        stroke(255, 255, 255);
-        strokeWeight(3);
-        rect(50, 50, this.gridSize, this.gridSize);
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(10);
-        text('TEST', 50 + this.gridSize/2, 50 + this.gridSize/2);
         
         // Draw placement instructions
         fill(255);
         textAlign(LEFT, TOP);
-        textSize(16);
-        text(`PLACING: ${ship.name.toUpperCase()} (${ship.size} squares)`, 10, height - 100);
-        text(`ORIENTATION: ${orientation.toUpperCase()}`, 10, height - 80);
-        text(`PRESS R TO ROTATE, ESC TO CANCEL`, 10, height - 60);
+        textSize(14);
+        text(`PLACING: ${ship.name.toUpperCase()} (${ship.size} squares)`, 10, canvasHeight - 80);
+        text(`ORIENTATION: ${orientation.toUpperCase()}`, 10, canvasHeight - 60);
+        text(`PRESS R TO ROTATE, ESC TO CANCEL`, 10, canvasHeight - 40);
     }
     
     drawUI() {
