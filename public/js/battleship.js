@@ -922,12 +922,7 @@ class BattleshipClient {
             }
         });
         
-        this.canvas.mousePressed(() => {
-            // Redraw after mouse press for ship placement only
-            if (this.game && this.game.gamePhase === 'placement') {
-                redraw();
-            }
-        });
+        // Remove canvas-specific mousePressed - using global handler instead
         
         // Add keyboard event listeners with proper cleanup
         this.keydownHandler = (e) => {
@@ -1409,6 +1404,8 @@ class BattleshipClient {
     mousePressed() {
         if (this.game.gamePhase === 'placement') {
             this.handleShipPlacement();
+            // Redraw for ship placement visual feedback
+            redraw();
         } else if (this.game.gamePhase === 'playing') {
             this.handleAttack();
         }
@@ -1450,6 +1447,8 @@ class BattleshipClient {
             return;
         }
         this.lastClickTime = currentTime;
+        
+        console.log(`🎯 handleAttack called - single click handler`);
         
         // Use correct attack grid position (must match drawGrids)
         const attackGridX = this.gridStartX + 500; // Match drawGrids position
@@ -1670,6 +1669,7 @@ function drawBasicGrid(x, y, gridSize, gridSpacing, title) {
 }
 
 function mousePressed() {
+    console.log(`🎯 Global mousePressed called`);
     if (battleshipClient) {
         battleshipClient.mousePressed();
     }
