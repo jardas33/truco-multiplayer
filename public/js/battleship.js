@@ -1338,10 +1338,10 @@ class BattleshipClient {
         const mouseCanvasX = mouseX;
         const mouseCanvasY = mouseY;
         
-        // Debug: Draw a small red dot at mouse position to verify coordinates
-        fill(255, 0, 0, 255);
-        noStroke();
-        ellipse(mouseCanvasX, mouseCanvasY, 8, 8);
+        // Debug: Draw a small red dot at mouse position to verify coordinates (disabled)
+        // fill(255, 0, 0, 255);
+        // noStroke();
+        // ellipse(mouseCanvasX, mouseCanvasY, 8, 8);
         
         // Calculate which grid cell the mouse is over
         const fleetGridX = this.gridStartX + 80;
@@ -1351,12 +1351,13 @@ class BattleshipClient {
         const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
-        // Only show preview if mouse is over the fleet grid
-        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
+        // Check if mouse is over the fleet grid
+        const isOverGrid = gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
             mouseCanvasX >= fleetGridX && mouseCanvasX < fleetGridX + 420 && 
-            mouseCanvasY >= fleetGridY && mouseCanvasY < fleetGridY + 420) {
-            
-            // Draw preview cells on the grid
+            mouseCanvasY >= fleetGridY && mouseCanvasY < fleetGridY + 420;
+        
+        if (isOverGrid) {
+            // Draw preview cells on the grid (snapped to grid)
             for (let i = 0; i < ship.size; i++) {
                 // Calculate position on the grid
                 let cellX = fleetGridX + (orientation === 'horizontal' ? (gridX + i) * cellSize : gridX * cellSize);
@@ -1378,6 +1379,45 @@ class BattleshipClient {
                 fill(255, 255, 0);
                 textSize(8);
                 text(orientation === 'horizontal' ? 'H' : 'V', cellX + this.gridSize/2, cellY + this.gridSize/2 + 8);
+            }
+        } else {
+            // Draw ship preview following mouse cursor (not on grid)
+            const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
+            
+            if (shipImage) {
+                // Draw ship image following mouse cursor
+                const imageSize = 40; // Size of the ship image
+                const offsetX = orientation === 'horizontal' ? -imageSize/2 : -imageSize/2;
+                const offsetY = orientation === 'horizontal' ? -imageSize/2 : -imageSize/2;
+                
+                // Rotate image if vertical
+                if (orientation === 'vertical') {
+                    push();
+                    translate(mouseCanvasX, mouseCanvasY);
+                    rotate(PI/2); // 90 degrees
+                    image(shipImage, offsetX, offsetY, imageSize, imageSize);
+                    pop();
+                } else {
+                    image(shipImage, mouseCanvasX + offsetX, mouseCanvasY + offsetY, imageSize, imageSize);
+                }
+            } else {
+                // Fallback: draw colored rectangles following mouse
+                for (let i = 0; i < ship.size; i++) {
+                    let cellX = mouseCanvasX - (this.gridSize / 2) + (orientation === 'horizontal' ? i * cellSize : 0);
+                    let cellY = mouseCanvasY - (this.gridSize / 2) + (orientation === 'vertical' ? i * cellSize : 0);
+                    
+                    // Make preview visible with ship color
+                    fill(ship.color || '#FFEAA7', 200); // Semi-transparent ship color
+                    stroke(255, 255, 255); // White border
+                    strokeWeight(2);
+                    rect(cellX, cellY, this.gridSize, this.gridSize);
+                    
+                    // Add ship name
+                    fill(255);
+                    textAlign(CENTER, CENTER);
+                    textSize(8);
+                    text(ship.name.substring(0, 2), cellX + this.gridSize/2, cellY + this.gridSize/2);
+                }
             }
         }
         
