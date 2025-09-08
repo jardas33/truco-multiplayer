@@ -1086,6 +1086,12 @@ class BattleshipClient {
         console.log(`🎨 drawGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
         console.log(`🎨 drawGrids - Canvas dimensions: ${width} x ${height}`);
         console.log(`🎨 drawGrids - Grid size: ${this.gridSize}, spacing: ${this.gridSpacing}`);
+        
+        // Debug canvas position for visual rendering
+        if (this.canvas && this.canvas.elt) {
+            const canvasRect = this.canvas.elt.getBoundingClientRect();
+            console.log(`🎨 Canvas position for rendering - top: ${canvasRect.top}, left: ${canvasRect.left}, width: ${canvasRect.width}, height: ${canvasRect.height}`);
+        }
         this.drawGrid(attackGridX, attackGridY, 1, false);
         
         // Draw grids without excessive logging
@@ -1485,6 +1491,13 @@ class BattleshipClient {
         console.log(`🎯 Window dimensions - width: ${windowWidth}, height: ${windowHeight}`);
         console.log(`🎯 Canvas dimensions - width: ${width}, height: ${height}`);
         console.log(`🎯 Mouse position relative to canvas - mouseX: ${mouseX}, mouseY: ${mouseY}`);
+        
+        // Debug canvas position and offset
+        if (this.canvas && this.canvas.elt) {
+            const canvasRect = this.canvas.elt.getBoundingClientRect();
+            console.log(`🎯 Canvas position - top: ${canvasRect.top}, left: ${canvasRect.left}, width: ${canvasRect.width}, height: ${canvasRect.height}`);
+            console.log(`🎯 Canvas offset - mouseX: ${mouseX - canvasRect.left}, mouseY: ${mouseY - canvasRect.top}`);
+        }
         
         // Calculate what the actual cell position should be
         const expectedCellX = attackGridX + gridX * cellSize;
