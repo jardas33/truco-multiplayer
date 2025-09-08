@@ -388,8 +388,6 @@ class BattleshipGame {
     }
     
     attack(player, x, y) {
-        console.log(`🎯 attack() called with player=${player}, x=${x}, y=${y}`);
-        
         if (this.gameOver) {
             return { valid: false, message: 'Game is already over!' };
         }
@@ -397,10 +395,6 @@ class BattleshipGame {
         const targetPlayer = 1 - player;
         const grid = this.playerGrids[targetPlayer];
         const attackGrid = this.attackGrids[player];
-        
-        console.log(`🎯 Target player: ${targetPlayer}, grid size: ${grid.length}x${grid[0].length}`);
-        console.log(`🎯 Attack grid size: ${attackGrid.length}x${attackGrid[0].length}`);
-        console.log(`🎯 Checking attackGrid[${y}][${x}] - hit: ${attackGrid[y][x].hit}, miss: ${attackGrid[y][x].miss}`);
         
         if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
             return { valid: false, message: 'Already attacked this position!' };
@@ -1129,16 +1123,8 @@ class BattleshipClient {
         // Draw attack grid (far right side) - MUST match drawBasicGrids exactly
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
-        console.log(`🎨 drawGrids - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}, gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
-        console.log(`🎨 drawGrids - Canvas dimensions: ${width} x ${height}`);
-        console.log(`🎨 drawGrids - Grid size: ${this.gridSize}, spacing: ${this.gridSpacing}`);
         
-        // Debug canvas position for visual rendering
-        if (this.canvas && this.canvas.elt) {
-            const canvasRect = this.canvas.elt.getBoundingClientRect();
-            console.log(`🎨 Canvas position for rendering - top: ${canvasRect.top}, left: ${canvasRect.left}, width: ${canvasRect.width}, height: ${canvasRect.height}`);
-        }
-        this.drawGrid(attackGridX, attackGridY, 1, false);
+        this.drawGrid(attackGridX, attackGridY, 0, false);
         
         // Draw grids without excessive logging
         
@@ -1537,49 +1523,6 @@ class BattleshipClient {
             return;
         }
         
-        // Debug coordinate calculation
-        console.log(`🎯 Click Debug - mouseX: ${mouseX}, mouseY: ${mouseY}`);
-        console.log(`🎯 Grid Position - attackGridX: ${attackGridX}, attackGridY: ${attackGridY}`);
-        console.log(`🎯 Calculated - gridX: ${gridX}, gridY: ${gridY}`);
-        console.log(`🎯 Cell Size: ${cellSize}`);
-        console.log(`🎯 gridStartX: ${this.gridStartX}, gridStartY: ${this.gridStartY}`);
-        console.log(`🎯 Window dimensions - width: ${windowWidth}, height: ${windowHeight}`);
-        console.log(`🎯 Canvas dimensions - width: ${width}, height: ${height}`);
-        console.log(`🎯 Mouse position relative to canvas - mouseX: ${mouseX}, mouseY: ${mouseY}`);
-        
-        // Debug canvas position and offset
-        if (this.canvas && this.canvas.elt) {
-            const canvasRect = this.canvas.elt.getBoundingClientRect();
-            console.log(`🎯 Canvas position - top: ${canvasRect.top}, left: ${canvasRect.left}, width: ${canvasRect.width}, height: ${canvasRect.height}`);
-            console.log(`🎯 Canvas offset - mouseX: ${mouseX - canvasRect.left}, mouseY: ${mouseY - canvasRect.top}`);
-        }
-        
-        // Calculate what the actual cell position should be
-        const expectedCellX = attackGridX + gridX * cellSize;
-        const expectedCellY = attackGridY + gridY * cellSize;
-        console.log(`🎯 Expected cell position - X: ${expectedCellX}, Y: ${expectedCellY}`);
-        console.log(`🎯 Mouse offset from cell - X: ${mouseX - expectedCellX}, Y: ${mouseY - expectedCellY}`);
-        
-        // Debug: Show actual cell positions for A1, B1, A2, B2
-        console.log(`🎯 A1 should be at: (${attackGridX + 0 * cellSize}, ${attackGridY + 0 * cellSize})`);
-        console.log(`🎯 B1 should be at: (${attackGridX + 0 * cellSize}, ${attackGridY + 1 * cellSize})`);
-        console.log(`🎯 A2 should be at: (${attackGridX + 1 * cellSize}, ${attackGridY + 0 * cellSize})`);
-        console.log(`🎯 B2 should be at: (${attackGridX + 1 * cellSize}, ${attackGridY + 1 * cellSize})`);
-        
-        // Debug: Show what the visual A1 actually corresponds to in game logic
-        console.log(`🎯 Visual A1 at (${attackGridX}, ${attackGridY}) maps to array [${gridY}][${gridX}]`);
-        console.log(`🎯 This should be A1 but might be showing as F6 due to coordinate mismatch`);
-        
-        // Debug: Show the actual clickable cell boundaries
-        const actualCellX = attackGridX + gridX * cellSize;
-        const actualCellY = attackGridY + gridY * cellSize;
-        console.log(`🎯 Actual clickable A1 cell: (${actualCellX}, ${actualCellY}) to (${actualCellX + this.gridSize}, ${actualCellY + this.gridSize})`);
-        console.log(`🎯 Your click at (${mouseX}, ${mouseY}) is ${mouseX - actualCellX}px right, ${mouseY - actualCellY}px down from cell top-left`);
-        
-        // Convert grid coordinates to letters/numbers for debugging
-        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-        const clickedPosition = `${letters[gridY]}${gridX + 1}`;
-        console.log(`🎯 Clicked position: ${clickedPosition}`);
         
         // STRICT BOUNDS CHECKING - only allow clicks within the actual attack grid
         const maxGridX = attackGridX + (10 * cellSize);
