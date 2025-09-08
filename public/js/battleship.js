@@ -754,6 +754,8 @@ class BattleshipClient {
         this.isDragging = false;
         this.dragStart = { x: 0, y: 0 };
         this.initialized = false;
+        this.lastClickTime = 0;
+        this.clickDebounceMs = 500; // Prevent multiple clicks within 500ms
         
         this.setupEventListeners();
         this.initializeCanvas();
@@ -1441,6 +1443,14 @@ class BattleshipClient {
     }
     
     handleAttack() {
+        // DEBOUNCE CLICKS - prevent multiple rapid clicks
+        const currentTime = Date.now();
+        if (currentTime - this.lastClickTime < this.clickDebounceMs) {
+            console.log(`🎯 Click debounced - too soon after last click`);
+            return;
+        }
+        this.lastClickTime = currentTime;
+        
         // Use correct attack grid position (must match drawGrids)
         const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
@@ -1468,10 +1478,14 @@ class BattleshipClient {
         const clickedPosition = `${letters[gridY]}${gridX + 1}`;
         console.log(`🎯 Clicked position: ${clickedPosition}`);
         
+        // STRICT BOUNDS CHECKING - only allow clicks within the actual attack grid
+        const maxGridX = attackGridX + (10 * cellSize);
+        const maxGridY = attackGridY + (10 * cellSize);
+        
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
-            mouseX >= attackGridX && mouseX < attackGridX + 420 && 
-            mouseY >= attackGridY && mouseY < attackGridY + 420 && 
+            mouseX >= attackGridX && mouseX < maxGridX && 
+            mouseY >= attackGridY && mouseY < maxGridY && 
             this.game.currentPlayer === 0 && this.game.gamePhase === 'playing') {
             
             // Check if this position has already been attacked
