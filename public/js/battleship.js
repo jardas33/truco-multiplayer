@@ -1142,6 +1142,7 @@ class BattleshipClient {
     drawGrids() {
         // Draw player grid (centered)
         const fleetGridX = this.gridStartX + 80; // Center the fleet grid at X=80
+        console.log('🔍 drawGrids - fleetGridX:', fleetGridX, 'gridStartY:', this.gridStartY, 'gridStartX:', this.gridStartX);
         this.drawGrid(fleetGridX, this.gridStartY, 0, true);
         
         // Draw attack grid (far right side) - MUST match drawBasicGrids exactly
@@ -1500,7 +1501,7 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
-        console.log('🔍 handleShipPlacement - mouseX:', mouseX, 'mouseY:', mouseY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY);
+        console.log('🔍 handleShipPlacement - mouseX:', mouseX, 'mouseY:', mouseY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'gridStartX:', this.gridStartX, 'gridStartY:', this.gridStartY);
         
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
