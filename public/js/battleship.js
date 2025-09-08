@@ -1286,16 +1286,16 @@ class BattleshipClient {
         
         // CRITICAL FIX: Draw visual indicators to show exact cell positions
         fill(255, 0, 0); // Red for debugging
-        textSize(10);
+        textSize(8);
         textAlign(LEFT, TOP);
         
-        // Draw A1, B1, A2, B2 indicators inside actual clickable cells
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        // Draw ALL cell indicators to show exact positions
+        for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 10; col++) {
                 const cellX = x + col * (this.gridSize + this.gridSpacing);
                 const cellY = y + row * (this.gridSize + this.gridSpacing);
                 const cellName = letters[row] + (col + 1);
-                text(cellName, cellX + 2, cellY + 2);
+                text(cellName, cellX + 1, cellY + 1);
             }
         }
     }
