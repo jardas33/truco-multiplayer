@@ -299,6 +299,18 @@
             const roomCode = document.getElementById('roomCodeInput').value.trim() || generateRoomCode();
             console.log('🚢 Creating Battleship room:', roomCode);
             
+            // Initialize socket if not already done
+            if (!window.socket) {
+                initBattleshipSocket();
+            }
+            
+            // Create room via socket
+            window.socket.emit('createRoom', {
+                roomCode: roomCode,
+                gameType: 'battleship',
+                maxPlayers: 2
+            });
+            
             // Store room settings
             localStorage.setItem('battleshipRoomCode', roomCode);
             localStorage.setItem('battleshipPlayerCount', '2');
@@ -334,13 +346,16 @@
             
             console.log('🚢 Joining Battleship room:', roomCode);
             
-            // Store room settings
-            localStorage.setItem('battleshipRoomCode', roomCode);
-            localStorage.setItem('battleshipPlayerCount', '2');
-            localStorage.setItem('battleshipGameMode', 'multiplayer');
+            // Initialize socket if not already done
+            if (!window.socket) {
+                initBattleshipSocket();
+            }
             
-            // Redirect to game
-            window.location.href = '/battleship';
+            // Join room via socket
+            window.socket.emit('joinRoom', {
+                roomCode: roomCode,
+                gameType: 'battleship'
+            });
         }
 
         function generateRoomCode() {
@@ -366,6 +381,64 @@
         // Bot management
         let playerCount = 1; // Start with 1 human player
         const maxPlayers = 2; // Battleship requires exactly 2 players
+        
+        // Socket initialization for battleship multiplayer
+        function initBattleshipSocket() {
+            if (window.socket) {
+                console.log('🚢 Socket already initialized');
+                return;
+            }
+            
+            console.log('🚢 Initializing battleship socket...');
+            window.socket = io();
+            
+            window.socket.on('connect', () => {
+                console.log('✅ Battleship socket connected');
+            });
+            
+            window.socket.on('roomCreated', (data) => {
+                console.log('✅ Created battleship room:', data);
+                window.battleshipRoomId = data.roomId;
+                updateBattleshipPlayerList(data.players || []);
+            });
+            
+            window.socket.on('roomJoined', (data) => {
+                console.log('✅ Joined battleship room:', data);
+                window.battleshipRoomId = data.roomId;
+                
+                // Store room settings
+                localStorage.setItem('battleshipRoomCode', data.roomId);
+                localStorage.setItem('battleshipPlayerCount', '2');
+                localStorage.setItem('battleshipGameMode', 'multiplayer');
+                
+                // Redirect to game
+                window.location.href = '/battleship';
+            });
+            
+            window.socket.on('playerJoined', (data) => {
+                console.log('👥 Player joined battleship room:', data);
+                updateBattleshipPlayerList(data.players);
+            });
+            
+            window.socket.on('error', (errorMessage) => {
+                console.error('❌ Battleship socket error:', errorMessage);
+                alert(`Error: ${errorMessage}`);
+            });
+        }
+        
+        function updateBattleshipPlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            if (!playerList) return;
+            
+            playerList.innerHTML = '<div class="player-list-header">Players in Room</div>';
+            
+            players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-item';
+                playerDiv.textContent = `${index + 1}. ${player.name}`;
+                playerList.appendChild(playerDiv);
+            });
+        }
 
         function addBot() {
             if (playerCount < maxPlayers) {
