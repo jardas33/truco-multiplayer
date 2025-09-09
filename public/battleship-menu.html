@@ -457,19 +457,16 @@
                 
                 // Check if we should show start button (for room creator)
                 if (data.players && data.players.length === 2) {
-                    console.log('🚢 Room creator: 2 players ready - showing start button');
                     showStartButton();
                 }
             });
             
             
             window.socket.on('playerJoined', (data) => {
-                console.log('👥 Player joined battleship room:', data);
                 updateBattleshipPlayerList(data.players);
                 
                 // Show start button when 2 players join
                 if (data.players && data.players.length === 2) {
-                    console.log('🚢 2 players ready - showing start button');
                     showStartButton();
                 }
             });
@@ -481,12 +478,10 @@
             
             // Handle players updated event to keep both players in sync
             window.socket.on('playersUpdated', (players) => {
-                console.log('👥 Players updated:', players);
                 updateBattleshipPlayerList(players);
                 
                 // Show start button when 2 players are ready
                 if (players && players.length === 2) {
-                    console.log('🚢 Players updated: 2 players ready - showing start button');
                     showStartButton();
                 }
             });
@@ -552,7 +547,7 @@
                 });
             }
             
-            // Redirect to game
+            // Both players redirect to game
             window.location.href = '/battleship';
         }
 
