@@ -610,8 +610,14 @@
 
     <!-- Multiplayer synchronization script - MUST run before battleship.js -->
     <script>
+        console.log('🚢 BATTLESHIP.HTML SCRIPT LOADED');
+        
         // Initialize socket for multiplayer synchronization
         let battleshipSocket;
+        
+        console.log('🚢 BATTLESHIP.HTML SCRIPT STARTING');
+        console.log('🚢 localStorage battleshipRoomCode:', localStorage.getItem('battleshipRoomCode'));
+        console.log('🚢 localStorage battleshipGameMode:', localStorage.getItem('battleshipGameMode'));
         
         // Check if we're in a multiplayer room
         const roomCode = localStorage.getItem('battleshipRoomCode');
