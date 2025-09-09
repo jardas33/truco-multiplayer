@@ -128,11 +128,11 @@
             position: fixed;
             top: 80px;
             right: 20px;
-            width: 250px;
+            width: 280px;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #FFD700;
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             backdrop-filter: blur(10px);
             z-index: 1001;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -150,25 +150,30 @@
         .scoreboard-content {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 15px;
+            gap: 10px;
         }
 
         .player-score {
             text-align: center;
             color: white;
+            flex: 1;
+            min-width: 0;
         }
 
         .player-name {
-            font-size: 0.9em;
+            font-size: 0.8em;
             opacity: 0.8;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .score-value {
-            font-size: 2em;
+            font-size: 0.75em;
             font-weight: bold;
             color: #4CAF50;
+            line-height: 1.2;
+            word-wrap: break-word;
         }
 
         .vs-divider {
