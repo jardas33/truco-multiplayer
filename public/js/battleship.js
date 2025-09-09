@@ -117,59 +117,61 @@ class BattleshipGame {
         console.log('🚢 Initializing battleship multiplayer for room:', roomCode);
         this.roomCode = roomCode;
         this.isMultiplayer = true;
-        this.playerId = window.socket ? window.socket.id : null;
+        
+        // Get socket from battleship.html script
+        this.socket = window.battleshipSocket;
+        this.playerId = this.socket ? this.socket.id : null;
         
         console.log('🚢 Multiplayer setup:');
         console.log('🚢 - roomCode:', this.roomCode);
         console.log('🚢 - isMultiplayer:', this.isMultiplayer);
         console.log('🚢 - playerId:', this.playerId);
-        console.log('🚢 - window.socket:', !!window.socket);
-        console.log('🚢 - socket.connected:', window.socket?.connected);
+        console.log('🚢 - battleshipSocket:', !!this.socket);
+        console.log('🚢 - socket.connected:', this.socket?.connected);
         
-        // Use existing socket from menu - don't create new one
-        if (window.socket) {
-            console.log('🚢 Using existing socket from menu, player ID:', this.playerId);
+        if (this.socket) {
+            console.log('🚢 Using battleship socket, player ID:', this.playerId);
             this.setupMultiplayerListeners();
         } else {
-            console.error('❌ No socket available for multiplayer!');
+            console.error('❌ No battleship socket available for multiplayer!');
         }
     }
     
     setupMultiplayerListeners() {
-        if (!window.socket) return;
+        if (!this.socket) return;
         
         // Handle player ready events
-        window.socket.on('battleshipPlayerReady', (data) => {
+        this.socket.on('battleshipPlayerReady', (data) => {
             console.log('🚢 Player ready received:', data);
             this.handlePlayerReady(data);
         });
         
         // Handle game start when both players are ready
-        window.socket.on('battleshipGameStart', (data) => {
+        this.socket.on('battleshipGameStart', (data) => {
             console.log('🚢 Game start received:', data);
             this.handleGameStart(data);
         });
         
         // Handle ship placement events
-        window.socket.on('battleshipShipPlaced', (data) => {
+        this.socket.on('battleshipShipPlaced', (data) => {
             console.log('🚢 Received ship placement from opponent:', data);
             this.handleOpponentShipPlaced(data);
         });
         
         // Handle attack events
-        window.socket.on('battleshipAttack', (data) => {
+        this.socket.on('battleshipAttack', (data) => {
             console.log('🚢 Received attack from opponent:', data);
             this.handleOpponentAttack(data);
         });
         
         // Handle turn change events
-        window.socket.on('battleshipTurnChange', (data) => {
+        this.socket.on('battleshipTurnChange', (data) => {
             console.log('🚢 Turn change received:', data);
             this.handleTurnChange(data);
         });
         
         // Handle game over events
-        window.socket.on('battleshipGameOver', (data) => {
+        this.socket.on('battleshipGameOver', (data) => {
             console.log('🚢 Game over received:', data);
             this.handleGameOver(data);
         });
@@ -281,21 +283,21 @@ class BattleshipGame {
     emitPlayerReady() {
         console.log('🚢 emitPlayerReady called');
         console.log('🚢 isMultiplayer:', this.isMultiplayer);
-        console.log('🚢 window.socket:', !!window.socket);
+        console.log('🚢 this.socket:', !!this.socket);
         console.log('🚢 roomCode:', this.roomCode);
-        console.log('🚢 socket.id:', window.socket?.id);
+        console.log('🚢 socket.id:', this.socket?.id);
         
-        if (this.isMultiplayer && window.socket && this.roomCode) {
+        if (this.isMultiplayer && this.socket && this.roomCode) {
             console.log('🚢 Emitting battleshipPlayerReady event');
-            window.socket.emit('battleshipPlayerReady', {
+            this.socket.emit('battleshipPlayerReady', {
                 roomId: this.roomCode,
-                playerId: window.socket.id
+                playerId: this.socket.id
             });
             console.log('🚢 battleshipPlayerReady event emitted successfully');
         } else {
             console.error('❌ Cannot emit player ready - missing requirements');
             console.error('❌ isMultiplayer:', this.isMultiplayer);
-            console.error('❌ window.socket:', !!window.socket);
+            console.error('❌ this.socket:', !!this.socket);
             console.error('❌ roomCode:', this.roomCode);
         }
     }
@@ -309,8 +311,8 @@ class BattleshipGame {
     }
     
     emitTurnChange() {
-        if (this.isMultiplayer && window.socket && this.roomCode) {
-            window.socket.emit('battleshipTurnChange', {
+        if (this.isMultiplayer && this.socket && this.roomCode) {
+            this.socket.emit('battleshipTurnChange', {
                 roomId: this.roomCode,
                 currentPlayer: this.opponentId // Switch to opponent
             });

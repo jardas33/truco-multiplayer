@@ -632,29 +632,9 @@
             console.log('🚢 Socket connected:', window.socket?.connected);
             console.log('🚢 Socket ID:', window.socket?.id);
             
-            // Check if socket exists and is valid
-            if (!window.socket || typeof window.socket !== 'object') {
-                console.error('❌ No valid socket available from menu!');
-                console.error('❌ Socket type:', typeof window.socket);
-                console.error('❌ Socket value:', window.socket);
-                return;
-            }
-            
-            // Use existing socket from menu instead of creating new one
-            battleshipSocket = window.socket;
-            
-            if (!battleshipSocket) {
-                console.error('❌ No socket available from menu!');
-                return;
-            }
-            
-            if (!battleshipSocket.connected) {
-                console.error('❌ Socket not connected!');
-                console.error('❌ Socket state:', battleshipSocket.readyState);
-                return;
-            }
-            
-            console.log('🚢 Socket is connected and ready for multiplayer');
+            // Create new socket connection since window.socket is lost on page navigation
+            battleshipSocket = io();
+            console.log('🚢 Created new socket connection for battleship game');
             
             // Handle player ready events
             battleshipSocket.on('battleshipPlayerReady', (data) => {
