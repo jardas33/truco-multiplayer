@@ -400,6 +400,11 @@
                 console.log('✅ Created battleship room:', data);
                 window.battleshipRoomId = data.roomId;
                 updateBattleshipPlayerList(data.players || []);
+                
+                // Show room created UI
+                document.getElementById('roomCodeDisplay').style.display = 'block';
+                document.getElementById('roomCodeText').textContent = data.roomId;
+                document.body.classList.add('room-created');
             });
             
             window.socket.on('roomJoined', (data) => {
@@ -418,6 +423,17 @@
             window.socket.on('playerJoined', (data) => {
                 console.log('👥 Player joined battleship room:', data);
                 updateBattleshipPlayerList(data.players);
+                
+                // Auto-start game when 2 players join
+                if (data.players && data.players.length === 2) {
+                    console.log('🚢 2 players ready - starting battleship game');
+                    startBattleshipGame();
+                }
+            });
+            
+            window.socket.on('battleshipGameStart', (data) => {
+                console.log('🚢 Battleship game starting:', data);
+                startBattleshipGame();
             });
             
             window.socket.on('error', (errorMessage) => {
@@ -438,6 +454,25 @@
                 playerDiv.textContent = `${index + 1}. ${player.name}`;
                 playerList.appendChild(playerDiv);
             });
+        }
+        
+        function startBattleshipGame() {
+            console.log('🚢 Starting battleship game for all players');
+            
+            // Store room settings
+            localStorage.setItem('battleshipRoomCode', window.battleshipRoomId);
+            localStorage.setItem('battleshipPlayerCount', '2');
+            localStorage.setItem('battleshipGameMode', 'multiplayer');
+            
+            // Emit game start to server to notify all players
+            if (window.socket) {
+                window.socket.emit('battleshipGameStart', {
+                    roomId: window.battleshipRoomId
+                });
+            }
+            
+            // Redirect to game
+            window.location.href = '/battleship';
         }
 
         function addBot() {

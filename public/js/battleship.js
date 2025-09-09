@@ -90,6 +90,11 @@ class BattleshipGame {
             this.addToHistory(`👥 Players: ${playerCount || 2}`, 'info');
             this.addToHistory(`🎮 Mode: ${gameMode || 'create'}`, 'info');
             
+            // Initialize multiplayer if in multiplayer mode
+            if (gameMode === 'multiplayer') {
+                this.initializeMultiplayer(roomCode);
+            }
+            
             // Clear localStorage after reading
             localStorage.removeItem('battleshipRoomCode');
             localStorage.removeItem('battleshipPlayerCount');
@@ -101,6 +106,97 @@ class BattleshipGame {
         console.log('🎨 About to render ships list...');
         this.renderShipsList();
         console.log('✅ Ships list rendered');
+    }
+    
+    initializeMultiplayer(roomCode) {
+        console.log('🚢 Initializing battleship multiplayer for room:', roomCode);
+        this.roomCode = roomCode;
+        this.isMultiplayer = true;
+        
+        // Initialize socket if not already done
+        if (!window.socket) {
+            window.socket = io();
+            this.setupMultiplayerListeners();
+        }
+    }
+    
+    setupMultiplayerListeners() {
+        if (!window.socket) return;
+        
+        window.socket.on('battleshipShipPlaced', (data) => {
+            console.log('🚢 Received ship placement from opponent:', data);
+            // Handle opponent ship placement
+            this.handleOpponentShipPlaced(data);
+        });
+        
+        window.socket.on('battleshipAttack', (data) => {
+            console.log('🚢 Received attack from opponent:', data);
+            // Handle opponent attack
+            this.handleOpponentAttack(data);
+        });
+        
+        window.socket.on('battleshipGameOver', (data) => {
+            console.log('🚢 Game over received:', data);
+            // Handle game over
+            this.handleGameOver(data);
+        });
+    }
+    
+    handleOpponentShipPlaced(data) {
+        // Update opponent's ship placement
+        console.log('🚢 Handling opponent ship placement:', data);
+        // This would update the opponent's grid display
+    }
+    
+    handleOpponentAttack(data) {
+        // Handle attack on player's grid
+        console.log('🚢 Handling opponent attack:', data);
+        const { x, y, hit, shipSunk } = data;
+        
+        // Update player's grid with the attack result
+        if (this.playerGrids[0][y] && this.playerGrids[0][y][x]) {
+            this.playerGrids[0][y][x].hit = hit;
+            if (shipSunk) {
+                // Handle ship sinking
+                this.handleShipSunk(0, shipSunk);
+            }
+        }
+    }
+    
+    handleGameOver(data) {
+        console.log('🚢 Handling game over:', data);
+        this.endGame(data.winner);
+    }
+    
+    // Emit multiplayer events
+    emitShipPlaced(shipData) {
+        if (this.isMultiplayer && window.socket && this.roomCode) {
+            window.socket.emit('battleshipShipPlaced', {
+                roomId: this.roomCode,
+                ship: shipData
+            });
+        }
+    }
+    
+    emitAttack(x, y, hit, shipSunk) {
+        if (this.isMultiplayer && window.socket && this.roomCode) {
+            window.socket.emit('battleshipAttack', {
+                roomId: this.roomCode,
+                x: x,
+                y: y,
+                hit: hit,
+                shipSunk: shipSunk
+            });
+        }
+    }
+    
+    emitGameOver(winner) {
+        if (this.isMultiplayer && window.socket && this.roomCode) {
+            window.socket.emit('battleshipGameOver', {
+                roomId: this.roomCode,
+                winner: winner
+            });
+        }
     }
     
     addToHistory(message, type = 'info') {

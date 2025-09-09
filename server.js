@@ -190,6 +190,45 @@ io.on('connection', (socket) => {
         
         // Emit players updated event
         io.to(roomCode).emit('playersUpdated', room.players);
+        
+        // For battleship: auto-start game when 2 players join
+        if (room.gameType === 'battleship' && room.players.length === 2) {
+            console.log(`🚢 Battleship room ${roomCode} has 2 players - starting game`);
+            io.to(roomCode).emit('battleshipGameStart', {
+                roomId: roomCode,
+                players: room.players
+            });
+        }
+    });
+
+    // ✅ Handle battleship game events
+    socket.on('battleshipGameStart', (data) => {
+        console.log(`🚢 Battleship game start requested for room: ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        if (room && room.gameType === 'battleship') {
+            io.to(data.roomId).emit('battleshipGameStart', {
+                roomId: data.roomId,
+                players: room.players
+            });
+        }
+    });
+    
+    socket.on('battleshipShipPlaced', (data) => {
+        console.log(`🚢 Ship placed in room ${data.roomId}:`, data);
+        // Broadcast ship placement to other players
+        socket.to(data.roomId).emit('battleshipShipPlaced', data);
+    });
+    
+    socket.on('battleshipAttack', (data) => {
+        console.log(`🚢 Attack in room ${data.roomId}:`, data);
+        // Broadcast attack to other players
+        socket.to(data.roomId).emit('battleshipAttack', data);
+    });
+    
+    socket.on('battleshipGameOver', (data) => {
+        console.log(`🚢 Game over in room ${data.roomId}:`, data);
+        // Broadcast game over to all players
+        io.to(data.roomId).emit('battleshipGameOver', data);
     });
 
     // ✅ Handle room leaving
