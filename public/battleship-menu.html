@@ -454,6 +454,12 @@
                 document.getElementById('roomCodeDisplay').style.display = 'block';
                 document.getElementById('roomCodeText').textContent = data.roomId;
                 document.body.classList.add('room-created');
+                
+                // Check if we should show start button (for room creator)
+                if (data.players && data.players.length === 2) {
+                    console.log('🚢 Room creator: 2 players ready - showing start button');
+                    showStartButton();
+                }
             });
             
             
@@ -473,6 +479,18 @@
                 startBattleshipGame();
             });
             
+            // Handle players updated event to keep both players in sync
+            window.socket.on('playersUpdated', (players) => {
+                console.log('👥 Players updated:', players);
+                updateBattleshipPlayerList(players);
+                
+                // Show start button when 2 players are ready
+                if (players && players.length === 2) {
+                    console.log('🚢 Players updated: 2 players ready - showing start button');
+                    showStartButton();
+                }
+            });
+            
             window.socket.on('error', (errorMessage) => {
                 console.error('❌ Battleship socket error:', errorMessage);
                 alert(`Error: ${errorMessage}`);
@@ -487,6 +505,11 @@
                 localStorage.setItem('battleshipRoomCode', data.roomId);
                 localStorage.setItem('battleshipPlayerCount', '2');
                 localStorage.setItem('battleshipGameMode', 'multiplayer');
+                
+                // Show room UI (same as room creator)
+                document.getElementById('roomCodeDisplay').style.display = 'block';
+                document.getElementById('roomCodeText').textContent = data.roomId;
+                document.body.classList.add('room-created');
                 
                 console.log('🚢 Room settings stored, staying on menu...');
                 // Don't redirect automatically - wait for manual start
