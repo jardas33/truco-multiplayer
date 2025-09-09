@@ -53,6 +53,7 @@ class BattleshipGame {
         this.aiGamesWon = 0;
         this.totalPlayerShipsSunk = 0; // Total ships sunk by player across all games
         this.totalAiShipsSunk = 0; // Total ships sunk by AI across all games
+        this.totalOpponentShipsSunk = 0; // Total ships sunk by opponent (AI) from player across all games
         
         // Current game tracking (resets each game)
         this.currentGamePlayerShipsSunk = 0;
@@ -251,11 +252,13 @@ class BattleshipGame {
         const playerScoreEl = document.getElementById('playerScore');
         const aiScoreEl = document.getElementById('aiScore');
         const shipsSunkEl = document.getElementById('shipsSunk');
+        const opponentShipsSunkEl = document.getElementById('opponentShipsSunk');
         
         // Show games won and total ships sunk across all games
         if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
         if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.totalAiShipsSunk} Ships Destroyed`;
         if (shipsSunkEl) shipsSunkEl.textContent = `${this.currentGamePlayerShipsSunk}`;
+        if (opponentShipsSunkEl) opponentShipsSunkEl.textContent = `${this.totalOpponentShipsSunk}`;
     }
     
     renderShipsList() {
@@ -490,11 +493,14 @@ class BattleshipGame {
                 
                 // Track ships sunk in current game and total
                 if (player === 0) {
+                    // Player sunk AI's ships
                     this.currentGamePlayerShipsSunk++;
                     this.totalPlayerShipsSunk++;
                 } else {
+                    // AI sunk player's ships
                     this.currentGameAiShipsSunk++;
                     this.totalAiShipsSunk++;
+                    this.totalOpponentShipsSunk++; // Track opponent ships sunk
                 }
                 
                 this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
