@@ -397,6 +397,8 @@ io.on('connection', (socket) => {
     
     socket.on('battleshipAttack', (data) => {
         console.log(`🚢 Attack in room ${data.roomId}:`, data);
+        // Add the attacking player ID to the data
+        data.attackingPlayerId = socket.id;
         // Broadcast attack to other players
         socket.to(data.roomId).emit('battleshipAttack', data);
     });

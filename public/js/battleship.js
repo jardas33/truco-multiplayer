@@ -228,6 +228,11 @@ class BattleshipGame {
         
         this.updateUI();
         console.log('🚢 Game phase after updateUI:', this.gamePhase);
+        
+        // Force a redraw to ensure the UI is updated
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
     }
     
     handleTurnChange(data) {
@@ -260,34 +265,55 @@ class BattleshipGame {
     handleOpponentAttack(data) {
         // Handle attack on player's grid
         console.log('🚢 Handling opponent attack:', data);
-        const { x, y, hit, shipSunk } = data;
+        const { x, y, attackingPlayerId } = data;
         
-        console.log(`🚢 Attack coordinates: x=${x}, y=${y}, hit=${hit}, shipSunk=${shipSunk}`);
+        // Only process attacks from the opponent, not our own attacks
+        if (attackingPlayerId === this.playerId) {
+            console.log('🚢 Ignoring own attack');
+            return;
+        }
+        
+        console.log(`🚢 Attack coordinates: x=${x}, y=${y}`);
+        
+        // Determine if the attack is a hit or miss based on our own ships
+        const cell = this.playerGrids[0][y][x];
+        const isHit = cell.ship !== null;
+        
+        console.log(`🚢 Attack result: hit=${isHit}, ship=${cell.ship ? cell.ship.name : 'none'}`);
         
         // Update player's grid with the attack result
         if (this.playerGrids[0][y] && this.playerGrids[0][y][x]) {
-            this.playerGrids[0][y][x].hit = hit;
-            this.playerGrids[0][y][x].miss = !hit;
-            console.log(`🚢 Updated player grid [${y}][${x}]: hit=${hit}, miss=${!hit}`);
+            this.playerGrids[0][y][x].hit = isHit;
+            this.playerGrids[0][y][x].miss = !isHit;
+            console.log(`🚢 Updated player grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
         } else {
             console.log(`🚢 ERROR: Player grid [${y}][${x}] not found!`);
         }
         
         // Update the attack grid to show the opponent's attack result
         if (this.attackGrids[0][y] && this.attackGrids[0][y][x]) {
-            this.attackGrids[0][y][x].hit = hit;
-            this.attackGrids[0][y][x].miss = !hit;
-            console.log(`🚢 Updated attack grid [${y}][${x}]: hit=${hit}, miss=${!hit}`);
+            this.attackGrids[0][y][x].hit = isHit;
+            this.attackGrids[0][y][x].miss = !isHit;
+            console.log(`🚢 Updated attack grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
         } else {
             console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
         }
         
-        // Add to history
-        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-        if (hit) {
-            this.addToHistory(`💥 Opponent hit ${letters[y]}${x + 1}!`, 'hit');
+        // Handle ship damage if it's a hit
+        if (isHit && cell.ship) {
+            cell.ship.hits++;
+            console.log(`🚢 Ship ${cell.ship.name} hit! Hits: ${cell.ship.hits}/${cell.ship.size}`);
+            
+            // Check if ship is sunk
+            if (cell.ship.hits >= cell.ship.size) {
+                cell.ship.sunk = true;
+                console.log(`🚢 Ship ${cell.ship.name} sunk!`);
+                this.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
+            } else {
+                this.addToHistory(`💥 Opponent hit your ${cell.ship.name}!`, 'hit');
+            }
         } else {
-            this.addToHistory(`💧 Opponent missed ${letters[y]}${x + 1}`, 'miss');
+            this.addToHistory(`💧 Opponent missed!`, 'miss');
         }
         
         // Force redraw
@@ -323,14 +349,15 @@ class BattleshipGame {
         }
     }
     
-    emitAttack(x, y, hit, shipSunk) {
+    emitAttack(x, y, hit = null, shipSunk = null) {
         if (this.isMultiplayer && this.socket && this.roomCode) {
             this.socket.emit('battleshipAttack', {
                 roomId: this.roomCode,
                 x: x,
                 y: y,
                 hit: hit,
-                shipSunk: shipSunk
+                shipSunk: shipSunk,
+                attackingPlayerId: this.playerId
             });
         }
     }
@@ -799,74 +826,24 @@ class BattleshipGame {
             // In multiplayer, player 0 attacks player 1's grid
             const attackingPlayer = 0; // The human player is always player 0
             const targetPlayer = 1; // Attack player 1's grid (opponent)
-            const grid = this.playerGrids[targetPlayer];
             const attackGrid = this.attackGrids[attackingPlayer]; // Player 0's view of player 1's grid
             
             if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
                 return { valid: false, message: 'Already attacked this position!' };
             }
             
-            const cell = grid[y][x];
-            const isHit = cell.ship !== null;
+            // In multiplayer, we can't determine hit/miss on the attacking client
+            // because we don't have the opponent's ship data
+            // The hit/miss will be determined by the server or the target player
+            // For now, we'll mark it as a miss and let the server response override it
+            attackGrid[y][x].miss = true;
             
-            if (isHit) {
-                attackGrid[y][x].hit = true;
-                cell.hit = true;
-                
-                const ship = cell.ship;
-                ship.hits++;
-                
-                // Update scoreboard
-                this.playerHits++;
-                this.playerScore += 10; // 10 points per hit
-                
-                if (ship.hits >= ship.size) {
-                    this.sinkShip(targetPlayer, ship);
-                    this.shipsSunk++;
-                    
-                    // Track ships sunk
-                    this.currentGamePlayerShipsSunk++;
-                    this.totalPlayerShipsSunk++;
-                    
-                    this.addToHistory(`💥 You sunk the ${ship.name}!`, 'sunk');
-                    this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
-                    
-                    // Bonus points for sinking a ship
-                    this.playerScore += 50; // 50 bonus points for sinking
-                    
-                    if (this.checkGameOver(targetPlayer)) {
-                        this.endGame(attackingPlayer); // The attacking player wins
-                        return { valid: true, hit: true, sunk: true, ship: ship.name, gameOver: true };
-                    }
-                    
-                    // Emit attack result to server
-                    this.emitAttack(x, y, true, ship.name);
-                    
-                    return { valid: true, hit: true, sunk: true, ship: ship.name };
-                } else {
-                    this.addToHistory(`🎯 You hit the ${ship.name}!`, 'hit');
-                    this.showGameMessage(`🎯 HIT! ${ship.name} damaged!`, 2000);
-                    
-                    // Emit attack result to server
-                    this.emitAttack(x, y, true, ship.name);
-                    
-                    return { valid: true, hit: true, sunk: false, ship: ship.name };
-                }
-            } else {
-                attackGrid[y][x].miss = true;
-                cell.miss = true;
-                
-                // Update scoreboard
-                this.playerMisses++;
-                
-                this.addToHistory(`💧 You missed!`, 'miss');
-                this.showGameMessage(`💧 Miss!`, 1500);
-                
-                // Emit attack result to server
-                this.emitAttack(x, y, false, null);
-                
-                return { valid: true, hit: false };
-            }
+            // Send attack to server - the server will determine hit/miss
+            this.emitAttack(x, y);
+            
+            this.addToHistory(`💧 You attacked ${String.fromCharCode(65 + y)}${x + 1}!`, 'info');
+            this.showGameMessage(`🎯 Attack sent!`, 2000);
+            return { valid: true, hit: false, sunk: false };
         } else {
             // Single player mode - original logic
             const targetPlayer = 1 - player;
