@@ -255,7 +255,7 @@ class BattleshipGame {
         // Show games won and total ships sunk across all games
         if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
         if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.totalAiShipsSunk} Ships Destroyed`;
-        if (shipsSunkEl) shipsSunkEl.textContent = `Sunk: ${this.shipsSunk}/5`;
+        if (shipsSunkEl) shipsSunkEl.textContent = `Sunk: ${this.currentGamePlayerShipsSunk}/5`;
     }
     
     renderShipsList() {
@@ -1510,7 +1510,7 @@ class BattleshipClient {
                 // This specific cell is hit - don't draw anything, let hit symbol handle it
                 continue; // Skip drawing this cell completely
             } else {
-                // This cell is unhit - green
+                // All unhit ships should be green (ignore ship.color)
                 cellColor = [0, 255, 0, 150]; // Green
                 strokeColor = [0, 255, 0]; // Green border
             }
