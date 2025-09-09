@@ -210,14 +210,14 @@ io.on('connection', (socket) => {
                 socket.join(roomCode);
                 console.log(`✅ Battleship room ${roomCode} created for joining player`);
 
-                // Emit roomJoined event
-                console.log(`🚢 Emitting roomJoined event to socket ${socket.id}`);
-                socket.emit('roomJoined', {
+                // Emit roomCreated event (this player is creating the room)
+                console.log(`🚢 Emitting roomCreated event to socket ${socket.id}`);
+                socket.emit('roomCreated', {
                     roomId: roomCode,
                     playerId: socket.id,
-                    isHost: false
+                    isHost: true
                 });
-                console.log(`🚢 roomJoined event emitted successfully`);
+                console.log(`🚢 roomCreated event emitted successfully`);
 
                 // Emit playerJoined event to all players in the room
                 io.to(roomCode).emit('playerJoined', {

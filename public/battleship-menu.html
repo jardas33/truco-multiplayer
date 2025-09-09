@@ -323,25 +323,10 @@
             localStorage.setItem('battleshipPlayerCount', '2');
             localStorage.setItem('battleshipGameMode', 'multiplayer');
             
-            // Show room code
-            document.getElementById('roomCodeDisplay').style.display = 'block';
-            document.getElementById('roomCodeText').textContent = roomCode;
-            document.getElementById('roomCodeInput').value = roomCode;
-            
             // Hide create/join buttons
             document.body.classList.add('room-created');
             
-            // Show game controls
-            document.getElementById('addBotBtn').style.display = 'inline-block';
-            document.getElementById('removeBotBtn').style.display = 'inline-block';
-            document.getElementById('startGameBtn').style.display = 'inline-block';
-            document.getElementById('gameMenuBtn').style.display = 'inline-block';
-            document.getElementById('playerCustomization').style.display = 'block';
-            document.getElementById('playerList').style.display = 'block';
-            
-            // Initialize player list and bot controls
-            updatePlayerList();
-            updateBotButtons();
+            // UI will be updated by the roomCreated socket event
         }
 
         function joinRoom() {
@@ -448,12 +433,21 @@
             window.socket.on('roomCreated', (data) => {
                 console.log('✅ Created battleship room:', data);
                 window.battleshipRoomId = data.roomId;
+                window.isRoomCreator = true; // Mark as room creator
                 updateBattleshipPlayerList(data.players || []);
                 
-                // Show room created UI
+                // Show room created UI (room creator sees room code)
                 document.getElementById('roomCodeDisplay').style.display = 'block';
                 document.getElementById('roomCodeText').textContent = data.roomId;
                 document.body.classList.add('room-created');
+                
+                // Show customization and management controls for room creator
+                document.getElementById('playerCustomization').style.display = 'block';
+                document.getElementById('addBotBtn').style.display = 'inline-block';
+                document.getElementById('removeBotBtn').style.display = 'inline-block';
+                document.getElementById('startGameBtn').style.display = 'inline-block';
+                document.getElementById('gameMenuBtn').style.display = 'inline-block';
+                document.getElementById('playerList').style.display = 'block';
                 
                 // Check if we should show start button (for room creator)
                 if (data.players && data.players.length === 2) {
@@ -465,7 +459,7 @@
             window.socket.on('playerJoined', (data) => {
                 updateBattleshipPlayerList(data.players);
                 
-                // Show start button when 2 players join
+                // Show start button when 2 players join (only for room creator)
                 if (data.players && data.players.length === 2) {
                     showStartButton();
                 }
@@ -477,7 +471,7 @@
             window.socket.on('playersUpdated', (players) => {
                 updateBattleshipPlayerList(players);
                 
-                // Show start button when 2 players are ready
+                // Show start button when 2 players are ready (only for room creator)
                 if (players && players.length === 2) {
                     showStartButton();
                 }
@@ -492,16 +486,26 @@
             window.socket.on('roomJoined', (data) => {
                 console.log('✅ Received roomJoined event:', data);
                 window.battleshipRoomId = data.roomId;
+                window.isRoomCreator = false; // Mark as room joiner
                 
                 // Store room settings
                 localStorage.setItem('battleshipRoomCode', data.roomId);
                 localStorage.setItem('battleshipPlayerCount', '2');
                 localStorage.setItem('battleshipGameMode', 'multiplayer');
                 
-                // Show room UI (same as room creator)
-                document.getElementById('roomCodeDisplay').style.display = 'block';
-                document.getElementById('roomCodeText').textContent = data.roomId;
+                // Show room UI (joiner sees same elements but NO room code)
+                document.getElementById('roomCodeDisplay').style.display = 'none'; // Hide room code for joiner
                 document.body.classList.add('room-created');
+                
+                // Show customization and player list for joiner (same as creator)
+                document.getElementById('playerCustomization').style.display = 'block';
+                document.getElementById('playerList').style.display = 'block';
+                
+                // Hide management controls for joiner (only room creator can manage)
+                document.getElementById('addBotBtn').style.display = 'none';
+                document.getElementById('removeBotBtn').style.display = 'none';
+                document.getElementById('startGameBtn').style.display = 'none';
+                document.getElementById('gameMenuBtn').style.display = 'none';
                 
                 console.log('🚢 Room settings stored, staying on menu...');
                 // Don't redirect automatically - wait for manual start
@@ -523,9 +527,12 @@
         }
         
         function showStartButton() {
-            const startButton = document.getElementById('startGameButton');
-            if (startButton) {
-                startButton.style.display = 'block';
+            // Only show start button for room creator
+            if (window.isRoomCreator) {
+                const startButton = document.getElementById('startGameButton');
+                if (startButton) {
+                    startButton.style.display = 'block';
+                }
             }
         }
         
