@@ -633,8 +633,11 @@
             
             if (!battleshipSocket.connected) {
                 console.error('❌ Socket not connected!');
+                console.error('❌ Socket state:', battleshipSocket.readyState);
                 return;
             }
+            
+            console.log('🚢 Socket is connected and ready for multiplayer');
             
             // Handle player ready events
             battleshipSocket.on('battleshipPlayerReady', (data) => {

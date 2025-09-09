@@ -290,17 +290,26 @@ io.on('connection', (socket) => {
     // ✅ Handle battleship game events
     socket.on('battleshipPlayerReady', (data) => {
         console.log(`🚢 Player ready for battleship game: ${data.playerId} in room ${data.roomId}`);
+        console.log(`🚢 Socket ID: ${socket.id}`);
+        console.log(`🚢 Data received:`, data);
+        
         const room = rooms.get(data.roomId);
+        console.log(`🚢 Room found:`, !!room);
+        console.log(`🚢 Room game type:`, room?.gameType);
+        console.log(`🚢 Room players:`, room?.players?.length);
         
         if (room && room.gameType === 'battleship') {
             // Mark player as ready
             const player = room.players.find(p => p.id === data.playerId);
+            console.log(`🚢 Player found:`, !!player);
             if (player) {
                 player.ready = true;
                 console.log(`🚢 Player ${data.playerId} marked as ready`);
+                console.log(`🚢 All players:`, room.players.map(p => ({ id: p.id, ready: p.ready })));
                 
                 // Check if both players are ready
                 const allReady = room.players.every(p => p.ready);
+                console.log(`🚢 All players ready:`, allReady);
                 if (allReady && room.players.length === 2) {
                     console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
                     io.to(data.roomId).emit('battleshipGameStart', {
@@ -308,13 +317,18 @@ io.on('connection', (socket) => {
                         players: room.players
                     });
                 } else {
+                    console.log(`🚢 Not all players ready yet, notifying others`);
                     // Notify other players that this player is ready
                     socket.to(data.roomId).emit('battleshipPlayerReady', {
                         playerId: data.playerId,
                         roomId: data.roomId
                     });
                 }
+            } else {
+                console.log(`❌ Player not found in room`);
             }
+        } else {
+            console.log(`❌ Room not found or not battleship type`);
         }
     });
     

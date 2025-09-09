@@ -119,6 +119,13 @@ class BattleshipGame {
         this.isMultiplayer = true;
         this.playerId = window.socket ? window.socket.id : null;
         
+        console.log('🚢 Multiplayer setup:');
+        console.log('🚢 - roomCode:', this.roomCode);
+        console.log('🚢 - isMultiplayer:', this.isMultiplayer);
+        console.log('🚢 - playerId:', this.playerId);
+        console.log('🚢 - window.socket:', !!window.socket);
+        console.log('🚢 - socket.connected:', window.socket?.connected);
+        
         // Use existing socket from menu - don't create new one
         if (window.socket) {
             console.log('🚢 Using existing socket from menu, player ID:', this.playerId);
@@ -272,11 +279,24 @@ class BattleshipGame {
     }
     
     emitPlayerReady() {
+        console.log('🚢 emitPlayerReady called');
+        console.log('🚢 isMultiplayer:', this.isMultiplayer);
+        console.log('🚢 window.socket:', !!window.socket);
+        console.log('🚢 roomCode:', this.roomCode);
+        console.log('🚢 socket.id:', window.socket?.id);
+        
         if (this.isMultiplayer && window.socket && this.roomCode) {
+            console.log('🚢 Emitting battleshipPlayerReady event');
             window.socket.emit('battleshipPlayerReady', {
                 roomId: this.roomCode,
                 playerId: window.socket.id
             });
+            console.log('🚢 battleshipPlayerReady event emitted successfully');
+        } else {
+            console.error('❌ Cannot emit player ready - missing requirements');
+            console.error('❌ isMultiplayer:', this.isMultiplayer);
+            console.error('❌ window.socket:', !!window.socket);
+            console.error('❌ roomCode:', this.roomCode);
         }
     }
     
@@ -545,6 +565,10 @@ class BattleshipGame {
         // Check if this is multiplayer mode
         if (this.isMultiplayer && this.roomCode) {
             console.log('🚀 Player ready for multiplayer battleship game');
+            console.log('🚀 isMultiplayer:', this.isMultiplayer);
+            console.log('🚀 roomCode:', this.roomCode);
+            console.log('🚀 window.socket:', !!window.socket);
+            
             this.addToHistory('✅ You are ready! Waiting for opponent to finish placing ships...', 'success');
             
             // Emit player ready event to server
