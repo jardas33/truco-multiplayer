@@ -262,21 +262,24 @@ class BattleshipGame {
         console.log('🚢 Handling opponent attack:', data);
         const { x, y, hit, shipSunk } = data;
         
+        console.log(`🚢 Attack coordinates: x=${x}, y=${y}, hit=${hit}, shipSunk=${shipSunk}`);
+        
         // Update player's grid with the attack result
         if (this.playerGrids[0][y] && this.playerGrids[0][y][x]) {
             this.playerGrids[0][y][x].hit = hit;
             this.playerGrids[0][y][x].miss = !hit;
-            
-            if (hit && shipSunk) {
-                // Handle ship sinking
-                this.handleShipSunk(0, shipSunk);
-            }
+            console.log(`🚢 Updated player grid [${y}][${x}]: hit=${hit}, miss=${!hit}`);
+        } else {
+            console.log(`🚢 ERROR: Player grid [${y}][${x}] not found!`);
         }
         
         // Update the attack grid to show the opponent's attack result
         if (this.attackGrids[0][y] && this.attackGrids[0][y][x]) {
             this.attackGrids[0][y][x].hit = hit;
             this.attackGrids[0][y][x].miss = !hit;
+            console.log(`🚢 Updated attack grid [${y}][${x}]: hit=${hit}, miss=${!hit}`);
+        } else {
+            console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
         }
         
         // Add to history
@@ -288,7 +291,9 @@ class BattleshipGame {
         }
         
         // Force redraw
-        this.staticRender();
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
     }
     
     handleShipSunk(player, shipName) {
