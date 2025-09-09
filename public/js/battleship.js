@@ -342,9 +342,12 @@ class BattleshipGame {
     
     emitTurnChange() {
         if (this.isMultiplayer && this.socket && this.roomCode) {
+            // Use a simple toggle between players instead of relying on opponentId
+            const nextPlayer = this.currentPlayer === 0 ? 1 : 0;
+            
             this.socket.emit('battleshipTurnChange', {
                 roomId: this.roomCode,
-                currentPlayer: this.opponentId // Switch to opponent
+                currentPlayer: nextPlayer
             });
             
             // Update local turn state
@@ -2254,7 +2257,7 @@ class BattleshipClient {
         console.log(`🎯 handleAttack called - single click handler`);
         
         // Use correct attack grid position (must match drawGrids)
-        const attackGridX = this.gridStartX + 500; // Match drawGrids position
+        const attackGridX = this.gridStartX + 400; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
         
         // Calculate grid coordinates to match exactly how cells are drawn
@@ -2280,8 +2283,8 @@ class BattleshipClient {
         }
         
         // Reject clicks that are clearly outside the attack grid area (more aggressive bounds checking)
-        if (mouseX < attackGridX - 50 || mouseX > attackGridX + 400 || 
-            mouseY < attackGridY - 50 || mouseY > attackGridY + 400) {
+        if (mouseX < attackGridX - 50 || mouseX > attackGridX + 350 || 
+            mouseY < attackGridY - 50 || mouseY > attackGridY + 350) {
             console.log(`🎯 Click rejected - way outside attack grid area`);
             return;
         }
@@ -2308,7 +2311,7 @@ class BattleshipClient {
             const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
             this.game.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
             
-            const result = this.game.attack(0, gridX, gridY);
+            const result = this.game.attack(1, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
