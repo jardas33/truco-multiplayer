@@ -614,7 +614,7 @@
         console.log('🚢 SCRIPT TAG IS EXECUTING - THIS IS A TEST');
         
         // Initialize socket for multiplayer synchronization
-        let battleshipSocket;
+        window.battleshipSocket = null;
         
         console.log('🚢 BATTLESHIP.HTML SCRIPT STARTING');
         console.log('🚢 localStorage battleshipRoomCode:', localStorage.getItem('battleshipRoomCode'));
@@ -633,20 +633,20 @@
             console.log('🚢 Socket ID:', window.socket?.id);
             
             // Create new socket connection since window.socket is lost on page navigation
-            battleshipSocket = io();
+            window.battleshipSocket = io();
             console.log('🚢 Created new socket connection for battleship game');
             
             // Join the room immediately after connection
-            battleshipSocket.on('connect', () => {
+            window.battleshipSocket.on('connect', () => {
                 console.log('🚢 Socket connected, joining room:', roomCode);
-                battleshipSocket.emit('joinRoom', {
+                window.battleshipSocket.emit('joinRoom', {
                     roomCode: roomCode,
                     gameType: 'battleship'
                 });
             });
             
             // Handle player ready events
-            battleshipSocket.on('battleshipPlayerReady', (data) => {
+            window.battleshipSocket.on('battleshipPlayerReady', (data) => {
                 console.log('🚢 Received player ready event:', data);
                 if (window.battleshipGame) {
                     window.battleshipGame.handlePlayerReady(data);
@@ -654,7 +654,7 @@
             });
             
             // Handle game start event from server
-            battleshipSocket.on('battleshipGameStart', (data) => {
+            window.battleshipSocket.on('battleshipGameStart', (data) => {
                 console.log('🚢 Received battleship game start event:', data);
                 
                 // Update player names in the game
@@ -690,7 +690,7 @@
             });
             
             // Handle turn change events
-            battleshipSocket.on('battleshipTurnChange', (data) => {
+            window.battleshipSocket.on('battleshipTurnChange', (data) => {
                 console.log('🚢 Received turn change event:', data);
                 if (window.battleshipGame) {
                     window.battleshipGame.handleTurnChange(data);
@@ -698,27 +698,27 @@
             });
             
             // Handle ship placement events
-            battleshipSocket.on('battleshipShipPlaced', (data) => {
+            window.battleshipSocket.on('battleshipShipPlaced', (data) => {
                 console.log('🚢 Received ship placement from opponent:', data);
                 // Handle opponent ship placement if needed
             });
             
             // Handle attack events
-            battleshipSocket.on('battleshipAttack', (data) => {
+            window.battleshipSocket.on('battleshipAttack', (data) => {
                 console.log('🚢 Received attack from opponent:', data);
                 // Handle opponent attack if needed
             });
             
             // Handle game over events
-            battleshipSocket.on('battleshipGameOver', (data) => {
+            window.battleshipSocket.on('battleshipGameOver', (data) => {
                 console.log('🚢 Received game over event:', data);
                 // Handle game over if needed
             });
             
             // Clean up socket on page unload
             window.addEventListener('beforeunload', () => {
-                if (battleshipSocket) {
-                    battleshipSocket.disconnect();
+                if (window.battleshipSocket) {
+                    window.battleshipSocket.disconnect();
                 }
             });
         }
