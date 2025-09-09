@@ -166,8 +166,52 @@ io.on('connection', (socket) => {
             console.log(`❌ Room ${roomCode} not found`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
             console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
-            socket.emit('error', 'Room not found');
-            return;
+            
+            // For battleship, create the room if it doesn't exist
+            if (data.gameType === 'battleship') {
+                console.log(`🚢 Creating battleship room ${roomCode} for joining player`);
+                
+                rooms.set(roomCode, {
+                    gameType: 'battleship',
+                    players: [{
+                        id: socket.id,
+                        name: `Player 1`,
+                        nickname: `Player 1`,
+                        team: null,
+                        isBot: false,
+                        isRoomCreator: true
+                    }],
+                    game: null,
+                    isFirstGame: true
+                });
+
+                socket.join(roomCode);
+                console.log(`✅ Battleship room ${roomCode} created for joining player`);
+
+                // Emit roomJoined event
+                console.log(`🚢 Emitting roomJoined event to socket ${socket.id}`);
+                socket.emit('roomJoined', {
+                    roomId: roomCode,
+                    playerId: socket.id,
+                    isHost: true
+                });
+                console.log(`🚢 roomJoined event emitted successfully`);
+
+                // Emit playerJoined event to all players in the room
+                io.to(roomCode).emit('playerJoined', {
+                    players: rooms.get(roomCode).players,
+                    count: 1
+                });
+                
+                // Emit players updated event
+                io.to(roomCode).emit('playersUpdated', rooms.get(roomCode).players);
+                
+                console.log(`✅ Battleship room ${roomCode} created and joined successfully`);
+                return;
+            } else {
+                socket.emit('error', 'Room not found');
+                return;
+            }
         }
 
         const maxPlayersJoin = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6

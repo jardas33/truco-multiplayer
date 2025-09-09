@@ -369,6 +369,14 @@
                 gameType: 'battleship'
             });
             console.log('🚢 joinRoom event emitted');
+            
+            // Add timeout to show message if no response
+            setTimeout(() => {
+                if (!window.battleshipRoomId) {
+                    console.log('⏰ Room join timeout - no response from server');
+                    alert('Room join timed out. Please try again or create a new room.');
+                }
+            }, 5000); // 5 second timeout
         }
 
         function generateRoomCode() {
@@ -433,19 +441,6 @@
                 document.body.classList.add('room-created');
             });
             
-            window.socket.on('roomJoined', (data) => {
-                console.log('✅ Joined battleship room:', data);
-                window.battleshipRoomId = data.roomId;
-                
-                // Store room settings
-                localStorage.setItem('battleshipRoomCode', data.roomId);
-                localStorage.setItem('battleshipPlayerCount', '2');
-                localStorage.setItem('battleshipGameMode', 'multiplayer');
-                
-                console.log('🚢 Room settings stored, redirecting to game...');
-                // Redirect to game
-                window.location.href = '/battleship';
-            });
             
             window.socket.on('playerJoined', (data) => {
                 console.log('👥 Player joined battleship room:', data);
@@ -466,6 +461,21 @@
             window.socket.on('error', (errorMessage) => {
                 console.error('❌ Battleship socket error:', errorMessage);
                 alert(`Error: ${errorMessage}`);
+            });
+            
+            // Add timeout for room joining
+            window.socket.on('roomJoined', (data) => {
+                console.log('✅ Received roomJoined event:', data);
+                window.battleshipRoomId = data.roomId;
+                
+                // Store room settings
+                localStorage.setItem('battleshipRoomCode', data.roomId);
+                localStorage.setItem('battleshipPlayerCount', '2');
+                localStorage.setItem('battleshipGameMode', 'multiplayer');
+                
+                console.log('🚢 Room settings stored, redirecting to game...');
+                // Redirect to game
+                window.location.href = '/battleship';
             });
         }
         
