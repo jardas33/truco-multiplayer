@@ -636,6 +636,15 @@
             battleshipSocket = io();
             console.log('🚢 Created new socket connection for battleship game');
             
+            // Join the room immediately after connection
+            battleshipSocket.on('connect', () => {
+                console.log('🚢 Socket connected, joining room:', roomCode);
+                battleshipSocket.emit('joinRoom', {
+                    roomCode: roomCode,
+                    gameType: 'battleship'
+                });
+            });
+            
             // Handle player ready events
             battleshipSocket.on('battleshipPlayerReady', (data) => {
                 console.log('🚢 Received player ready event:', data);
@@ -724,11 +733,14 @@
     <!-- Clear localStorage after all scripts are loaded -->
     <script>
         // Clear localStorage after all scripts are loaded to prevent race conditions
-        if (roomCode && gameMode === 'multiplayer') {
-            localStorage.removeItem('battleshipRoomCode');
-            localStorage.removeItem('battleshipPlayerCount');
-            localStorage.removeItem('battleshipGameMode');
-        }
+        // Only clear after a delay to ensure game initialization is complete
+        setTimeout(() => {
+            if (roomCode && gameMode === 'multiplayer') {
+                localStorage.removeItem('battleshipRoomCode');
+                localStorage.removeItem('battleshipPlayerCount');
+                localStorage.removeItem('battleshipGameMode');
+            }
+        }, 2000); // 2 second delay
     </script>
 </body>
 </html>

@@ -98,8 +98,12 @@ class BattleshipGame {
             this.addToHistory(`🎮 Mode: ${gameMode || 'create'}`, 'info');
             
             // Initialize multiplayer if in multiplayer mode
+            console.log('🚢 Game initialization - gameMode:', gameMode, 'roomCode:', roomCode);
             if (gameMode === 'multiplayer') {
+                console.log('🚢 Multiplayer mode detected, room:', roomCode);
                 this.initializeMultiplayer(roomCode);
+            } else {
+                console.log('🚢 Single player mode detected');
             }
             
             // Don't clear localStorage here - let the HTML script handle it
@@ -118,23 +122,28 @@ class BattleshipGame {
         this.roomCode = roomCode;
         this.isMultiplayer = true;
         
-        // Get socket from battleship.html script
-        this.socket = window.battleshipSocket;
-        this.playerId = this.socket ? this.socket.id : null;
+        // Wait for socket to be available and connected
+        const waitForSocket = () => {
+            this.socket = window.battleshipSocket;
+            this.playerId = this.socket ? this.socket.id : null;
+            
+            console.log('🚢 Multiplayer setup:');
+            console.log('🚢 - roomCode:', this.roomCode);
+            console.log('🚢 - isMultiplayer:', this.isMultiplayer);
+            console.log('🚢 - playerId:', this.playerId);
+            console.log('🚢 - battleshipSocket:', !!this.socket);
+            console.log('🚢 - socket.connected:', this.socket?.connected);
+            
+            if (this.socket && this.socket.connected) {
+                console.log('🚢 Using battleship socket, player ID:', this.playerId);
+                this.setupMultiplayerListeners();
+            } else {
+                console.log('🚢 Socket not ready yet, retrying in 100ms...');
+                setTimeout(waitForSocket, 100);
+            }
+        };
         
-        console.log('🚢 Multiplayer setup:');
-        console.log('🚢 - roomCode:', this.roomCode);
-        console.log('🚢 - isMultiplayer:', this.isMultiplayer);
-        console.log('🚢 - playerId:', this.playerId);
-        console.log('🚢 - battleshipSocket:', !!this.socket);
-        console.log('🚢 - socket.connected:', this.socket?.connected);
-        
-        if (this.socket) {
-            console.log('🚢 Using battleship socket, player ID:', this.playerId);
-            this.setupMultiplayerListeners();
-        } else {
-            console.error('❌ No battleship socket available for multiplayer!');
-        }
+        waitForSocket();
     }
     
     setupMultiplayerListeners() {
@@ -1546,16 +1555,30 @@ class BattleshipClient {
         if (this.game.gamePhase === 'playing') {
             if (this.game.currentPlayer === 0) {
                 text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
-                text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
+                if (this.game.isMultiplayer) {
+                    text('👥 Opponent is waiting...', fleetGridX + 200, gridY + 20);
+                } else {
+                    text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
+                }
             } else {
-                text('🤖 AI TURN - AI is attacking...', attackGridX + 200, gridY + 20);
-                text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
+                if (this.game.isMultiplayer) {
+                    text('👥 OPPONENT TURN - Opponent is attacking...', attackGridX + 200, gridY + 20);
+                    text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
+                } else {
+                    text('🤖 AI TURN - AI is attacking...', attackGridX + 200, gridY + 20);
+                    text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
+                }
             }
         } else if (this.game.gamePhase === 'placement') {
             text('⚓ Place your ships!', attackGridX + 200, gridY + 20);
             text('📋 Your Fleet', fleetGridX + 200, gridY + 20);
         } else if (this.game.gamePhase === 'finished') {
-            const winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 AI WON!';
+            let winnerText;
+            if (this.game.isMultiplayer) {
+                winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 OPPONENT WON!';
+            } else {
+                winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 AI WON!';
+            }
             text(winnerText, attackGridX + 200, gridY + 20);
             text(winnerText, fleetGridX + 200, gridY + 20);
         }
