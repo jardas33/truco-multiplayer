@@ -48,6 +48,14 @@ class BattleshipGame {
         this.aiMisses = 0;
         this.shipsSunk = 0;
         
+        // Game tracking (persists across games)
+        this.playerGamesWon = 0;
+        this.aiGamesWon = 0;
+        
+        // Current game tracking (resets each game)
+        this.currentGamePlayerShipsSunk = 0;
+        this.currentGameAiShipsSunk = 0;
+        
         this.initializeGame();
         this.imagesChecked = false; // Initialize images checked flag
     }
@@ -243,9 +251,10 @@ class BattleshipGame {
         const shipsSunkEl = document.getElementById('shipsSunk');
         const accuracyEl = document.getElementById('accuracy');
         
-        if (playerScoreEl) playerScoreEl.textContent = this.playerScore;
-        if (aiScoreEl) aiScoreEl.textContent = this.aiScore;
-        if (shipsSunkEl) shipsSunkEl.textContent = `${this.shipsSunk}/5`;
+        // Show games won and ships sunk in current game
+        if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon}W ${this.currentGamePlayerShipsSunk}S`;
+        if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon}W ${this.currentGameAiShipsSunk}S`;
+        if (shipsSunkEl) shipsSunkEl.textContent = `Sunk: ${this.shipsSunk}/5`;
         
         if (accuracyEl) {
             const totalShots = this.playerHits + this.playerMisses;
@@ -483,6 +492,14 @@ class BattleshipGame {
             if (ship.hits >= ship.size) {
                 this.sinkShip(targetPlayer, ship);
                 this.shipsSunk++;
+                
+                // Track ships sunk in current game
+                if (player === 0) {
+                    this.currentGamePlayerShipsSunk++;
+                } else {
+                    this.currentGameAiShipsSunk++;
+                }
+                
                 this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
                 this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
                 
@@ -542,11 +559,14 @@ class BattleshipGame {
         this.winner = winner;
         this.gameOver = true;
         
+        // Track games won
         if (winner === 0) {
+            this.playerGamesWon++;
             this.addToHistory('🏆 Congratulations! You won the battle!', 'success');
             this.showGameMessage('🏆 VICTORY! You sunk all enemy ships!', 5000);
             this.triggerVictoryEffect();
         } else {
+            this.aiGamesWon++;
             this.addToHistory('💥 Game Over! The AI defeated you!', 'error');
             this.showGameMessage('💥 DEFEAT! The AI sunk all your ships!', 5000);
         }
@@ -756,6 +776,10 @@ class BattleshipGame {
         
         // Reset ship placement status
         this.ships.forEach(ship => ship.placed = false);
+        
+        // Reset current game tracking (games won persist)
+        this.currentGamePlayerShipsSunk = 0;
+        this.currentGameAiShipsSunk = 0;
         
         // Reset images checked flag
         this.imagesChecked = false;
@@ -1291,32 +1315,38 @@ class BattleshipClient {
                 const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
                 
                 if (window.shipImages && window.shipImages[cell.ship.type]) {
-                    // Draw ship image with proper rotation handling
-                    if (cell.ship.orientation === 'vertical') {
-                        push();
-                        // For vertical ships, rotate around the center
-                        const centerX = x + shipWidth / 2;
-                        const centerY = y + shipHeight / 2;
-                        translate(centerX, centerY);
-                        rotate(PI/2); // 90 degrees clockwise
-                        // Use original horizontal dimensions to prevent stretching
-                        const imageWidth = cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing;
-                        const imageHeight = this.gridSize;
-                        image(window.shipImages[cell.ship.type], -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-                        pop();
-                    } else {
-                        // Horizontal ships - draw normally
-                        image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
+                    // Don't draw ship image for hit cells - let hit symbol handle it completely
+                    if (!cell.hit) {
+                        // Draw ship image with proper rotation handling
+                        if (cell.ship.orientation === 'vertical') {
+                            push();
+                            // For vertical ships, rotate around the center
+                            const centerX = x + shipWidth / 2;
+                            const centerY = y + shipHeight / 2;
+                            translate(centerX, centerY);
+                            rotate(PI/2); // 90 degrees clockwise
+                            // Use original horizontal dimensions to prevent stretching
+                            const imageWidth = cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing;
+                            const imageHeight = this.gridSize;
+                            image(window.shipImages[cell.ship.type], -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
+                            pop();
+                        } else {
+                            // Horizontal ships - draw normally
+                            image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
+                        }
                     }
                     
                     // Don't draw hit overlay here - let the hit symbol rendering handle it
                     // This prevents double red overlay that makes hit symbols invisible
                 } else {
-                    // Fallback to colored rectangle - don't show red for hit cells, let hit symbol handle it
+                    // Fallback to colored rectangle - don't show ship color for hit cells
                     if (cell.ship.sunk) {
                         fill(139, 0, 0); // Dark red for sunk ships
+                    } else if (cell.hit) {
+                        // Don't draw ship color for hit cells - let hit symbol handle it completely
+                        return; // Skip drawing ship color for hit cells
                     } else {
-                        fill(cell.ship.color); // Original color for all cells (hit symbol will show hit status)
+                        fill(cell.ship.color); // Original color for unhit cells only
                     }
                     rect(x, y, shipWidth, shipHeight);
                 }
