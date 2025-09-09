@@ -866,7 +866,7 @@ class BattleshipGame {
             // In multiplayer, player 0 attacks player 1's grid
             const attackingPlayer = 0; // The human player is always player 0
             const targetPlayer = 1; // Attack player 1's grid (opponent)
-            const attackGrid = this.attackGrids[attackingPlayer]; // Player 0's view of player 1's grid
+            const attackGrid = this.attackGrids[0]; // Player 0's view of player 1's grid
             
             if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
                 return { valid: false, message: 'Already attacked this position!' };
@@ -1364,6 +1364,15 @@ class BattleshipClient {
         return this.game ? this.game.gamePhase : 'placement';
     }
     
+    set gamePhase(value) {
+        // Update the global game instance's game phase
+        if (window.battleshipGame) {
+            window.battleshipGame.gamePhase = value;
+        } else if (this.game) {
+            this.game.gamePhase = value;
+        }
+    }
+    
     get currentPlayer() {
         // Always check the global instance first
         if (window.battleshipGame) {
@@ -1372,12 +1381,30 @@ class BattleshipClient {
         return this.game ? this.game.currentPlayer : 0;
     }
     
+    set currentPlayer(value) {
+        // Update the global game instance's current player
+        if (window.battleshipGame) {
+            window.battleshipGame.currentPlayer = value;
+        } else if (this.game) {
+            this.game.currentPlayer = value;
+        }
+    }
+    
     get isPlayerTurn() {
         // Always check the global instance first
         if (window.battleshipGame) {
             return window.battleshipGame.isPlayerTurn;
         }
         return this.game ? this.game.isPlayerTurn : false;
+    }
+    
+    set isPlayerTurn(value) {
+        // Update the global game instance's isPlayerTurn
+        if (window.battleshipGame) {
+            window.battleshipGame.isPlayerTurn = value;
+        } else if (this.game) {
+            this.game.isPlayerTurn = value;
+        }
     }
     
     get playerId() {
@@ -2520,7 +2547,7 @@ class BattleshipClient {
             
             // Check if this position has already been attacked
             const gameInstance = window.battleshipGame || this.game;
-            const attackGrid = this.isMultiplayer ? gameInstance.attackGrids[1] : gameInstance.attackGrids[0];
+            const attackGrid = gameInstance.attackGrids[0]; // Always use player 0's attack grid
             if (attackGrid[gridY][gridX].hit || attackGrid[gridY][gridX].miss) {
                 gameInstance.addToHistory('❌ You already attacked this position!', 'error');
                 return;
