@@ -1108,9 +1108,8 @@ class BattleshipClient {
         // Clear the canvas first to ensure clean drawing
         clear();
         
-        // Draw grids with high visibility
+        // Draw grids with high visibility (includes ship rendering and hit symbols)
         this.drawGrids();
-        this.drawShips();
         this.drawShipPreview(); // Add ship preview during placement
         this.drawTurnIndicator();
         this.drawMouseHover();
@@ -1351,11 +1350,13 @@ class BattleshipClient {
                     rect(x, y, shipWidth, shipHeight);
                 }
                 
-                // Add border
-                noFill();
-                stroke(255, 255, 255);
-                strokeWeight(1);
-                rect(x, y, shipWidth, shipHeight);
+                // Add border only for unhit ships
+                if (!cell.hit) {
+                    noFill();
+                    stroke(255, 255, 255);
+                    strokeWeight(1);
+                    rect(x, y, shipWidth, shipHeight);
+                }
             } else {
                 // For non-first cells, don't draw ship color for hit cells
                 if (!cell.hit) {
@@ -1500,14 +1501,17 @@ class BattleshipClient {
             const gridY = ship.y + (ship.orientation === 'vertical' ? i : 0);
             const cell = this.game.playerGrids[player][gridY][gridX];
             
-            // Determine color based on ship status - let hit symbol rendering handle individual hits
+            // Determine color based on individual cell hit status
             let cellColor, strokeColor;
             if (ship.sunk) {
                 // Ship is completely sunk - dark red
                 cellColor = [139, 0, 0, 200]; // Dark red
                 strokeColor = [255, 0, 0]; // Bright red border
+            } else if (cell.hit) {
+                // This specific cell is hit - don't draw anything, let hit symbol handle it
+                continue; // Skip drawing this cell completely
             } else {
-                // Ship is not sunk - green (hit symbol will show individual hit status)
+                // This cell is unhit - green
                 cellColor = [0, 255, 0, 150]; // Green
                 strokeColor = [0, 255, 0]; // Green border
             }
