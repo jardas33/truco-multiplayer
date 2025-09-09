@@ -229,8 +229,9 @@ class BattleshipGame {
     handleTurnChange(data) {
         console.log('🚢 Handling turn change:', data);
         
-        this.isPlayerTurn = data.currentPlayer === this.playerId;
-        this.currentPlayer = this.isPlayerTurn ? 0 : 1;
+        // In multiplayer, player 0 is always the human player
+        this.isPlayerTurn = data.currentPlayer === 0;
+        this.currentPlayer = data.currentPlayer;
         
         if (this.isPlayerTurn) {
             this.addToHistory('🎯 Your turn to attack!', 'info');
@@ -268,10 +269,10 @@ class BattleshipGame {
             }
         }
         
-        // Update the opponent's attack grid to show the result
-        if (this.attackGrids[1][y] && this.attackGrids[1][y][x]) {
-            this.attackGrids[1][y][x].hit = hit;
-            this.attackGrids[1][y][x].miss = !hit;
+        // Update the attack grid to show the opponent's attack result
+        if (this.attackGrids[0][y] && this.attackGrids[0][y][x]) {
+            this.attackGrids[0][y][x].hit = hit;
+            this.attackGrids[0][y][x].miss = !hit;
         }
         
         // Add to history
@@ -280,6 +281,21 @@ class BattleshipGame {
             this.addToHistory(`💥 Opponent hit ${letters[y]}${x + 1}!`, 'hit');
         } else {
             this.addToHistory(`💧 Opponent missed ${letters[y]}${x + 1}`, 'miss');
+        }
+        
+        // Force redraw
+        this.staticRender();
+    }
+    
+    handleShipSunk(player, shipName) {
+        // Find and mark the ship as sunk
+        const ships = this.placedShips[player];
+        const ship = ships.find(s => s.name === shipName);
+        
+        if (ship) {
+            ship.sunk = true;
+            console.log(`🚢 Ship ${shipName} sunk for player ${player}`);
+            this.addToHistory(`💥 Your ${shipName} has been sunk!`, 'error');
         }
     }
     
@@ -352,14 +368,14 @@ class BattleshipGame {
             
             // Update local turn state
             this.isPlayerTurn = false;
-            this.currentPlayer = 1;
+            this.currentPlayer = nextPlayer;
             this.updateUI();
         }
     }
     
     emitGameOver(winner) {
-        if (this.isMultiplayer && window.socket && this.roomCode) {
-            window.socket.emit('battleshipGameOver', {
+        if (this.isMultiplayer && this.socket && this.roomCode) {
+            this.socket.emit('battleshipGameOver', {
                 roomId: this.roomCode,
                 winner: winner
             });
@@ -770,10 +786,11 @@ class BattleshipGame {
                 return { valid: false, message: 'Not your turn!' };
             }
             
-            // Attack opponent's grid (player 1's grid)
+            // In multiplayer, player 0 attacks player 1's grid
+            const attackingPlayer = 0; // The human player is always player 0
             const targetPlayer = 1; // Attack player 1's grid (opponent)
             const grid = this.playerGrids[targetPlayer];
-            const attackGrid = this.attackGrids[0]; // Player 0's view of player 1's grid
+            const attackGrid = this.attackGrids[attackingPlayer]; // Player 0's view of player 1's grid
             
             if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
                 return { valid: false, message: 'Already attacked this position!' };
@@ -808,7 +825,7 @@ class BattleshipGame {
                     this.playerScore += 50; // 50 bonus points for sinking
                     
                     if (this.checkGameOver(targetPlayer)) {
-                        this.endGame(0); // Player 0 wins (the attacker)
+                        this.endGame(attackingPlayer); // The attacking player wins
                         return { valid: true, hit: true, sunk: true, ship: ship.name, gameOver: true };
                     }
                     
@@ -1678,7 +1695,9 @@ class BattleshipClient {
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
         const attackGridY = this.gridStartY; // Same Y position
         
-        this.drawGrid(attackGridX, attackGridY, 0, false);
+        // In multiplayer, show player 0's view of player 1's grid (opponent's grid)
+        const attackGridPlayer = this.game.isMultiplayer ? 0 : 0;
+        this.drawGrid(attackGridX, attackGridY, attackGridPlayer, false);
         
         // Draw grids without excessive logging
         
@@ -2311,7 +2330,7 @@ class BattleshipClient {
             const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
             this.game.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
             
-            const result = this.game.attack(1, gridX, gridY);
+            const result = this.game.attack(0, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
