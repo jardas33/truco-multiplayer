@@ -390,10 +390,23 @@
             }
             
             console.log('🚢 Initializing battleship socket...');
-            window.socket = io();
+            window.socket = io({
+                transports: ['websocket', 'polling'],
+                timeout: 20000,
+                forceNew: true
+            });
             
             window.socket.on('connect', () => {
                 console.log('✅ Battleship socket connected');
+                console.log('🔍 Socket ID:', window.socket.id);
+            });
+            
+            window.socket.on('connect_error', (error) => {
+                console.error('❌ Battleship socket connection error:', error);
+            });
+            
+            window.socket.on('disconnect', (reason) => {
+                console.log('❌ Battleship socket disconnected:', reason);
             });
             
             window.socket.on('roomCreated', (data) => {

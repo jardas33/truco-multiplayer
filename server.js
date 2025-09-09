@@ -1,7 +1,12 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // Store active rooms
 const rooms = new Map();
@@ -69,6 +74,15 @@ app.use(express.static('public'));
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log(`👤 User connected: ${socket.id}`);
+    
+    // Add error handling for socket
+    socket.on('error', (error) => {
+        console.error(`❌ Socket error for ${socket.id}:`, error);
+    });
+    
+    socket.on('disconnect', (reason) => {
+        console.log(`👤 User disconnected: ${socket.id}, reason: ${reason}`);
+    });
     
     // ✅ DEBUG: Log all incoming events to see if startGame is received
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
