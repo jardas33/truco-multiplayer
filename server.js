@@ -275,13 +275,9 @@ io.on('connection', (socket) => {
         // Emit players updated event
         io.to(roomCode).emit('playersUpdated', room.players);
         
-        // For battleship: auto-start game when 2 players join
+        // For battleship: wait for manual game start
         if (room.gameType === 'battleship' && room.players.length === 2) {
-            console.log(`🚢 Battleship room ${roomCode} has 2 players - starting game`);
-            io.to(roomCode).emit('battleshipGameStart', {
-                roomId: roomCode,
-                players: room.players
-            });
+            console.log(`🚢 Battleship room ${roomCode} has 2 players - waiting for manual start`);
         }
         
         } catch (error) {

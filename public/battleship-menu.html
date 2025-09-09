@@ -222,6 +222,13 @@
             <button id="createRoomBtn">Create Room</button>
           </div>
           
+          <!-- Start Game Button (hidden by default) -->
+          <div id="startGameButton" style="display: none; margin: 15px 0; text-align: center;">
+            <button onclick="startBattleshipGame()" style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+              🚢 Start Battle!
+            </button>
+          </div>
+          
           
           <!-- Room Code Display with Copy Button Next to Yellow Box -->
                 <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
@@ -454,10 +461,10 @@
                 console.log('👥 Player joined battleship room:', data);
                 updateBattleshipPlayerList(data.players);
                 
-                // Auto-start game when 2 players join
+                // Show start button when 2 players join
                 if (data.players && data.players.length === 2) {
-                    console.log('🚢 2 players ready - starting battleship game');
-                    startBattleshipGame();
+                    console.log('🚢 2 players ready - showing start button');
+                    showStartButton();
                 }
             });
             
@@ -471,7 +478,7 @@
                 alert(`Error: ${errorMessage}`);
             });
             
-            // Add timeout for room joining
+            // Handle room joining - stay on menu
             window.socket.on('roomJoined', (data) => {
                 console.log('✅ Received roomJoined event:', data);
                 window.battleshipRoomId = data.roomId;
@@ -481,9 +488,8 @@
                 localStorage.setItem('battleshipPlayerCount', '2');
                 localStorage.setItem('battleshipGameMode', 'multiplayer');
                 
-                console.log('🚢 Room settings stored, redirecting to game...');
-                // Redirect to game
-                window.location.href = '/battleship';
+                console.log('🚢 Room settings stored, staying on menu...');
+                // Don't redirect automatically - wait for manual start
             });
         }
         
@@ -499,6 +505,13 @@
                 playerDiv.textContent = `${index + 1}. ${player.name}`;
                 playerList.appendChild(playerDiv);
             });
+        }
+        
+        function showStartButton() {
+            const startButton = document.getElementById('startGameButton');
+            if (startButton) {
+                startButton.style.display = 'block';
+            }
         }
         
         function startBattleshipGame() {
