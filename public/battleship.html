@@ -636,6 +636,14 @@
                 return;
             }
             
+            // Handle player ready events
+            battleshipSocket.on('battleshipPlayerReady', (data) => {
+                console.log('🚢 Received player ready event:', data);
+                if (window.battleshipGame) {
+                    window.battleshipGame.handlePlayerReady(data);
+                }
+            });
+            
             // Handle game start event from server
             battleshipSocket.on('battleshipGameStart', (data) => {
                 console.log('🚢 Received battleship game start event:', data);
@@ -668,8 +676,15 @@
                 
                 // Show message that game is starting
                 if (window.battleshipGame) {
-                    window.battleshipGame.addToHistory('🚀 Multiplayer game starting!', 'success');
-                    window.battleshipGame.showGameMessage('🚀 Multiplayer Battle Starting!', 3000);
+                    window.battleshipGame.handleGameStart(data);
+                }
+            });
+            
+            // Handle turn change events
+            battleshipSocket.on('battleshipTurnChange', (data) => {
+                console.log('🚢 Received turn change event:', data);
+                if (window.battleshipGame) {
+                    window.battleshipGame.handleTurnChange(data);
                 }
             });
             

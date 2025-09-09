@@ -12,9 +12,16 @@ class BattleshipGame {
         ];
         
         this.gamePhase = 'placement'; // placement, playing, finished
-        this.currentPlayer = 0; // 0 = human, 1 = AI
+        this.currentPlayer = 0; // 0 = player1, 1 = player2 (in multiplayer)
         this.gameOver = false;
         this.winner = null;
+        
+        // Multiplayer state
+        this.playerReady = false;
+        this.opponentReady = false;
+        this.playerId = null;
+        this.opponentId = null;
+        this.isPlayerTurn = false;
         
         // Grids: 0 = human, 1 = AI
         this.playerGrids = [
@@ -110,10 +117,11 @@ class BattleshipGame {
         console.log('🚢 Initializing battleship multiplayer for room:', roomCode);
         this.roomCode = roomCode;
         this.isMultiplayer = true;
+        this.playerId = window.socket ? window.socket.id : null;
         
         // Use existing socket from menu - don't create new one
         if (window.socket) {
-            console.log('🚢 Using existing socket from menu');
+            console.log('🚢 Using existing socket from menu, player ID:', this.playerId);
             this.setupMultiplayerListeners();
         } else {
             console.error('❌ No socket available for multiplayer!');
@@ -123,23 +131,96 @@ class BattleshipGame {
     setupMultiplayerListeners() {
         if (!window.socket) return;
         
+        // Handle player ready events
+        window.socket.on('battleshipPlayerReady', (data) => {
+            console.log('🚢 Player ready received:', data);
+            this.handlePlayerReady(data);
+        });
+        
+        // Handle game start when both players are ready
+        window.socket.on('battleshipGameStart', (data) => {
+            console.log('🚢 Game start received:', data);
+            this.handleGameStart(data);
+        });
+        
+        // Handle ship placement events
         window.socket.on('battleshipShipPlaced', (data) => {
             console.log('🚢 Received ship placement from opponent:', data);
-            // Handle opponent ship placement
             this.handleOpponentShipPlaced(data);
         });
         
+        // Handle attack events
         window.socket.on('battleshipAttack', (data) => {
             console.log('🚢 Received attack from opponent:', data);
-            // Handle opponent attack
             this.handleOpponentAttack(data);
         });
         
+        // Handle turn change events
+        window.socket.on('battleshipTurnChange', (data) => {
+            console.log('🚢 Turn change received:', data);
+            this.handleTurnChange(data);
+        });
+        
+        // Handle game over events
         window.socket.on('battleshipGameOver', (data) => {
             console.log('🚢 Game over received:', data);
-            // Handle game over
             this.handleGameOver(data);
         });
+    }
+    
+    handlePlayerReady(data) {
+        console.log('🚢 Handling player ready:', data);
+        
+        if (data.playerId !== this.playerId) {
+            this.opponentReady = true;
+            this.opponentId = data.playerId;
+            this.addToHistory('✅ Opponent is ready!', 'success');
+        } else {
+            // This is our own ready event
+            this.playerReady = true;
+            this.addToHistory('✅ You are ready!', 'success');
+        }
+        
+        // If both players are ready, start the game
+        if (this.playerReady && this.opponentReady) {
+            this.addToHistory('🚀 Both players ready! Starting game...', 'success');
+            this.emitGameStart();
+        }
+    }
+    
+    handleGameStart(data) {
+        console.log('🚢 Handling game start:', data);
+        
+        // Determine which player goes first (randomly)
+        const isPlayer1Turn = Math.random() < 0.5;
+        this.isPlayerTurn = isPlayer1Turn;
+        this.currentPlayer = isPlayer1Turn ? 0 : 1;
+        
+        this.gamePhase = 'playing';
+        this.addToHistory('🚀 Multiplayer battle started!', 'success');
+        
+        if (this.isPlayerTurn) {
+            this.addToHistory('🎯 Your turn to attack!', 'info');
+        } else {
+            this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
+        }
+        
+        this.updateUI();
+    }
+    
+    handleTurnChange(data) {
+        console.log('🚢 Handling turn change:', data);
+        
+        this.isPlayerTurn = data.currentPlayer === this.playerId;
+        this.currentPlayer = this.isPlayerTurn ? 0 : 1;
+        
+        if (this.isPlayerTurn) {
+            this.addToHistory('🎯 Your turn to attack!', 'info');
+        } else {
+            this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
+        }
+        
+        this.updateUI();
     }
     
     handleOpponentShipPlaced(data) {
@@ -190,10 +271,28 @@ class BattleshipGame {
         }
     }
     
+    emitPlayerReady() {
+        if (this.isMultiplayer && window.socket && this.roomCode) {
+            window.socket.emit('battleshipPlayerReady', {
+                roomId: this.roomCode,
+                playerId: window.socket.id
+            });
+        }
+    }
+    
     emitGameStart() {
         if (this.isMultiplayer && window.socket && this.roomCode) {
             window.socket.emit('battleshipGameStart', {
                 roomId: this.roomCode
+            });
+        }
+    }
+    
+    emitTurnChange() {
+        if (this.isMultiplayer && window.socket && this.roomCode) {
+            window.socket.emit('battleshipTurnChange', {
+                roomId: this.roomCode,
+                currentPlayer: this.opponentId // Switch to opponent
             });
         }
     }
@@ -301,7 +400,11 @@ class BattleshipGame {
                     gamePhase.textContent = '⚓ Ship Placement Phase';
                     break;
                 case 'playing':
-                    gamePhase.textContent = this.currentPlayer === 0 ? '🎯 Your Turn' : '🤖 AI Turn';
+                    if (this.isMultiplayer) {
+                        gamePhase.textContent = this.isPlayerTurn ? '🎯 Your Turn' : '⏳ Opponent\'s Turn';
+                    } else {
+                        gamePhase.textContent = this.currentPlayer === 0 ? '🎯 Your Turn' : '🤖 AI Turn';
+                    }
                     break;
                 case 'finished':
                     gamePhase.textContent = this.winner ? '🏆 Victory!' : '💥 Defeat!';
@@ -316,16 +419,28 @@ class BattleshipGame {
                     gameStatus.textContent = `Placed ${placedCount}/5 ships`;
                     break;
                 case 'playing':
-                    gameStatus.textContent = this.currentPlayer === 0 ? 'Choose your target' : 'AI is thinking...';
+                    if (this.isMultiplayer) {
+                        gameStatus.textContent = this.isPlayerTurn ? 'Choose your target' : 'Waiting for opponent...';
+                    } else {
+                        gameStatus.textContent = this.currentPlayer === 0 ? 'Choose your target' : 'AI is thinking...';
+                    }
                     break;
                 case 'finished':
-                    gameStatus.textContent = this.winner === 0 ? 'You won!' : 'AI won!';
+                    if (this.isMultiplayer) {
+                        gameStatus.textContent = this.winner === 0 ? 'You won!' : 'Opponent won!';
+                    } else {
+                        gameStatus.textContent = this.winner === 0 ? 'You won!' : 'AI won!';
+                    }
                     break;
             }
         }
         
         if (currentTurn) {
-            currentTurn.textContent = this.currentPlayer === 0 ? 'You' : 'AI';
+            if (this.isMultiplayer) {
+                currentTurn.textContent = this.isPlayerTurn ? 'You' : 'Opponent';
+            } else {
+                currentTurn.textContent = this.currentPlayer === 0 ? 'You' : 'AI';
+            }
         }
         
         if (instructions) {
@@ -429,16 +544,19 @@ class BattleshipGame {
         
         // Check if this is multiplayer mode
         if (this.isMultiplayer && this.roomCode) {
-            console.log('🚀 Starting multiplayer battleship game');
-            this.addToHistory('🚀 Multiplayer battle starting! Waiting for opponent...', 'success');
+            console.log('🚀 Player ready for multiplayer battleship game');
+            this.addToHistory('✅ You are ready! Waiting for opponent to finish placing ships...', 'success');
             
-            // Emit game start to server to notify all players
-            this.emitGameStart();
+            // Emit player ready event to server
+            this.emitPlayerReady();
             
-            // In multiplayer, don't set up AI ships - wait for both players
-            this.gamePhase = 'playing';
-            this.currentPlayer = 0;
-            this.updateUI();
+            // Disable start button and show waiting message
+            const startBtn = document.getElementById('startGameBtn');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.textContent = 'Waiting for Opponent...';
+            }
+            
             return;
         }
         
@@ -578,84 +696,163 @@ class BattleshipGame {
             return { valid: false, message: 'Game is already over!' };
         }
         
-        const targetPlayer = 1 - player;
-        const grid = this.playerGrids[targetPlayer];
-        const attackGrid = this.attackGrids[player];
-        
-        if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
-            return { valid: false, message: 'Already attacked this position!' };
-        }
-        
-        const cell = grid[y][x];
-        const isHit = cell.ship !== null;
-        
-        if (isHit) {
-            attackGrid[y][x].hit = true;
-            cell.hit = true;
+        // In multiplayer, only allow attacks on opponent's grid
+        if (this.isMultiplayer) {
+            if (!this.isPlayerTurn) {
+                return { valid: false, message: 'Not your turn!' };
+            }
             
-            const ship = cell.ship;
-            ship.hits++;
+            // Attack opponent's grid (player 1's grid)
+            const targetPlayer = 0; // Always attack player 1's grid
+            const grid = this.playerGrids[targetPlayer];
+            const attackGrid = this.attackGrids[1]; // Player 2's view of player 1's grid
             
-            // Update scoreboard
-            if (player === 0) {
+            if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
+                return { valid: false, message: 'Already attacked this position!' };
+            }
+            
+            const cell = grid[y][x];
+            const isHit = cell.ship !== null;
+            
+            if (isHit) {
+                attackGrid[y][x].hit = true;
+                cell.hit = true;
+                
+                const ship = cell.ship;
+                ship.hits++;
+                
+                // Update scoreboard
                 this.playerHits++;
                 this.playerScore += 10; // 10 points per hit
-            } else {
-                this.aiHitsCount++;
-                this.aiScore += 10;
-            }
-            
-            if (ship.hits >= ship.size) {
-                this.sinkShip(targetPlayer, ship);
-                this.shipsSunk++;
                 
-                // Track ships sunk in current game and total
-                if (player === 0) {
-                    // Player sunk AI's ships
+                if (ship.hits >= ship.size) {
+                    this.sinkShip(targetPlayer, ship);
+                    this.shipsSunk++;
+                    
+                    // Track ships sunk
                     this.currentGamePlayerShipsSunk++;
                     this.totalPlayerShipsSunk++;
-                } else {
-                    // AI sunk player's ships
-                    this.currentGameAiShipsSunk++;
-                    this.totalAiShipsSunk++;
-                    this.totalOpponentShipsSunk++; // Track opponent ships sunk
-                }
-                
-                this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
-                this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
-                
-                // Bonus points for sinking a ship
-                if (player === 0) {
+                    
+                    this.addToHistory(`💥 You sunk the ${ship.name}!`, 'sunk');
+                    this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
+                    
+                    // Bonus points for sinking a ship
                     this.playerScore += 50; // 50 bonus points for sinking
+                    
+                    if (this.checkGameOver(targetPlayer)) {
+                        this.endGame(1); // Player 2 wins
+                        return { valid: true, hit: true, sunk: true, ship: ship.name, gameOver: true };
+                    }
+                    
+                    // Emit attack result to server
+                    this.emitAttack(x, y, true, ship.name);
+                    
+                    return { valid: true, hit: true, sunk: true, ship: ship.name };
                 } else {
-                    this.aiScore += 50;
+                    this.addToHistory(`🎯 You hit the ${ship.name}!`, 'hit');
+                    this.showGameMessage(`🎯 HIT! ${ship.name} damaged!`, 2000);
+                    
+                    // Emit attack result to server
+                    this.emitAttack(x, y, true, ship.name);
+                    
+                    return { valid: true, hit: true, sunk: false, ship: ship.name };
                 }
-                
-                if (this.checkGameOver(targetPlayer)) {
-                    this.endGame(player);
-                    return { valid: true, hit: true, sunk: true, ship: ship.name, gameOver: true };
-                }
-                
-                return { valid: true, hit: true, sunk: true, ship: ship.name };
             } else {
-                this.addToHistory(`🎯 ${player === 0 ? 'You' : 'AI'} hit the ${ship.name}!`, 'hit');
-                this.showGameMessage(`🎯 HIT! ${ship.name} damaged!`, 2000);
-                return { valid: true, hit: true, sunk: false, ship: ship.name };
+                attackGrid[y][x].miss = true;
+                cell.miss = true;
+                
+                // Update scoreboard
+                this.playerMisses++;
+                
+                this.addToHistory(`💧 You missed!`, 'miss');
+                this.showGameMessage(`💧 Miss!`, 1500);
+                
+                // Emit attack result to server
+                this.emitAttack(x, y, false, null);
+                
+                return { valid: true, hit: false };
             }
         } else {
-            attackGrid[y][x].miss = true;
-            cell.miss = true;
+            // Single player mode - original logic
+            const targetPlayer = 1 - player;
+            const grid = this.playerGrids[targetPlayer];
+            const attackGrid = this.attackGrids[player];
             
-            // Update scoreboard
-            if (player === 0) {
-                this.playerMisses++;
-            } else {
-                this.aiMisses++;
+            if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
+                return { valid: false, message: 'Already attacked this position!' };
             }
             
-            this.addToHistory(`💧 ${player === 0 ? 'You' : 'AI'} missed!`, 'miss');
-            this.showGameMessage(`💧 Miss!`, 1500);
-            return { valid: true, hit: false };
+            const cell = grid[y][x];
+            const isHit = cell.ship !== null;
+            
+            if (isHit) {
+                attackGrid[y][x].hit = true;
+                cell.hit = true;
+                
+                const ship = cell.ship;
+                ship.hits++;
+                
+                // Update scoreboard
+                if (player === 0) {
+                    this.playerHits++;
+                    this.playerScore += 10; // 10 points per hit
+                } else {
+                    this.aiHitsCount++;
+                    this.aiScore += 10;
+                }
+                
+                if (ship.hits >= ship.size) {
+                    this.sinkShip(targetPlayer, ship);
+                    this.shipsSunk++;
+                    
+                    // Track ships sunk in current game and total
+                    if (player === 0) {
+                        // Player sunk AI's ships
+                        this.currentGamePlayerShipsSunk++;
+                        this.totalPlayerShipsSunk++;
+                    } else {
+                        // AI sunk player's ships
+                        this.currentGameAiShipsSunk++;
+                        this.totalAiShipsSunk++;
+                        this.totalOpponentShipsSunk++; // Track opponent ships sunk
+                    }
+                    
+                    this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
+                    this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
+                    
+                    // Bonus points for sinking a ship
+                    if (player === 0) {
+                        this.playerScore += 50; // 50 bonus points for sinking
+                    } else {
+                        this.aiScore += 50;
+                    }
+                    
+                    if (this.checkGameOver(targetPlayer)) {
+                        this.endGame(player);
+                        return { valid: true, hit: true, sunk: true, ship: ship.name, gameOver: true };
+                    }
+                    
+                    return { valid: true, hit: true, sunk: true, ship: ship.name };
+                } else {
+                    this.addToHistory(`🎯 ${player === 0 ? 'You' : 'AI'} hit the ${ship.name}!`, 'hit');
+                    this.showGameMessage(`🎯 HIT! ${ship.name} damaged!`, 2000);
+                    return { valid: true, hit: true, sunk: false, ship: ship.name };
+                }
+            } else {
+                attackGrid[y][x].miss = true;
+                cell.miss = true;
+                
+                // Update scoreboard
+                if (player === 0) {
+                    this.playerMisses++;
+                } else {
+                    this.aiMisses++;
+                }
+                
+                this.addToHistory(`💧 ${player === 0 ? 'You' : 'AI'} missed!`, 'miss');
+                this.showGameMessage(`💧 Miss!`, 1500);
+                return { valid: true, hit: false };
+            }
         }
     }
     
@@ -746,11 +943,17 @@ class BattleshipGame {
     }
     
     endTurn() {
-        this.currentPlayer = 1 - this.currentPlayer;
-        this.updateUI();
-        
-        if (this.currentPlayer === 1 && this.gamePhase === 'playing') {
-            setTimeout(() => this.aiTurn(), 1000);
+        if (this.isMultiplayer) {
+            // In multiplayer, emit turn change to server
+            this.emitTurnChange();
+        } else {
+            // Single player mode
+            this.currentPlayer = 1 - this.currentPlayer;
+            this.updateUI();
+            
+            if (this.currentPlayer === 1 && this.gamePhase === 'playing') {
+                setTimeout(() => this.aiTurn(), 1000);
+            }
         }
     }
     
@@ -2007,10 +2210,17 @@ class BattleshipClient {
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
             mouseX >= attackGridX && mouseX < maxGridX && 
             mouseY >= attackGridY && mouseY < maxGridY && 
-            this.game.currentPlayer === 0 && this.game.gamePhase === 'playing') {
+            this.game.gamePhase === 'playing') {
+            
+            // In multiplayer, check if it's the player's turn
+            if (this.game.isMultiplayer && !this.game.isPlayerTurn) {
+                this.game.addToHistory('❌ Not your turn!', 'error');
+                return;
+            }
             
             // Check if this position has already been attacked
-            if (this.game.attackGrids[0][gridY][gridX].hit || this.game.attackGrids[0][gridY][gridX].miss) {
+            const attackGrid = this.game.isMultiplayer ? this.game.attackGrids[1] : this.game.attackGrids[0];
+            if (attackGrid[gridY][gridX].hit || attackGrid[gridY][gridX].miss) {
                 this.game.addToHistory('❌ You already attacked this position!', 'error');
                 return;
             }
@@ -2025,8 +2235,8 @@ class BattleshipClient {
                 // Static render after attack
                 this.staticRender();
                 
-                // Start AI turn after a short delay
-                if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
+                // In single player mode, start AI turn after a short delay
+                if (!this.game.isMultiplayer && this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
                     setTimeout(() => {
                         this.game.aiTurn();
                         // Static render after AI attack

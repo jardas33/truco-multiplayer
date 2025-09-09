@@ -288,6 +288,36 @@ io.on('connection', (socket) => {
     });
 
     // ✅ Handle battleship game events
+    socket.on('battleshipPlayerReady', (data) => {
+        console.log(`🚢 Player ready for battleship game: ${data.playerId} in room ${data.roomId}`);
+        const room = rooms.get(data.roomId);
+        
+        if (room && room.gameType === 'battleship') {
+            // Mark player as ready
+            const player = room.players.find(p => p.id === data.playerId);
+            if (player) {
+                player.ready = true;
+                console.log(`🚢 Player ${data.playerId} marked as ready`);
+                
+                // Check if both players are ready
+                const allReady = room.players.every(p => p.ready);
+                if (allReady && room.players.length === 2) {
+                    console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
+                    io.to(data.roomId).emit('battleshipGameStart', {
+                        roomId: data.roomId,
+                        players: room.players
+                    });
+                } else {
+                    // Notify other players that this player is ready
+                    socket.to(data.roomId).emit('battleshipPlayerReady', {
+                        playerId: data.playerId,
+                        roomId: data.roomId
+                    });
+                }
+            }
+        }
+    });
+    
     socket.on('battleshipGameStart', (data) => {
         console.log(`🚢 Battleship game start requested for room: ${data.roomId}`);
         console.log(`🚢 Requesting socket ID: ${socket.id}`);
@@ -305,6 +335,18 @@ io.on('connection', (socket) => {
             console.log(`🚢 Broadcast complete`);
         } else {
             console.log(`❌ Room not found or not battleship type`);
+        }
+    });
+    
+    socket.on('battleshipTurnChange', (data) => {
+        console.log(`🚢 Turn change in room ${data.roomId}: ${data.currentPlayer}`);
+        const room = rooms.get(data.roomId);
+        
+        if (room && room.gameType === 'battleship') {
+            io.to(data.roomId).emit('battleshipTurnChange', {
+                roomId: data.roomId,
+                currentPlayer: data.currentPlayer
+            });
         }
     });
     
