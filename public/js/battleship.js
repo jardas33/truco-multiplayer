@@ -279,24 +279,30 @@ class BattleshipGame {
         console.log(`🚢 Attack coordinates: x=${x}, y=${y}`);
         
         // Determine if the attack is a hit or miss based on our own ships
-        const cell = this.game.playerGrids[0][y][x];
+        const gameInstance = window.battleshipGame || this.game;
+        if (!gameInstance) {
+            console.log('🚢 ERROR: No game instance available for attack handling');
+            return;
+        }
+        
+        const cell = gameInstance.playerGrids[0][y][x];
         const isHit = cell.ship !== null;
         
         console.log(`🚢 Attack result: hit=${isHit}, ship=${cell.ship ? cell.ship.name : 'none'}`);
         
         // Update player's grid with the attack result
-        if (this.game.playerGrids[0][y] && this.game.playerGrids[0][y][x]) {
-            this.game.playerGrids[0][y][x].hit = isHit;
-            this.game.playerGrids[0][y][x].miss = !isHit;
+        if (gameInstance.playerGrids[0][y] && gameInstance.playerGrids[0][y][x]) {
+            gameInstance.playerGrids[0][y][x].hit = isHit;
+            gameInstance.playerGrids[0][y][x].miss = !isHit;
             console.log(`🚢 Updated player grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
         } else {
             console.log(`🚢 ERROR: Player grid [${y}][${x}] not found!`);
         }
         
         // Update the attack grid to show the opponent's attack result
-        if (this.game.attackGrids[0][y] && this.game.attackGrids[0][y][x]) {
-            this.game.attackGrids[0][y][x].hit = isHit;
-            this.game.attackGrids[0][y][x].miss = !isHit;
+        if (gameInstance.attackGrids[0][y] && gameInstance.attackGrids[0][y][x]) {
+            gameInstance.attackGrids[0][y][x].hit = isHit;
+            gameInstance.attackGrids[0][y][x].miss = !isHit;
             console.log(`🚢 Updated attack grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
         } else {
             console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
@@ -311,12 +317,12 @@ class BattleshipGame {
             if (cell.ship.hits >= cell.ship.size) {
                 cell.ship.sunk = true;
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
-                this.game.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
+                gameInstance.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
             } else {
-                this.game.addToHistory(`💥 Opponent hit your ${cell.ship.name}!`, 'hit');
+                gameInstance.addToHistory(`💥 Opponent hit your ${cell.ship.name}!`, 'hit');
             }
         } else {
-            this.game.addToHistory(`💧 Opponent missed!`, 'miss');
+            gameInstance.addToHistory(`💧 Opponent missed!`, 'miss');
         }
         
         // Force redraw
@@ -1320,30 +1326,58 @@ class BattleshipClient {
     
     // Getter methods to always access the current game instance
     get gamePhase() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.gamePhase;
+        }
         return this.game ? this.game.gamePhase : 'placement';
     }
     
     get currentPlayer() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.currentPlayer;
+        }
         return this.game ? this.game.currentPlayer : 0;
     }
     
     get isPlayerTurn() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.isPlayerTurn;
+        }
         return this.game ? this.game.isPlayerTurn : false;
     }
     
     get playerId() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.playerId;
+        }
         return this.game ? this.game.playerId : null;
     }
     
     get isMultiplayer() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.isMultiplayer;
+        }
         return this.game ? this.game.isMultiplayer : false;
     }
     
     get roomCode() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.roomCode;
+        }
         return this.game ? this.game.roomCode : null;
     }
     
     get socket() {
+        // Always check the global instance first
+        if (window.battleshipGame) {
+            return window.battleshipGame.socket;
+        }
         return this.game ? this.game.socket : null;
     }
     
@@ -1556,8 +1590,10 @@ class BattleshipClient {
             return;
         }
         
-        if (!this.game) {
-            console.log('🔍 draw() called but no game instance');
+        // Always use the global game instance
+        const gameInstance = window.battleshipGame || this.game;
+        if (!gameInstance) {
+            console.log('🔍 draw() called but no game instance available');
             return;
         }
         
@@ -1568,10 +1604,11 @@ class BattleshipClient {
         clear();
         
         // Draw unhit ships first (green colors)
-        this.drawShips();
+        this.drawShips(gameInstance);
         // Draw grids with hit symbols on top
-        this.drawGrids();
-        this.drawShipPreview(); // Add ship preview during placement
+        this.drawGrids(gameInstance);
+        this.drawShipPreview(gameInstance); // Add ship preview during placement
+        this.drawUI(gameInstance); // Add UI elements
         this.drawTurnIndicator();
         this.drawMouseHover();
         
@@ -1735,11 +1772,11 @@ class BattleshipClient {
         }
     }
     
-    drawGrids() {
+    drawGrids(gameInstance) {
         // Draw player grid (centered)
         const fleetGridX = this.gridStartX + 80; // Center the fleet grid at X=80
         console.log('🔍 drawGrids - fleetGridX:', fleetGridX, 'gridStartY:', this.gridStartY, 'gridStartX:', this.gridStartX);
-        this.drawGrid(fleetGridX, this.gridStartY, 0, true);
+        this.drawGrid(fleetGridX, this.gridStartY, 0, true, gameInstance);
         
         // Draw attack grid (far right side) - MUST match drawBasicGrids exactly
         const attackGridX = this.gridStartX + 500; // Position attack grid far to the right
@@ -1747,7 +1784,7 @@ class BattleshipClient {
         
         // In multiplayer, show player 0's view of player 1's grid (opponent's grid)
         const attackGridPlayer = this.isMultiplayer ? 0 : 0;
-        this.drawGrid(attackGridX, attackGridY, attackGridPlayer, false);
+        this.drawGrid(attackGridX, attackGridY, attackGridPlayer, false, gameInstance);
         
         // Draw grids without excessive logging
         
@@ -1760,8 +1797,8 @@ class BattleshipClient {
         text('Attack Grid', attackGridX + 200, attackGridY - 40);
     }
     
-    drawGrid(x, y, player, showShips) {
-        const grid = showShips ? this.game.playerGrids[player] : this.game.attackGrids[player];
+    drawGrid(x, y, player, showShips, gameInstance) {
+        const grid = showShips ? gameInstance.playerGrids[player] : gameInstance.attackGrids[player];
         
         // Draw grid background with high contrast to make it visible
         fill(0, 0, 0, 250); // Very dark background with high opacity
@@ -1913,22 +1950,22 @@ class BattleshipClient {
         
     }
     
-    drawShips() {
+    drawShips(gameInstance) {
         // Draw ships being placed - preview is handled in main draw()
         
         // Draw placed ships on the player grid
-        this.drawPlacedShips();
+        this.drawPlacedShips(gameInstance);
     }
     
-    drawPlacedShips() {
+    drawPlacedShips(gameInstance) {
         // Draw all placed ships on the player grid
-        for (let i = 0; i < this.game.placedShips[0].length; i++) {
-            const ship = this.game.placedShips[0][i];
-            this.drawShipOnGrid(ship, 0);
+        for (let i = 0; i < gameInstance.placedShips[0].length; i++) {
+            const ship = gameInstance.placedShips[0][i];
+            this.drawShipOnGrid(ship, 0, gameInstance);
         }
     }
     
-    drawShipOnGrid(ship, player) {
+    drawShipOnGrid(ship, player, gameInstance) {
         // Use the correct grid position for the fleet grid
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
@@ -1956,7 +1993,7 @@ class BattleshipClient {
             // Get the grid cell to check if this specific cell is hit
             const gridX = ship.x + (ship.orientation === 'horizontal' ? i : 0);
             const gridY = ship.y + (ship.orientation === 'vertical' ? i : 0);
-            const cell = this.game.playerGrids[player][gridY][gridX];
+            const cell = gameInstance.playerGrids[player][gridY][gridX];
             
             // Only draw unhit ships - let hit symbols handle hit cells
             let cellColor, strokeColor;
@@ -1981,13 +2018,13 @@ class BattleshipClient {
         }
     }
     
-    drawShipPreview() {
+    drawShipPreview(gameInstance) {
         console.log('🔍 drawShipPreview called - gamePhase:', this.gamePhase, 'currentShip:', this.currentShip);
         
         // If no currentShip on client, try to get it from the game instance
-        if (!this.currentShip && this.game && this.game.currentShip) {
+        if (!this.currentShip && gameInstance && gameInstance.currentShip) {
             console.log('🔍 Syncing currentShip from game instance');
-            this.currentShip = this.game.currentShip;
+            this.currentShip = gameInstance.currentShip;
         }
         
         if (!this.currentShip) {
@@ -2026,7 +2063,7 @@ class BattleshipClient {
         console.log('🔍 Ship preview coordinates - mouseCanvasX:', mouseCanvasX, 'mouseCanvasY:', mouseCanvasY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'cellSize:', cellSize, 'gridX:', gridX, 'gridY:', gridY);
         
         // Check if the ship can be placed at the current grid position
-        const canPlace = this.game.canPlaceShip(0, gridX, gridY, ship.size, orientation);
+        const canPlace = gameInstance.canPlaceShip(0, gridX, gridY, ship.size, orientation);
         
         // Draw preview squares snapped to grid cells (only when over the grid)
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
@@ -2115,18 +2152,18 @@ class BattleshipClient {
         text(`PRESS R TO ROTATE, ESC TO CANCEL`, 10, canvasHeight - 40);
     }
     
-    drawUI() {
+    drawUI(gameInstance) {
         // Draw current ship being placed
-        if (this.game.currentShip) {
-            this.drawCurrentShipInfo();
+        if (gameInstance.currentShip) {
+            this.drawCurrentShipInfo(gameInstance);
         }
         
         // Draw game phase indicator
         this.drawGamePhaseIndicator();
     }
     
-    drawCurrentShipInfo() {
-        const ship = this.game.currentShip;
+    drawCurrentShipInfo(gameInstance) {
+        const ship = gameInstance.currentShip;
         if (!ship) return;
         
         // Draw ship info box
@@ -2242,7 +2279,8 @@ class BattleshipClient {
                 const shipName = this.currentShip.name;
                 const orientation = this.currentShip.orientation || 'horizontal';
                 console.log(`🚢 Attempting to place ${shipName} at (${gridX}, ${gridY}) with orientation ${orientation}`);
-                const success = this.game.placeShipAt(gridX, gridY, orientation);
+                const gameInstance = window.battleshipGame || this.game;
+                const success = gameInstance.placeShipAt(gridX, gridY, orientation);
                 if (success) {
                     console.log(`✅ Placed ${shipName} at (${gridX}, ${gridY})`);
                     // Static render after ship placement
@@ -2373,31 +2411,33 @@ class BattleshipClient {
             
             // In multiplayer, check if it's the player's turn
             if (this.isMultiplayer && !this.isPlayerTurn) {
-                this.game.addToHistory('❌ Not your turn!', 'error');
+                const gameInstance = window.battleshipGame || this.game;
+                gameInstance.addToHistory('❌ Not your turn!', 'error');
                 return;
             }
             
             // Check if this position has already been attacked
-            const attackGrid = this.isMultiplayer ? this.game.attackGrids[1] : this.game.attackGrids[0];
+            const gameInstance = window.battleshipGame || this.game;
+            const attackGrid = this.isMultiplayer ? gameInstance.attackGrids[1] : gameInstance.attackGrids[0];
             if (attackGrid[gridY][gridX].hit || attackGrid[gridY][gridX].miss) {
-                this.game.addToHistory('❌ You already attacked this position!', 'error');
+                gameInstance.addToHistory('❌ You already attacked this position!', 'error');
                 return;
             }
             
             const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-            this.game.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
+            gameInstance.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
             
-            const result = this.game.attack(0, gridX, gridY);
+            const result = gameInstance.attack(0, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
-                this.game.endTurn();
+                gameInstance.endTurn();
                 // Static render after attack
                 this.staticRender();
                 
                 // In single player mode, start AI turn after a short delay
-                if (!this.game.isMultiplayer && this.game.gamePhase === 'playing' && this.game.currentPlayer === 1) {
+                if (!this.isMultiplayer && this.gamePhase === 'playing' && this.currentPlayer === 1) {
                     setTimeout(() => {
-                        this.game.aiTurn();
+                        gameInstance.aiTurn();
                         // Static render after AI attack
                         this.staticRender();
                     }, 1000);
