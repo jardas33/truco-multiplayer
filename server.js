@@ -215,7 +215,7 @@ io.on('connection', (socket) => {
                 socket.emit('roomJoined', {
                     roomId: roomCode,
                     playerId: socket.id,
-                    isHost: true
+                    isHost: false
                 });
                 console.log(`🚢 roomJoined event emitted successfully`);
 
@@ -262,7 +262,7 @@ io.on('connection', (socket) => {
         socket.emit('roomJoined', {
             roomId: roomCode,
             playerId: socket.id,
-            isHost: room.players[0].id === socket.id
+            isHost: false
         });
         console.log(`🚢 roomJoined event emitted successfully`);
 

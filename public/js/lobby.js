@@ -405,6 +405,19 @@ function setupSocketListeners() {
         }
     });
 
+    // Handle players updated event
+    socket.on('playersUpdated', (players) => {
+        console.log('✅ Players updated:', players);
+        updatePlayerList(players);
+        
+        if (players.length === 4) {
+            console.log('🎯 Room is full with 4 players - enabling start button');
+            enableStartButton();
+        } else {
+            console.log(`📊 Room has ${players.length}/4 players`);
+        }
+    });
+
     // ✅ Handle nickname change success
     socket.on('nicknameChanged', (data) => {
         console.log('✅ Nickname changed successfully:', data);
@@ -428,6 +441,15 @@ function setupSocketListeners() {
     socket.on('playerDisconnected', (data) => {
         console.log('Player disconnected:', data);
         updatePlayerList(data.players);
+        
+        // ✅ Disable start button if we don't have 4 players
+        if (data.count < 4) {
+            console.log('🎯 Room has', data.count, 'players - disabling start button');
+            const startGameBtn = document.getElementById('startGameBtn');
+            if (startGameBtn) {
+                startGameBtn.disabled = true;
+            }
+        }
         
         // ✅ Check if we still have enough players to continue
         if (data.count < 2) {
@@ -2207,10 +2229,17 @@ function updateLobbyUI(inRoom) {
         if (createRoomBtn) createRoomBtn.style.display = 'none';
         if (joinRoomBtn) joinRoomBtn.style.display = 'none';
         
-        // Show room management options
-        if (addBotBtn) addBotBtn.style.display = 'inline-block';
-        if (removeBotBtn) removeBotBtn.style.display = 'inline-block';
-        if (startGameBtn) startGameBtn.style.display = 'inline-block';
+        // Show room management options (only for room creator)
+        if (addBotBtn) {
+            addBotBtn.style.display = window.isRoomCreator ? 'inline-block' : 'none';
+        }
+        if (removeBotBtn) {
+            removeBotBtn.style.display = window.isRoomCreator ? 'inline-block' : 'none';
+        }
+        // Only show Start Game button for room creator
+        if (startGameBtn) {
+            startGameBtn.style.display = window.isRoomCreator ? 'inline-block' : 'none';
+        }
         if (backToMainMenuBtn) backToMainMenuBtn.style.display = 'inline-block';
         
         // Show room code display
@@ -2282,7 +2311,7 @@ function updatePlayerList(players) {
 
 function enableStartButton() {
     const startGameBtn = document.getElementById('startGameBtn');
-    if (startGameBtn) {
+    if (startGameBtn && window.isRoomCreator) {
         startGameBtn.disabled = false;
         startGameBtn.style.display = 'inline-block';
         console.log('✅ Start button enabled - 4 players ready');

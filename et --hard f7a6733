@@ -1,0 +1,5 @@
+[33m2c1c810[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix coordinate system and ship preview validation
+[33mf7a6733[m Fix coordinate offset direction - change from subtract to add
+[33mec7ef3e[m Fix 2-column offset in ship placement coordinates
+[33m65dd19e[m Remove incorrect +71 offset that was causing double offset
+[33m606b897[m Fix ship placement coordinate offset issue
