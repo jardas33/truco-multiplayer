@@ -239,6 +239,11 @@ class BattleshipGame {
         }
         
         this.updateUI();
+        
+        // Force a redraw to show the updated turn state
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
     }
     
     handleOpponentShipPlaced(data) {
@@ -255,10 +260,26 @@ class BattleshipGame {
         // Update player's grid with the attack result
         if (this.playerGrids[0][y] && this.playerGrids[0][y][x]) {
             this.playerGrids[0][y][x].hit = hit;
-            if (shipSunk) {
+            this.playerGrids[0][y][x].miss = !hit;
+            
+            if (hit && shipSunk) {
                 // Handle ship sinking
                 this.handleShipSunk(0, shipSunk);
             }
+        }
+        
+        // Update the opponent's attack grid to show the result
+        if (this.attackGrids[1][y] && this.attackGrids[1][y][x]) {
+            this.attackGrids[1][y][x].hit = hit;
+            this.attackGrids[1][y][x].miss = !hit;
+        }
+        
+        // Add to history
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        if (hit) {
+            this.addToHistory(`💥 Opponent hit ${letters[y]}${x + 1}!`, 'hit');
+        } else {
+            this.addToHistory(`💧 Opponent missed ${letters[y]}${x + 1}`, 'miss');
         }
     }
     
@@ -278,8 +299,8 @@ class BattleshipGame {
     }
     
     emitAttack(x, y, hit, shipSunk) {
-        if (this.isMultiplayer && window.socket && this.roomCode) {
-            window.socket.emit('battleshipAttack', {
+        if (this.isMultiplayer && this.socket && this.roomCode) {
+            this.socket.emit('battleshipAttack', {
                 roomId: this.roomCode,
                 x: x,
                 y: y,
@@ -325,6 +346,11 @@ class BattleshipGame {
                 roomId: this.roomCode,
                 currentPlayer: this.opponentId // Switch to opponent
             });
+            
+            // Update local turn state
+            this.isPlayerTurn = false;
+            this.currentPlayer = 1;
+            this.updateUI();
         }
     }
     
@@ -2282,7 +2308,7 @@ class BattleshipClient {
             const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
             this.game.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
             
-            const result = this.game.attack(1, gridX, gridY);
+            const result = this.game.attack(0, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
