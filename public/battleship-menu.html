@@ -471,10 +471,7 @@
                 }
             });
             
-            window.socket.on('battleshipGameStart', (data) => {
-                console.log('🚢 Battleship game starting:', data);
-                startBattleshipGame();
-            });
+            // battleshipGameStart event handler removed to prevent loop
             
             // Handle players updated event to keep both players in sync
             window.socket.on('playersUpdated', (players) => {
@@ -533,8 +530,6 @@
         }
         
         function startBattleshipGame() {
-            console.log('🚢 Starting battleship game for all players');
-            
             // Store room settings
             localStorage.setItem('battleshipRoomCode', window.battleshipRoomId);
             localStorage.setItem('battleshipPlayerCount', '2');
@@ -547,7 +542,7 @@
                 });
             }
             
-            // Both players redirect to game
+            // Redirect to game
             window.location.href = '/battleship';
         }
 
