@@ -22,6 +22,16 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Test endpoint for debugging
+app.get('/test', (req, res) => {
+    res.status(200).json({
+        message: 'Server is working',
+        timestamp: new Date().toISOString(),
+        rooms: Array.from(rooms.keys()),
+        socketConnections: io.engine.clientsCount
+    });
+});
+
 // Basic route - redirect to main menu
 app.get('/', (req, res) => {
     console.log('🏠 ROOT ROUTE: Serving main-menu.html');
@@ -86,6 +96,12 @@ io.on('connection', (socket) => {
     
     // ✅ DEBUG: Log all incoming events to see if startGame is received
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
+    
+    // Test event to verify socket communication
+    socket.on('test', (data) => {
+        console.log(`🧪 Test event received from ${socket.id}:`, data);
+        socket.emit('testResponse', { message: 'Server received test event', timestamp: new Date().toISOString() });
+    });
     
     // Handle room creation
     socket.on('createRoom', (data) => {
@@ -153,14 +169,20 @@ io.on('connection', (socket) => {
 
     // Handle room joining
     socket.on('joinRoom', (data) => {
-        console.log(`🔍 JOINROOM EVENT RECEIVED! Data:`, data);
-        const roomCode = data.roomCode || data;
-        console.log(`🔍 JOINROOM EVENT RECEIVED! Room: ${roomCode}`);
-        const room = rooms.get(roomCode);
-        
-        console.log(`🚪 User ${socket.id} attempting to join room: ${roomCode}`);
-        console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
-        console.log(`🔍 DEBUG: Room exists:`, !!room);
+        try {
+            console.log(`🔍 JOINROOM EVENT RECEIVED! Data:`, data);
+            console.log(`🔍 JOINROOM EVENT RECEIVED! Socket ID: ${socket.id}`);
+            console.log(`🔍 JOINROOM EVENT RECEIVED! Timestamp: ${new Date().toISOString()}`);
+            
+            const roomCode = data.roomCode || data;
+            console.log(`🔍 JOINROOM EVENT RECEIVED! Room: ${roomCode}`);
+            const room = rooms.get(roomCode);
+            
+            console.log(`🚪 User ${socket.id} attempting to join room: ${roomCode}`);
+            console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+            console.log(`🔍 DEBUG: Room exists:`, !!room);
+            console.log(`🔍 DEBUG: Data type:`, typeof data);
+            console.log(`🔍 DEBUG: Data.gameType:`, data.gameType);
         
         if (!room) {
             console.log(`❌ Room ${roomCode} not found`);
@@ -261,6 +283,12 @@ io.on('connection', (socket) => {
                 roomId: roomCode,
                 players: room.players
             });
+        }
+        
+        } catch (error) {
+            console.error(`❌ Error in joinRoom handler:`, error);
+            console.error(`❌ Error stack:`, error.stack);
+            socket.emit('error', `Server error: ${error.message}`);
         }
     });
 

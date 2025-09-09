@@ -420,6 +420,14 @@
             window.socket.on('connect', () => {
                 console.log('✅ Battleship socket connected');
                 console.log('🔍 Socket ID:', window.socket.id);
+                
+                // Test socket communication
+                console.log('🧪 Testing socket communication...');
+                window.socket.emit('test', { message: 'Client test message' });
+            });
+            
+            window.socket.on('testResponse', (data) => {
+                console.log('🧪 Test response received:', data);
             });
             
             window.socket.on('connect_error', (error) => {
