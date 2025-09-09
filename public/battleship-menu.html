@@ -439,6 +439,9 @@
                 document.getElementById('gameMenuBtn').style.display = 'inline-block';
                 document.getElementById('playerList').style.display = 'block';
                 
+                // Update Add Bot button state
+                updateAddBotButtonState(data.players ? data.players.length : 1);
+                
                 // Enable start button when 2 players are ready (for room creator)
                 if (data.players && data.players.length === 2) {
                     const startBtn = document.getElementById('startGameBtn');
@@ -536,6 +539,9 @@
                 // Show Battleship Game Menu button for joiners
                 document.getElementById('gameMenuBtn').style.display = 'inline-block';
                 
+                // Update Add Bot button state (even though hidden, for consistency)
+                updateAddBotButtonState(1); // Joiner starts with 1 player (themselves)
+                
                 console.log('🚢 Room settings stored, staying on menu...');
                 // Don't redirect automatically - wait for manual start
             });
@@ -553,6 +559,24 @@
                 playerDiv.textContent = `${index + 1}. ${player.name}`;
                 playerList.appendChild(playerDiv);
             });
+            
+            // Update Add Bot button state based on player count
+            updateAddBotButtonState(players.length);
+        }
+        
+        function updateAddBotButtonState(playerCount) {
+            const addBotBtn = document.getElementById('addBotBtn');
+            if (addBotBtn) {
+                if (playerCount >= 2) {
+                    addBotBtn.disabled = true;
+                    addBotBtn.style.opacity = '0.5';
+                    addBotBtn.title = 'Room is full (2 players maximum)';
+                } else {
+                    addBotBtn.disabled = false;
+                    addBotBtn.style.opacity = '1';
+                    addBotBtn.title = 'Add a bot player';
+                }
+            }
         }
         
         
@@ -611,6 +635,12 @@
                 updatePlayerList();
                 updateBotButtons();
                 console.log('🤖 Bot added. Players:', playerCount);
+                
+                // Update Add Bot button state
+                updateAddBotButtonState(playerCount);
+            } else {
+                console.log('❌ Cannot add bot - room is full (2 players maximum)');
+                alert('Cannot add more bots - room is full (2 players maximum)');
             }
         }
 
@@ -620,6 +650,9 @@
                 updatePlayerList();
                 updateBotButtons();
                 console.log('🤖 Bot removed. Players:', playerCount);
+                
+                // Update Add Bot button state
+                updateAddBotButtonState(playerCount);
             }
         }
 
@@ -671,6 +704,9 @@
             } else {
                 startBtn.disabled = true;
             }
+            
+            // Update Add Bot button state
+            updateAddBotButtonState(playerCount);
         }
 
         // Add room-created class when room is created to hide Create/Join buttons
