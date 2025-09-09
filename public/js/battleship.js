@@ -51,6 +51,8 @@ class BattleshipGame {
         // Game tracking (persists across games)
         this.playerGamesWon = 0;
         this.aiGamesWon = 0;
+        this.totalPlayerShipsSunk = 0; // Total ships sunk by player across all games
+        this.totalAiShipsSunk = 0; // Total ships sunk by AI across all games
         
         // Current game tracking (resets each game)
         this.currentGamePlayerShipsSunk = 0;
@@ -249,18 +251,11 @@ class BattleshipGame {
         const playerScoreEl = document.getElementById('playerScore');
         const aiScoreEl = document.getElementById('aiScore');
         const shipsSunkEl = document.getElementById('shipsSunk');
-        const accuracyEl = document.getElementById('accuracy');
         
-        // Show games won and ships sunk in current game with clear labels
-        if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.currentGamePlayerShipsSunk} Ships Destroyed`;
-        if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.currentGameAiShipsSunk} Ships Destroyed`;
+        // Show games won and total ships sunk across all games
+        if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
+        if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.totalAiShipsSunk} Ships Destroyed`;
         if (shipsSunkEl) shipsSunkEl.textContent = `Sunk: ${this.shipsSunk}/5`;
-        
-        if (accuracyEl) {
-            const totalShots = this.playerHits + this.playerMisses;
-            const accuracy = totalShots > 0 ? Math.round((this.playerHits / totalShots) * 100) : 0;
-            accuracyEl.textContent = `${accuracy}%`;
-        }
     }
     
     renderShipsList() {
@@ -493,11 +488,13 @@ class BattleshipGame {
                 this.sinkShip(targetPlayer, ship);
                 this.shipsSunk++;
                 
-                // Track ships sunk in current game
+                // Track ships sunk in current game and total
                 if (player === 0) {
                     this.currentGamePlayerShipsSunk++;
+                    this.totalPlayerShipsSunk++;
                 } else {
                     this.currentGameAiShipsSunk++;
+                    this.totalAiShipsSunk++;
                 }
                 
                 this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
