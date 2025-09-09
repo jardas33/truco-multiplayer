@@ -183,8 +183,8 @@ io.on('connection', (socket) => {
             console.log(`🔍 DEBUG: Room exists:`, !!room);
             console.log(`🔍 DEBUG: Data type:`, typeof data);
             console.log(`🔍 DEBUG: Data.gameType:`, data.gameType);
-        
-        if (!room) {
+            
+            if (!room) {
             console.log(`❌ Room ${roomCode} not found`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
             console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
@@ -252,7 +252,6 @@ io.on('connection', (socket) => {
         });
         
         socket.join(roomCode);
-        roomCode = roomCode;
 
         console.log(`✅ User ${socket.id} joined room ${roomCode}. Total players: ${room.players.length}`);
         console.log(`🔍 Socket joined room: ${roomCode}`);
