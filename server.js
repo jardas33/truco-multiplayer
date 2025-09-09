@@ -92,6 +92,17 @@ io.on('connection', (socket) => {
     
     socket.on('disconnect', (reason) => {
         console.log(`👤 User disconnected: ${socket.id}, reason: ${reason}`);
+        
+        // For battleship rooms, mark player as disconnected but don't remove them immediately
+        // This allows for reconnection when navigating from menu to game
+        if (socket.roomCode) {
+            const room = rooms.get(socket.roomCode);
+            if (room && room.gameType === 'battleship') {
+                console.log(`🚢 Battleship player ${socket.id} disconnected from room ${socket.roomCode}`);
+                // Don't remove the player immediately - let the reconnection logic handle it
+                // The player will be replaced when they reconnect
+            }
+        }
     });
     
     // ✅ DEBUG: Log all incoming events to see if startGame is received
@@ -196,24 +207,50 @@ io.on('connection', (socket) => {
 
         const maxPlayersJoin = room.gameType === 'truco' ? 4 : (room.gameType === 'battleship' ? 2 : 6); // Truco needs 4, Battleship needs 2, other games can have up to 6
         
-        // For battleship rooms, allow reconnection even if room appears full
-        // This handles the case where players navigate from menu to game and create new socket connections
+        // For battleship rooms, handle reconnection by replacing disconnected players
         if (room.gameType === 'battleship' && room.players.length >= maxPlayersJoin) {
-            console.log(`🚢 Battleship room ${roomCode} appears full (${room.players.length}/${maxPlayersJoin}), but allowing reconnection`);
-            // Don't reject the connection - let them join and clean up later
+            console.log(`🚢 Battleship room ${roomCode} appears full (${room.players.length}/${maxPlayersJoin}), checking for reconnection`);
+            
+            // Check if this is a reconnection by looking for disconnected players
+            const disconnectedPlayers = room.players.filter(p => {
+                const socketExists = io.sockets.sockets.has(p.id);
+                return !socketExists;
+            });
+            
+            if (disconnectedPlayers.length > 0) {
+                console.log(`🚢 Found ${disconnectedPlayers.length} disconnected players, allowing reconnection`);
+                // Remove the first disconnected player and add the new one
+                const disconnectedIndex = room.players.findIndex(p => p.id === disconnectedPlayers[0].id);
+                if (disconnectedIndex !== -1) {
+                    room.players[disconnectedIndex] = {
+                        id: socket.id,
+                        name: `Player ${disconnectedIndex + 1}`,
+                        nickname: `Player ${disconnectedIndex + 1}`,
+                        team: null,
+                        isBot: false,
+                        ready: false // Reset ready state for reconnected player
+                    };
+                    console.log(`🚢 Replaced disconnected player ${disconnectedPlayers[0].id} with new player ${socket.id}`);
+                }
+            } else {
+                console.log(`❌ Room ${roomCode} is full and no disconnected players found`);
+                socket.emit('error', 'Room is full');
+                return;
+            }
         } else if (room.players.length >= maxPlayersJoin) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersJoin})`);
             socket.emit('error', 'Room is full');
             return;
+        } else {
+            // Normal case: add new player
+            room.players.push({
+                id: socket.id,
+                name: `Player ${room.players.length + 1}`,
+                nickname: `Player ${room.players.length + 1}`,
+                team: null, // No team assigned yet
+                isBot: false
+            });
         }
-
-        room.players.push({
-            id: socket.id,
-            name: `Player ${room.players.length + 1}`,
-            nickname: `Player ${room.players.length + 1}`,
-            team: null, // No team assigned yet
-            isBot: false
-        });
         
         socket.join(roomCode);
 
@@ -269,21 +306,43 @@ io.on('connection', (socket) => {
             if (player) {
                 player.ready = true;
                 console.log(`🚢 Player ${socket.id} marked as ready`);
-                console.log(`🚢 All players:`, room.players.map(p => ({ id: p.id, ready: p.ready })));
                 
-                // Check if both players are ready (only check first 2 players for battleship)
-                const battleshipPlayers = room.players.slice(0, 2);
-                const allReady = battleshipPlayers.every(p => p.ready);
-                console.log(`🚢 All players ready:`, allReady);
-                console.log(`🚢 Room has ${room.players.length} players, checking first 2 for battleship`);
-                if (allReady && battleshipPlayers.length === 2) {
-                    console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
-                    io.to(data.roomId).emit('battleshipGameStart', {
-                        roomId: data.roomId,
-                        players: room.players
-                    });
+                // Clean up disconnected players and get only connected players
+                const connectedPlayers = room.players.filter(p => {
+                    const socketExists = io.sockets.sockets.has(p.id);
+                    if (!socketExists) {
+                        console.log(`🚢 Removing disconnected player ${p.id} from room`);
+                    }
+                    return socketExists;
+                });
+                
+                // Update room.players to only include connected players
+                room.players = connectedPlayers;
+                
+                console.log(`🚢 Connected players:`, room.players.map(p => ({ id: p.id, ready: p.ready })));
+                console.log(`🚢 Room has ${room.players.length} connected players`);
+                
+                // Check if we have exactly 2 connected players and both are ready
+                if (room.players.length === 2) {
+                    const allReady = room.players.every(p => p.ready);
+                    console.log(`🚢 All players ready:`, allReady);
+                    
+                    if (allReady) {
+                        console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
+                        io.to(data.roomId).emit('battleshipGameStart', {
+                            roomId: data.roomId,
+                            players: room.players
+                        });
+                    } else {
+                        console.log(`🚢 Not all players ready yet, notifying others`);
+                        // Notify other players that this player is ready
+                        socket.to(data.roomId).emit('battleshipPlayerReady', {
+                            playerId: socket.id,
+                            roomId: data.roomId
+                        });
+                    }
                 } else {
-                    console.log(`🚢 Not all players ready yet, notifying others`);
+                    console.log(`🚢 Room has ${room.players.length} players, need exactly 2 for battleship`);
                     // Notify other players that this player is ready
                     socket.to(data.roomId).emit('battleshipPlayerReady', {
                         playerId: socket.id,
