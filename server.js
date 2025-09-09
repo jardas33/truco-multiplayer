@@ -329,9 +329,17 @@ io.on('connection', (socket) => {
                     
                     if (allReady) {
                         console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
+                        
+                        // Find the room creator (Player 1) to assign first turn
+                        const roomCreator = room.players.find(p => p.isRoomCreator);
+                        const firstPlayerId = roomCreator ? roomCreator.id : room.players[0].id;
+                        
+                        console.log(`🚢 Assigning first turn to: ${firstPlayerId} (${roomCreator ? 'Room Creator' : 'First Player'})`);
+                        
                         io.to(data.roomId).emit('battleshipGameStart', {
                             roomId: data.roomId,
-                            players: room.players
+                            players: room.players,
+                            firstPlayerId: firstPlayerId
                         });
                     } else {
                         console.log(`🚢 Not all players ready yet, notifying others`);

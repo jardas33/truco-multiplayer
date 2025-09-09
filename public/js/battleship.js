@@ -217,10 +217,18 @@ class BattleshipGame {
         console.log('🚢 Handling game start:', data);
         console.log('🚢 Game phase before setting:', this.gamePhase);
         
-        // Determine which player goes first (randomly)
-        const isPlayer1Turn = Math.random() < 0.5;
-        this.isPlayerTurn = isPlayer1Turn;
-        this.currentPlayer = isPlayer1Turn ? 0 : 1;
+        // Use server-assigned first player instead of random assignment
+        if (data.firstPlayerId) {
+            this.isPlayerTurn = (data.firstPlayerId === this.playerId);
+            this.currentPlayer = this.isPlayerTurn ? 0 : 1;
+            console.log(`🚢 Server assigned first turn to: ${data.firstPlayerId}, isPlayerTurn: ${this.isPlayerTurn}`);
+        } else {
+            // Fallback to random assignment if server doesn't provide firstPlayerId
+            const isPlayer1Turn = Math.random() < 0.5;
+            this.isPlayerTurn = isPlayer1Turn;
+            this.currentPlayer = isPlayer1Turn ? 0 : 1;
+            console.log('🚢 No firstPlayerId from server, using random assignment');
+        }
         
         this.gamePhase = 'playing';
         console.log('🚢 Game phase after setting:', this.gamePhase);
@@ -2239,14 +2247,25 @@ class BattleshipClient {
             strokeWeight(2);
             rect(width - 250, 10, 240, 60);
             
-            fill(this.currentPlayer === 0 ? 76 : 255, 175, 80);
-            textAlign(LEFT, TOP);
-            textSize(16);
-            text(`Turn: ${this.currentPlayer === 0 ? 'Your Turn' : 'AI Turn'}`, width - 240, 20);
-            
-            fill(255);
-            textSize(14);
-            text(this.currentPlayer === 0 ? 'Click on the right grid to attack!' : 'AI is thinking...', width - 240, 40);
+            if (this.isMultiplayer) {
+                fill(this.isPlayerTurn ? 76 : 255, 175, 80);
+                textAlign(LEFT, TOP);
+                textSize(16);
+                text(`Turn: ${this.isPlayerTurn ? 'Your Turn' : 'Opponent Turn'}`, width - 240, 20);
+                
+                fill(255);
+                textSize(14);
+                text(this.isPlayerTurn ? 'Click on the right grid to attack!' : 'Waiting for opponent...', width - 240, 40);
+            } else {
+                fill(this.currentPlayer === 0 ? 76 : 255, 175, 80);
+                textAlign(LEFT, TOP);
+                textSize(16);
+                text(`Turn: ${this.currentPlayer === 0 ? 'Your Turn' : 'AI Turn'}`, width - 240, 20);
+                
+                fill(255);
+                textSize(14);
+                text(this.currentPlayer === 0 ? 'Click on the right grid to attack!' : 'AI is thinking...', width - 240, 40);
+            }
         }
     }
     
@@ -2260,6 +2279,18 @@ class BattleshipClient {
         // Additional check for phantom events during resize
         if (this.resizeTimeout) {
             console.log(`🎯 Click ignored - resize timeout active`);
+            return;
+        }
+        
+        // Check for phantom events with invalid coordinates
+        if (mouseX < 0 || mouseY < 0 || mouseX > windowWidth || mouseY > windowHeight) {
+            console.log(`🎯 Click ignored - invalid coordinates: mouseX=${mouseX}, mouseY=${mouseY}`);
+            return;
+        }
+        
+        // Check for phantom events that are clearly outside the game area
+        if (mouseX > 1000 || mouseY > 1000) {
+            console.log(`🎯 Click ignored - coordinates way outside game area: mouseX=${mouseX}, mouseY=${mouseY}`);
             return;
         }
         
