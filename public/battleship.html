@@ -620,8 +620,18 @@
         if (roomCode && gameMode === 'multiplayer') {
             console.log('🚢 Initializing battleship multiplayer for room:', roomCode);
             console.log('🚢 Window socket available:', !!window.socket);
+            console.log('🚢 Socket type:', typeof window.socket);
+            console.log('🚢 Socket value:', window.socket);
             console.log('🚢 Socket connected:', window.socket?.connected);
             console.log('🚢 Socket ID:', window.socket?.id);
+            
+            // Check if socket exists and is valid
+            if (!window.socket || typeof window.socket !== 'object') {
+                console.error('❌ No valid socket available from menu!');
+                console.error('❌ Socket type:', typeof window.socket);
+                console.error('❌ Socket value:', window.socket);
+                return;
+            }
             
             // Use existing socket from menu instead of creating new one
             battleshipSocket = window.socket;

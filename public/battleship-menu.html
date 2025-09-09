@@ -467,6 +467,8 @@
             // Handle battleship game start event - redirect all players to game
             window.socket.on('battleshipGameStart', (data) => {
                 console.log('🚢 Received battleship game start event in menu:', data);
+                console.log('🚢 Socket before redirect:', !!window.socket);
+                console.log('🚢 Socket ID before redirect:', window.socket?.id);
                 
                 // Store room settings for the game
                 localStorage.setItem('battleshipRoomCode', data.roomId);
