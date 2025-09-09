@@ -267,11 +267,11 @@ class BattleshipGame {
         console.log('🚢 Handling opponent attack:', data);
         const { x, y, attackingPlayerId } = data;
         
-        console.log('🚢 Current playerId:', this.game ? this.game.playerId : 'no game instance');
+        console.log('🚢 Current playerId:', this.playerId);
         console.log('🚢 Attacking playerId:', attackingPlayerId);
         
         // Only process attacks from the opponent, not our own attacks
-        if (attackingPlayerId === (this.game ? this.game.playerId : null)) {
+        if (attackingPlayerId === this.playerId) {
             console.log('🚢 Ignoring own attack');
             return;
         }
@@ -279,24 +279,24 @@ class BattleshipGame {
         console.log(`🚢 Attack coordinates: x=${x}, y=${y}`);
         
         // Determine if the attack is a hit or miss based on our own ships
-        const cell = this.playerGrids[0][y][x];
+        const cell = this.game.playerGrids[0][y][x];
         const isHit = cell.ship !== null;
         
         console.log(`🚢 Attack result: hit=${isHit}, ship=${cell.ship ? cell.ship.name : 'none'}`);
         
         // Update player's grid with the attack result
-        if (this.playerGrids[0][y] && this.playerGrids[0][y][x]) {
-            this.playerGrids[0][y][x].hit = isHit;
-            this.playerGrids[0][y][x].miss = !isHit;
+        if (this.game.playerGrids[0][y] && this.game.playerGrids[0][y][x]) {
+            this.game.playerGrids[0][y][x].hit = isHit;
+            this.game.playerGrids[0][y][x].miss = !isHit;
             console.log(`🚢 Updated player grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
         } else {
             console.log(`🚢 ERROR: Player grid [${y}][${x}] not found!`);
         }
         
         // Update the attack grid to show the opponent's attack result
-        if (this.attackGrids[0][y] && this.attackGrids[0][y][x]) {
-            this.attackGrids[0][y][x].hit = isHit;
-            this.attackGrids[0][y][x].miss = !isHit;
+        if (this.game.attackGrids[0][y] && this.game.attackGrids[0][y][x]) {
+            this.game.attackGrids[0][y][x].hit = isHit;
+            this.game.attackGrids[0][y][x].miss = !isHit;
             console.log(`🚢 Updated attack grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
         } else {
             console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
@@ -311,12 +311,12 @@ class BattleshipGame {
             if (cell.ship.hits >= cell.ship.size) {
                 cell.ship.sunk = true;
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
-                this.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
+                this.game.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
             } else {
-                this.addToHistory(`💥 Opponent hit your ${cell.ship.name}!`, 'hit');
+                this.game.addToHistory(`💥 Opponent hit your ${cell.ship.name}!`, 'hit');
             }
         } else {
-            this.addToHistory(`💧 Opponent missed!`, 'miss');
+            this.game.addToHistory(`💧 Opponent missed!`, 'miss');
         }
         
         // Force redraw
@@ -1318,6 +1318,35 @@ class BattleshipClient {
         }, 1000);
     }
     
+    // Getter methods to always access the current game instance
+    get gamePhase() {
+        return this.game ? this.game.gamePhase : 'placement';
+    }
+    
+    get currentPlayer() {
+        return this.game ? this.game.currentPlayer : 0;
+    }
+    
+    get isPlayerTurn() {
+        return this.game ? this.game.isPlayerTurn : false;
+    }
+    
+    get playerId() {
+        return this.game ? this.game.playerId : null;
+    }
+    
+    get isMultiplayer() {
+        return this.game ? this.game.isMultiplayer : false;
+    }
+    
+    get roomCode() {
+        return this.game ? this.game.roomCode : null;
+    }
+    
+    get socket() {
+        return this.game ? this.game.socket : null;
+    }
+    
     initializeCanvas() {
         console.log('🎨 Initializing canvas...');
         
@@ -1471,7 +1500,7 @@ class BattleshipClient {
         // Add mouse event listeners
         this.canvas.mouseMoved(() => {
             // Update hover position for ship placement preview
-            if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
+            if (this.game && this.gamePhase === 'placement' && this.game.currentShip) {
                 // Just update the hover position, NO redraw calls
                 this.updateHoverPosition();
                 // NO redraw calls - hover will be drawn by the main draw() function
@@ -1484,7 +1513,7 @@ class BattleshipClient {
         this.keydownHandler = (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
                 // Redraw for ship rotation and cancellation during placement
-                if (this.game && this.game.gamePhase === 'placement') {
+                if (this.game && this.gamePhase === 'placement') {
                     redraw();
                 }
             }
@@ -1532,7 +1561,7 @@ class BattleshipClient {
             return;
         }
         
-        console.log('🔍 draw() called - gamePhase:', this.game.gamePhase, 'currentShip:', this.currentShip);
+        console.log('🔍 draw() called - gamePhase:', this.gamePhase, 'currentShip:', this.currentShip);
         console.log('🔍 Global game phase:', window.battleshipGame ? window.battleshipGame.gamePhase : 'no global game');
         
         // Clear the canvas first to ensure clean drawing
@@ -1547,7 +1576,7 @@ class BattleshipClient {
         this.drawMouseHover();
         
         // Only stop the loop if we're not in placement phase with a current ship
-        if (this.game.gamePhase !== 'placement' || !this.currentShip) {
+        if (this.gamePhase !== 'placement' || !this.currentShip) {
             noLoop();
         }
     }
@@ -1592,7 +1621,7 @@ class BattleshipClient {
     updateHoverPosition() {
         // Update hover position for ship placement preview
         // This method just updates internal state, NO redraw calls
-        if (this.game && this.game.gamePhase === 'placement' && this.game.currentShip) {
+        if (this.game && this.gamePhase === 'placement' && this.game.currentShip) {
             // Store current mouse position for hover preview
             this.hoverX = mouseX;
             this.hoverY = mouseY;
@@ -1623,9 +1652,9 @@ class BattleshipClient {
         stroke(0, 0, 0); // Black outline for better readability
         strokeWeight(2);
         
-        if (this.game.gamePhase === 'playing') {
-            if (this.game.isMultiplayer) {
-                if (this.game.isPlayerTurn) {
+        if (this.gamePhase === 'playing') {
+            if (this.isMultiplayer) {
+                if (this.isPlayerTurn) {
                     text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
                     text('👥 Opponent is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
@@ -1633,7 +1662,7 @@ class BattleshipClient {
                     text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
                 }
             } else {
-                if (this.game.currentPlayer === 0) {
+                if (this.currentPlayer === 0) {
                     text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
                     text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
@@ -1641,12 +1670,12 @@ class BattleshipClient {
                     text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
                 }
             }
-        } else if (this.game.gamePhase === 'placement') {
+        } else if (this.gamePhase === 'placement') {
             text('⚓ Place your ships!', attackGridX + 200, gridY + 20);
             text('📋 Your Fleet', fleetGridX + 200, gridY + 20);
-        } else if (this.game.gamePhase === 'finished') {
+        } else if (this.gamePhase === 'finished') {
             let winnerText;
-            if (this.game.isMultiplayer) {
+            if (this.isMultiplayer) {
                 winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 OPPONENT WON!';
             } else {
                 winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 AI WON!';
@@ -1658,7 +1687,7 @@ class BattleshipClient {
     
     drawMouseHover() {
         // Draw hover effect on grids
-        if (this.game.gamePhase === 'placement') {
+        if (this.gamePhase === 'placement') {
             // Use the correct fleet grid position
             const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
             const fleetGridY = this.gridStartY;
@@ -1684,7 +1713,7 @@ class BattleshipClient {
                 strokeWeight(2);
                 rect(cellX, cellY, this.gridSize, this.gridSize);
             }
-        } else if (this.game.gamePhase === 'playing' && this.game.currentPlayer === 0) {
+        } else if (this.gamePhase === 'playing' && this.currentPlayer === 0) {
             const attackGridX = this.gridStartX + 500; // Fixed to match actual attack grid position
             const attackGridY = this.gridStartY;
             
@@ -1717,7 +1746,7 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y position
         
         // In multiplayer, show player 0's view of player 1's grid (opponent's grid)
-        const attackGridPlayer = this.game.isMultiplayer ? 0 : 0;
+        const attackGridPlayer = this.isMultiplayer ? 0 : 0;
         this.drawGrid(attackGridX, attackGridY, attackGridPlayer, false);
         
         // Draw grids without excessive logging
@@ -1953,7 +1982,7 @@ class BattleshipClient {
     }
     
     drawShipPreview() {
-        console.log('🔍 drawShipPreview called - gamePhase:', this.game.gamePhase, 'currentShip:', this.currentShip);
+        console.log('🔍 drawShipPreview called - gamePhase:', this.gamePhase, 'currentShip:', this.currentShip);
         
         // If no currentShip on client, try to get it from the game instance
         if (!this.currentShip && this.game && this.game.currentShip) {
@@ -2130,23 +2159,23 @@ class BattleshipClient {
     }
     
     drawGamePhaseIndicator() {
-        if (this.game.gamePhase === 'placement') {
+        if (this.gamePhase === 'placement') {
             // Ships placed box removed as requested
-        } else if (this.game.gamePhase === 'playing') {
+        } else if (this.gamePhase === 'playing') {
             // Draw turn indicator
             fill(0, 0, 0, 200);
-            stroke(this.game.currentPlayer === 0 ? 76 : 255, 175, 80);
+            stroke(this.currentPlayer === 0 ? 76 : 255, 175, 80);
             strokeWeight(2);
             rect(width - 250, 10, 240, 60);
             
-            fill(this.game.currentPlayer === 0 ? 76 : 255, 175, 80);
+            fill(this.currentPlayer === 0 ? 76 : 255, 175, 80);
             textAlign(LEFT, TOP);
             textSize(16);
-            text(`Turn: ${this.game.currentPlayer === 0 ? 'Your Turn' : 'AI Turn'}`, width - 240, 20);
+            text(`Turn: ${this.currentPlayer === 0 ? 'Your Turn' : 'AI Turn'}`, width - 240, 20);
             
             fill(255);
             textSize(14);
-            text(this.game.currentPlayer === 0 ? 'Click on the right grid to attack!' : 'AI is thinking...', width - 240, 40);
+            text(this.currentPlayer === 0 ? 'Click on the right grid to attack!' : 'AI is thinking...', width - 240, 40);
         }
     }
     
@@ -2157,7 +2186,7 @@ class BattleshipClient {
             return;
         }
         
-        if (this.game.gamePhase === 'placement') {
+        if (this.gamePhase === 'placement') {
             // In placement mode, always try to place the ship first
             // Only check for ship item clicks if placement fails
             this.handleShipPlacement();
@@ -2173,7 +2202,7 @@ class BattleshipClient {
             // Ship selection is handled by the event listeners in setupShipPlacement
             // No need to do anything here as the click will be handled by the ship item's click listener
             return;
-        } else if (this.game.gamePhase === 'playing') {
+        } else if (this.gamePhase === 'playing') {
             this.handleAttack();
         }
     }
@@ -2340,16 +2369,16 @@ class BattleshipClient {
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
             mouseX >= attackGridX && mouseX < maxGridX && 
             mouseY >= attackGridY && mouseY < maxGridY && 
-            this.game.gamePhase === 'playing') {
+            this.gamePhase === 'playing') {
             
             // In multiplayer, check if it's the player's turn
-            if (this.game.isMultiplayer && !this.game.isPlayerTurn) {
+            if (this.isMultiplayer && !this.isPlayerTurn) {
                 this.game.addToHistory('❌ Not your turn!', 'error');
                 return;
             }
             
             // Check if this position has already been attacked
-            const attackGrid = this.game.isMultiplayer ? this.game.attackGrids[1] : this.game.attackGrids[0];
+            const attackGrid = this.isMultiplayer ? this.game.attackGrids[1] : this.game.attackGrids[0];
             if (attackGrid[gridY][gridX].hit || attackGrid[gridY][gridX].miss) {
                 this.game.addToHistory('❌ You already attacked this position!', 'error');
                 return;
