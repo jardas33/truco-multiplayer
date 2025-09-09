@@ -153,11 +153,14 @@ io.on('connection', (socket) => {
 
     // Handle room joining
     socket.on('joinRoom', (data) => {
+        console.log(`🔍 JOINROOM EVENT RECEIVED! Data:`, data);
         const roomCode = data.roomCode || data;
         console.log(`🔍 JOINROOM EVENT RECEIVED! Room: ${roomCode}`);
         const room = rooms.get(roomCode);
         
         console.log(`🚪 User ${socket.id} attempting to join room: ${roomCode}`);
+        console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+        console.log(`🔍 DEBUG: Room exists:`, !!room);
         
         if (!room) {
             console.log(`❌ Room ${roomCode} not found`);
@@ -190,11 +193,13 @@ io.on('connection', (socket) => {
         console.log(`🔍 Socket room code set to: ${roomCode}`);
 
         // ✅ CRITICAL FIX: Emit roomJoined event to the joining player
+        console.log(`🚢 Emitting roomJoined event to socket ${socket.id}`);
         socket.emit('roomJoined', {
             roomId: roomCode,
             playerId: socket.id,
             isHost: room.players[0].id === socket.id
         });
+        console.log(`🚢 roomJoined event emitted successfully`);
 
         // ✅ Emit playerJoined event to all players in the room
         io.to(roomCode).emit('playerJoined', {

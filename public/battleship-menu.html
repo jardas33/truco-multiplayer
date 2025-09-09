@@ -348,14 +348,27 @@
             
             // Initialize socket if not already done
             if (!window.socket) {
+                console.log('🚢 Socket not initialized, initializing now...');
                 initBattleshipSocket();
+                
+                // Wait for socket to connect before joining room
+                window.socket.on('connect', () => {
+                    console.log('🚢 Socket connected, now joining room...');
+                    joinRoomAfterConnect(roomCode);
+                });
+            } else {
+                console.log('🚢 Socket already initialized, joining room...');
+                joinRoomAfterConnect(roomCode);
             }
-            
-            // Join room via socket
+        }
+        
+        function joinRoomAfterConnect(roomCode) {
+            console.log('🚢 Emitting joinRoom event for:', roomCode);
             window.socket.emit('joinRoom', {
                 roomCode: roomCode,
                 gameType: 'battleship'
             });
+            console.log('🚢 joinRoom event emitted');
         }
 
         function generateRoomCode() {
@@ -429,6 +442,7 @@
                 localStorage.setItem('battleshipPlayerCount', '2');
                 localStorage.setItem('battleshipGameMode', 'multiplayer');
                 
+                console.log('🚢 Room settings stored, redirecting to game...');
                 // Redirect to game
                 window.location.href = '/battleship';
             });
