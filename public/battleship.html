@@ -540,12 +540,12 @@
             <div class="scoreboard-title">Scoreboard</div>
             <div class="scoreboard-content">
                 <div class="player-score">
-                    <div class="player-name">You</div>
+                    <div class="player-name">Player 1</div>
                     <div class="score-value" id="playerScore">0</div>
                 </div>
                 <div class="vs-divider">VS</div>
                 <div class="player-score">
-                    <div class="player-name">AI</div>
+                    <div class="player-name">Player 2</div>
                     <div class="score-value" id="aiScore">0</div>
                 </div>
             </div>
@@ -568,7 +568,7 @@
 
             <!-- Game Info Panel -->
             <div class="game-info" id="gameInfo">
-                <div>Player: <span id="playerName">You</span></div>
+                <div>Player: <span id="playerName">Player 1</span></div>
                 <div>Turn: <span id="currentTurn">Player 1</span></div>
                 <div>Status: <span id="gameStatus">Setting up ships</span></div>
                 <div id="instructions" style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
@@ -613,5 +613,84 @@
     <script src="js/preload.js"></script>
     <script src="js/battleship.js"></script>
     <script src="js/setup.js"></script>
+    
+    <!-- Multiplayer synchronization script -->
+    <script>
+        // Initialize socket for multiplayer synchronization
+        let battleshipSocket;
+        
+        // Check if we're in a multiplayer room
+        const roomCode = localStorage.getItem('battleshipRoomCode');
+        const gameMode = localStorage.getItem('battleshipGameMode');
+        
+        if (roomCode && gameMode === 'multiplayer') {
+            console.log('🚢 Initializing battleship multiplayer socket for room:', roomCode);
+            
+            // Initialize socket
+            battleshipSocket = io();
+            
+            // Handle game start event from server
+            battleshipSocket.on('battleshipGameStart', (data) => {
+                console.log('🚢 Received battleship game start event:', data);
+                
+                // Update player names in the game
+                if (data.players && data.players.length >= 2) {
+                    // Update scoreboard to show both players instead of "You" vs "AI"
+                    const player1Name = data.players[0].nickname || data.players[0].name || 'Player 1';
+                    const player2Name = data.players[1].nickname || data.players[1].name || 'Player 2';
+                    
+                    // Update the scoreboard
+                    const playerScoreEl = document.getElementById('playerScore');
+                    const aiScoreEl = document.getElementById('aiScore');
+                    
+                    if (playerScoreEl) {
+                        playerScoreEl.textContent = player1Name;
+                    }
+                    if (aiScoreEl) {
+                        aiScoreEl.textContent = player2Name;
+                    }
+                    
+                    // Update player name in game info
+                    const playerNameEl = document.getElementById('playerName');
+                    if (playerNameEl) {
+                        playerNameEl.textContent = player1Name;
+                    }
+                    
+                    console.log('🚢 Updated player names:', player1Name, 'vs', player2Name);
+                }
+                
+                // Show message that game is starting
+                if (window.battleshipGame) {
+                    window.battleshipGame.addToHistory('🚀 Multiplayer game starting!', 'success');
+                    window.battleshipGame.showGameMessage('🚀 Multiplayer Battle Starting!', 3000);
+                }
+            });
+            
+            // Handle ship placement events
+            battleshipSocket.on('battleshipShipPlaced', (data) => {
+                console.log('🚢 Received ship placement from opponent:', data);
+                // Handle opponent ship placement if needed
+            });
+            
+            // Handle attack events
+            battleshipSocket.on('battleshipAttack', (data) => {
+                console.log('🚢 Received attack from opponent:', data);
+                // Handle opponent attack if needed
+            });
+            
+            // Handle game over events
+            battleshipSocket.on('battleshipGameOver', (data) => {
+                console.log('🚢 Received game over event:', data);
+                // Handle game over if needed
+            });
+            
+            // Clean up socket on page unload
+            window.addEventListener('beforeunload', () => {
+                if (battleshipSocket) {
+                    battleshipSocket.disconnect();
+                }
+            });
+        }
+    </script>
 </body>
 </html>

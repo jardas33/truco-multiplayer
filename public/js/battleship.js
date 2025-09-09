@@ -190,6 +190,14 @@ class BattleshipGame {
         }
     }
     
+    emitGameStart() {
+        if (this.isMultiplayer && window.socket && this.roomCode) {
+            window.socket.emit('battleshipGameStart', {
+                roomId: this.roomCode
+            });
+        }
+    }
+    
     emitGameOver(winner) {
         if (this.isMultiplayer && window.socket && this.roomCode) {
             window.socket.emit('battleshipGameOver', {
@@ -419,8 +427,22 @@ class BattleshipGame {
             return;
         }
         
-        // NO drawing calls - grid will be updated on next draw cycle
+        // Check if this is multiplayer mode
+        if (this.isMultiplayer && this.roomCode) {
+            console.log('🚀 Starting multiplayer battleship game');
+            this.addToHistory('🚀 Multiplayer battle starting! Waiting for opponent...', 'success');
+            
+            // Emit game start to server to notify all players
+            this.emitGameStart();
+            
+            // In multiplayer, don't set up AI ships - wait for both players
+            this.gamePhase = 'playing';
+            this.currentPlayer = 0;
+            this.updateUI();
+            return;
+        }
         
+        // Single player mode - set up AI ships
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
         this.addToHistory('🚀 Battle started! Your turn to attack!', 'success');
