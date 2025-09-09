@@ -2274,15 +2274,22 @@ class BattleshipClient {
         this.lastClickTime = currentTime;
         
         console.log(`🎯 handleAttack called - single click handler`);
+        console.log(`🎯 Mouse coordinates: mouseX=${mouseX}, mouseY=${mouseY}`);
+        console.log(`🎯 Grid start position: gridStartX=${this.gridStartX}, gridStartY=${this.gridStartY}`);
         
         // Use correct attack grid position (must match drawGrids)
         const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
         
+        console.log(`🎯 Attack grid position: attackGridX=${attackGridX}, attackGridY=${attackGridY}`);
+        
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
         const gridX = Math.floor((mouseX - attackGridX) / cellSize);
         const gridY = Math.floor((mouseY - attackGridY) / cellSize);
+        
+        console.log(`🎯 Calculated grid coordinates: gridX=${gridX}, gridY=${gridY}`);
+        console.log(`🎯 Cell size: ${cellSize}, mouse relative to attack grid: (${mouseX - attackGridX}, ${mouseY - attackGridY})`);
         
         // CRITICAL FIX: Ensure coordinates are within valid bounds
         if (gridX < 0 || gridX >= 10 || gridY < 0 || gridY >= 10) {
