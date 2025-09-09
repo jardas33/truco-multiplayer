@@ -195,7 +195,13 @@ io.on('connection', (socket) => {
         }
 
         const maxPlayersJoin = room.gameType === 'truco' ? 4 : (room.gameType === 'battleship' ? 2 : 6); // Truco needs 4, Battleship needs 2, other games can have up to 6
-        if (room.players.length >= maxPlayersJoin) {
+        
+        // For battleship rooms, allow reconnection even if room appears full
+        // This handles the case where players navigate from menu to game and create new socket connections
+        if (room.gameType === 'battleship' && room.players.length >= maxPlayersJoin) {
+            console.log(`🚢 Battleship room ${roomCode} appears full (${room.players.length}/${maxPlayersJoin}), but allowing reconnection`);
+            // Don't reject the connection - let them join and clean up later
+        } else if (room.players.length >= maxPlayersJoin) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersJoin})`);
             socket.emit('error', 'Room is full');
             return;
