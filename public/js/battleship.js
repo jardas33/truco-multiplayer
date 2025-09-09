@@ -1605,14 +1605,33 @@ class BattleshipClient {
             startY = mouseCanvasY - totalHeight / 2;
         }
         
-        // Draw the ship as a green rectangle instead of using ship images
-        // const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
+        // Draw the ship image for preview
+        const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
         
-        // Always use green rectangle for ship preview
-        fill(0, 255, 0); // Green for all ship previews
-        stroke(255, 255, 255);
-        strokeWeight(1);
-        rect(startX, startY, totalWidth, totalHeight);
+        if (shipImage) {
+            if (orientation === 'vertical') {
+                push();
+                // For vertical ships, we need to rotate around the center of the ship
+                const centerX = startX + totalWidth / 2;
+                const centerY = startY + totalHeight / 2;
+                translate(centerX, centerY);
+                rotate(PI/2); // 90 degrees clockwise
+                // Draw the image with swapped dimensions to prevent stretching
+                // The image should be drawn with the original horizontal dimensions
+                const imageWidth = ship.size * cellSize;  // Original horizontal width
+                const imageHeight = cellSize;             // Original horizontal height
+                image(shipImage, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
+                pop();
+            } else {
+                image(shipImage, startX, startY, totalWidth, totalHeight);
+            }
+        } else {
+            // Fallback to green rectangle if no image
+            fill(0, 255, 0); // Green for all ship previews
+            stroke(255, 255, 255);
+            strokeWeight(1);
+            rect(startX, startY, totalWidth, totalHeight);
+        }
         
         // Draw placement instructions
         fill(255);
