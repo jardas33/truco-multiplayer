@@ -758,41 +758,20 @@ class BattleshipGame {
     canPlaceShip(player, x, y, size, orientation) {
         const grid = this.playerGrids[player];
         
-        console.log(`🔍 canPlaceShip - player: ${player}, x: ${x}, y: ${y}, size: ${size}, orientation: ${orientation}`);
-        
-        // Debug: Show current grid state
-        console.log(`🔍 Current grid state:`);
-        for (let row = 0; row < 10; row++) {
-            let rowStr = '';
-            for (let col = 0; col < 10; col++) {
-                if (grid[row][col].ship) {
-                    rowStr += grid[row][col].ship.name.substring(0, 1) + ' ';
-                } else {
-                    rowStr += '. ';
-                }
-            }
-            console.log(`🔍 Row ${row}: ${rowStr}`);
-        }
-        
         for (let i = 0; i < size; i++) {
             const checkX = orientation === 'horizontal' ? x + i : x;
             const checkY = orientation === 'vertical' ? y + i : y;
             
-            console.log(`🔍 Checking cell (${checkX}, ${checkY}) for ship part ${i}`);
-            
             // Check bounds
             if (checkX >= this.gridSize || checkY >= this.gridSize) {
-                console.log(`❌ Out of bounds: checkX=${checkX}, checkY=${checkY}, gridSize=${this.gridSize}`);
                 return false;
             }
             if (checkX < 0 || checkY < 0) {
-                console.log(`❌ Negative coordinates: checkX=${checkX}, checkY=${checkY}`);
                 return false;
             }
             
             // Check if cell is already occupied
             if (grid[checkY][checkX].ship !== null) {
-                console.log(`❌ Cell (${checkX}, ${checkY}) already occupied by ship: ${grid[checkY][checkX].ship.name}`);
                 return false;
             }
             
@@ -809,15 +788,12 @@ class BattleshipGame {
                     
                     // Check if adjacent cell has a ship
                     if (grid[adjY][adjX].ship !== null) {
-                        console.log(`❌ Adjacent cell (${adjX}, ${adjY}) has ship: ${grid[adjY][adjX].ship.name}`);
-                        console.log(`❌ This prevents placing ship at (${x}, ${y}) with orientation ${orientation}`);
                         return false;
                     }
                 }
             }
         }
         
-        console.log(`✅ Ship can be placed at (${x}, ${y}) with orientation ${orientation}`);
         return true;
     }
     
@@ -1330,6 +1306,7 @@ class BattleshipClient {
         this.listenersSetup = false; // Prevent duplicate event listeners
         this.hoverRedrawScheduled = false;
         this.resizeTimeout = null; // Timeout for resize debouncing
+        this.lastLoggedGamePhase = null; // Track last logged game phase to reduce logging
         
         this.setupEventListeners();
         this.initializeCanvas();
@@ -1666,8 +1643,11 @@ class BattleshipClient {
             return;
         }
         
-        console.log('🔍 draw() called - gamePhase:', this.gamePhase, 'currentShip:', this.currentShip);
-        console.log('🔍 Global game phase:', window.battleshipGame ? window.battleshipGame.gamePhase : 'no global game');
+        // Only log when there's a significant change in game state
+        if (this.lastLoggedGamePhase !== this.gamePhase) {
+            console.log('🔍 Game phase changed to:', this.gamePhase);
+            this.lastLoggedGamePhase = this.gamePhase;
+        }
         
         // Clear the canvas first to ensure clean drawing
         clear();
@@ -2088,20 +2068,19 @@ class BattleshipClient {
     }
     
     drawShipPreview(gameInstance) {
-        console.log('🔍 drawShipPreview called - gamePhase:', this.gamePhase, 'currentShip:', this.currentShip);
+        // Only draw ship preview during placement phase and when there's a current ship
+        if (!this.currentShip || this.gamePhase !== 'placement') {
+            return;
+        }
         
         // If no currentShip on client, try to get it from the game instance
         if (!this.currentShip && gameInstance && gameInstance.currentShip) {
-            console.log('🔍 Syncing currentShip from game instance');
             this.currentShip = gameInstance.currentShip;
         }
         
         if (!this.currentShip) {
-            console.log('🔍 drawShipPreview: No current ship selected');
             return;
         }
-        
-        console.log('🔍 drawShipPreview: Drawing preview for ship:', this.currentShip.name);
         
         const ship = this.currentShip;
         const orientation = ship.orientation || 'horizontal';
@@ -2128,8 +2107,10 @@ class BattleshipClient {
         const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
         const gridY = Math.floor((mouseCanvasY - fleetGridY) / cellSize);
         
-        // Debug: Show preview coordinates
-        console.log('🔍 Ship preview coordinates - mouseCanvasX:', mouseCanvasX, 'mouseCanvasY:', mouseCanvasY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'cellSize:', cellSize, 'gridX:', gridX, 'gridY:', gridY);
+        // Only log coordinates when they're valid (not negative)
+        if (gridX >= 0 && gridY >= 0 && gridX < 10 && gridY < 10) {
+            // Valid coordinates - no need to log every frame
+        }
         
         // Check if the ship can be placed at the current grid position
         const canPlace = gameInstance.canPlaceShip(0, gridX, gridY, ship.size, orientation);
@@ -2600,7 +2581,6 @@ class BattleshipClient {
     mouseMoved() {
         // Redraw when mouse moves during ship placement to update preview
         if (this.game.gamePhase === 'placement' && this.currentShip) {
-            console.log('🔍 mouseMoved - mouseX:', mouseX, 'mouseY:', mouseY);
             redraw();
         }
     }
