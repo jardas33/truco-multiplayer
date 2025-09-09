@@ -1108,7 +1108,9 @@ class BattleshipClient {
         // Clear the canvas first to ensure clean drawing
         clear();
         
-        // Draw grids with high visibility (includes ship rendering and hit symbols)
+        // Draw unhit ships first (green colors)
+        this.drawShips();
+        // Draw grids with hit symbols on top
         this.drawGrids();
         this.drawShipPreview(); // Add ship preview during placement
         this.drawTurnIndicator();
@@ -1501,7 +1503,7 @@ class BattleshipClient {
             const gridY = ship.y + (ship.orientation === 'vertical' ? i : 0);
             const cell = this.game.playerGrids[player][gridY][gridX];
             
-            // Determine color based on individual cell hit status
+            // Only draw unhit ships - let hit symbols handle hit cells
             let cellColor, strokeColor;
             if (ship.sunk) {
                 // Ship is completely sunk - dark red
