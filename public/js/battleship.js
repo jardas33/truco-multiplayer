@@ -257,7 +257,7 @@ class BattleshipGame {
         // Show games won and total ships sunk across all games
         if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
         if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.totalAiShipsSunk} Ships Destroyed`;
-        if (shipsSunkEl) shipsSunkEl.textContent = `${this.currentGamePlayerShipsSunk}`;
+        if (shipsSunkEl) shipsSunkEl.textContent = `${this.totalPlayerShipsSunk}`;
         if (opponentShipsSunkEl) opponentShipsSunkEl.textContent = `${this.totalOpponentShipsSunk}`;
     }
     
