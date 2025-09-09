@@ -222,12 +222,6 @@
             <button id="createRoomBtn">Create Room</button>
           </div>
           
-          <!-- Start Game Button (hidden by default) -->
-          <div id="startGameButton" style="display: none; margin: 15px 0; text-align: center;">
-            <button onclick="startBattleshipGame()" style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-              🚢 Start Battle!
-            </button>
-          </div>
           
           
           <!-- Room Code Display with Copy Button Next to Yellow Box -->
@@ -386,10 +380,6 @@
             });
         }
 
-        function startGame() {
-            console.log('🚢 Starting Battleship game...');
-            window.location.href = '/battleship';
-        }
 
         // Bot management
         let playerCount = 1; // Start with 1 human player
@@ -449,9 +439,12 @@
                 document.getElementById('gameMenuBtn').style.display = 'inline-block';
                 document.getElementById('playerList').style.display = 'block';
                 
-                // Check if we should show start button (for room creator)
+                // Enable start button when 2 players are ready (for room creator)
                 if (data.players && data.players.length === 2) {
-                    showStartButton();
+                    const startBtn = document.getElementById('startGameBtn');
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                    }
                 }
             });
             
@@ -459,9 +452,12 @@
             window.socket.on('playerJoined', (data) => {
                 updateBattleshipPlayerList(data.players);
                 
-                // Show start button when 2 players join (only for room creator)
-                if (data.players && data.players.length === 2) {
-                    showStartButton();
+                // Enable start button when 2 players join (only for room creator)
+                if (data.players && data.players.length === 2 && window.isRoomCreator) {
+                    const startBtn = document.getElementById('startGameBtn');
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                    }
                 }
             });
             
@@ -471,15 +467,47 @@
             window.socket.on('playersUpdated', (players) => {
                 updateBattleshipPlayerList(players);
                 
-                // Show start button when 2 players are ready (only for room creator)
-                if (players && players.length === 2) {
-                    showStartButton();
+                // Enable start button when 2 players are ready (only for room creator)
+                if (players && players.length === 2 && window.isRoomCreator) {
+                    const startBtn = document.getElementById('startGameBtn');
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                    }
                 }
             });
             
             window.socket.on('error', (errorMessage) => {
                 console.error('❌ Battleship socket error:', errorMessage);
                 alert(`Error: ${errorMessage}`);
+            });
+            
+            // Handle nickname change success
+            window.socket.on('nicknameChanged', (data) => {
+                console.log('✅ Nickname changed successfully:', data);
+                
+                // Reset button state
+                const changeBtn = document.getElementById('changeNicknameBtn');
+                if (changeBtn) {
+                    changeBtn.textContent = 'Change';
+                    changeBtn.disabled = false;
+                }
+                
+                // Show success message
+                alert('Nickname changed successfully!');
+            });
+            
+            // Handle nickname change error
+            window.socket.on('nicknameError', (errorMessage) => {
+                console.error('❌ Nickname change error:', errorMessage);
+                
+                // Reset button state
+                const changeBtn = document.getElementById('changeNicknameBtn');
+                if (changeBtn) {
+                    changeBtn.textContent = 'Change';
+                    changeBtn.disabled = false;
+                }
+                
+                alert(`Nickname change failed: ${errorMessage}`);
             });
             
             // Handle room joining - stay on menu
@@ -505,7 +533,8 @@
                 document.getElementById('addBotBtn').style.display = 'none';
                 document.getElementById('removeBotBtn').style.display = 'none';
                 document.getElementById('startGameBtn').style.display = 'none';
-                document.getElementById('gameMenuBtn').style.display = 'none';
+                // Show Battleship Game Menu button for joiners
+                document.getElementById('gameMenuBtn').style.display = 'inline-block';
                 
                 console.log('🚢 Room settings stored, staying on menu...');
                 // Don't redirect automatically - wait for manual start
@@ -526,15 +555,6 @@
             });
         }
         
-        function showStartButton() {
-            // Only show start button for room creator
-            if (window.isRoomCreator) {
-                const startButton = document.getElementById('startGameButton');
-                if (startButton) {
-                    startButton.style.display = 'block';
-                }
-            }
-        }
         
         function startBattleshipGame() {
             // Store room settings
@@ -551,6 +571,38 @@
             
             // Redirect to game
             window.location.href = '/battleship';
+        }
+
+        // Nickname change functionality
+        function changeNickname() {
+            const nicknameInput = document.getElementById('nicknameInput');
+            const newNickname = nicknameInput.value.trim();
+            
+            if (!newNickname) {
+                alert('Please enter a nickname!');
+                return;
+            }
+            
+            if (newNickname.length > 12) {
+                alert('Nickname must be 12 characters or less!');
+                return;
+            }
+            
+            if (!window.socket || !window.battleshipRoomId) {
+                alert('Not connected to room!');
+                return;
+            }
+            
+            // Emit nickname change to server
+            window.socket.emit('changeNickname', {
+                roomCode: window.battleshipRoomId,
+                nickname: newNickname
+            });
+            
+            // Show loading state
+            const changeBtn = document.getElementById('changeNicknameBtn');
+            changeBtn.textContent = 'Changing...';
+            changeBtn.disabled = true;
         }
 
         function addBot() {
@@ -627,9 +679,10 @@
             document.getElementById('createRoomBtn').onclick = createRoom;
             document.getElementById('joinRoomBtn').onclick = joinRoom;
             document.getElementById('copyRoomCodeBtn').onclick = copyRoomCode;
-            document.getElementById('startGameBtn').onclick = startGame;
+            document.getElementById('startGameBtn').onclick = startBattleshipGame;
             document.getElementById('addBotBtn').onclick = addBot;
             document.getElementById('removeBotBtn').onclick = removeBot;
+            document.getElementById('changeNicknameBtn').onclick = changeNickname;
             
             // Player list and bot controls will be initialized when room is created
             
