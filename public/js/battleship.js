@@ -2257,7 +2257,7 @@ class BattleshipClient {
         console.log(`🎯 handleAttack called - single click handler`);
         
         // Use correct attack grid position (must match drawGrids)
-        const attackGridX = this.gridStartX + 400; // Match drawGrids position
+        const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
         
         // Calculate grid coordinates to match exactly how cells are drawn
@@ -2283,8 +2283,8 @@ class BattleshipClient {
         }
         
         // Reject clicks that are clearly outside the attack grid area (more aggressive bounds checking)
-        if (mouseX < attackGridX - 50 || mouseX > attackGridX + 350 || 
-            mouseY < attackGridY - 50 || mouseY > attackGridY + 350) {
+        if (mouseX < attackGridX - 50 || mouseX > attackGridX + 400 || 
+            mouseY < attackGridY - 50 || mouseY > attackGridY + 400) {
             console.log(`🎯 Click rejected - way outside attack grid area`);
             return;
         }
