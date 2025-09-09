@@ -267,11 +267,11 @@ class BattleshipGame {
         console.log('🚢 Handling opponent attack:', data);
         const { x, y, attackingPlayerId } = data;
         
-        console.log('🚢 Current playerId:', this.playerId);
+        console.log('🚢 Current playerId:', this.game ? this.game.playerId : 'no game instance');
         console.log('🚢 Attacking playerId:', attackingPlayerId);
         
         // Only process attacks from the opponent, not our own attacks
-        if (attackingPlayerId === this.playerId) {
+        if (attackingPlayerId === (this.game ? this.game.playerId : null)) {
             console.log('🚢 Ignoring own attack');
             return;
         }
@@ -1277,8 +1277,8 @@ class BattleshipGame {
 // 🎮 BATTLESHIP CLIENT
 class BattleshipClient {
     constructor() {
-        // Use the global battleshipGame instance instead of creating a new one
-        this.game = window.battleshipGame || new BattleshipGame();
+        // Always use the global battleshipGame instance
+        this.game = null; // Will be set in initialize()
         this.canvas = null;
         this.gridSize = 30; // Smaller grid size for better fit
         this.gridSpacing = 1; // Smaller spacing for better fit
@@ -1297,6 +1297,25 @@ class BattleshipClient {
         this.setupEventListeners();
         this.initializeCanvas();
         this.setupResizeHandler();
+    }
+    
+    initialize() {
+        // Set the game reference to the global instance
+        this.game = window.battleshipGame;
+        if (!this.game) {
+            console.log('⚠️ Global battleshipGame not available yet, will retry...');
+            setTimeout(() => this.initialize(), 100);
+            return;
+        }
+        console.log('✅ BattleshipClient initialized with global game instance');
+        
+        // Set up a periodic check to ensure we're always using the latest game instance
+        setInterval(() => {
+            if (window.battleshipGame && this.game !== window.battleshipGame) {
+                console.log('🔄 Syncing with updated global game instance');
+                this.game = window.battleshipGame;
+            }
+        }, 1000);
     }
     
     initializeCanvas() {
@@ -1508,7 +1527,13 @@ class BattleshipClient {
             return;
         }
         
+        if (!this.game) {
+            console.log('🔍 draw() called but no game instance');
+            return;
+        }
+        
         console.log('🔍 draw() called - gamePhase:', this.game.gamePhase, 'currentShip:', this.currentShip);
+        console.log('🔍 Global game phase:', window.battleshipGame ? window.battleshipGame.gamePhase : 'no global game');
         
         // Clear the canvas first to ensure clean drawing
         clear();
@@ -2410,6 +2435,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!battleshipClient) {
                 battleshipClient = new BattleshipClient();
                 window.battleshipClient = battleshipClient; // Make it globally accessible
+                battleshipClient.initialize(); // Initialize with global game instance
                 console.log('🎮 Battleship client initialized');
             }
         } else {
@@ -2440,6 +2466,7 @@ function draw() {
             console.log('🎮 Initializing battleship client...');
             battleshipClient = new BattleshipClient();
             window.battleshipClient = battleshipClient; // Make it globally accessible
+            battleshipClient.initialize(); // Initialize with global game instance
         }
     }
     
