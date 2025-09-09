@@ -484,7 +484,11 @@ class BattleshipGame {
                     }
                     break;
                 case 'playing':
-                    instructions.textContent = this.currentPlayer === 0 ? 'Click on the attack grid to fire!' : 'AI is making its move...';
+                    if (this.isMultiplayer) {
+                        instructions.textContent = this.isPlayerTurn ? 'Click on the attack grid to fire!' : 'Opponent is making their move...';
+                    } else {
+                        instructions.textContent = this.currentPlayer === 0 ? 'Click on the attack grid to fire!' : 'AI is making its move...';
+                    }
                     break;
                 case 'finished':
                     instructions.textContent = this.winner === 0 ? 'Congratulations! You won!' : 'Game Over! Better luck next time!';
@@ -738,9 +742,9 @@ class BattleshipGame {
             }
             
             // Attack opponent's grid (player 1's grid)
-            const targetPlayer = 0; // Always attack player 1's grid
+            const targetPlayer = 1; // Attack player 1's grid (opponent)
             const grid = this.playerGrids[targetPlayer];
-            const attackGrid = this.attackGrids[1]; // Player 2's view of player 1's grid
+            const attackGrid = this.attackGrids[0]; // Player 0's view of player 1's grid
             
             if (attackGrid[y][x].hit || attackGrid[y][x].miss) {
                 return { valid: false, message: 'Already attacked this position!' };
@@ -775,7 +779,7 @@ class BattleshipGame {
                     this.playerScore += 50; // 50 bonus points for sinking
                     
                     if (this.checkGameOver(targetPlayer)) {
-                        this.endGame(1); // Player 2 wins
+                        this.endGame(0); // Player 0 wins (the attacker)
                         return { valid: true, hit: true, sunk: true, ship: ship.name, gameOver: true };
                     }
                     
@@ -1553,17 +1557,18 @@ class BattleshipClient {
         strokeWeight(2);
         
         if (this.game.gamePhase === 'playing') {
-            if (this.game.currentPlayer === 0) {
-                text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
-                if (this.game.isMultiplayer) {
+            if (this.game.isMultiplayer) {
+                if (this.game.isPlayerTurn) {
+                    text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
                     text('👥 Opponent is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
-                    text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
-                }
-            } else {
-                if (this.game.isMultiplayer) {
                     text('👥 OPPONENT TURN - Opponent is attacking...', attackGridX + 200, gridY + 20);
                     text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
+                }
+            } else {
+                if (this.game.currentPlayer === 0) {
+                    text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
+                    text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
                     text('🤖 AI TURN - AI is attacking...', attackGridX + 200, gridY + 20);
                     text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
@@ -2277,7 +2282,7 @@ class BattleshipClient {
             const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
             this.game.addToHistory(`🎯 You attack ${letters[gridY]}${gridX + 1}`, 'info');
             
-            const result = this.game.attack(0, gridX, gridY);
+            const result = this.game.attack(1, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
                 this.game.endTurn();
