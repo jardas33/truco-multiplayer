@@ -706,7 +706,10 @@
             // Handle attack events
             window.battleshipSocket.on('battleshipAttack', (data) => {
                 console.log('🚢 Received attack from opponent:', data);
-                // Handle opponent attack if needed
+                // Handle opponent attack
+                if (window.battleshipGame) {
+                    window.battleshipGame.handleOpponentAttack(data);
+                }
             });
             
             // Handle game over events

@@ -208,6 +208,7 @@ class BattleshipGame {
     
     handleGameStart(data) {
         console.log('🚢 Handling game start:', data);
+        console.log('🚢 Game phase before setting:', this.gamePhase);
         
         // Determine which player goes first (randomly)
         const isPlayer1Turn = Math.random() < 0.5;
@@ -215,6 +216,8 @@ class BattleshipGame {
         this.currentPlayer = isPlayer1Turn ? 0 : 1;
         
         this.gamePhase = 'playing';
+        console.log('🚢 Game phase after setting:', this.gamePhase);
+        
         this.addToHistory('🚀 Multiplayer battle started!', 'success');
         
         if (this.isPlayerTurn) {
@@ -224,6 +227,7 @@ class BattleshipGame {
         }
         
         this.updateUI();
+        console.log('🚢 Game phase after updateUI:', this.gamePhase);
     }
     
     handleTurnChange(data) {
@@ -461,6 +465,7 @@ class BattleshipGame {
     }
     
     updateUI() {
+        console.log('🔍 updateUI called - gamePhase:', this.gamePhase);
         const gamePhase = document.getElementById('gamePhase');
         const gameStatus = document.getElementById('gameStatus');
         const currentTurn = document.getElementById('currentTurn');
