@@ -149,6 +149,13 @@ class BattleshipGame {
     setupMultiplayerListeners() {
         if (!this.socket) return;
         
+        // Prevent duplicate event listeners
+        if (this.listenersSetup) {
+            console.log('🚢 Listeners already setup, skipping');
+            return;
+        }
+        this.listenersSetup = true;
+        
         // Handle player ready events
         this.socket.on('battleshipPlayerReady', (data) => {
             console.log('🚢 Player ready received:', data);
@@ -275,6 +282,19 @@ class BattleshipGame {
             console.log('🚢 Ignoring own attack');
             return;
         }
+        
+        // Check if this attack has already been processed (deduplication)
+        const attackKey = `${attackingPlayerId}-${x}-${y}`;
+        if (this.processedAttacks && this.processedAttacks.has(attackKey)) {
+            console.log('🚢 Ignoring duplicate attack:', attackKey);
+            return;
+        }
+        
+        // Mark this attack as processed
+        if (!this.processedAttacks) {
+            this.processedAttacks = new Set();
+        }
+        this.processedAttacks.add(attackKey);
         
         console.log(`🚢 Attack coordinates: x=${x}, y=${y}`);
         
@@ -1298,7 +1318,10 @@ class BattleshipClient {
         this.isResizing = false; // Prevent clicks during resize
         this.hoverX = 0;
         this.hoverY = 0;
+        this.processedAttacks = new Set(); // Track processed attacks to prevent duplicates
+        this.listenersSetup = false; // Prevent duplicate event listeners
         this.hoverRedrawScheduled = false;
+        this.resizeTimeout = null; // Timeout for resize debouncing
         
         this.setupEventListeners();
         this.initializeCanvas();
@@ -1496,11 +1519,18 @@ class BattleshipClient {
     }
     
     setupResizeHandler() {
-        let resizeTimeout;
         window.addEventListener('resize', () => {
+            // Set resizing flag to prevent phantom mouse events
+            this.isResizing = true;
+            console.log('🔄 Window resize detected - blocking clicks temporarily');
+            
+            // Clear any existing timeout
+            if (this.resizeTimeout) {
+                clearTimeout(this.resizeTimeout);
+            }
+            
             // Debounce resize events to prevent excessive redraws
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
+            this.resizeTimeout = setTimeout(() => {
                 if (this.canvas) {
                     // Recalculate canvas size and grid positions
                     const newWidth = Math.min(1400, windowWidth - 30);
@@ -1520,7 +1550,11 @@ class BattleshipClient {
                     
                     // Canvas resized successfully
                 }
-            }, 100); // 100ms debounce
+                
+                // Re-enable clicks after resize is complete
+                this.isResizing = false;
+                console.log('🔄 Window resize complete - clicks re-enabled');
+            }, 1000); // Wait 1 second after resize stops to prevent phantom events
         });
     }
     
@@ -2223,6 +2257,12 @@ class BattleshipClient {
             return;
         }
         
+        // Additional check for phantom events during resize
+        if (this.resizeTimeout) {
+            console.log(`🎯 Click ignored - resize timeout active`);
+            return;
+        }
+        
         if (this.gamePhase === 'placement') {
             // In placement mode, always try to place the ship first
             // Only check for ship item clicks if placement fails
@@ -2353,6 +2393,12 @@ class BattleshipClient {
     }
     
     handleAttack() {
+        // Prevent attacks during resize events
+        if (this.isResizing || this.resizeTimeout) {
+            console.log(`🎯 Attack blocked - window is resizing`);
+            return;
+        }
+        
         // DEBOUNCE CLICKS - prevent multiple rapid clicks
         const currentTime = Date.now();
         if (currentTime - this.lastClickTime < this.clickDebounceMs) {
@@ -2365,9 +2411,34 @@ class BattleshipClient {
         console.log(`🎯 Mouse coordinates: mouseX=${mouseX}, mouseY=${mouseY}`);
         console.log(`🎯 Grid start position: gridStartX=${this.gridStartX}, gridStartY=${this.gridStartY}`);
         
+        // Check if this is a phantom event (coordinates that don't make sense)
+        if (mouseX === 0 && mouseY === 0) {
+            console.log(`🎯 Click rejected - phantom event (0,0)`);
+            return;
+        }
+        
+        // Check if coordinates are negative (invalid)
+        if (mouseX < 0 || mouseY < 0) {
+            console.log(`🎯 Click rejected - negative coordinates: mouseX=${mouseX}, mouseY=${mouseY}`);
+            return;
+        }
+        
         // Use correct attack grid position (must match drawGrids)
         const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
+        
+        // Check if coordinates are too far from the attack grid (likely phantom event)
+        const distanceFromAttackGrid = Math.sqrt(Math.pow(mouseX - attackGridX, 2) + Math.pow(mouseY - attackGridY, 2));
+        if (distanceFromAttackGrid > 1000) {
+            console.log(`🎯 Click rejected - too far from attack grid: distance=${distanceFromAttackGrid}`);
+            return;
+        }
+        
+        // Check if coordinates are way outside the window bounds (likely phantom event)
+        if (mouseX > windowWidth + 100 || mouseY > windowHeight + 100) {
+            console.log(`🎯 Click rejected - way outside window bounds: mouseX=${mouseX}, mouseY=${mouseY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
+            return;
+        }
         
         console.log(`🎯 Attack grid position: attackGridX=${attackGridX}, attackGridY=${attackGridY}`);
         
@@ -2392,14 +2463,14 @@ class BattleshipClient {
         
         // Additional validation: reject clicks that are clearly outside reasonable bounds
         if (mouseX < 0 || mouseY < 0 || mouseX > windowWidth || mouseY > windowHeight) {
-            console.log(`🎯 Click rejected - outside window bounds`);
+            console.log(`🎯 Click rejected - outside window bounds: mouseX=${mouseX}, mouseY=${mouseY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
             return;
         }
         
-        // Reject clicks that are clearly outside the attack grid area (more aggressive bounds checking)
-        if (mouseX < attackGridX - 50 || mouseX > attackGridX + 400 || 
-            mouseY < attackGridY - 50 || mouseY > attackGridY + 400) {
-            console.log(`🎯 Click rejected - way outside attack grid area`);
+        // Additional validation: reject clicks that are clearly outside the attack grid area
+        if (mouseX < attackGridX - 100 || mouseX > attackGridX + 500 || 
+            mouseY < attackGridY - 100 || mouseY > attackGridY + 500) {
+            console.log(`🎯 Click rejected - way outside attack grid area: mouseX=${mouseX}, mouseY=${mouseY}, attackGridX=${attackGridX}, attackGridY=${attackGridY}`);
             return;
         }
         
