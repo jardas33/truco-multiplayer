@@ -251,9 +251,9 @@ class BattleshipGame {
         const shipsSunkEl = document.getElementById('shipsSunk');
         const accuracyEl = document.getElementById('accuracy');
         
-        // Show games won and ships sunk in current game
-        if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon}W ${this.currentGamePlayerShipsSunk}S`;
-        if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon}W ${this.currentGameAiShipsSunk}S`;
+        // Show games won and ships sunk in current game with clear labels
+        if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.currentGamePlayerShipsSunk} Ships Destroyed`;
+        if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.currentGameAiShipsSunk} Ships Destroyed`;
         if (shipsSunkEl) shipsSunkEl.textContent = `Sunk: ${this.shipsSunk}/5`;
         
         if (accuracyEl) {
@@ -1357,11 +1357,14 @@ class BattleshipClient {
                 strokeWeight(1);
                 rect(x, y, shipWidth, shipHeight);
             } else {
-                // For non-first cells, draw a subtle ship indicator
-                fill(cell.ship.color + '80'); // Add transparency
-                stroke(cell.ship.color);
-                strokeWeight(1);
-                rect(x, y, this.gridSize, this.gridSize);
+                // For non-first cells, don't draw ship color for hit cells
+                if (!cell.hit) {
+                    // Draw a subtle ship indicator only for unhit cells
+                    fill(cell.ship.color + '80'); // Add transparency
+                    stroke(cell.ship.color);
+                    strokeWeight(1);
+                    rect(x, y, this.gridSize, this.gridSize);
+                }
             }
         } else {
             // Water with high contrast for visibility
@@ -1377,17 +1380,28 @@ class BattleshipClient {
             fill(255, 100, 100, 255); // Fully opaque to cover green
             noStroke();
             
-            if (showShips && cell.ship && cell.ship.isFirstCell) {
-                // Cover the entire ship area, not just individual cell
-                const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
-                const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
-                rect(x, y, shipWidth, shipHeight);
-                
-                // White explosion symbol in center of ship
-                fill(255, 255, 255);
-                textAlign(CENTER, CENTER);
-                textSize(16);
-                text('💥', x + shipWidth/2, y + shipHeight/2);
+            if (showShips && cell.ship) {
+                if (cell.ship.isFirstCell) {
+                    // Cover the entire ship area for first cell
+                    const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                    const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                    rect(x, y, shipWidth, shipHeight);
+                    
+                    // White explosion symbol in center of ship
+                    fill(255, 255, 255);
+                    textAlign(CENTER, CENTER);
+                    textSize(16);
+                    text('💥', x + shipWidth/2, y + shipHeight/2);
+                } else {
+                    // Cover individual cell for non-first cells of hit ships
+                    rect(x, y, this.gridSize, this.gridSize);
+                    
+                    // White explosion symbol
+                    fill(255, 255, 255);
+                    textAlign(CENTER, CENTER);
+                    textSize(16);
+                    text('💥', x + this.gridSize/2, y + this.gridSize/2);
+                }
             } else {
                 // Cover individual cell for non-ship hits
                 rect(x, y, this.gridSize, this.gridSize);
