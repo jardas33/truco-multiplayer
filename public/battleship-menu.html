@@ -464,7 +464,19 @@
                 }
             });
             
-            // battleshipGameStart event handler removed to prevent loop
+            // Handle battleship game start event - redirect all players to game
+            window.socket.on('battleshipGameStart', (data) => {
+                console.log('🚢 Received battleship game start event in menu:', data);
+                
+                // Store room settings for the game
+                localStorage.setItem('battleshipRoomCode', data.roomId);
+                localStorage.setItem('battleshipPlayerCount', data.players ? data.players.length.toString() : '2');
+                localStorage.setItem('battleshipGameMode', 'multiplayer');
+                
+                // Redirect to game
+                console.log('🚢 Redirecting to battleship game...');
+                window.location.href = '/battleship';
+            });
             
             // Handle players updated event to keep both players in sync
             window.socket.on('playersUpdated', (players) => {
@@ -581,11 +593,6 @@
         
         
         function startBattleshipGame() {
-            // Store room settings
-            localStorage.setItem('battleshipRoomCode', window.battleshipRoomId);
-            localStorage.setItem('battleshipPlayerCount', '2');
-            localStorage.setItem('battleshipGameMode', 'multiplayer');
-            
             // Emit game start to server to notify all players
             if (window.socket) {
                 window.socket.emit('battleshipGameStart', {
@@ -593,8 +600,8 @@
                 });
             }
             
-            // Redirect to game
-            window.location.href = '/battleship';
+            // The actual redirect will be handled by the battleshipGameStart event handler
+            // This ensures all players get redirected simultaneously
         }
 
         // Nickname change functionality

@@ -290,12 +290,21 @@ io.on('connection', (socket) => {
     // ✅ Handle battleship game events
     socket.on('battleshipGameStart', (data) => {
         console.log(`🚢 Battleship game start requested for room: ${data.roomId}`);
+        console.log(`🚢 Requesting socket ID: ${socket.id}`);
         const room = rooms.get(data.roomId);
+        console.log(`🚢 Room found:`, !!room);
+        console.log(`🚢 Room game type:`, room?.gameType);
+        console.log(`🚢 Room players:`, room?.players?.length);
+        
         if (room && room.gameType === 'battleship') {
+            console.log(`🚢 Broadcasting battleshipGameStart to room ${data.roomId}`);
             io.to(data.roomId).emit('battleshipGameStart', {
                 roomId: data.roomId,
                 players: room.players
             });
+            console.log(`🚢 Broadcast complete`);
+        } else {
+            console.log(`❌ Room not found or not battleship type`);
         }
     });
     

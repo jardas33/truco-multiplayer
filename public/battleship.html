@@ -608,13 +608,7 @@
     </div>
 
 
-    <!-- Scripts -->
-    <script src="js/functions.js"></script>
-    <script src="js/preload.js"></script>
-    <script src="js/battleship.js"></script>
-    <script src="js/setup.js"></script>
-    
-    <!-- Multiplayer synchronization script -->
+    <!-- Multiplayer synchronization script - MUST run before battleship.js -->
     <script>
         // Initialize socket for multiplayer synchronization
         let battleshipSocket;
@@ -624,10 +618,23 @@
         const gameMode = localStorage.getItem('battleshipGameMode');
         
         if (roomCode && gameMode === 'multiplayer') {
-            console.log('🚢 Initializing battleship multiplayer socket for room:', roomCode);
+            console.log('🚢 Initializing battleship multiplayer for room:', roomCode);
+            console.log('🚢 Window socket available:', !!window.socket);
+            console.log('🚢 Socket connected:', window.socket?.connected);
+            console.log('🚢 Socket ID:', window.socket?.id);
             
-            // Initialize socket
-            battleshipSocket = io();
+            // Use existing socket from menu instead of creating new one
+            battleshipSocket = window.socket;
+            
+            if (!battleshipSocket) {
+                console.error('❌ No socket available from menu!');
+                return;
+            }
+            
+            if (!battleshipSocket.connected) {
+                console.error('❌ Socket not connected!');
+                return;
+            }
             
             // Handle game start event from server
             battleshipSocket.on('battleshipGameStart', (data) => {
@@ -690,6 +697,22 @@
                     battleshipSocket.disconnect();
                 }
             });
+        }
+    </script>
+
+    <!-- Scripts -->
+    <script src="js/functions.js"></script>
+    <script src="js/preload.js"></script>
+    <script src="js/battleship.js"></script>
+    <script src="js/setup.js"></script>
+    
+    <!-- Clear localStorage after all scripts are loaded -->
+    <script>
+        // Clear localStorage after all scripts are loaded to prevent race conditions
+        if (roomCode && gameMode === 'multiplayer') {
+            localStorage.removeItem('battleshipRoomCode');
+            localStorage.removeItem('battleshipPlayerCount');
+            localStorage.removeItem('battleshipGameMode');
         }
     </script>
 </body>

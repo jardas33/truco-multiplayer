@@ -95,10 +95,8 @@ class BattleshipGame {
                 this.initializeMultiplayer(roomCode);
             }
             
-            // Clear localStorage after reading
-            localStorage.removeItem('battleshipRoomCode');
-            localStorage.removeItem('battleshipPlayerCount');
-            localStorage.removeItem('battleshipGameMode');
+            // Don't clear localStorage here - let the HTML script handle it
+            // This prevents race conditions between the game initialization and socket setup
         }
         
         this.addToHistory('🎮 Game initialized. Place your ships to begin!', 'info');
@@ -113,10 +111,12 @@ class BattleshipGame {
         this.roomCode = roomCode;
         this.isMultiplayer = true;
         
-        // Initialize socket if not already done
-        if (!window.socket) {
-            window.socket = io();
+        // Use existing socket from menu - don't create new one
+        if (window.socket) {
+            console.log('🚢 Using existing socket from menu');
             this.setupMultiplayerListeners();
+        } else {
+            console.error('❌ No socket available for multiplayer!');
         }
     }
     
@@ -2075,7 +2075,11 @@ let battleshipClient;
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚢 Initializing Battleship game...');
-    battleshipGame = new BattleshipGame();
+    
+    // Add a small delay to ensure multiplayer socket is ready
+    setTimeout(() => {
+        battleshipGame = new BattleshipGame();
+    }, 100);
     
     // Set up callback for when ship images are loaded
     window.checkShipImagesLoaded = function() {
