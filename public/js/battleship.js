@@ -1343,16 +1343,31 @@ class BattleshipClient {
         
         // Then, draw hit/miss indicators ON TOP of everything
         if (cell.hit) {
-            // RED square for hits (whole square) - covers ship squares
+            // RED square for hits - cover the full ship area if it's a ship cell
             fill(255, 100, 100, 255); // Fully opaque to cover green
             noStroke();
-            rect(x, y, this.gridSize, this.gridSize);
             
-            // White explosion symbol
-            fill(255, 255, 255);
-            textAlign(CENTER, CENTER);
-            textSize(16);
-            text('💥', x + this.gridSize/2, y + this.gridSize/2);
+            if (showShips && cell.ship && cell.ship.isFirstCell) {
+                // Cover the entire ship area, not just individual cell
+                const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
+                rect(x, y, shipWidth, shipHeight);
+                
+                // White explosion symbol in center of ship
+                fill(255, 255, 255);
+                textAlign(CENTER, CENTER);
+                textSize(16);
+                text('💥', x + shipWidth/2, y + shipHeight/2);
+            } else {
+                // Cover individual cell for non-ship hits
+                rect(x, y, this.gridSize, this.gridSize);
+                
+                // White explosion symbol
+                fill(255, 255, 255);
+                textAlign(CENTER, CENTER);
+                textSize(16);
+                text('💥', x + this.gridSize/2, y + this.gridSize/2);
+            }
         } else if (cell.miss) {
             // BLUE square for misses (whole square) - covers ship squares
             fill(100, 150, 255, 255); // Fully opaque to cover green
