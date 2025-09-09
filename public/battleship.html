@@ -683,10 +683,7 @@
                     console.log('🚢 Updated player names:', player1Name, 'vs', player2Name);
                 }
                 
-                // CRITICAL: Call the game's handleGameStart function to transition to playing phase
-                if (window.battleshipGame) {
-                    window.battleshipGame.handleGameStart(data);
-                }
+                // Game start is handled in the JavaScript file via socket listener
             });
             
             // Handle turn change events

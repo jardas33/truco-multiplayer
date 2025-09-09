@@ -267,6 +267,9 @@ class BattleshipGame {
         console.log('🚢 Handling opponent attack:', data);
         const { x, y, attackingPlayerId } = data;
         
+        console.log('🚢 Current playerId:', this.playerId);
+        console.log('🚢 Attacking playerId:', attackingPlayerId);
+        
         // Only process attacks from the opponent, not our own attacks
         if (attackingPlayerId === this.playerId) {
             console.log('🚢 Ignoring own attack');
@@ -393,14 +396,17 @@ class BattleshipGame {
     }
     
     emitTurnChange() {
+        console.log('🚢 emitTurnChange called - isMultiplayer:', this.isMultiplayer, 'socket:', !!this.socket, 'roomCode:', this.roomCode);
         if (this.isMultiplayer && this.socket && this.roomCode) {
             // Use a simple toggle between players instead of relying on opponentId
             const nextPlayer = this.currentPlayer === 0 ? 1 : 0;
+            console.log('🚢 Current player:', this.currentPlayer, 'Next player:', nextPlayer);
             
             this.socket.emit('battleshipTurnChange', {
                 roomId: this.roomCode,
                 currentPlayer: nextPlayer
             });
+            console.log('🚢 Turn change emitted');
             
             // Update local turn state
             this.isPlayerTurn = false;
@@ -1015,8 +1021,10 @@ class BattleshipGame {
     }
     
     endTurn() {
+        console.log('🚢 endTurn called - isMultiplayer:', this.isMultiplayer);
         if (this.isMultiplayer) {
             // In multiplayer, emit turn change to server
+            console.log('🚢 Emitting turn change');
             this.emitTurnChange();
         } else {
             // Single player mode
@@ -1269,7 +1277,8 @@ class BattleshipGame {
 // 🎮 BATTLESHIP CLIENT
 class BattleshipClient {
     constructor() {
-        this.game = new BattleshipGame();
+        // Use the global battleshipGame instance instead of creating a new one
+        this.game = window.battleshipGame || new BattleshipGame();
         this.canvas = null;
         this.gridSize = 30; // Smaller grid size for better fit
         this.gridSpacing = 1; // Smaller spacing for better fit
@@ -2385,6 +2394,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add a small delay to ensure multiplayer socket is ready
     setTimeout(() => {
         battleshipGame = new BattleshipGame();
+        window.battleshipGame = battleshipGame; // Make it globally accessible
     }, 100);
     
     // Set up callback for when ship images are loaded
