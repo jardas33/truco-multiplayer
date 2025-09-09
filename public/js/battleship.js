@@ -1312,31 +1312,10 @@ class BattleshipClient {
                 const shipWidth = cell.ship.orientation === 'horizontal' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
                 const shipHeight = cell.ship.orientation === 'vertical' ? cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing : this.gridSize;
                 
-                if (window.shipImages && window.shipImages[cell.ship.type]) {
-                    // Don't draw ship image for hit cells - let hit symbol handle it completely
-                    if (!cell.hit) {
-                        // Draw ship image with proper rotation handling
-                        if (cell.ship.orientation === 'vertical') {
-                            push();
-                            // For vertical ships, rotate around the center
-                            const centerX = x + shipWidth / 2;
-                            const centerY = y + shipHeight / 2;
-                            translate(centerX, centerY);
-                            rotate(PI/2); // 90 degrees clockwise
-                            // Use original horizontal dimensions to prevent stretching
-                            const imageWidth = cell.ship.size * (this.gridSize + this.gridSpacing) - this.gridSpacing;
-                            const imageHeight = this.gridSize;
-                            image(window.shipImages[cell.ship.type], -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-                            pop();
-                        } else {
-                            // Horizontal ships - draw normally
-                            image(window.shipImages[cell.ship.type], x, y, shipWidth, shipHeight);
-                        }
-                    }
-                    
-                    // Don't draw hit overlay here - let the hit symbol rendering handle it
-                    // This prevents double red overlay that makes hit symbols invisible
-                } else {
+                // Always use colored rectangles instead of ship images to ensure consistent green color
+                // if (window.shipImages && window.shipImages[cell.ship.type]) {
+                //     // Ship images disabled - use green rectangles instead
+                // } else {
                     // Fallback to colored rectangle - don't show ship color for hit cells
                     if (cell.ship.sunk) {
                         fill(139, 0, 0); // Dark red for sunk ships
@@ -1347,7 +1326,7 @@ class BattleshipClient {
                         fill(0, 255, 0); // Green for all unhit ships
                     }
                     rect(x, y, shipWidth, shipHeight);
-                }
+                // }
                 
                 // Add border only for unhit ships
                 if (!cell.hit) {
@@ -1359,9 +1338,9 @@ class BattleshipClient {
             } else {
                 // For non-first cells, don't draw ship color for hit cells
                 if (!cell.hit) {
-                    // Draw a subtle ship indicator only for unhit cells
-                    fill(cell.ship.color + '80'); // Add transparency
-                    stroke(cell.ship.color);
+                    // Draw a subtle ship indicator only for unhit cells - use green
+                    fill(0, 255, 0, 128); // Green with transparency
+                    stroke(0, 255, 0); // Green border
                     strokeWeight(1);
                     rect(x, y, this.gridSize, this.gridSize);
                 }
@@ -1620,27 +1599,14 @@ class BattleshipClient {
             startY = mouseCanvasY - totalHeight / 2;
         }
         
-        // Draw the ship image
-        const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
+        // Draw the ship as a green rectangle instead of using ship images
+        // const shipImage = window.shipImages ? window.shipImages[ship.type] : null;
         
-        if (shipImage) {
-            if (orientation === 'vertical') {
-                push();
-                // For vertical ships, we need to rotate around the center of the ship
-                const centerX = startX + totalWidth / 2;
-                const centerY = startY + totalHeight / 2;
-                translate(centerX, centerY);
-                rotate(PI/2); // 90 degrees clockwise
-                // Draw the image with swapped dimensions to prevent stretching
-                // The image should be drawn with the original horizontal dimensions
-                const imageWidth = ship.size * cellSize;  // Original horizontal width
-                const imageHeight = cellSize;             // Original horizontal height
-                image(shipImage, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-                pop();
-            } else {
-                image(shipImage, startX, startY, totalWidth, totalHeight);
-            }
-        }
+        // Always use green rectangle for ship preview
+        fill(0, 255, 0); // Green for all ship previews
+        stroke(255, 255, 255);
+        strokeWeight(1);
+        rect(startX, startY, totalWidth, totalHeight);
         
         // Draw placement instructions
         fill(255);
@@ -1688,7 +1654,7 @@ class BattleshipClient {
         const shipWidth = ship.orientation === 'horizontal' ? ship.size * 15 : 15;
         const shipHeight = ship.orientation === 'vertical' ? ship.size * 15 : 15;
         
-        fill(red(ship.color), green(ship.color), blue(ship.color));
+        fill(0, 255, 0); // Green for all ship previews
         stroke(255);
         strokeWeight(1);
         rect(20, height - 40, shipWidth, shipHeight);
