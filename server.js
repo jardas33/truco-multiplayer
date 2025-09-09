@@ -194,7 +194,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayersJoin = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        const maxPlayersJoin = room.gameType === 'truco' ? 4 : (room.gameType === 'battleship' ? 2 : 6); // Truco needs 4, Battleship needs 2, other games can have up to 6
         if (room.players.length >= maxPlayersJoin) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersJoin})`);
             socket.emit('error', 'Room is full');
@@ -265,10 +265,12 @@ io.on('connection', (socket) => {
                 console.log(`🚢 Player ${socket.id} marked as ready`);
                 console.log(`🚢 All players:`, room.players.map(p => ({ id: p.id, ready: p.ready })));
                 
-                // Check if both players are ready
-                const allReady = room.players.every(p => p.ready);
+                // Check if both players are ready (only check first 2 players for battleship)
+                const battleshipPlayers = room.players.slice(0, 2);
+                const allReady = battleshipPlayers.every(p => p.ready);
                 console.log(`🚢 All players ready:`, allReady);
-                if (allReady && room.players.length === 2) {
+                console.log(`🚢 Room has ${room.players.length} players, checking first 2 for battleship`);
+                if (allReady && battleshipPlayers.length === 2) {
                     console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
                     io.to(data.roomId).emit('battleshipGameStart', {
                         roomId: data.roomId,
