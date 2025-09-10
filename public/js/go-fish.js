@@ -37,8 +37,8 @@ class GoFishGame {
         
         this.players = players.map((player, index) => ({
             ...player,
-            hand: [],
-            pairs: 0,
+            hand: player.hand || [], // Use existing hand if provided
+            pairs: player.pairs || 0,
             overallWins: player.overallWins || 0, // Initialize overall wins
             position: index,
             isBot: player.name.toLowerCase().includes('bot') || player.isBot || false // Detect bots by name or explicit property
@@ -77,23 +77,37 @@ class GoFishGame {
     startNewGame() {
         console.log('🎯 Starting new Go Fish game');
         
-        // Reset all hands and pairs
-        this.players.forEach(player => {
-            player.hand = [];
-            player.pairs = 0;
-        });
+        // Check if hands are already provided by server
+        const hasHandsFromServer = this.players.some(player => player.hand && player.hand.length > 0);
         
-        this.pond = [];
+        if (hasHandsFromServer) {
+            // Hands already provided by server, just reset pairs
+            console.log('🐟 Using hands provided by server');
+            this.players.forEach(player => {
+                player.pairs = 0;
+            });
+        } else {
+            // Reset all hands and pairs
+            this.players.forEach(player => {
+                player.hand = [];
+                player.pairs = 0;
+            });
+            
+            // Create fresh deck and shuffle
+            this.deck = CardUtils.createStandardDeck();
+            this.deck = CardUtils.shuffleDeck(this.deck);
+            
+            // Deal cards
+            this.dealCards();
+        }
+        
+        // Only reset pond if not provided by server
+        if (!hasHandsFromServer) {
+            this.pond = [];
+        }
         this.pairs = [];
         this.gameOver = false;
         this.winner = null;
-        
-        // Create fresh deck and shuffle
-        this.deck = CardUtils.createStandardDeck();
-        this.deck = CardUtils.shuffleDeck(this.deck);
-        
-        // Deal cards
-        this.dealCards();
         
         // Check for initial pairs
         this.players.forEach(player => {
@@ -113,10 +127,17 @@ class GoFishGame {
         // Start periodic game over check
         this.startGameOverCheck();
         
-        // If it's a bot's turn, make them play after a short delay
+        // Check if it's the local player's turn
         const currentPlayer = this.players[this.currentPlayer];
-        if (currentPlayer.isBot) {
-            setTimeout(() => this.botPlay(), 3000); // 3 second delay for game start
+        if (this.isMyTurn) {
+            if (currentPlayer.isBot) {
+                console.log(`🤖 ${currentPlayer.name} is a bot - will play in 3 seconds`);
+                setTimeout(() => this.botPlay(), 3000); // 3 second delay for game start
+            } else {
+                console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
+            }
+        } else {
+            console.log(`👤 Waiting for ${currentPlayer.name}'s turn`);
         }
     }
     
@@ -525,13 +546,17 @@ class GoFishGame {
             players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs }))
         });
         
-        // If it's a bot's turn, make them play after a delay
+        // Check if it's the local player's turn
         const currentPlayer = this.players[this.currentPlayer];
-        if (currentPlayer.isBot) {
-            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 4 seconds`);
-            setTimeout(() => this.botPlay(), 4000); // 4 second delay for bot thinking
+        if (this.isMyTurn) {
+            if (currentPlayer.isBot) {
+                console.log(`🤖 ${currentPlayer.name} is a bot - will play in 4 seconds`);
+                setTimeout(() => this.botPlay(), 4000); // 4 second delay for bot thinking
+            } else {
+                console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
+            }
         } else {
-            console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
+            console.log(`👤 Waiting for ${currentPlayer.name}'s turn`);
         }
     }
     
@@ -539,6 +564,9 @@ class GoFishGame {
     botPlay() {
         const bot = this.players[this.currentPlayer];
         if (!bot.isBot) return;
+        
+        // Only run bot logic if it's the local player's turn
+        if (!this.isMyTurn) return;
         
         console.log(`🤖 ${bot.name} is thinking...`);
         
@@ -798,10 +826,10 @@ class GoFishClient {
         const goFishBtn = document.getElementById('goFishBtn');
         
         if (askBtn) {
-            askBtn.onclick = () => this.askForCards();
+            askBtn.onclick = () => this.handleAskForCards();
         }
         if (goFishBtn) {
-            goFishBtn.onclick = () => this.goFish();
+            goFishBtn.onclick = () => this.handleGoFish();
         }
         
         // Copy room code
@@ -822,13 +850,18 @@ class GoFishClient {
         
         socket.on('roomJoined', (data) => {
             console.log('🏠 Room joined:', data);
-            this.localPlayerIndex = data.playerIndex;
+            this.localPlayerIndex = data.playerIndex || 0;
             this.showPlayerCustomization();
             this.showGameControls();
         });
         
         socket.on('gameStarted', (data) => {
             console.log('🎮 Game started:', data);
+            this.startGame(data);
+        });
+
+        socket.on('gameStart', (data) => {
+            console.log('🎮 Game start event received:', data);
             this.startGame(data);
         });
         
@@ -851,7 +884,13 @@ class GoFishClient {
         // Error handling
         socket.on('error', (error) => {
             console.error('Socket error:', error);
-            UIUtils.showGameMessage(`Error: ${error}`, 'error');
+            this.addGameMessage(`Error: ${error}`, 'error');
+        });
+        
+        // Handle disconnection
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            this.addGameMessage('Disconnected from server. Please refresh the page.', 'error');
         });
     }
 
@@ -925,8 +964,28 @@ class GoFishClient {
     startGame(data = null) {
         console.log('🎮 Go Fish: Starting game with data:', data);
         
-        if (data) {
+        if (data && data.players) {
+            // Initialize with server data
             this.game.initialize(data.players);
+            this.localPlayerIndex = data.localPlayerIndex || 0;
+            
+            // Set pond data if provided
+            if (data.pond) {
+                this.game.pond = data.pond;
+            }
+            
+            // Update turn state based on current player
+            this.isMyTurn = (this.game.currentPlayer === this.localPlayerIndex);
+            this.canAct = this.isMyTurn;
+        } else if (data && data.hands) {
+            // Handle Truco-style game start data
+            const players = data.players.map((player, index) => ({
+                ...player,
+                hand: data.hands[index] || [],
+                pairs: 0,
+                isBot: player.name.toLowerCase().includes('bot') || player.isBot || false
+            }));
+            this.game.initialize(players);
             this.localPlayerIndex = data.localPlayerIndex || 0;
         } else {
             // Initialize with default players for testing
@@ -974,6 +1033,32 @@ class GoFishClient {
         console.log('🎮 Go Fish: Game started successfully');
     }
 
+    // Handle ask for cards from UI
+    handleAskForCards() {
+        if (!this.canAct || !this.isMyTurn) {
+            console.log('❌ Cannot ask for cards - not my turn or cannot act');
+            return;
+        }
+        
+        const targetSelect = document.getElementById('targetPlayerSelect');
+        const rankSelect = document.getElementById('rankSelect');
+        
+        if (!targetSelect || !rankSelect) {
+            console.log('❌ Missing UI elements for ask for cards');
+            return;
+        }
+        
+        const targetPlayerIndex = parseInt(targetSelect.value);
+        const rank = rankSelect.value;
+        
+        if (!targetPlayerIndex || !rank) {
+            console.log('❌ Missing target player or rank selection');
+            return;
+        }
+        
+        this.askForCards(targetPlayerIndex, rank);
+    }
+
     // Ask for cards
     askForCards(targetPlayerIndex, rank) {
         if (!this.canAct || !this.isMyTurn) {
@@ -986,6 +1071,14 @@ class GoFishClient {
             return;
         }
         
+        // Validate that the local player has the rank they're asking for
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (!localPlayer.hand.some(card => card.rank === rank)) {
+            console.log('❌ Cannot ask for a rank you don\'t have');
+            this.addGameMessage('You can only ask for ranks you have in your hand!', 'error');
+            return;
+        }
+        
         console.log(`🎯 Asking ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`);
         
         // Use the game's askForCards method
@@ -993,12 +1086,12 @@ class GoFishClient {
         
         if (success) {
             console.log('✅ Successfully asked for cards - got cards from target player');
-            addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`, 'info');
+            this.addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`, 'info');
             this.updateUI();
             // Player gets another turn, so don't call endTurn()
         } else {
             console.log('✅ Ask completed - target player said "Go Fish!" and game handled it');
-            addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s but got "Go Fish!"`, 'warning');
+            this.addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s but got "Go Fish!"`, 'warning');
             this.updateUI();
             // Game already handled the Go Fish internally, no need to do anything else
         }
@@ -1015,6 +1108,16 @@ class GoFishClient {
         }
     }
 
+    // Handle go fish from UI
+    handleGoFish() {
+        if (!this.canAct || !this.isMyTurn) {
+            console.log('❌ Cannot go fish - not my turn or cannot act');
+            return;
+        }
+        
+        this.goFish();
+    }
+
     // Go fish
     goFish() {
         if (!this.canAct || !this.isMyTurn) {
@@ -1028,7 +1131,7 @@ class GoFishClient {
         this.game.goFish(this.game.players[this.localPlayerIndex]);
         
         // Show message
-        addGameMessage('🐟 Going fishing!', 'info');
+        this.addGameMessage('🐟 Going fishing!', 'info');
         
         // Update UI
         this.updateUI();
@@ -1078,7 +1181,17 @@ class GoFishClient {
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
+        
+        console.log(`🔄 Turn changed to ${this.game.players[this.game.currentPlayer]?.name}, isMyTurn: ${this.isMyTurn}`);
+        
         this.updateUI();
+        
+        // If it's a bot's turn and it's the local player, trigger bot play
+        const currentPlayer = this.game.players[this.game.currentPlayer];
+        if (this.isMyTurn && currentPlayer.isBot) {
+            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 4 seconds`);
+            setTimeout(() => this.botPlay(), 4000);
+        }
     }
 
     // Show game over
@@ -1141,13 +1254,54 @@ class GoFishClient {
 
     // Update player areas
     updatePlayerAreas() {
-        // This would update the visual representation of players
-        // For now, just log the state
-        console.log('Players:', this.game.players.map(p => ({
-            name: p.name,
-            hand: p.hand.length,
-            pairs: p.pairs
-        })));
+        const playerAreas = document.getElementById('playerAreas');
+        if (!playerAreas) return;
+        
+        // Clear existing areas
+        playerAreas.innerHTML = '';
+        
+        // Create player areas
+        this.game.players.forEach((player, index) => {
+            const area = document.createElement('div');
+            area.className = `player-area ${index === this.game.currentPlayer ? 'active' : ''}`;
+            area.style.cssText = `
+                position: absolute;
+                ${index === 0 ? 'bottom: 20px; left: 50%; transform: translateX(-50%);' : ''}
+                ${index === 1 ? 'top: 20px; left: 50%; transform: translateX(-50%);' : ''}
+                ${index === 2 ? 'top: 50%; left: 20px; transform: translateY(-50%);' : ''}
+                ${index === 3 ? 'top: 50%; right: 20px; transform: translateY(-50%);' : ''}
+                ${index === 4 ? 'top: 20px; left: 20px;' : ''}
+                ${index === 5 ? 'top: 20px; right: 20px;' : ''}
+            `;
+            
+            // Only show hand cards for the local player, others show card count
+            const showHand = (index === this.localPlayerIndex);
+            
+            area.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 10px;">${player.name}</div>
+                <div style="font-size: 12px; margin-bottom: 5px;">Cards: ${player.hand.length}</div>
+                <div style="font-size: 12px; margin-bottom: 5px;">Pairs: ${player.pairs}</div>
+                <div class="hand-cards">
+                    ${showHand ? 
+                        player.hand.map(card => 
+                            `<div class="card" title="${card.name}">${card.rank}</div>`
+                        ).join('') :
+                        `🃏 ${player.hand.length} cards`
+                    }
+                </div>
+            `;
+            
+            playerAreas.appendChild(area);
+        });
+    }
+
+    // Add game message
+    addGameMessage(message, type = 'info') {
+        if (typeof UIUtils !== 'undefined' && UIUtils.showGameMessage) {
+            UIUtils.showGameMessage(message, type);
+        } else {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
     }
 
     // Update controls

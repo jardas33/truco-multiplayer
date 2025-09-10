@@ -388,6 +388,68 @@
             background-color: #1976D2 !important;
             background: #1976D2 !important;
         }
+
+        /* Player Areas */
+        .player-areas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .player-area {
+            position: absolute;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            min-width: 200px;
+            pointer-events: auto;
+        }
+
+        .player-area.active {
+            border-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+
+        .hand-cards {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 40px;
+            height: 56px;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .card.selected {
+            transform: translateY(-10px);
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255,215,0,0.8);
+        }
     </style>
 </head>
 <body>
@@ -465,6 +527,29 @@
             
             <div class="fish-pond" id="fishPond">
                 🐟<br>Go Fish!<br><span id="pondCards">0</span>
+            </div>
+            
+            <!-- Player Areas -->
+            <div id="playerAreas" class="player-areas">
+                <!-- Player areas will be dynamically generated -->
+            </div>
+            
+            <!-- Player Selector -->
+            <div id="playerSelector" class="player-selector" style="display: none;">
+                <label for="targetPlayerSelect">Ask player:</label>
+                <select id="targetPlayerSelect">
+                    <!-- Options will be populated dynamically -->
+                </select>
+                <label for="rankSelect">For rank:</label>
+                <select id="rankSelect">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            
+            <!-- Action Controls -->
+            <div id="actionControls" class="action-controls" style="display: none;">
+                <button id="askBtn" class="ask-button">Ask for Cards</button>
+                <button id="goFishBtn" class="go-fish-button">Go Fish!</button>
             </div>
             
         </div>

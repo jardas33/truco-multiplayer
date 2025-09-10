@@ -11,6 +11,15 @@ const io = require('socket.io')(http, {
 // Store active rooms
 const rooms = new Map();
 
+// Helper function for Go Fish card values
+function getCardValue(rank) {
+    const values = {
+        '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+        'jack': 11, 'queen': 12, 'king': 13, 'ace': 14
+    };
+    return values[rank] || 0;
+}
+
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
     res.status(200).json({
@@ -263,6 +272,7 @@ io.on('connection', (socket) => {
         socket.emit('roomJoined', {
             roomId: roomCode,
             playerId: socket.id,
+            playerIndex: room.players.length - 1, // Index of the player who just joined
             isHost: false
         });
         console.log(`🚢 roomJoined event emitted successfully`);
@@ -607,53 +617,115 @@ io.on('connection', (socket) => {
             console.log(`✅ Team assignment:`, room.players.map((p, i) => `${i}: ${p.name} → ${p.team === 'team1' ? 'Team Alfa' : 'Team Beta'}`));
             console.log(`✅ Starting game with ${room.players.length} players in room ${roomCode}`);
 
-            // ✅ Create shared deck and distribute cards to all players
-            console.log(`🔍 Creating deck...`);
-            const deck = createDeck();
-            console.log(`🔍 Deck created successfully with ${deck.length} cards`);
-            
-            console.log(`🔍 Dealing cards...`);
-            const hands = dealCards(deck);
-            console.log(`🔍 Cards dealt successfully, hands:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
-            
-            // ✅ VALIDATION: Ensure hands are properly created
-            if (!hands || hands.length !== 4 || hands.some(hand => !Array.isArray(hand) || hand.length !== 3)) {
-                throw new Error('Invalid hands created');
+            // ✅ Create game state based on game type
+            if (room.gameType === 'go-fish') {
+                // For Go Fish, create a proper game state with dealt cards
+                console.log(`🐟 Creating Go Fish game for ${room.players.length} players`);
+                
+                // Create a standard deck for Go Fish
+                const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+                const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+                const deck = [];
+                
+                for (let suit of suits) {
+                    for (let rank of ranks) {
+                        deck.push({
+                            name: `${rank} of ${suit}`,
+                            suit: suit,
+                            rank: rank,
+                            value: getCardValue(rank)
+                        });
+                    }
+                }
+                
+                // Shuffle deck
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+                
+                // Deal cards to players (5 cards each, or 7 if 2 players)
+                const cardsPerPlayer = room.players.length === 2 ? 7 : 5;
+                const hands = Array(room.players.length).fill().map(() => []);
+                
+                for (let i = 0; i < cardsPerPlayer; i++) {
+                    for (let j = 0; j < room.players.length; j++) {
+                        if (deck.length > 0) {
+                            hands[j].push(deck.pop());
+                        }
+                    }
+                }
+                
+                // Remaining cards go to pond
+                const pond = [...deck];
+                
+                room.game = {
+                    started: true,
+                    currentPlayer: 0, // Will be set correctly below
+                    gameType: 'go-fish',
+                    hands: hands,
+                    pond: pond,
+                    deck: []
+                };
+                
+                console.log(`🐟 Go Fish game created with hands:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
+                console.log(`🐟 Pond has ${pond.length} cards`);
+            } else {
+                // For Truco and other games, create shared deck and distribute cards
+                console.log(`🔍 Creating deck...`);
+                const deck = createDeck();
+                console.log(`🔍 Deck created successfully with ${deck.length} cards`);
+                
+                console.log(`🔍 Dealing cards...`);
+                const hands = dealCards(deck);
+                console.log(`🔍 Cards dealt successfully, hands:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
+                
+                // ✅ VALIDATION: Ensure hands are properly created
+                if (!hands || hands.length !== 4 || hands.some(hand => !Array.isArray(hand) || hand.length !== 3)) {
+                    throw new Error('Invalid hands created');
+                }
+                
+                // ✅ Store game state in room for synchronization
+                room.game = {
+                    deck: deck,
+                    hands: hands,
+                    currentPlayer: 0, // Will be set correctly below
+                    playedCards: [], // ✅ Clear played cards when starting new game
+                    scores: { team1: 0, team2: 0 },
+                    started: true
+                };
             }
             
-            // ✅ Store game state in room for synchronization
-            room.game = {
-                deck: deck,
-                hands: hands,
-                currentPlayer: 0, // Will be set correctly below
-                playedCards: [], // ✅ Clear played cards when starting new game
-                scores: { team1: 0, team2: 0 }
-            };
-            
-            // ✅ CRITICAL FIX: Only the very first game starts with Player 1
-            // All subsequent games start with the round winner from the previous game
-            if (!room.isFirstGame) {
-                // This is a subsequent game - start with round winner
-                if (room.lastRoundWinner) {
-                    const winnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
-                    if (winnerPlayerIndex !== -1) {
-                        room.game.currentPlayer = winnerPlayerIndex;
-                        console.log(`🎯 Subsequent game starting with round winner: ${room.lastRoundWinner.name} (index ${winnerPlayerIndex})`);
+            // ✅ Set current player based on game type
+            if (room.gameType === 'go-fish') {
+                // For Go Fish, always start with Player 1
+                room.game.currentPlayer = 0;
+                console.log(`🐟 Go Fish game starting with Player 1: ${room.players[0]?.name}`);
+            } else {
+                // For Truco and other games, use the existing logic
+                if (!room.isFirstGame) {
+                    // This is a subsequent game - start with round winner
+                    if (room.lastRoundWinner) {
+                        const winnerPlayerIndex = room.players.findIndex(p => p.name === room.lastRoundWinner.name);
+                        if (winnerPlayerIndex !== -1) {
+                            room.game.currentPlayer = winnerPlayerIndex;
+                            console.log(`🎯 Subsequent game starting with round winner: ${room.lastRoundWinner.name} (index ${winnerPlayerIndex})`);
+                        } else {
+                            room.game.currentPlayer = 0;
+                            console.log(`⚠️ Could not find round winner, defaulting to Player 1`);
+                        }
                     } else {
                         room.game.currentPlayer = 0;
-                        console.log(`⚠️ Could not find round winner, defaulting to Player 1`);
+                        console.log(`⚠️ No round winner found, defaulting to Player 1`);
                     }
                 } else {
+                    // This is the very first game - start with Player 1
                     room.game.currentPlayer = 0;
-                    console.log(`⚠️ No round winner found, defaulting to Player 1`);
+                    console.log(`🎯 Very first game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                    console.log(`🔍 DEBUG: First game currentPlayer set to: ${room.game.currentPlayer}`);
+                    console.log(`🔍 DEBUG: Player at index 0: ${room.players[0]?.name} (${room.players[0]?.team})`);
+                    room.isFirstGame = false; // Mark that we've had our first game
                 }
-            } else {
-                // This is the very first game - start with Player 1
-                room.game.currentPlayer = 0;
-                console.log(`🎯 Very first game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-                console.log(`🔍 DEBUG: First game currentPlayer set to: ${room.game.currentPlayer}`);
-                console.log(`🔍 DEBUG: Player at index 0: ${room.players[0]?.name} (${room.players[0]?.team})`);
-                room.isFirstGame = false; // Mark that we've had our first game
             }
             
             console.log(`✅ Game state initialized successfully for room ${roomCode}`);
@@ -662,11 +734,32 @@ io.on('connection', (socket) => {
             // ✅ Emit gameStart event with hands to all players in the room
             // ✅ Emitting gameStart event to room
             
-            io.to(roomCode).emit('gameStart', {
-                players: room.players,
-                hands: hands,
-                currentPlayer: room.game.currentPlayer  // ✅ FIX: Use the actual random starting player
-            });
+            if (room.gameType === 'go-fish') {
+                // For Go Fish, emit gameStarted event with proper format including hands and pond
+                // Send to each player individually with their correct local player index
+                room.players.forEach((player, playerIndex) => {
+                    const socket = io.sockets.sockets.get(player.id);
+                    if (socket) {
+                        socket.emit('gameStarted', {
+                            players: room.players.map((p, index) => ({
+                                ...p,
+                                hand: room.game.hands[index] || [],
+                                pairs: 0
+                            })),
+                            pond: room.game.pond,
+                            localPlayerIndex: playerIndex, // Each player gets their correct index
+                            currentPlayer: room.game.currentPlayer
+                        });
+                    }
+                });
+            } else {
+                // For other games (Truco, etc.), emit gameStart event
+                io.to(roomCode).emit('gameStart', {
+                    players: room.players,
+                    hands: hands,
+                    currentPlayer: room.game.currentPlayer  // ✅ FIX: Use the actual random starting player
+                });
+            }
             
             console.log(`🎯 Game started successfully in room ${roomCode} with shared deck`);
             console.log(`🔍 gameStart event emitted to ${room.players.length} players`);
@@ -674,6 +767,146 @@ io.on('connection', (socket) => {
             console.error(`❌ CRITICAL ERROR in startGame handler:`, error);
             console.error(`❌ Error stack:`, error.stack);
             socket.emit('error', 'Failed to start game due to server error');
+        }
+    });
+
+    // 🐟 GO FISH SPECIFIC EVENT HANDLERS
+    socket.on('askForCards', (data) => {
+        try {
+            console.log(`🐟 Ask for cards event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for askForCards`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            if (!room.game) {
+                console.log(`❌ No active game in room ${roomCode}`);
+                socket.emit('error', 'No active game');
+                return;
+            }
+            
+            // Broadcast the ask to all players in the room
+            io.to(roomCode).emit('askForCards', {
+                askingPlayer: room.players[data.playerIndex]?.name,
+                targetPlayer: room.players[data.targetPlayerIndex]?.name,
+                rank: data.rank,
+                playerIndex: data.playerIndex,
+                targetPlayerIndex: data.targetPlayerIndex
+            });
+            
+        } catch (error) {
+            console.error(`❌ Error in askForCards handler:`, error);
+            socket.emit('error', 'Failed to process ask for cards');
+        }
+    });
+
+    socket.on('goFish', (data) => {
+        try {
+            console.log(`🐟 Go fish event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for goFish`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            if (!room.game) {
+                console.log(`❌ No active game in room ${roomCode}`);
+                socket.emit('error', 'No active game');
+                return;
+            }
+            
+            // Broadcast the go fish to all players in the room
+            io.to(roomCode).emit('goFish', {
+                player: room.players[data.playerIndex]?.name,
+                playerIndex: data.playerIndex
+            });
+            
+        } catch (error) {
+            console.error(`❌ Error in goFish handler:`, error);
+            socket.emit('error', 'Failed to process go fish');
+        }
+    });
+
+    socket.on('cardsGiven', (data) => {
+        try {
+            console.log(`🐟 Cards given event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for cardsGiven`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            // Broadcast the cards given to all players in the room
+            io.to(roomCode).emit('cardsGiven', {
+                askingPlayer: data.askingPlayer,
+                targetPlayer: data.targetPlayer,
+                rank: data.rank,
+                cardsGiven: data.cardsGiven,
+                players: data.players,
+                currentPlayer: data.currentPlayer
+            });
+            
+        } catch (error) {
+            console.error(`❌ Error in cardsGiven handler:`, error);
+            socket.emit('error', 'Failed to process cards given');
+        }
+    });
+
+    socket.on('turnChanged', (data) => {
+        try {
+            console.log(`🐟 Turn changed event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for turnChanged`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            // Broadcast the turn change to all players in the room
+            io.to(roomCode).emit('turnChanged', {
+                currentPlayer: data.currentPlayer,
+                players: data.players
+            });
+            
+        } catch (error) {
+            console.error(`❌ Error in turnChanged handler:`, error);
+            socket.emit('error', 'Failed to process turn change');
+        }
+    });
+
+    socket.on('gameOver', (data) => {
+        try {
+            console.log(`🐟 Game over event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for gameOver`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            // Broadcast the game over to all players in the room
+            io.to(roomCode).emit('gameOver', {
+                winner: data.winner,
+                finalScores: data.finalScores
+            });
+            
+        } catch (error) {
+            console.error(`❌ Error in gameOver handler:`, error);
+            socket.emit('error', 'Failed to process game over');
         }
     });
 
