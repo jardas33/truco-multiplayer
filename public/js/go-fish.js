@@ -664,7 +664,7 @@ class GoFishClient {
             console.log('🎮 Data has localPlayerIndex:', data.localPlayerIndex !== undefined);
             
             // Only process gameStart if game hasn't been started yet
-            if (!this.game || this.game.state !== 'Playing') {
+            if (!this.game || this.game.state !== 'playing') {
                 console.log('🎮 Game not started yet, processing gameStart event');
                 this.startGame(data);
             } else {
