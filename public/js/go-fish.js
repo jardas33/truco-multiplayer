@@ -651,12 +651,16 @@ class GoFishClient {
         });
         
         socket.on('gameStarted', (data) => {
-            console.log('🎮 Game started:', data);
+            console.log('🎮 Game started event received:', data);
+            console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
+            console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
             this.startGame(data);
         });
 
         socket.on('gameStart', (data) => {
             console.log('🎮 Game start event received:', data);
+            console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
+            console.log('🎮 Data currentPlayer:', data.currentPlayer);
             this.startGame(data);
         });
         

@@ -1147,9 +1147,12 @@ io.on('connection', (socket) => {
             if (room.gameType === 'go-fish') {
                 // For Go Fish, emit gameStarted event with proper format including hands and pond
                 // Send to each player individually with their correct local player index
+                console.log(`🐟 Sending gameStarted to ${room.players.length} players in Go Fish room`);
                 room.players.forEach((player, playerIndex) => {
+                    console.log(`🐟 Sending to player ${playerIndex}: ${player.name} (socket ID: ${player.id})`);
                     const socket = io.sockets.sockets.get(player.id);
                     if (socket) {
+                        console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
                         socket.emit('gameStarted', {
                             players: room.players.map((p, index) => ({
                                 ...p,
@@ -1160,7 +1163,22 @@ io.on('connection', (socket) => {
                             localPlayerIndex: playerIndex, // Each player gets their correct index
                             currentPlayer: room.game.currentPlayer
                         });
+                    } else {
+                        console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
+                        console.log(`🔍 Available sockets:`, Array.from(io.sockets.sockets.keys()));
                     }
+                });
+                
+                // Also broadcast to room as backup
+                console.log(`🐟 Broadcasting gameStart to room ${actualRoomCode} as backup`);
+                io.to(actualRoomCode).emit('gameStart', {
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: p.pairs || 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
                 });
             } else {
                 // For other games (Truco, etc.), emit gameStart event
