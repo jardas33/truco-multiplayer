@@ -1153,7 +1153,7 @@ io.on('connection', (socket) => {
                     const socket = io.sockets.sockets.get(player.id);
                     if (socket) {
                         console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
-                        socket.emit('gameStarted', {
+                        const gameStartedData = {
                             players: room.players.map((p, index) => ({
                                 ...p,
                                 hand: room.game.hands[index] || [],
@@ -1162,7 +1162,9 @@ io.on('connection', (socket) => {
                             pond: room.game.pond,
                             localPlayerIndex: playerIndex, // Each player gets their correct index
                             currentPlayer: room.game.currentPlayer
-                        });
+                        };
+                        console.log(`🐟 Sending gameStarted data to player ${playerIndex}:`, JSON.stringify(gameStartedData, null, 2));
+                        socket.emit('gameStarted', gameStartedData);
                     } else {
                         console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
                         console.log(`🔍 Available sockets:`, Array.from(io.sockets.sockets.keys()));

@@ -646,7 +646,10 @@ class GoFishClient {
         
         socket.on('roomJoined', (data) => {
             console.log('🏠 Room joined:', data);
+            console.log('🏠 Setting localPlayerIndex to:', data.playerIndex);
+            console.log('🏠 Previous localPlayerIndex:', this.localPlayerIndex);
             this.localPlayerIndex = data.playerIndex || 0;
+            console.log('🏠 New localPlayerIndex:', this.localPlayerIndex);
             this.showPlayerCustomization();
             this.showGameControls();
         });
@@ -1137,7 +1140,7 @@ class GoFishClient {
         console.log('🎮   game exists:', !!this.game);
         console.log('🎮   players exist:', !!(this.game && this.game.players));
         console.log('🎮   my hand exists:', !!(this.game && this.game.players && this.game.players[this.localPlayerIndex]));
-        console.log('🎮   my hand length:', this.game && this.game.players && this.game.players[this.localPlayerIndex] ? this.game.players[this.localPlayerIndex].hand.length : 'undefined');
+        console.log('🎮   my hand length:', this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand ? this.game.players[this.localPlayerIndex].hand.length : 'undefined');
         
         if (this.isMyTurn && this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand.length > 0) {
             console.log('🎮 Showing controls for player', this.localPlayerIndex);
