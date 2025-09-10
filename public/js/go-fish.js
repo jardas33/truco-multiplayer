@@ -109,10 +109,7 @@ class GoFishGame {
         this.gameOver = false;
         this.winner = null;
         
-        // Check for initial pairs
-        this.players.forEach(player => {
-            this.checkForPairs(player);
-        });
+        // Pair detection is now handled by the server
         
         this.emitEvent('gameStarted', {
             players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
@@ -245,158 +242,9 @@ class GoFishGame {
         return true;
     }
 
-    // Player asks for cards
-    askForCards(playerIndex, targetPlayerIndex, rank) {
-        const askingPlayer = this.players[playerIndex];
-        const targetPlayer = this.players[targetPlayerIndex];
-        
-        if (!askingPlayer || !targetPlayer || this.currentPlayer !== playerIndex) {
-            return false;
-        }
-        
-        // Check if asking player has the rank in their hand
-        if (!askingPlayer.hand.some(card => card.rank === rank)) {
-            return false;
-        }
-        
-        console.log(`🎯 ${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s`);
-        
-        // Show asking message first - show specific rank for strategy purposes
-        if (!askingPlayer.isBot) { // Human player asking
-            this.showGameMessage(`You ask ${targetPlayer.name} for ${rank}s...`, 1500);
-        } else { // Bot asking (show what they're asking for)
-            this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s...`, 1500);
-        }
-        
-        // Add delay to make the game flow more natural
-        setTimeout(() => {
-        // Find cards of the requested rank
-        const requestedCards = targetPlayer.hand.filter(card => card.rank === rank);
-        
-        if (requestedCards.length > 0) {
-            // Target player has the cards
-            targetPlayer.hand = targetPlayer.hand.filter(card => card.rank !== rank);
-            askingPlayer.hand.push(...requestedCards);
-            
-            console.log(`✅ ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}`);
-                
-                // Log successful ask
-                this.addToHistory(`✅ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s and got ${requestedCards.length} card(s)`, 'success');
-                
-                // Show success message with celebration
-                this.showGameMessage(`🎉 ${targetPlayer.name} gives ${requestedCards.length} ${rank}(s) to ${askingPlayer.name}!`, 3000);
-            
-            // Check for new pairs
-                const pairsBefore = askingPlayer.pairs;
-            this.checkForPairs(askingPlayer);
-                const pairsAfter = askingPlayer.pairs;
-                const foundPairs = pairsAfter - pairsBefore;
-                
-                // If pairs were found, show message
-                if (foundPairs > 0) {
-                    this.addToHistory(`🎯 ${askingPlayer.name} found ${foundPairs} pair(s) after getting cards!`, 'success');
-                    this.showGameMessage(`🎉 ${askingPlayer.name} found ${foundPairs} pair(s)!`, 2000);
-                }
-            
-            this.emitEvent('cardsGiven', {
-                askingPlayer: askingPlayer.name,
-                targetPlayer: targetPlayer.name,
-                rank: rank,
-                cardsGiven: requestedCards.length,
-                players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
-                currentPlayer: this.currentPlayer
-            });
-                
-                // Bot logic is now handled by the server
-            
-            // Asking player gets another turn
-            return true;
-        } else {
-            // Target player doesn't have the cards - Go Fish!
-                this.addToHistory(`❌ ${askingPlayer.name} asked ${targetPlayer.name} for ${rank}s but got "Go Fish!"`, 'warning');
-                this.showGameMessage(`🐟 ${targetPlayer.name} says "Go Fish!"`, 2000);
-                
-                // Add delay before Go Fish animation
-                setTimeout(() => {
-            this.goFish(askingPlayer);
-                }, 1000);
-            return false;
-        }
-        }, 1500); // 1.5 second delay for natural flow
-    }
+    // Old askForCards method removed - now handled by server
 
-    // Player goes fishing
-    goFish(player) {
-        console.log(`🐟 ${player.name} goes fishing!`);
-        
-        if (this.pond.length === 0) {
-            console.log('🐟 Pond is empty!');
-            this.showGameMessage('Pond is empty! Game continues...', 2000);
-            
-            // Check if game is over (all players empty + pond empty)
-            if (this.isGameOver()) {
-                console.log(`🏆 Game is over! Pond is empty and all players have empty hands.`);
-                this.endGame();
-                return;
-            }
-            
-            this.endTurn();
-            return;
-        }
-        
-        // Show fishing animation message
-        this.showGameMessage(`🎣 ${player.name} is fishing in the pond...`, 2000);
-        
-        // Add fishing animation delay
-        setTimeout(() => {
-        // Draw a card from pond
-        const drawnCard = this.pond.pop();
-        player.hand.push(drawnCard);
-        
-        console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
-            
-            // Log the draw - only show card name to the player who drew it
-            if (!player.isBot) { // Human player
-                this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
-                this.showGameMessage(`🎉 You caught ${drawnCard.name}!`, 2500);
-            } else { // Bot players
-                this.addToHistory(`🎣 ${player.name} drew a card from the pond`, 'info');
-                this.showGameMessage(`🎣 ${player.name} went fishing!`, 2500);
-            }
-            
-            // Trigger fishing visual effect
-            this.triggerFishingEffect();
-        
-        // Check for pairs
-            const pairsBefore = player.pairs;
-        this.checkForPairs(player);
-            const pairsAfter = player.pairs;
-            const foundPairs = pairsAfter - pairsBefore;
-        
-        this.emitEvent('goFish', {
-            player: player.name,
-            drawnCard: drawnCard,
-            players: this.players.map(p => ({ name: p.name, hand: p.hand, pairs: p.pairs })),
-            pond: this.pond,
-            currentPlayer: this.currentPlayer
-        });
-        
-            // If player found pairs, they get another turn
-            if (foundPairs > 0) {
-                console.log(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing - gets another turn!`);
-                this.addToHistory(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing!`, 'success');
-                this.showGameMessage(`🎉 ${player.name} found ${foundPairs} pair(s)!`, 2000);
-                
-                // Bot logic is now handled by the server
-                // Don't end turn - player gets another turn
-            } else {
-                console.log(`🎯 ${player.name} found no pairs after fishing`);
-                // Player didn't find pairs, so their turn ends
-                console.log(`🎯 ${player.name} ending turn after fishing`);
-                this.endTurn();
-            }
-        }, 2000); // 2 second delay for fishing animation
-    }
+    // Old goFish method removed - now handled by server
     
     // Trigger fishing visual effect
     triggerFishingEffect() {
@@ -925,9 +773,6 @@ class GoFishClient {
                 this.game.pond = data.pond;
             }
             
-            // Update turn state based on current player
-            this.isMyTurn = (this.game.currentPlayer === this.localPlayerIndex);
-            this.canAct = this.isMyTurn;
         } else if (data && data.hands) {
             // Handle Truco-style game start data
             const players = data.players.map((player, index) => ({
@@ -958,7 +803,7 @@ class GoFishClient {
             window.gameState = gameStateEnum.Playing;
         }
         
-        // Set initial turn state
+        // Set initial turn state (only once)
         this.isMyTurn = (this.game.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
         
