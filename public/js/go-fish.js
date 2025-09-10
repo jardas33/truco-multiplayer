@@ -636,6 +636,11 @@ class GoFishClient {
     setupSocketListeners() {
         const socket = window.gameFramework.socket;
         
+        // Debug: Log all socket events
+        socket.onAny((eventName, ...args) => {
+            console.log('🔍 Socket event received:', eventName, args);
+        });
+        
         socket.on('roomCreated', (data) => {
             console.log('🏠 Room created:', data);
             const roomCode = data.roomId || data; // Handle both old and new formats

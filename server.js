@@ -679,12 +679,14 @@ io.on('connection', (socket) => {
 
         // ✅ CRITICAL FIX: Emit roomJoined event to the joining player
         console.log(`🚢 Emitting roomJoined event to socket ${socket.id}`);
-        socket.emit('roomJoined', {
+        const roomJoinedData = {
             roomId: roomCode,
             playerId: socket.id,
             playerIndex: room.players.length - 1, // Index of the player who just joined
             isHost: false
-        });
+        };
+        console.log(`🚢 roomJoined data:`, JSON.stringify(roomJoinedData, null, 2));
+        socket.emit('roomJoined', roomJoinedData);
         console.log(`🚢 roomJoined event emitted successfully`);
 
         // ✅ Emit playerJoined event to all players in the room
