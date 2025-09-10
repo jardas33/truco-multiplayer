@@ -438,7 +438,7 @@ function windowResized() {
             draw();
         }
         // Also trigger battleship client redraw if available
-        if (battleshipClient && battleshipClient.initialized) {
+        if (typeof battleshipClient !== 'undefined' && battleshipClient && battleshipClient.initialized) {
             battleshipClient.draw();
         }
     }, 100);

@@ -608,7 +608,7 @@ class GoFishClient {
         
         document.getElementById('addBotBtn').onclick = () => this.addBot();
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
-        document.getElementById('startGameBtn').onclick = () => this.startGame();
+        document.getElementById('startGameBtn').onclick = () => this.emitStartGame();
         
         // Game controls (only if elements exist)
         const askBtn = document.getElementById('askBtn');
@@ -1080,14 +1080,14 @@ class GoFishClient {
             
             area.innerHTML = `
                 <div style="font-weight: bold; margin-bottom: 10px;">${player.name}</div>
-                <div style="font-size: 12px; margin-bottom: 5px;">Cards: ${player.hand.length}</div>
-                <div style="font-size: 12px; margin-bottom: 5px;">Pairs: ${player.pairs}</div>
+                <div style="font-size: 12px; margin-bottom: 5px;">Cards: ${player.hand ? player.hand.length : 0}</div>
+                <div style="font-size: 12px; margin-bottom: 5px;">Pairs: ${player.pairs || 0}</div>
                 <div class="hand-cards">
-                    ${showHand ? 
+                    ${showHand && player.hand ? 
                         player.hand.map(card => 
                             `<div class="card" title="${card.name}">${card.rank}</div>`
                         ).join('') :
-                        `🃏 ${player.hand.length} cards`
+                        `🃏 ${player.hand ? player.hand.length : 0} cards`
                     }
                 </div>
             `;
@@ -1280,6 +1280,18 @@ class GoFishClient {
                 playerId: window.gameFramework.playerId,
                 nickname: newNickname
             });
+        }
+    }
+
+    // Emit start game to server
+    emitStartGame() {
+        console.log('🎮 Emitting startGame to server');
+        if (window.gameFramework && window.gameFramework.socket && window.gameFramework.roomId) {
+            const socket = window.gameFramework.socket;
+            socket.emit('startGame', window.gameFramework.roomId);
+        } else {
+            console.error('❌ Cannot emit startGame - no socket or room ID');
+            this.addGameMessage('Error: Not connected to server or room', 'error');
         }
     }
 
