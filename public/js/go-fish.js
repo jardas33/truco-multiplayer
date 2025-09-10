@@ -55,6 +55,7 @@ class GoFishGame {
         console.log('🐟 Go Fish game initialized with', this.players.length, 'players');
         
         // Set game state to Playing
+        this.state = 'playing';
         if (typeof gameStateEnum !== 'undefined') {
             gameState = gameStateEnum.Playing;
             window.gameState = gameStateEnum.Playing;
@@ -832,6 +833,7 @@ class GoFishClient {
         window.game = this.game;
         
         // Set game state to Playing
+        this.game.state = 'playing';
         if (typeof gameStateEnum !== 'undefined') {
             gameState = gameStateEnum.Playing;
             window.gameState = gameStateEnum.Playing;
