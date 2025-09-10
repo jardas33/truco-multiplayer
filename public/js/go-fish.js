@@ -685,6 +685,31 @@ class GoFishClient {
             this.startGame(data);
         });
 
+        // Backup event listeners for alternative emission methods
+        socket.on('gameStarted_backup', (data) => {
+            console.log('🎮 Game started BACKUP event received:', data);
+            console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
+            console.log('🔍 DEBUG: Client socket ID:', socket.id);
+            
+            if (data.localPlayerIndex !== undefined) {
+                console.log('🎮 Setting localPlayerIndex from gameStarted_backup to:', data.localPlayerIndex);
+                this.localPlayerIndex = data.localPlayerIndex;
+                this.startGame(data);
+            }
+        });
+
+        socket.on('gameStarted_fallback', (data) => {
+            console.log('🎮 Game started FALLBACK event received:', data);
+            console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
+            console.log('🔍 DEBUG: Client socket ID:', socket.id);
+            
+            if (data.localPlayerIndex !== undefined) {
+                console.log('🎮 Setting localPlayerIndex from gameStarted_fallback to:', data.localPlayerIndex);
+                this.localPlayerIndex = data.localPlayerIndex;
+                this.startGame(data);
+            }
+        });
+
         socket.on('gameStart', (data) => {
             console.log('🎮 Game start event received:', data);
             console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);

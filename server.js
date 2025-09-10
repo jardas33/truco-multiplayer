@@ -1151,35 +1151,67 @@ io.on('connection', (socket) => {
             // ✅ Emitting gameStart event to room
             
             if (room.gameType === 'go-fish') {
-                // For Go Fish, emit gameStarted event with proper format including hands and pond
-                // Send to each player individually with their correct local player index
-                console.log(`🐟 Sending gameStarted to ${room.players.length} players in Go Fish room`);
+                // For Go Fish, try a different approach: send to each socket in the room with their specific data
+                console.log(`🐟 Sending gameStarted to ${room.players.length} players in Go Fish room using alternative method`);
+                
+                // Get all sockets in the room
+                const socketsInRoom = io.sockets.adapter.rooms.get(roomCode);
+                console.log(`🔍 DEBUG: Sockets in room ${roomCode}:`, socketsInRoom ? Array.from(socketsInRoom) : 'none');
+                
+                // Send to each player individually using their socket ID from the player list
                 room.players.forEach((player, playerIndex) => {
-                    console.log(`🐟 Sending to player ${playerIndex}: ${player.name} (socket ID: ${player.id})`);
-                    console.log(`🔍 DEBUG: Looking up socket for player ${playerIndex} with ID: ${player.id}`);
-                    const socket = io.sockets.sockets.get(player.id);
-                    if (socket) {
-                        console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
-                        console.log(`🔍 Socket ID lookup: ${player.id} -> ${socket.id}`);
-                        console.log(`🔍 Player data:`, JSON.stringify(player, null, 2));
-                        console.log(`🔍 DEBUG: Socket connected: ${socket.connected}`);
-                        console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
-                        const gameStartedData = {
-                            players: room.players.map((p, index) => ({
-                                ...p,
-                                hand: room.game.hands[index] || [],
-                                pairs: p.pairs || 0
-                            })),
-                            pond: room.game.pond,
-                            localPlayerIndex: playerIndex, // Each player gets their correct index
-                            currentPlayer: room.game.currentPlayer
-                        };
-                        console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${socket.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
-                        socket.emit('gameStarted', gameStartedData);
-                        console.log(`🔍 DEBUG: gameStarted event emitted to socket ${socket.id}`);
-                    } else {
-                        console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
-                        console.log(`🔍 Available sockets:`, Array.from(io.sockets.sockets.keys()));
+                    if (!player.isBot) { // Only send to real players, not bots
+                        console.log(`🐟 Sending to player ${playerIndex}: ${player.name} (socket ID: ${player.id})`);
+                        console.log(`🔍 DEBUG: Looking up socket for player ${playerIndex} with ID: ${player.id}`);
+                        
+                        // Try multiple methods to get the socket
+                        const socket1 = io.sockets.sockets.get(player.id);
+                        const socket2 = io.to(player.id);
+                        
+                        console.log(`🔍 DEBUG: Socket lookup method 1 (get):`, !!socket1);
+                        console.log(`🔍 DEBUG: Socket lookup method 2 (to):`, !!socket2);
+                        
+                        if (socket1) {
+                            console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
+                            console.log(`🔍 Socket ID lookup: ${player.id} -> ${socket1.id}`);
+                            console.log(`🔍 DEBUG: Socket connected: ${socket1.connected}`);
+                            console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket1.rooms));
+                            
+                            const gameStartedData = {
+                                players: room.players.map((p, index) => ({
+                                    ...p,
+                                    hand: room.game.hands[index] || [],
+                                    pairs: p.pairs || 0
+                                })),
+                                pond: room.game.pond,
+                                localPlayerIndex: playerIndex, // Each player gets their correct index
+                                currentPlayer: room.game.currentPlayer
+                            };
+                            
+                            console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${socket1.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
+                            
+                            // Try both direct socket emission and targeted emission
+                            socket1.emit('gameStarted', gameStartedData);
+                            io.to(player.id).emit('gameStarted_backup', gameStartedData);
+                            
+                            console.log(`🔍 DEBUG: gameStarted event emitted to socket ${socket1.id}`);
+                        } else {
+                            console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
+                            console.log(`🔍 Available sockets:`, Array.from(io.sockets.sockets.keys()));
+                            
+                            // Try sending to the socket ID directly as a fallback
+                            console.log(`🔍 DEBUG: Trying fallback emission to ${player.id}`);
+                            io.to(player.id).emit('gameStarted_fallback', {
+                                players: room.players.map((p, index) => ({
+                                    ...p,
+                                    hand: room.game.hands[index] || [],
+                                    pairs: p.pairs || 0
+                                })),
+                                pond: room.game.pond,
+                                localPlayerIndex: playerIndex,
+                                currentPlayer: room.game.currentPlayer
+                            });
+                        }
                     }
                 });
                 
