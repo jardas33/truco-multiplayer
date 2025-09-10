@@ -176,8 +176,8 @@ class GoFishGame {
 
     // Check for pairs in a player's hand
     checkForPairs(player) {
-        // Skip automatic pair detection for human player (Player 1)
-        if (player === this.players[0]) {
+        // Skip automatic pair detection for human players (they can make pairs manually)
+        if (!player.isBot) {
             console.log(`🎯 Skipping automatic pair detection for human player ${player.name}`);
             return;
         }
@@ -220,11 +220,12 @@ class GoFishGame {
     }
     
     // Manual pair making for human player
-    makePairManually(card1, card2) {
+    makePairManually(card1, card2, playerIndex = 0) {
         if (!card1 || !card2) return false;
         if (card1.rank !== card2.rank) return false;
         
-        const humanPlayer = this.players[0];
+        const humanPlayer = this.players[playerIndex];
+        if (!humanPlayer) return false;
         
         // Remove both cards from hand
         const card1Index = humanPlayer.hand.findIndex(card => card === card1);
@@ -266,7 +267,7 @@ class GoFishGame {
         console.log(`🎯 ${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s`);
         
         // Show asking message first - show specific rank for strategy purposes
-        if (askingPlayer === this.players[0]) { // Human player asking
+        if (!askingPlayer.isBot) { // Human player asking
             this.showGameMessage(`You ask ${targetPlayer.name} for ${rank}s...`, 1500);
         } else { // Bot asking (show what they're asking for)
             this.showGameMessage(`${askingPlayer.name} asks ${targetPlayer.name} for ${rank}s...`, 1500);
@@ -366,7 +367,7 @@ class GoFishGame {
         console.log(`🎣 ${player.name} drew ${drawnCard.name}`);
             
             // Log the draw - only show card name to the player who drew it
-            if (player === this.players[0]) { // Human player (Player 1)
+            if (!player.isBot) { // Human player
                 this.addToHistory(`🎣 ${player.name} drew ${drawnCard.name} from the pond`, 'info');
                 this.showGameMessage(`🎉 You caught ${drawnCard.name}!`, 2500);
             } else { // Bot players
@@ -834,6 +835,12 @@ class GoFishClient {
         
         // Copy room code
         document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
+        
+        // Nickname change
+        const changeNicknameBtn = document.getElementById('changeNicknameBtn');
+        if (changeNicknameBtn) {
+            changeNicknameBtn.onclick = () => this.changeNickname();
+        }
     }
 
     // Setup socket event listeners
@@ -879,6 +886,14 @@ class GoFishClient {
         
         socket.on('gameOver', (data) => {
             this.showGameOver(data);
+        });
+        
+        // Handle players updated (for nickname changes)
+        socket.on('playersUpdated', (players) => {
+            if (this.game && this.game.players) {
+                this.game.players = players;
+                this.updateUI();
+            }
         });
         
         // Error handling
@@ -1081,20 +1096,9 @@ class GoFishClient {
         
         console.log(`🎯 Asking ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`);
         
-        // Use the game's askForCards method
-        const success = this.game.askForCards(this.localPlayerIndex, targetPlayerIndex, rank);
-        
-        if (success) {
-            console.log('✅ Successfully asked for cards - got cards from target player');
-            this.addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`, 'info');
-            this.updateUI();
-            // Player gets another turn, so don't call endTurn()
-        } else {
-            console.log('✅ Ask completed - target player said "Go Fish!" and game handled it');
-            this.addGameMessage(`Asked ${this.game.players[targetPlayerIndex]?.name} for ${rank}s but got "Go Fish!"`, 'warning');
-            this.updateUI();
-            // Game already handled the Go Fish internally, no need to do anything else
-        }
+        // Don't process game logic on client - let server handle it
+        console.log(`🎯 Sending ask for cards request to server`);
+        this.addGameMessage(`Asking ${this.game.players[targetPlayerIndex]?.name} for ${rank}s...`, 'info');
         
         // Emit to server if connected
         if (window.gameFramework && window.gameFramework.socket) {
@@ -1127,17 +1131,8 @@ class GoFishClient {
         
         console.log('🐟 Going fishing!');
         
-        // Use the game's goFish method
-        this.game.goFish(this.game.players[this.localPlayerIndex]);
-        
-        // Show message
+        // Don't process game logic on client - let server handle it
         this.addGameMessage('🐟 Going fishing!', 'info');
-        
-        // Update UI
-        this.updateUI();
-        
-        // DON'T call endTurn() here - let the game's goFish method handle turn progression
-        // The goFish method will call endTurn() after the fishing animation completes
         
         // Emit to server if connected
         if (window.gameFramework && window.gameFramework.socket) {
@@ -1151,27 +1146,34 @@ class GoFishClient {
 
     // Update cards given
     updateCardsGiven(data) {
+        // Update game state from server
         this.game.players = data.players;
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
-        this.updateUI();
         
-        UIUtils.showGameMessage(`${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`, 'info');
+        this.addGameMessage(`${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`, 'success');
+        this.updateUI();
     }
 
     // Update go fish
     updateGoFish(data) {
+        // Update game state from server
         this.game.players = data.players;
         this.game.pond = data.pond;
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
-        this.updateUI();
         
-        UIUtils.showGameMessage(`${data.player} went fishing and drew ${data.drawnCard.name}`, 'info');
+        if (data.drawnCard) {
+            this.addGameMessage(`${data.player} went fishing and drew a card`, 'info');
+        } else {
+            this.addGameMessage(`${data.player} went fishing but the pond is empty`, 'warning');
+        }
+        
+        this.updateUI();
     }
 
     // Update turn changed
@@ -1306,7 +1308,7 @@ class GoFishClient {
 
     // Update controls
     updateControls() {
-        if (this.isMyTurn && this.game.players[this.localPlayerIndex].hand.length > 0) {
+        if (this.isMyTurn && this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand.length > 0) {
             this.showPlayerSelector();
             this.showActionControls();
             this.updatePlayerSelector();
@@ -1448,6 +1450,38 @@ class GoFishClient {
         navigator.clipboard.writeText(roomCode).then(() => {
             UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
         });
+    }
+
+    // Change nickname
+    changeNickname() {
+        const nicknameInput = document.getElementById('nicknameInput');
+        const newNickname = nicknameInput.value.trim();
+        
+        if (!newNickname) {
+            this.addGameMessage('Please enter a nickname', 'error');
+            return;
+        }
+        
+        if (newNickname.length > 12) {
+            this.addGameMessage('Nickname must be 12 characters or less', 'error');
+            return;
+        }
+        
+        // Update local player name
+        if (this.game && this.game.players && this.game.players[this.localPlayerIndex]) {
+            this.game.players[this.localPlayerIndex].name = newNickname;
+            this.addGameMessage(`Nickname changed to ${newNickname}`, 'success');
+        }
+        
+        // Emit to server if connected
+        if (window.gameFramework && window.gameFramework.socket) {
+            const socket = window.gameFramework.socket;
+            socket.emit('changeNickname', {
+                roomId: window.gameFramework.roomId,
+                playerId: window.gameFramework.playerId,
+                nickname: newNickname
+            });
+        }
     }
 
     // Reset client state

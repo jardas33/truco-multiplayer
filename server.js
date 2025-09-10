@@ -789,14 +789,54 @@ io.on('connection', (socket) => {
                 return;
             }
             
-            // Broadcast the ask to all players in the room
-            io.to(roomCode).emit('askForCards', {
-                askingPlayer: room.players[data.playerIndex]?.name,
-                targetPlayer: room.players[data.targetPlayerIndex]?.name,
-                rank: data.rank,
-                playerIndex: data.playerIndex,
-                targetPlayerIndex: data.targetPlayerIndex
-            });
+            // Process the ask for cards logic on server side
+            const askingPlayer = room.players[data.playerIndex];
+            const targetPlayer = room.players[data.targetPlayerIndex];
+            
+            if (!askingPlayer || !targetPlayer) {
+                socket.emit('error', 'Invalid player indices');
+                return;
+            }
+            
+            // Check if asking player has the rank in their hand
+            const askingPlayerHand = room.game.hands[data.playerIndex] || [];
+            if (!askingPlayerHand.some(card => card.rank === data.rank)) {
+                socket.emit('error', 'You can only ask for ranks you have in your hand');
+                return;
+            }
+            
+            // Find cards of the requested rank in target player's hand
+            const targetPlayerHand = room.game.hands[data.targetPlayerIndex] || [];
+            const requestedCards = targetPlayerHand.filter(card => card.rank === data.rank);
+            
+            if (requestedCards.length > 0) {
+                // Target player has the cards - transfer them
+                room.game.hands[data.targetPlayerIndex] = targetPlayerHand.filter(card => card.rank !== data.rank);
+                room.game.hands[data.playerIndex] = [...askingPlayerHand, ...requestedCards];
+                
+                // Broadcast successful ask
+                io.to(roomCode).emit('cardsGiven', {
+                    askingPlayer: askingPlayer.name,
+                    targetPlayer: targetPlayer.name,
+                    rank: data.rank,
+                    cardsGiven: requestedCards.length,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0 // Will be calculated on client side
+                    })),
+                    currentPlayer: room.game.currentPlayer
+                });
+            } else {
+                // Target player doesn't have the cards - Go Fish
+                io.to(roomCode).emit('goFish', {
+                    askingPlayer: askingPlayer.name,
+                    targetPlayer: targetPlayer.name,
+                    rank: data.rank,
+                    playerIndex: data.playerIndex,
+                    targetPlayerIndex: data.targetPlayerIndex
+                });
+            }
             
         } catch (error) {
             console.error(`❌ Error in askForCards handler:`, error);
@@ -822,11 +862,46 @@ io.on('connection', (socket) => {
                 return;
             }
             
-            // Broadcast the go fish to all players in the room
-            io.to(roomCode).emit('goFish', {
-                player: room.players[data.playerIndex]?.name,
-                playerIndex: data.playerIndex
-            });
+            // Process go fish logic on server side
+            const player = room.players[data.playerIndex];
+            if (!player) {
+                socket.emit('error', 'Invalid player index');
+                return;
+            }
+            
+            // Draw a card from pond
+            if (room.game.pond.length > 0) {
+                const drawnCard = room.game.pond.pop();
+                room.game.hands[data.playerIndex] = [...(room.game.hands[data.playerIndex] || []), drawnCard];
+                
+                // Broadcast go fish with drawn card
+                io.to(roomCode).emit('goFish', {
+                    player: player.name,
+                    playerIndex: data.playerIndex,
+                    drawnCard: drawnCard,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0 // Will be calculated on client side
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
+                });
+            } else {
+                // Pond is empty - end turn
+                io.to(roomCode).emit('goFish', {
+                    player: player.name,
+                    playerIndex: data.playerIndex,
+                    drawnCard: null,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
+                });
+            }
             
         } catch (error) {
             console.error(`❌ Error in goFish handler:`, error);
@@ -874,10 +949,19 @@ io.on('connection', (socket) => {
                 return;
             }
             
+            // Update server-side current player
+            if (data.currentPlayer !== undefined) {
+                room.game.currentPlayer = data.currentPlayer;
+            }
+            
             // Broadcast the turn change to all players in the room
             io.to(roomCode).emit('turnChanged', {
-                currentPlayer: data.currentPlayer,
-                players: data.players
+                currentPlayer: room.game.currentPlayer,
+                players: room.players.map((p, index) => ({
+                    ...p,
+                    hand: room.game.hands[index] || [],
+                    pairs: 0 // Will be calculated on client side
+                }))
             });
             
         } catch (error) {
@@ -907,6 +991,35 @@ io.on('connection', (socket) => {
         } catch (error) {
             console.error(`❌ Error in gameOver handler:`, error);
             socket.emit('error', 'Failed to process game over');
+        }
+    });
+
+    // Handle nickname change
+    socket.on('changeNickname', (data) => {
+        try {
+            console.log(`🐟 Nickname change event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for changeNickname`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            // Find and update the player's nickname
+            const player = room.players.find(p => p.id === data.playerId);
+            if (player) {
+                player.name = data.nickname;
+                console.log(`🐟 Player ${data.playerId} changed nickname to ${data.nickname}`);
+                
+                // Broadcast the nickname change to all players in the room
+                io.to(roomCode).emit('playersUpdated', room.players);
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error in changeNickname handler:`, error);
+            socket.emit('error', 'Failed to process nickname change');
         }
     });
 
