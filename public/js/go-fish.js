@@ -661,7 +661,16 @@ class GoFishClient {
             console.log('🎮 Game start event received:', data);
             console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
             console.log('🎮 Data currentPlayer:', data.currentPlayer);
-            this.startGame(data);
+            console.log('🎮 Data has localPlayerIndex:', data.localPlayerIndex !== undefined);
+            
+            // Only process gameStart if game hasn't been started yet
+            if (!this.game || this.game.state !== 'Playing') {
+                console.log('🎮 Game not started yet, processing gameStart event');
+                this.startGame(data);
+            } else {
+                console.log('🎮 Game already started, ignoring gameStart event');
+                console.log('🎮 Preserving localPlayerIndex:', this.localPlayerIndex);
+            }
         });
         
         socket.on('cardsGiven', (data) => {
@@ -775,13 +784,17 @@ class GoFishClient {
     // Start game
     startGame(data = null) {
         console.log('🎮 Go Fish: Starting game with data:', data);
+        console.log('🎮 Current localPlayerIndex before startGame:', this.localPlayerIndex);
         
         if (data && data.players) {
             // Initialize with server data
             this.game.initialize(data.players);
             // Only set localPlayerIndex if it's not already set or if data provides it
             if (data.localPlayerIndex !== undefined) {
+                console.log('🎮 Setting localPlayerIndex from data:', data.localPlayerIndex);
                 this.localPlayerIndex = data.localPlayerIndex;
+            } else {
+                console.log('🎮 Data has no localPlayerIndex, keeping current:', this.localPlayerIndex);
             }
             
             // Set pond data if provided
