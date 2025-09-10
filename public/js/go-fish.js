@@ -670,7 +670,16 @@ class GoFishClient {
             console.log('🎮 Game started event received:', data);
             console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
             console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
-            console.log('🎮 Setting localPlayerIndex to:', data.localPlayerIndex);
+            
+            // CRITICAL FIX: Always use the localPlayerIndex from gameStarted event
+            // This ensures Player 2 gets the correct index even if roomJoined was missed
+            if (data.localPlayerIndex !== undefined) {
+                console.log('🎮 Setting localPlayerIndex from gameStarted to:', data.localPlayerIndex);
+                this.localPlayerIndex = data.localPlayerIndex;
+            } else {
+                console.log('⚠️ gameStarted event missing localPlayerIndex, keeping current:', this.localPlayerIndex);
+            }
+            
             this.startGame(data);
         });
 
@@ -2060,7 +2069,7 @@ function drawGameControls() {
             const actionControls = document.getElementById('actionControls');
             const htmlButtonsVisible = actionControls && actionControls.style.display !== 'none';
             
-            if (window.game.currentPlayer === 0 && !htmlButtonsVisible) { // Only show for human player when HTML buttons are hidden
+            if (window.game.currentPlayer === this.localPlayerIndex && !htmlButtonsVisible) { // Only show for current player when HTML buttons are hidden
                 // Ask player selector
                 fill(255);
                 textSize(14);
@@ -3009,7 +3018,7 @@ function drawModernControlPanel() {
     const actionControls = document.getElementById('actionControls');
     const htmlButtonsVisible = actionControls && actionControls.style.display !== 'none';
     
-    if (window.game.currentPlayer === 0 && !htmlButtonsVisible) {
+    if (window.game.currentPlayer === this.localPlayerIndex && !htmlButtonsVisible) {
         // Action buttons - centered in smaller panel
         const buttonY = panelY + 15;
         const buttonWidth = 70;
