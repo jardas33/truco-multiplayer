@@ -233,6 +233,16 @@ class GoFishGame {
         
         console.log(`🎯 Human player made a pair of ${card1.rank}s manually`);
         
+        // Emit to server to update other players
+        if (window.gameFramework && window.gameFramework.socket) {
+            const socket = window.gameFramework.socket;
+            socket.emit('makePair', {
+                roomId: window.gameFramework.roomId,
+                playerIndex: playerIndex,
+                rank: card1.rank
+            });
+        }
+        
         // Log pair found
         this.addToHistory(`🎯 You made a pair of ${card1.rank}s!`, 'success');
         
@@ -680,6 +690,11 @@ class GoFishClient {
             }
         });
         
+        // Handle pair made by human players
+        socket.on('pairMade', (data) => {
+            this.updatePairMade(data);
+        });
+        
         // Error handling
         socket.on('error', (error) => {
             console.error('Socket error:', error);
@@ -970,6 +985,16 @@ class GoFishClient {
         this.updateUI();
         
         // Bot logic is now handled by the server
+    }
+
+    // Update pair made
+    updatePairMade(data) {
+        // Update game state from server
+        this.game.players = data.players;
+        this.game.currentPlayer = data.currentPlayer;
+        
+        this.addGameMessage(`${data.player} made a pair of ${data.rank}s!`, 'success');
+        this.updateUI();
     }
 
     // Show game over

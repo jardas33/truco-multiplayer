@@ -177,13 +177,15 @@ function handleGoFishBotTurn(roomCode, room) {
             room.game.hands[targetIndex] = targetPlayerHand.filter(card => card.rank !== targetRank);
             room.game.hands[room.game.currentPlayer] = [...botHand, ...requestedCards];
             
-            // Check for pairs in the asking player's hand
-            const newHand = room.game.hands[room.game.currentPlayer];
-            const pairsFound = checkForPairs(newHand);
-            if (pairsFound > 0) {
-                // Remove pairs from hand
-                room.game.hands[room.game.currentPlayer] = removePairs(newHand);
-                console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after getting cards`);
+            // Check for pairs in the asking player's hand (only for bots)
+            if (currentPlayer.isBot) {
+                const newHand = room.game.hands[room.game.currentPlayer];
+                const pairsFound = checkForPairs(newHand);
+                if (pairsFound > 0) {
+                    // Remove pairs from hand
+                    room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                    console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after getting cards`);
+                }
             }
             
             // Broadcast successful ask
@@ -200,13 +202,28 @@ function handleGoFishBotTurn(roomCode, room) {
                 currentPlayer: room.game.currentPlayer
             });
             
-            // If pairs were found, bot gets another turn
-            if (pairsFound > 0) {
-                setTimeout(() => {
-                    handleGoFishBotTurn(roomCode, room);
-                }, 2000);
+            // If pairs were found (and it's a bot), bot gets another turn
+            if (currentPlayer.isBot) {
+                const newHand = room.game.hands[room.game.currentPlayer];
+                const pairsFound = checkForPairs(newHand);
+                if (pairsFound > 0) {
+                    setTimeout(() => {
+                        handleGoFishBotTurn(roomCode, room);
+                    }, 2000);
+                } else {
+                    // No pairs found, end turn
+                    room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+                    io.to(roomCode).emit('turnChanged', {
+                        currentPlayer: room.game.currentPlayer,
+                        players: room.players.map((p, index) => ({
+                            ...p,
+                            hand: room.game.hands[index] || [],
+                            pairs: 0
+                        }))
+                    });
+                }
             } else {
-                // No pairs found, end turn
+                // Human player - end turn (they need to manually make pairs)
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
                 io.to(roomCode).emit('turnChanged', {
                     currentPlayer: room.game.currentPlayer,
@@ -223,13 +240,15 @@ function handleGoFishBotTurn(roomCode, room) {
                 const drawnCard = room.game.pond.pop();
                 room.game.hands[room.game.currentPlayer] = [...botHand, drawnCard];
                 
-                // Check for pairs in the player's hand after fishing
-                const newHand = room.game.hands[room.game.currentPlayer];
-                const pairsFound = checkForPairs(newHand);
-                if (pairsFound > 0) {
-                    // Remove pairs from hand
-                    room.game.hands[room.game.currentPlayer] = removePairs(newHand);
-                    console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                // Check for pairs in the player's hand after fishing (only for bots)
+                if (currentPlayer.isBot) {
+                    const newHand = room.game.hands[room.game.currentPlayer];
+                    const pairsFound = checkForPairs(newHand);
+                    if (pairsFound > 0) {
+                        // Remove pairs from hand
+                        room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                        console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                    }
                 }
                 
                 io.to(roomCode).emit('goFish', {
@@ -248,13 +267,28 @@ function handleGoFishBotTurn(roomCode, room) {
                     currentPlayer: room.game.currentPlayer
                 });
                 
-                // If pairs were found, bot gets another turn
-                if (pairsFound > 0) {
-                    setTimeout(() => {
-                        handleGoFishBotTurn(roomCode, room);
-                    }, 2000);
+                // If pairs were found (and it's a bot), bot gets another turn
+                if (currentPlayer.isBot) {
+                    const newHand = room.game.hands[room.game.currentPlayer];
+                    const pairsFound = checkForPairs(newHand);
+                    if (pairsFound > 0) {
+                        setTimeout(() => {
+                            handleGoFishBotTurn(roomCode, room);
+                        }, 2000);
+                    } else {
+                        // No pairs found, end turn
+                        room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+                        io.to(roomCode).emit('turnChanged', {
+                            currentPlayer: room.game.currentPlayer,
+                            players: room.players.map((p, index) => ({
+                                ...p,
+                                hand: room.game.hands[index] || [],
+                                pairs: 0
+                            }))
+                        });
+                    }
                 } else {
-                    // No pairs found, end turn
+                    // Human player - end turn (they need to manually make pairs)
                     room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
                     io.to(roomCode).emit('turnChanged', {
                         currentPlayer: room.game.currentPlayer,
@@ -1372,6 +1406,53 @@ io.on('connection', (socket) => {
         } catch (error) {
             console.error(`❌ Error in gameOver handler:`, error);
             socket.emit('error', 'Failed to process game over');
+        }
+    });
+
+    // Handle manual pair making by human players
+    socket.on('makePair', (data) => {
+        try {
+            console.log(`🐟 Make pair event received:`, data);
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.log(`❌ Room ${roomCode} not found for makePair`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            if (!room.game) {
+                console.log(`❌ No active game in room ${roomCode}`);
+                socket.emit('error', 'No active game');
+                return;
+            }
+            
+            const player = room.players[data.playerIndex];
+            if (!player || player.isBot) {
+                socket.emit('error', 'Invalid player or bot cannot make pairs manually');
+                return;
+            }
+            
+            // Update the player's pairs count
+            player.pairs = (player.pairs || 0) + 1;
+            
+            // Broadcast the pair made event
+            io.to(roomCode).emit('pairMade', {
+                player: player.name,
+                playerIndex: data.playerIndex,
+                rank: data.rank,
+                players: room.players.map((p, index) => ({
+                    ...p,
+                    hand: room.game.hands[index] || [],
+                    pairs: p.pairs || 0
+                })),
+                currentPlayer: room.game.currentPlayer
+            });
+            
+        } catch (error) {
+            console.error(`❌ Error in makePair handler:`, error);
+            socket.emit('error', 'Failed to process pair making');
         }
     });
 
