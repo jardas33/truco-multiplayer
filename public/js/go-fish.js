@@ -654,6 +654,7 @@ class GoFishClient {
             console.log('🎮 Game started event received:', data);
             console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
             console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
+            console.log('🎮 Setting localPlayerIndex to:', data.localPlayerIndex);
             this.startGame(data);
         });
 
@@ -662,6 +663,8 @@ class GoFishClient {
             console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
             console.log('🎮 Data currentPlayer:', data.currentPlayer);
             console.log('🎮 Data has localPlayerIndex:', data.localPlayerIndex !== undefined);
+            console.log('🎮 Game exists:', !!this.game);
+            console.log('🎮 Game state:', this.game ? this.game.state : 'undefined');
             
             // Only process gameStart if game hasn't been started yet
             if (!this.game || this.game.state !== 'playing') {
@@ -792,7 +795,9 @@ class GoFishClient {
             // Only set localPlayerIndex if it's not already set or if data provides it
             if (data.localPlayerIndex !== undefined) {
                 console.log('🎮 Setting localPlayerIndex from data:', data.localPlayerIndex);
+                console.log('🎮 Previous localPlayerIndex:', this.localPlayerIndex);
                 this.localPlayerIndex = data.localPlayerIndex;
+                console.log('🎮 New localPlayerIndex:', this.localPlayerIndex);
             } else {
                 console.log('🎮 Data has no localPlayerIndex, keeping current:', this.localPlayerIndex);
             }
@@ -1123,11 +1128,22 @@ class GoFishClient {
 
     // Update controls
     updateControls() {
+        console.log('🎮 updateControls called:');
+        console.log('🎮   isMyTurn:', this.isMyTurn);
+        console.log('🎮   localPlayerIndex:', this.localPlayerIndex);
+        console.log('🎮   currentPlayer:', this.game ? this.game.currentPlayer : 'undefined');
+        console.log('🎮   game exists:', !!this.game);
+        console.log('🎮   players exist:', !!(this.game && this.game.players));
+        console.log('🎮   my hand exists:', !!(this.game && this.game.players && this.game.players[this.localPlayerIndex]));
+        console.log('🎮   my hand length:', this.game && this.game.players && this.game.players[this.localPlayerIndex] ? this.game.players[this.localPlayerIndex].hand.length : 'undefined');
+        
         if (this.isMyTurn && this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand.length > 0) {
+            console.log('🎮 Showing controls for player', this.localPlayerIndex);
             this.showPlayerSelector();
             this.showActionControls();
             this.updatePlayerSelector();
         } else {
+            console.log('🎮 Hiding controls for player', this.localPlayerIndex);
             this.hidePlayerSelector();
             this.hideActionControls();
         }
