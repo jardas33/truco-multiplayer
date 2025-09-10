@@ -41,6 +41,8 @@ function handleGoFishBotTurn(roomCode, room) {
                 if (pairsFound > 0) {
                     // Remove pairs from hand
                     room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                    // Update pair count
+                    currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
                     console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
                 }
                 
@@ -51,7 +53,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     })),
                     pond: room.game.pond,
                     currentPlayer: room.game.currentPlayer
@@ -70,7 +72,7 @@ function handleGoFishBotTurn(roomCode, room) {
                         players: room.players.map((p, index) => ({
                             ...p,
                             hand: room.game.hands[index] || [],
-                            pairs: 0
+                            pairs: p.pairs || 0
                         }))
                     });
                 }
@@ -87,7 +89,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     }))
                 });
             }
@@ -112,6 +114,8 @@ function handleGoFishBotTurn(roomCode, room) {
                 if (pairsFound > 0) {
                     // Remove pairs from hand
                     room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                    // Update pair count
+                    currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
                     console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
                 }
                 
@@ -122,7 +126,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     })),
                     pond: room.game.pond,
                     currentPlayer: room.game.currentPlayer
@@ -141,7 +145,7 @@ function handleGoFishBotTurn(roomCode, room) {
                         players: room.players.map((p, index) => ({
                             ...p,
                             hand: room.game.hands[index] || [],
-                            pairs: 0
+                            pairs: p.pairs || 0
                         }))
                     });
                 }
@@ -158,7 +162,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     }))
                 });
             }
@@ -184,6 +188,8 @@ function handleGoFishBotTurn(roomCode, room) {
                 if (pairsFound > 0) {
                     // Remove pairs from hand
                     room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                    // Update pair count
+                    currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
                     console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after getting cards`);
                 }
             }
@@ -197,7 +203,7 @@ function handleGoFishBotTurn(roomCode, room) {
                 players: room.players.map((p, index) => ({
                     ...p,
                     hand: room.game.hands[index] || [],
-                    pairs: 0
+                    pairs: p.pairs || 0
                 })),
                 currentPlayer: room.game.currentPlayer
             });
@@ -218,7 +224,7 @@ function handleGoFishBotTurn(roomCode, room) {
                         players: room.players.map((p, index) => ({
                             ...p,
                             hand: room.game.hands[index] || [],
-                            pairs: 0
+                            pairs: p.pairs || 0
                         }))
                     });
                 }
@@ -230,7 +236,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     }))
                 });
             }
@@ -247,6 +253,8 @@ function handleGoFishBotTurn(roomCode, room) {
                     if (pairsFound > 0) {
                         // Remove pairs from hand
                         room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                        // Update pair count
+                        currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
                         console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
                     }
                 }
@@ -261,7 +269,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     })),
                     pond: room.game.pond,
                     currentPlayer: room.game.currentPlayer
@@ -283,7 +291,7 @@ function handleGoFishBotTurn(roomCode, room) {
                             players: room.players.map((p, index) => ({
                                 ...p,
                                 hand: room.game.hands[index] || [],
-                                pairs: 0
+                                pairs: p.pairs || 0
                             }))
                         });
                     }
@@ -295,7 +303,7 @@ function handleGoFishBotTurn(roomCode, room) {
                         players: room.players.map((p, index) => ({
                             ...p,
                             hand: room.game.hands[index] || [],
-                            pairs: 0
+                            pairs: p.pairs || 0
                         }))
                     });
                 }
@@ -312,7 +320,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     }))
                 });
             }
@@ -384,11 +392,9 @@ function checkGoFishGameOver(room) {
             
             // Calculate final scores (pairs)
             const finalScores = room.players.map((player, index) => {
-                // For now, we'll use 0 for pairs since we're not tracking them on server
-                // In a full implementation, you'd track pairs on the server
                 return {
                     name: player.name,
-                    pairs: 0
+                    pairs: player.pairs || 0
                 };
             });
             
@@ -1148,7 +1154,7 @@ io.on('connection', (socket) => {
                             players: room.players.map((p, index) => ({
                                 ...p,
                                 hand: room.game.hands[index] || [],
-                                pairs: 0
+                                pairs: p.pairs || 0
                             })),
                             pond: room.game.pond,
                             localPlayerIndex: playerIndex, // Each player gets their correct index
@@ -1227,7 +1233,7 @@ io.on('connection', (socket) => {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0 // Will be calculated on client side
+                        pairs: p.pairs || 0 // Will be calculated on client side
                     })),
                     currentPlayer: room.game.currentPlayer
                 });
@@ -1286,7 +1292,7 @@ io.on('connection', (socket) => {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0 // Will be calculated on client side
+                        pairs: p.pairs || 0 // Will be calculated on client side
                     })),
                     pond: room.game.pond,
                     currentPlayer: room.game.currentPlayer
@@ -1300,7 +1306,7 @@ io.on('connection', (socket) => {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: 0
+                        pairs: p.pairs || 0
                     })),
                     pond: room.game.pond,
                     currentPlayer: room.game.currentPlayer

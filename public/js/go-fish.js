@@ -133,16 +133,10 @@ class GoFishGame {
         }
     }
     
-    // Start periodic game over check
+    // Start periodic game over check - now handled by server
     startGameOverCheck() {
-        // Check for game over every 2 seconds
-        this.gameOverCheckInterval = setInterval(() => {
-            if (!this.gameOver && this.isGameOver()) {
-                console.log(`🏆 Periodic check: Game is over!`);
-                clearInterval(this.gameOverCheckInterval);
-                this.endGame();
-            }
-        }, 2000);
+        // Game over detection is now handled by the server
+        console.log('🔍 Game over detection is now handled by the server');
     }
 
     // Deal cards to all players
