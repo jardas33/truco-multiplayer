@@ -670,6 +670,8 @@ class GoFishClient {
             console.log('🎮 Game started event received:', data);
             console.log('🎮 Current localPlayerIndex:', this.localPlayerIndex);
             console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
+            console.log('🔍 DEBUG: Client socket ID:', socket.id);
+            console.log('🔍 DEBUG: Client connected:', socket.connected);
             
             // CRITICAL FIX: Always use the localPlayerIndex from gameStarted event
             // This ensures Player 2 gets the correct index even if roomJoined was missed

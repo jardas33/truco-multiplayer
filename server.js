@@ -662,13 +662,17 @@ io.on('connection', (socket) => {
             return;
         } else {
             // Normal case: add new player
-            room.players.push({
+            const newPlayer = {
                 id: socket.id,
                 name: `Player ${room.players.length + 1}`,
                 nickname: `Player ${room.players.length + 1}`,
                 team: null, // No team assigned yet
                 isBot: false
-            });
+            };
+            room.players.push(newPlayer);
+            
+            console.log(`🔍 DEBUG: Added player to room:`, JSON.stringify(newPlayer, null, 2));
+            console.log(`🔍 DEBUG: Room now has ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, index: room.players.indexOf(p) })));
         }
         
         socket.join(roomCode);
@@ -1152,11 +1156,14 @@ io.on('connection', (socket) => {
                 console.log(`🐟 Sending gameStarted to ${room.players.length} players in Go Fish room`);
                 room.players.forEach((player, playerIndex) => {
                     console.log(`🐟 Sending to player ${playerIndex}: ${player.name} (socket ID: ${player.id})`);
+                    console.log(`🔍 DEBUG: Looking up socket for player ${playerIndex} with ID: ${player.id}`);
                     const socket = io.sockets.sockets.get(player.id);
                     if (socket) {
                         console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
                         console.log(`🔍 Socket ID lookup: ${player.id} -> ${socket.id}`);
                         console.log(`🔍 Player data:`, JSON.stringify(player, null, 2));
+                        console.log(`🔍 DEBUG: Socket connected: ${socket.connected}`);
+                        console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
                         const gameStartedData = {
                             players: room.players.map((p, index) => ({
                                 ...p,
@@ -1169,6 +1176,7 @@ io.on('connection', (socket) => {
                         };
                         console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${socket.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
                         socket.emit('gameStarted', gameStartedData);
+                        console.log(`🔍 DEBUG: gameStarted event emitted to socket ${socket.id}`);
                     } else {
                         console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
                         console.log(`🔍 Available sockets:`, Array.from(io.sockets.sockets.keys()));
