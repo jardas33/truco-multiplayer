@@ -644,6 +644,13 @@ class GoFishClient {
         socket.on('roomCreated', (data) => {
             console.log('🏠 Room created:', data);
             const roomCode = data.roomId || data; // Handle both old and new formats
+            
+            // Set localPlayerIndex for room creator (always 0)
+            console.log('🏠 Setting localPlayerIndex for room creator to: 0');
+            console.log('🏠 Previous localPlayerIndex:', this.localPlayerIndex);
+            this.localPlayerIndex = 0;
+            console.log('🏠 New localPlayerIndex:', this.localPlayerIndex);
+            
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();

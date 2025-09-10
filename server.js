@@ -1155,6 +1155,8 @@ io.on('connection', (socket) => {
                     const socket = io.sockets.sockets.get(player.id);
                     if (socket) {
                         console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
+                        console.log(`🔍 Socket ID lookup: ${player.id} -> ${socket.id}`);
+                        console.log(`🔍 Player data:`, JSON.stringify(player, null, 2));
                         const gameStartedData = {
                             players: room.players.map((p, index) => ({
                                 ...p,
@@ -1165,7 +1167,7 @@ io.on('connection', (socket) => {
                             localPlayerIndex: playerIndex, // Each player gets their correct index
                             currentPlayer: room.game.currentPlayer
                         };
-                        console.log(`🐟 Sending gameStarted data to player ${playerIndex}:`, JSON.stringify(gameStartedData, null, 2));
+                        console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${socket.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
                         socket.emit('gameStarted', gameStartedData);
                     } else {
                         console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
