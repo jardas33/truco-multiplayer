@@ -20,6 +20,214 @@ function getCardValue(rank) {
     return values[rank] || 0;
 }
 
+// Handle Go Fish bot turns
+function handleGoFishBotTurn(roomCode, room) {
+    try {
+        const currentPlayer = room.players[room.game.currentPlayer];
+        if (!currentPlayer || !currentPlayer.isBot) {
+            return;
+        }
+        
+        const botHand = room.game.hands[room.game.currentPlayer] || [];
+        if (botHand.length === 0) {
+            // Bot has no cards - go fish
+            if (room.game.pond.length > 0) {
+                const drawnCard = room.game.pond.pop();
+                room.game.hands[room.game.currentPlayer] = [...botHand, drawnCard];
+                
+                io.to(roomCode).emit('goFish', {
+                    player: currentPlayer.name,
+                    playerIndex: room.game.currentPlayer,
+                    drawnCard: drawnCard,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
+                });
+            } else {
+                // Pond is empty - end turn
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+                io.to(roomCode).emit('turnChanged', {
+                    currentPlayer: room.game.currentPlayer,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    }))
+                });
+            }
+            return;
+        }
+        
+        // Bot has cards - ask for a rank they have
+        const availableRanks = [...new Set(botHand.map(card => card.rank))];
+        const targetRank = availableRanks[Math.floor(Math.random() * availableRanks.length)];
+        
+        // Choose a target player (not themselves)
+        const otherPlayers = room.players.filter((p, index) => index !== room.game.currentPlayer && (room.game.hands[index] || []).length > 0);
+        if (otherPlayers.length === 0) {
+            // No other players with cards - go fish
+            if (room.game.pond.length > 0) {
+                const drawnCard = room.game.pond.pop();
+                room.game.hands[room.game.currentPlayer] = [...botHand, drawnCard];
+                
+                io.to(roomCode).emit('goFish', {
+                    player: currentPlayer.name,
+                    playerIndex: room.game.currentPlayer,
+                    drawnCard: drawnCard,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
+                });
+            } else {
+                // Pond is empty - end turn
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+                io.to(roomCode).emit('turnChanged', {
+                    currentPlayer: room.game.currentPlayer,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    }))
+                });
+            }
+            return;
+        }
+        
+        const targetPlayer = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+        const targetIndex = room.players.indexOf(targetPlayer);
+        
+        // Find cards of the requested rank in target player's hand
+        const targetPlayerHand = room.game.hands[targetIndex] || [];
+        const requestedCards = targetPlayerHand.filter(card => card.rank === targetRank);
+        
+        if (requestedCards.length > 0) {
+            // Target player has the cards - transfer them
+            room.game.hands[targetIndex] = targetPlayerHand.filter(card => card.rank !== targetRank);
+            room.game.hands[room.game.currentPlayer] = [...botHand, ...requestedCards];
+            
+            // Broadcast successful ask
+            io.to(roomCode).emit('cardsGiven', {
+                askingPlayer: currentPlayer.name,
+                targetPlayer: targetPlayer.name,
+                rank: targetRank,
+                cardsGiven: requestedCards.length,
+                players: room.players.map((p, index) => ({
+                    ...p,
+                    hand: room.game.hands[index] || [],
+                    pairs: 0
+                })),
+                currentPlayer: room.game.currentPlayer
+            });
+        } else {
+            // Target player doesn't have the cards - Go Fish
+            if (room.game.pond.length > 0) {
+                const drawnCard = room.game.pond.pop();
+                room.game.hands[room.game.currentPlayer] = [...botHand, drawnCard];
+                
+                io.to(roomCode).emit('goFish', {
+                    askingPlayer: currentPlayer.name,
+                    targetPlayer: targetPlayer.name,
+                    rank: targetRank,
+                    playerIndex: room.game.currentPlayer,
+                    targetPlayerIndex: targetIndex,
+                    drawnCard: drawnCard,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
+                });
+            } else {
+                // Pond is empty - check for game over
+                if (checkGoFishGameOver(room)) {
+                    return; // Game over handled
+                }
+                
+                // End turn
+                room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+                io.to(roomCode).emit('turnChanged', {
+                    currentPlayer: room.game.currentPlayer,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: 0
+                    }))
+                });
+            }
+        }
+        
+    } catch (error) {
+        console.error(`❌ Error in handleGoFishBotTurn:`, error);
+    }
+}
+
+// Check if Go Fish game is over
+function checkGoFishGameOver(room) {
+    try {
+        // Game is over when all players have empty hands AND pond is empty
+        const allPlayersEmpty = room.players.every((player, index) => {
+            const hand = room.game.hands[index] || [];
+            return hand.length === 0;
+        });
+        const pondEmpty = room.game.pond.length === 0;
+        
+        console.log(`🔍 Go Fish game over check: allPlayersEmpty=${allPlayersEmpty}, pondEmpty=${pondEmpty}`);
+        
+        if (allPlayersEmpty && pondEmpty) {
+            console.log('🏆 Go Fish game is over!');
+            
+            // Calculate final scores (pairs)
+            const finalScores = room.players.map((player, index) => {
+                // For now, we'll use 0 for pairs since we're not tracking them on server
+                // In a full implementation, you'd track pairs on the server
+                return {
+                    name: player.name,
+                    pairs: 0
+                };
+            });
+            
+            // Find winner (most pairs)
+            const winner = finalScores.reduce((max, player) => 
+                player.pairs > max.pairs ? player : max
+            );
+            
+            // Find the room code for this room
+            let roomCode = null;
+            for (let [code, r] of rooms.entries()) {
+                if (r === room) {
+                    roomCode = code;
+                    break;
+                }
+            }
+            
+            if (roomCode) {
+                // Broadcast game over
+                io.to(roomCode).emit('gameOver', {
+                    winner: winner,
+                    finalScores: finalScores
+                });
+            }
+            
+            return true;
+        }
+        
+        return false;
+    } catch (error) {
+        console.error(`❌ Error in checkGoFishGameOver:`, error);
+        return false;
+    }
+}
+
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
     res.status(200).json({
@@ -963,6 +1171,17 @@ io.on('connection', (socket) => {
                     pairs: 0 // Will be calculated on client side
                 }))
             });
+            
+            // Handle bot turns for Go Fish
+            if (room.gameType === 'go-fish') {
+                const currentPlayer = room.players[room.game.currentPlayer];
+                if (currentPlayer && currentPlayer.isBot) {
+                    console.log(`🤖 Go Fish bot ${currentPlayer.name} turn - will play in 2 seconds`);
+                    setTimeout(() => {
+                        handleGoFishBotTurn(roomCode, room);
+                    }, 2000);
+                }
+            }
             
         } catch (error) {
             console.error(`❌ Error in turnChanged handler:`, error);
@@ -2331,57 +2550,6 @@ io.on('connection', (socket) => {
     // ✅ Handle Truco responses with improved validation
     // ✅ DUPLICATE respondTruco HANDLER REMOVED - Was overriding the main Truco logic
 
-    // ✅ Handle player nickname changes
-    socket.on('changeNickname', (data) => {
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`✏️ Nickname change requested in room: ${roomCode}`);
-        
-        if (!roomCode) {
-            console.log(`❌ User ${socket.id} not in a room`);
-            socket.emit('error', 'Not in a room');
-            return;
-        }
-        
-        const room = rooms.get(roomCode);
-        if (!room) {
-            console.log(`❌ Room ${roomCode} not found for nickname change`);
-            socket.emit('error', 'Room not found');
-            return;
-        }
-
-        const player = room.players.find(p => p.id === socket.id);
-        if (!player) {
-            console.log(`❌ Player ${socket.id} not found in room`);
-            socket.emit('error', 'Player not found in room');
-            return;
-        }
-
-        // Validate nickname length (max 12 characters)
-        const newNickname = data.nickname.trim();
-        if (newNickname.length === 0 || newNickname.length > 12) {
-            socket.emit('error', 'Nickname must be between 1 and 12 characters');
-            return;
-        }
-
-        // Check if nickname is already taken
-        const nicknameTaken = room.players.some(p => p.nickname === newNickname && p.id !== socket.id);
-        if (nicknameTaken) {
-            socket.emit('error', 'Nickname already taken');
-            return;
-        }
-
-        // Update player nickname
-        player.nickname = newNickname;
-        console.log(`✅ ${player.name} changed nickname to: ${newNickname}`);
-
-        // Emit updated player list to all players in the room
-        io.to(roomCode).emit('playerJoined', {
-            players: room.players,
-            count: room.players.length
-        });
-
-        console.log(`✅ Nickname change event emitted for user ${socket.id} in room ${roomCode}`);
-    });
 
     // ✅ Handle player team selection
     socket.on('selectTeam', (data) => {
@@ -2664,14 +2832,6 @@ function determineRoundWinner(playedCards, room) {
         }
     });
 
-    // Handle turn changes for all games
-    socket.on('turnChanged', (data) => {
-        console.log(`🎮 Turn changed in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('turnChanged', data);
-        }
-    });
 
     // Handle game completion for all games
     socket.on('gameCompleted', (data) => {

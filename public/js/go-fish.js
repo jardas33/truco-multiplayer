@@ -130,12 +130,7 @@ class GoFishGame {
         // Check if it's the local player's turn
         const currentPlayer = this.players[this.currentPlayer];
         if (this.isMyTurn) {
-            if (currentPlayer.isBot) {
-                console.log(`🤖 ${currentPlayer.name} is a bot - will play in 3 seconds`);
-                setTimeout(() => this.botPlay(), 3000); // 3 second delay for game start
-            } else {
-                console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
-            }
+            console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
         } else {
             console.log(`👤 Waiting for ${currentPlayer.name}'s turn`);
         }
@@ -312,13 +307,7 @@ class GoFishGame {
                 currentPlayer: this.currentPlayer
             });
                 
-                // If it's a bot, schedule another bot play
-                if (askingPlayer.isBot) {
-                    console.log(`🤖 ${askingPlayer.name} will continue their turn after getting cards`);
-                    setTimeout(() => {
-                        this.botPlay();
-                    }, 3000); // 3 second delay for bot continuation
-                }
+                // Bot logic is now handled by the server
             
             // Asking player gets another turn
             return true;
@@ -398,13 +387,7 @@ class GoFishGame {
                 this.addToHistory(`🎯 ${player.name} found ${foundPairs} pair(s) after fishing!`, 'success');
                 this.showGameMessage(`🎉 ${player.name} found ${foundPairs} pair(s)!`, 2000);
                 
-                // If it's a bot, schedule another bot play
-                if (player.isBot) {
-                    console.log(`🤖 ${player.name} will continue their turn after finding pairs`);
-                    setTimeout(() => {
-                        this.botPlay();
-                    }, 3000); // 3 second delay for bot continuation
-                }
+                // Bot logic is now handled by the server
                 // Don't end turn - player gets another turn
             } else {
                 console.log(`🎯 ${player.name} found no pairs after fishing`);
@@ -534,8 +517,16 @@ class GoFishGame {
             const currentPlayer = this.players[this.currentPlayer];
             console.log(`🔄 ${currentPlayer.name} has no cards - going fishing`);
             this.addToHistory(`🔄 ${currentPlayer.name} has no cards - going fishing`, 'info');
-            this.goFish(currentPlayer);
-            return; // goFish will handle turn progression
+            
+            // Send go fish request to server
+            if (window.gameFramework && window.gameFramework.socket) {
+                const socket = window.gameFramework.socket;
+                socket.emit('goFish', {
+                    roomId: window.gameFramework.roomId,
+                    playerIndex: this.currentPlayer
+                });
+            }
+            return; // Server will handle turn progression
         }
         
         // Log turn change
@@ -550,71 +541,16 @@ class GoFishGame {
         // Check if it's the local player's turn
         const currentPlayer = this.players[this.currentPlayer];
         if (this.isMyTurn) {
-            if (currentPlayer.isBot) {
-                console.log(`🤖 ${currentPlayer.name} is a bot - will play in 4 seconds`);
-                setTimeout(() => this.botPlay(), 4000); // 4 second delay for bot thinking
-            } else {
-                console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
-            }
+            console.log(`👤 ${currentPlayer.name} is a human player - waiting for input`);
         } else {
             console.log(`👤 Waiting for ${currentPlayer.name}'s turn`);
         }
     }
     
-    // Bot AI logic
+    // Bot AI logic - now handled by server
     botPlay() {
-        const bot = this.players[this.currentPlayer];
-        if (!bot.isBot) return;
-        
-        // Only run bot logic if it's the local player's turn
-        if (!this.isMyTurn) return;
-        
-        console.log(`🤖 ${bot.name} is thinking...`);
-        
-        // If bot has no cards, they must go fish
-        if (bot.hand.length === 0) {
-            console.log(`🤖 ${bot.name} has no cards - going fishing`);
-            this.showGameMessage(`${bot.name} has no cards - going fishing`);
-            this.goFish(bot);
-            return;
-        }
-        
-        // Simple bot strategy: ask for a rank they have
-        const availableRanks = [...new Set(bot.hand.map(card => card.rank))];
-        const targetRank = availableRanks[Math.floor(Math.random() * availableRanks.length)];
-        
-        // Choose a target player (not themselves)
-        const otherPlayers = this.players.filter((p, index) => index !== this.currentPlayer && p.hand.length > 0);
-        if (otherPlayers.length === 0) {
-            this.goFish(bot);
-            return;
-        }
-        
-        const targetPlayer = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
-        const targetIndex = this.players.indexOf(targetPlayer);
-        
-        console.log(`🤖 ${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
-        
-        // Show bot action popup - show specific card rank for strategy
-        this.showGameMessage(`${bot.name} asks ${targetPlayer.name} for ${targetRank}s`);
-        
-        // Execute the ask
-        const success = this.askForCards(this.currentPlayer, targetIndex, targetRank);
-        
-        // If bot got cards successfully, they get another turn
-        if (success) {
-            console.log(`🤖 ${bot.name} got cards successfully - gets another turn`);
-            console.log(`🤖 ${bot.name} current hand:`, bot.hand.map(card => card.name));
-            console.log(`🤖 ${bot.name} current pairs:`, bot.pairs);
-            // Schedule another bot play after a short delay
-            setTimeout(() => {
-                console.log(`🤖 ${bot.name} continuing their turn...`);
-                this.botPlay();
-            }, 3000); // 3 second delay for bot thinking
-        } else {
-            console.log(`🤖 ${bot.name} ask failed - Go Fish scenario handled by game`);
-        }
-        // If ask failed (Go Fish), the goFish method will handle turn progression
+        // Bots are now handled by the server-side handleGoFishBotTurn function
+        console.log('🤖 Bot logic is now handled by the server');
     }
     
     // Show game message popup
@@ -1188,12 +1124,7 @@ class GoFishClient {
         
         this.updateUI();
         
-        // If it's a bot's turn and it's the local player, trigger bot play
-        const currentPlayer = this.game.players[this.game.currentPlayer];
-        if (this.isMyTurn && currentPlayer.isBot) {
-            console.log(`🤖 ${currentPlayer.name} is a bot - will play in 4 seconds`);
-            setTimeout(() => this.botPlay(), 4000);
-        }
+        // Bot logic is now handled by the server
     }
 
     // Show game over
