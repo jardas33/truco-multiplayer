@@ -779,7 +779,10 @@ class GoFishClient {
         if (data && data.players) {
             // Initialize with server data
             this.game.initialize(data.players);
-            this.localPlayerIndex = data.localPlayerIndex || 0;
+            // Only set localPlayerIndex if it's not already set or if data provides it
+            if (data.localPlayerIndex !== undefined) {
+                this.localPlayerIndex = data.localPlayerIndex;
+            }
             
             // Set pond data if provided
             if (data.pond) {
@@ -2007,7 +2010,11 @@ function drawGameControls() {
             text('Ask for cards or Go Fish!', controlsX, controlsY - 25);
             
             // Draw player selector
-            if (window.game.currentPlayer === 0) { // Only show for human player
+            // Only show p5.js buttons if HTML buttons are not visible
+            const actionControls = document.getElementById('actionControls');
+            const htmlButtonsVisible = actionControls && actionControls.style.display !== 'none';
+            
+            if (window.game.currentPlayer === 0 && !htmlButtonsVisible) { // Only show for human player when HTML buttons are hidden
                 // Ask player selector
                 fill(255);
                 textSize(14);
@@ -2952,7 +2959,11 @@ function drawModernControlPanel() {
     rect(panelX, panelY, panelWidth, panelHeight, 10);
     
     // Current player info
-    if (window.game.currentPlayer === 0) {
+    // Only show p5.js buttons if HTML buttons are not visible
+    const actionControls = document.getElementById('actionControls');
+    const htmlButtonsVisible = actionControls && actionControls.style.display !== 'none';
+    
+    if (window.game.currentPlayer === 0 && !htmlButtonsVisible) {
         // Action buttons - centered in smaller panel
         const buttonY = panelY + 15;
         const buttonWidth = 70;
