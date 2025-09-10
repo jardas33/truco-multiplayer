@@ -386,21 +386,9 @@ class GoFishGame {
                 // Don't end turn - player gets another turn
             } else {
                 console.log(`🎯 ${player.name} found no pairs after fishing`);
-                // If player now has cards, they can continue playing
-                if (player.hand.length > 0) {
-                    if (player.isBot) {
-                        console.log(`🤖 ${player.name} has cards after fishing - continuing turn`);
-                        setTimeout(() => {
-                            this.botPlay();
-                        }, 2000); // 2 second delay for bot to continue
-                    } else {
-                        console.log(`👤 ${player.name} has cards after fishing - continuing turn`);
-                        // Human player continues their turn (no action needed, they can click buttons)
-                    }
-                } else {
-                    console.log(`🎯 ${player.name} ending turn`);
-        this.endTurn();
-                }
+                // Player didn't find pairs, so their turn ends
+                console.log(`🎯 ${player.name} ending turn after fishing`);
+                this.endTurn();
             }
         }, 2000); // 2 second delay for fishing animation
     }
