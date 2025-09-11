@@ -1025,8 +1025,19 @@ class GoFishClient {
     updateCardsGiven(data) {
         console.log('🎮 Cards given event received:', data);
         
-        // Update game state from server
-        this.game.players = data.players;
+        // Update game state from server - only update current player's hand
+        if (data.players) {
+            data.players.forEach((playerData, index) => {
+                if (this.game.players[index]) {
+                    // Only update hand if it's the local player
+                    if (index === this.localPlayerIndex) {
+                        this.game.players[index].hand = playerData.hand;
+                    }
+                    // Always update pairs and other data
+                    this.game.players[index].pairs = playerData.pairs;
+                }
+            });
+        }
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
@@ -1046,8 +1057,19 @@ class GoFishClient {
     updateGoFish(data) {
         console.log('🎮 Go fish event received:', data);
         
-        // Update game state from server
-        this.game.players = data.players;
+        // Update game state from server - only update current player's hand
+        if (data.players) {
+            data.players.forEach((playerData, index) => {
+                if (this.game.players[index]) {
+                    // Only update hand if it's the local player
+                    if (index === this.localPlayerIndex) {
+                        this.game.players[index].hand = playerData.hand;
+                    }
+                    // Always update pairs and other data
+                    this.game.players[index].pairs = playerData.pairs;
+                }
+            });
+        }
         this.game.pond = data.pond;
         this.game.currentPlayer = data.currentPlayer;
         
@@ -1087,7 +1109,20 @@ class GoFishClient {
         console.log('🎮 Turn changed event received:', data);
         
         this.game.currentPlayer = data.currentPlayer;
-        this.game.players = data.players;
+        
+        // Update game state from server - only update current player's hand
+        if (data.players) {
+            data.players.forEach((playerData, index) => {
+                if (this.game.players[index]) {
+                    // Only update hand if it's the local player
+                    if (index === this.localPlayerIndex) {
+                        this.game.players[index].hand = playerData.hand;
+                    }
+                    // Always update pairs and other data
+                    this.game.players[index].pairs = playerData.pairs;
+                }
+            });
+        }
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
@@ -1109,8 +1144,19 @@ class GoFishClient {
     updatePairMade(data) {
         console.log('🎮 Pair made event received:', data);
         
-        // Update game state from server
-        this.game.players = data.players;
+        // Update game state from server - only update current player's hand
+        if (data.players) {
+            data.players.forEach((playerData, index) => {
+                if (this.game.players[index]) {
+                    // Only update hand if it's the local player
+                    if (index === this.localPlayerIndex) {
+                        this.game.players[index].hand = playerData.hand;
+                    }
+                    // Always update pairs and other data
+                    this.game.players[index].pairs = playerData.pairs;
+                }
+            });
+        }
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
@@ -1190,14 +1236,19 @@ class GoFishClient {
         this.game.players.forEach((player, index) => {
             const area = document.createElement('div');
             area.className = `player-area ${index === this.game.currentPlayer ? 'active' : ''}`;
+            // Position based on whether this is the local player or not
+            const isLocalPlayer = (index === this.localPlayerIndex);
+            const isCurrentPlayer = (index === this.game.currentPlayer);
+            
             area.style.cssText = `
                 position: absolute;
-                ${index === 0 ? 'bottom: 20px; left: 50%; transform: translateX(-50%);' : ''}
-                ${index === 1 ? 'top: 20px; left: 50%; transform: translateX(-50%);' : ''}
-                ${index === 2 ? 'top: 50%; left: 20px; transform: translateY(-50%);' : ''}
-                ${index === 3 ? 'top: 50%; right: 20px; transform: translateY(-50%);' : ''}
-                ${index === 4 ? 'top: 20px; left: 20px;' : ''}
-                ${index === 5 ? 'top: 20px; right: 20px;' : ''}
+                ${isLocalPlayer ? 'bottom: 20px; left: 50%; transform: translateX(-50%);' : ''}
+                ${!isLocalPlayer && index === 0 ? 'top: 20px; left: 50%; transform: translateX(-50%);' : ''}
+                ${!isLocalPlayer && index === 1 ? 'top: 20px; left: 50%; transform: translateX(-50%);' : ''}
+                ${!isLocalPlayer && index === 2 ? 'top: 50%; left: 20px; transform: translateY(-50%);' : ''}
+                ${!isLocalPlayer && index === 3 ? 'top: 50%; right: 20px; transform: translateY(-50%);' : ''}
+                ${!isLocalPlayer && index === 4 ? 'top: 20px; left: 20px;' : ''}
+                ${!isLocalPlayer && index === 5 ? 'top: 20px; right: 20px;' : ''}
             `;
             
             // Only show hand cards for the local player, others show card count
