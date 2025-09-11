@@ -865,6 +865,9 @@ class GoFishClient {
                 this.game.pond = data.pond;
             }
             
+            // Set localPlayerIndex in game object
+            this.game.localPlayerIndex = this.localPlayerIndex;
+            
         } else if (data && data.hands) {
             // Handle Truco-style game start data
             const players = data.players.map((player, index) => ({
@@ -1200,8 +1203,11 @@ class GoFishClient {
             // Only show hand cards for the local player, others show card count
             const showHand = (index === this.localPlayerIndex);
             
+            // Display name: "You" for local player, actual name for others
+            const displayName = (index === this.localPlayerIndex) ? 'You' : player.name;
+            
             area.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 10px;">${player.name}</div>
+                <div style="font-weight: bold; margin-bottom: 10px;">${displayName}</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">Cards: ${player.hand ? player.hand.length : 0}</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">Pairs: ${player.pairs || 0}</div>
                 <div class="hand-cards">
@@ -1575,9 +1581,9 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
 }
 
 function drawMainPlayerHand() {
-    if (!window.game.players || !window.game.players[0]) return;
+    if (!window.game.players || !window.game.players[window.game.localPlayerIndex]) return;
     
-    const player = window.game.players[0];
+    const player = window.game.players[window.game.localPlayerIndex];
     const handY = height - 150; // Moved up more to give space for pair-making area
     const cardWidth = 60;
     const cardHeight = 84;
@@ -1631,7 +1637,7 @@ function drawMainPlayerHand() {
     });
     
     // Draw action buttons next to the cards
-    if (window.game.currentPlayer === 0) {
+    if (window.game.currentPlayer === window.game.localPlayerIndex) {
         const buttonY = handY + 20;
         
         // Ask button
@@ -1674,9 +1680,9 @@ function drawMainPlayerHand() {
 }
 
 function drawPairMakingArea() {
-    if (!window.game.players || !window.game.players[0]) return;
+    if (!window.game.players || !window.game.players[window.game.localPlayerIndex]) return;
     
-    const player = window.game.players[0];
+    const player = window.game.players[window.game.localPlayerIndex];
     const handY = height - 150; // Match the main player hand position
     const pairAreaWidth = 200;
     const pairAreaHeight = 100; // Taller to accommodate cards
@@ -2318,7 +2324,7 @@ function mousePressed() {
     if (!window.game || window.game.gameOver) return;
     
     // Only handle clicks for human player's turn
-    if (window.game.currentPlayer === 0) {
+    if (window.game.currentPlayer === window.game.localPlayerIndex) {
         const handY = height - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
@@ -2328,7 +2334,7 @@ function mousePressed() {
         const cardsToButtonsGap = 30;
         
         // Calculate positions (same as in drawMainPlayerHand)
-        const cardsWidth = (window.game.players[0].hand.length - 1) * (cardWidth + spacing) + cardWidth;
+        const cardsWidth = (window.game.players[window.game.localPlayerIndex].hand.length - 1) * (cardWidth + spacing) + cardWidth;
         const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
         const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
         const startX = (width - totalWidth) / 2;
@@ -2336,7 +2342,7 @@ function mousePressed() {
         const buttonY = handY + 20;
         
         // Check for card dragging
-        const player = window.game.players[0];
+        const player = window.game.players[window.game.localPlayerIndex];
         for (let i = 0; i < player.hand.length; i++) {
             const cardX = startX + i * (cardWidth + spacing);
             const cardY = handY;
