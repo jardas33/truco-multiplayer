@@ -1277,7 +1277,7 @@ io.on('connection', (socket) => {
                             const gameStartedData = {
                                 players: room.players.map((p, index) => ({
                                     ...p,
-                                    hand: room.game.hands[index] || [],
+                                    hand: index === playerIndex ? (room.game.hands[index] || []) : [], // Only show own hand
                                     pairs: p.pairs || 0
                                 })),
                                 pond: room.game.pond,
@@ -1301,7 +1301,7 @@ io.on('connection', (socket) => {
                             io.to(player.id).emit('gameStarted_fallback', {
                                 players: room.players.map((p, index) => ({
                                     ...p,
-                                    hand: room.game.hands[index] || [],
+                                    hand: index === playerIndex ? (room.game.hands[index] || []) : [], // Only show own hand
                                     pairs: p.pairs || 0
                                 })),
                                 pond: room.game.pond,
@@ -1312,17 +1312,8 @@ io.on('connection', (socket) => {
                     }
                 });
                 
-                // Also broadcast to room as backup
-                console.log(`🐟 Broadcasting gameStart to room ${actualRoomCode} as backup`);
-                io.to(actualRoomCode).emit('gameStart', {
-                    players: room.players.map((p, index) => ({
-                        ...p,
-                        hand: room.game.hands[index] || [],
-                        pairs: p.pairs || 0
-                    })),
-                    pond: room.game.pond,
-                    currentPlayer: room.game.currentPlayer
-                });
+                // No broadcast for Go Fish - each player gets individual data
+                console.log(`🐟 Go Fish: Individual gameStarted events sent to all players`);
             } else {
                 // For other games (Truco, etc.), emit gameStart event
                 io.to(roomCode).emit('gameStart', {
