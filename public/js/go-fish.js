@@ -1734,6 +1734,7 @@ function drawMainPlayerHand() {
     
     const player = window.game.players[window.game.localPlayerIndex];
     const handY = height - 150; // Moved up more to give space for pair-making area
+    console.log('🎮 handY calculated as:', handY, 'from height:', height);
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
@@ -1787,9 +1788,11 @@ function drawMainPlayerHand() {
     
     // Draw action buttons next to the cards
     console.log('🎮 drawMainPlayerHand - currentPlayer:', window.game.currentPlayer, 'localPlayerIndex:', window.game.localPlayerIndex, 'isMyTurn:', window.goFishClient ? window.goFishClient.isMyTurn : 'undefined');
+    console.log('🎮 Canvas dimensions - width:', width, 'height:', height);
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
         console.log('🎮 Drawing buttons for current player');
         const buttonY = handY + 20;
+        console.log('🎮 Button positions - buttonsStartX:', buttonsStartX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
         
         // Ask button
         const askX = buttonsStartX;
@@ -1799,6 +1802,7 @@ function drawMainPlayerHand() {
         fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
         stroke(255);
         strokeWeight(1);
+        console.log('🎮 Drawing Ask button at:', askX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringAsk ? 'hover' : 'normal');
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
         fill(255);
@@ -1816,6 +1820,7 @@ function drawMainPlayerHand() {
         fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
         stroke(255);
         strokeWeight(1);
+        console.log('🎮 Drawing Go Fish button at:', goFishX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringGoFish ? 'hover' : 'normal');
         rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
         
         fill(255);
