@@ -1032,9 +1032,19 @@ class GoFishClient {
                     // Only update hand if it's the local player
                     if (index === this.localPlayerIndex) {
                         this.game.players[index].hand = playerData.hand;
+                        
+                        // For human players, don't automatically update pairs from server
+                        // Let them make pairs manually by dragging cards
+                        if (!this.game.players[index].isBot) {
+                            console.log('🎯 Human player - skipping automatic pair update from server');
+                        } else {
+                            // For bots, update pairs from server
+                            this.game.players[index].pairs = playerData.pairs;
+                        }
+                    } else {
+                        // For other players, always update pairs from server
+                        this.game.players[index].pairs = playerData.pairs;
                     }
-                    // Always update pairs and other data
-                    this.game.players[index].pairs = playerData.pairs;
                 }
             });
         }
@@ -1064,9 +1074,19 @@ class GoFishClient {
                     // Only update hand if it's the local player
                     if (index === this.localPlayerIndex) {
                         this.game.players[index].hand = playerData.hand;
+                        
+                        // For human players, don't automatically update pairs from server
+                        // Let them make pairs manually by dragging cards
+                        if (!this.game.players[index].isBot) {
+                            console.log('🎯 Human player - skipping automatic pair update from server');
+                        } else {
+                            // For bots, update pairs from server
+                            this.game.players[index].pairs = playerData.pairs;
+                        }
+                    } else {
+                        // For other players, always update pairs from server
+                        this.game.players[index].pairs = playerData.pairs;
                     }
-                    // Always update pairs and other data
-                    this.game.players[index].pairs = playerData.pairs;
                 }
             });
         }
@@ -1117,9 +1137,19 @@ class GoFishClient {
                     // Only update hand if it's the local player
                     if (index === this.localPlayerIndex) {
                         this.game.players[index].hand = playerData.hand;
+                        
+                        // For human players, don't automatically update pairs from server
+                        // Let them make pairs manually by dragging cards
+                        if (!this.game.players[index].isBot) {
+                            console.log('🎯 Human player - skipping automatic pair update from server');
+                        } else {
+                            // For bots, update pairs from server
+                            this.game.players[index].pairs = playerData.pairs;
+                        }
+                    } else {
+                        // For other players, always update pairs from server
+                        this.game.players[index].pairs = playerData.pairs;
                     }
-                    // Always update pairs and other data
-                    this.game.players[index].pairs = playerData.pairs;
                 }
             });
         }
@@ -1151,9 +1181,19 @@ class GoFishClient {
                     // Only update hand if it's the local player
                     if (index === this.localPlayerIndex) {
                         this.game.players[index].hand = playerData.hand;
+                        
+                        // For human players, don't automatically update pairs from server
+                        // Let them make pairs manually by dragging cards
+                        if (!this.game.players[index].isBot) {
+                            console.log('🎯 Human player - skipping automatic pair update from server');
+                        } else {
+                            // For bots, update pairs from server
+                            this.game.players[index].pairs = playerData.pairs;
+                        }
+                    } else {
+                        // For other players, always update pairs from server
+                        this.game.players[index].pairs = playerData.pairs;
                     }
-                    // Always update pairs and other data
-                    this.game.players[index].pairs = playerData.pairs;
                 }
             });
         }
@@ -1603,12 +1643,39 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
     strokeWeight(2);
     rect(x, y, 150, 80, 8);
     
-    // Player name
+    // Player name - show from local player's perspective
     fill(255, 255, 255);
     textAlign(LEFT, CENTER);
     textSize(14);
     noStroke();
-    text(player.name, x + 10, y + 20);
+    
+    // Calculate relative player position from local player's perspective
+    let displayName = player.name;
+    if (window.game && window.game.localPlayerIndex !== undefined) {
+        const localIndex = window.game.localPlayerIndex;
+        const playerIndex = window.game.players.indexOf(player);
+        
+        if (playerIndex !== -1) {
+            // Calculate relative position (0 = local player, 1 = next player, etc.)
+            let relativePosition = playerIndex - localIndex;
+            if (relativePosition < 0) {
+                relativePosition += window.game.players.length;
+            }
+            
+            // Convert to display name
+            if (relativePosition === 0) {
+                displayName = "You";
+            } else if (relativePosition === 1) {
+                displayName = "Player 1";
+            } else if (relativePosition === 2) {
+                displayName = "Player 2";
+            } else {
+                displayName = `Player ${relativePosition}`;
+            }
+        }
+    }
+    
+    text(displayName, x + 10, y + 20);
     
     // Card count
     fill(200, 200, 200);
@@ -2534,18 +2601,39 @@ function mouseReleased() {
 }
 
 function showAskForCardsDialog() {
-    if (!window.game || !window.game.players) return;
+    console.log('🎯 showAskForCardsDialog called');
+    console.log('🎯 window.game:', window.game);
+    console.log('🎯 window.game.players:', window.game?.players);
+    
+    if (!window.game || !window.game.players) {
+        console.log('❌ No game or players available');
+        return;
+    }
     
     const currentPlayer = window.game.players[window.game.currentPlayer];
-    if (!currentPlayer || currentPlayer.hand.length === 0) return;
+    console.log('🎯 currentPlayer:', currentPlayer);
+    console.log('🎯 currentPlayer hand length:', currentPlayer?.hand?.length);
+    
+    if (!currentPlayer || currentPlayer.hand.length === 0) {
+        console.log('❌ No current player or empty hand');
+        return;
+    }
     
     // Get available ranks for current player
     const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
-    if (availableRanks.length === 0) return;
+    console.log('🎯 availableRanks:', availableRanks);
+    if (availableRanks.length === 0) {
+        console.log('❌ No available ranks');
+        return;
+    }
     
     // Get available target players
     const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
-    if (availableTargets.length === 0) return;
+    console.log('🎯 availableTargets:', availableTargets);
+    if (availableTargets.length === 0) {
+        console.log('❌ No available targets');
+        return;
+    }
     
     // Create dialog
     const dialog = document.createElement('div');
