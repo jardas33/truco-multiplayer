@@ -1625,15 +1625,23 @@ function drawOpponentHands() {
     const cardHeight = 56;
     const spacing = 8;
     
+    // Get opponents (all players except the local player)
+    const localPlayerIndex = window.game.localPlayerIndex || 0;
+    const opponents = window.game.players.filter((player, index) => index !== localPlayerIndex);
+    
+    if (opponents.length === 0) return;
+    
     // Bot 1 (top left) - moved down to avoid score panel
     const bot1X = 50;
     const bot1Y = 80;
-    drawOpponentHand(bot1X, bot1Y, window.game.players[1], cardWidth, cardHeight, spacing);
+    drawOpponentHand(bot1X, bot1Y, opponents[0], cardWidth, cardHeight, spacing);
     
     // Bot 2 (top right) - moved down and left to avoid score panel
     const bot2X = width - 250;
     const bot2Y = 80;
-    drawOpponentHand(bot2X, bot2Y, window.game.players[2], cardWidth, cardHeight, spacing);
+    if (opponents.length > 1) {
+        drawOpponentHand(bot2X, bot2Y, opponents[1], cardWidth, cardHeight, spacing);
+    }
 }
 
 function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
@@ -2151,8 +2159,30 @@ function drawGameInfo() {
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
         const currentPlayer = window.game.players[window.game.currentPlayer];
+        const localPlayerIndex = window.game.localPlayerIndex || 0;
+        
+        // Calculate display name from local player's perspective
+        let displayName = currentPlayer.name;
+        if (window.game.localPlayerIndex !== undefined) {
+            const playerIndex = window.game.currentPlayer;
+            let relativePosition = playerIndex - localPlayerIndex;
+            if (relativePosition < 0) {
+                relativePosition += window.game.players.length;
+            }
+            
+            if (relativePosition === 0) {
+                displayName = "You";
+            } else if (relativePosition === 1) {
+                displayName = "Player 1";
+            } else if (relativePosition === 2) {
+                displayName = "Player 2";
+            } else {
+                displayName = `Player ${relativePosition}`;
+            }
+        }
+        
         textSize(12);
-        text(`Current Player: ${currentPlayer.name}`, boxX + 10, boxY + 30);
+        text(`Current Player: ${displayName}`, boxX + 10, boxY + 30);
     }
     
     // Draw pond info
@@ -2231,7 +2261,27 @@ function drawScores() {
             fill(255);
         }
         
-        text(`${player.name}: ${player.pairs || 0}`, scoresX + 10, scoresY + yOffset);
+        // Calculate display name from local player's perspective
+        let displayName = player.name;
+        if (window.game.localPlayerIndex !== undefined) {
+            const localPlayerIndex = window.game.localPlayerIndex;
+            let relativePosition = index - localPlayerIndex;
+            if (relativePosition < 0) {
+                relativePosition += window.game.players.length;
+            }
+            
+            if (relativePosition === 0) {
+                displayName = "You";
+            } else if (relativePosition === 1) {
+                displayName = "Player 1";
+            } else if (relativePosition === 2) {
+                displayName = "Player 2";
+            } else {
+                displayName = `Player ${relativePosition}`;
+            }
+        }
+        
+        text(`${displayName}: ${player.pairs || 0}`, scoresX + 10, scoresY + yOffset);
         yOffset += 20;
     });
 }
@@ -2251,11 +2301,33 @@ function drawGameControls() {
     // Draw current player info
     if (window.game.currentPlayer !== undefined && window.game.players[window.game.currentPlayer]) {
         const currentPlayer = window.game.players[window.game.currentPlayer];
+        const localPlayerIndex = window.game.localPlayerIndex || 0;
+        
+        // Calculate display name from local player's perspective
+        let displayName = currentPlayer.name;
+        if (window.game.localPlayerIndex !== undefined) {
+            const playerIndex = window.game.currentPlayer;
+            let relativePosition = playerIndex - localPlayerIndex;
+            if (relativePosition < 0) {
+                relativePosition += window.game.players.length;
+            }
+            
+            if (relativePosition === 0) {
+                displayName = "You";
+            } else if (relativePosition === 1) {
+                displayName = "Player 1";
+            } else if (relativePosition === 2) {
+                displayName = "Player 2";
+            } else {
+                displayName = `Player ${relativePosition}`;
+            }
+        }
+        
         fill(255, 215, 0);
         textAlign(CENTER, CENTER);
             textSize(18);
             noStroke();
-            text(`🎯 ${currentPlayer.name}'s Turn`, controlsX, controlsY - 50);
+            text(`🎯 ${displayName}'s Turn`, controlsX, controlsY - 50);
         
         // Draw available actions
         fill(255);
@@ -2585,7 +2657,8 @@ function mouseReleased() {
                 const lastTwo = window.pairMakingArea.cards.slice(-2);
                 if (lastTwo[0].rank === lastTwo[1].rank) {
                     // Make the pair
-                    if (window.game.makePairManually(lastTwo[0], lastTwo[1])) {
+                    const localPlayerIndex = window.game.localPlayerIndex || 0;
+                    if (window.game.makePairManually(lastTwo[0], lastTwo[1], localPlayerIndex)) {
                         // Remove the paired cards from pair-making area
                         window.pairMakingArea.cards = window.pairMakingArea.cards.filter(
                             card => card !== lastTwo[0] && card !== lastTwo[1]
@@ -2610,17 +2683,19 @@ function showAskForCardsDialog() {
         return;
     }
     
-    const currentPlayer = window.game.players[window.game.currentPlayer];
-    console.log('🎯 currentPlayer:', currentPlayer);
-    console.log('🎯 currentPlayer hand length:', currentPlayer?.hand?.length);
+    // Use local player index instead of current player index
+    const localPlayerIndex = window.game.localPlayerIndex || 0;
+    const localPlayer = window.game.players[localPlayerIndex];
+    console.log('🎯 localPlayer:', localPlayer);
+    console.log('🎯 localPlayer hand length:', localPlayer?.hand?.length);
     
-    if (!currentPlayer || currentPlayer.hand.length === 0) {
-        console.log('❌ No current player or empty hand');
+    if (!localPlayer || localPlayer.hand.length === 0) {
+        console.log('❌ No local player or empty hand');
         return;
     }
     
-    // Get available ranks for current player
-    const availableRanks = window.game.getAvailableRanks(window.game.currentPlayer);
+    // Get available ranks for local player
+    const availableRanks = window.game.getAvailableRanks(localPlayerIndex);
     console.log('🎯 availableRanks:', availableRanks);
     if (availableRanks.length === 0) {
         console.log('❌ No available ranks');
@@ -2628,7 +2703,7 @@ function showAskForCardsDialog() {
     }
     
     // Get available target players
-    const availableTargets = window.game.getAvailableTargets(window.game.currentPlayer);
+    const availableTargets = window.game.getAvailableTargets(localPlayerIndex);
     console.log('🎯 availableTargets:', availableTargets);
     if (availableTargets.length === 0) {
         console.log('❌ No available targets');
@@ -2989,9 +3064,31 @@ function drawModernScorePanel() {
     // Current turn indicator
     if (window.game && window.game.currentPlayer !== undefined) {
         const currentPlayer = window.game.players[window.game.currentPlayer];
+        const localPlayerIndex = window.game.localPlayerIndex || 0;
+        
+        // Calculate display name from local player's perspective
+        let displayName = currentPlayer.name;
+        if (window.game.localPlayerIndex !== undefined) {
+            const playerIndex = window.game.currentPlayer;
+            let relativePosition = playerIndex - localPlayerIndex;
+            if (relativePosition < 0) {
+                relativePosition += window.game.players.length;
+            }
+            
+            if (relativePosition === 0) {
+                displayName = "You";
+            } else if (relativePosition === 1) {
+                displayName = "Player 1";
+            } else if (relativePosition === 2) {
+                displayName = "Player 2";
+            } else {
+                displayName = `Player ${relativePosition}`;
+            }
+        }
+        
         fill(100, 200, 255);
         textSize(14);
-        text(`Current Turn: ${currentPlayer.name}`, panelX + 15, panelY + 50);
+        text(`Current Turn: ${displayName}`, panelX + 15, panelY + 50);
     }
     
     // Player scores
@@ -3009,10 +3106,30 @@ function drawModernScorePanel() {
             const isCurrentPlayer = index === window.game.currentPlayer;
             const textColor = isCurrentPlayer ? color(255, 215, 0) : color(255, 255, 255);
             
+            // Calculate display name from local player's perspective
+            let displayName = player.name;
+            if (window.game.localPlayerIndex !== undefined) {
+                const localPlayerIndex = window.game.localPlayerIndex;
+                let relativePosition = index - localPlayerIndex;
+                if (relativePosition < 0) {
+                    relativePosition += window.game.players.length;
+                }
+                
+                if (relativePosition === 0) {
+                    displayName = "You";
+                } else if (relativePosition === 1) {
+                    displayName = "Player 1";
+                } else if (relativePosition === 2) {
+                    displayName = "Player 2";
+                } else {
+                    displayName = `Player ${relativePosition}`;
+                }
+            }
+            
             fill(textColor);
             textSize(12);
             textStyle(NORMAL);
-            text(`${player.name}: ${player.pairs || 0} pairs`, panelX + 15, panelY + yOffset);
+            text(`${displayName}: ${player.pairs || 0} pairs`, panelX + 15, panelY + yOffset);
             yOffset += 18; // Optimized spacing
         });
         
@@ -3028,10 +3145,30 @@ function drawModernScorePanel() {
             const isCurrentPlayer = index === window.game.currentPlayer;
             const textColor = isCurrentPlayer ? color(255, 215, 0) : color(200, 200, 200);
             
+            // Calculate display name from local player's perspective
+            let displayName = player.name;
+            if (window.game.localPlayerIndex !== undefined) {
+                const localPlayerIndex = window.game.localPlayerIndex;
+                let relativePosition = index - localPlayerIndex;
+                if (relativePosition < 0) {
+                    relativePosition += window.game.players.length;
+                }
+                
+                if (relativePosition === 0) {
+                    displayName = "You";
+                } else if (relativePosition === 1) {
+                    displayName = "Player 1";
+                } else if (relativePosition === 2) {
+                    displayName = "Player 2";
+                } else {
+                    displayName = `Player ${relativePosition}`;
+                }
+            }
+            
             fill(textColor);
             textSize(11);
             textStyle(NORMAL);
-            text(`${player.name}: ${player.overallWins || 0}`, panelX + 15, panelY + yOffset);
+            text(`${displayName}: ${player.overallWins || 0}`, panelX + 15, panelY + yOffset);
             yOffset += 16; // Optimized spacing
         });
     }
