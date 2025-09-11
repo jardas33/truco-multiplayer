@@ -513,10 +513,20 @@ class GoFishGame {
 
     // Get available target players
     getAvailableTargets(playerIndex) {
-        return this.players
+        console.log('🎯 getAvailableTargets called for playerIndex:', playerIndex);
+        console.log('🎯 All players:', this.players.map((p, i) => ({ index: i, name: p.name, handLength: p.hand ? p.hand.length : 'undefined' })));
+        
+        const targets = this.players
             .map((player, index) => ({ player, index }))
-            .filter(({ player, index }) => index !== playerIndex && player.hand.length > 0)
+            .filter(({ player, index }) => {
+                const isValid = index !== playerIndex && player.hand && player.hand.length > 0;
+                console.log(`🎯 Player ${index} (${player.name}): handLength=${player.hand ? player.hand.length : 'undefined'}, isValid=${isValid}`);
+                return isValid;
+            })
             .map(({ player, index }) => ({ name: player.name, index }));
+        
+        console.log('🎯 Available targets result:', targets);
+        return targets;
     }
 
     // Emit event to server
@@ -1335,15 +1345,13 @@ class GoFishClient {
         console.log('🎮   my hand exists:', !!(this.game && this.game.players && this.game.players[this.localPlayerIndex]));
         console.log('🎮   my hand length:', this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand ? this.game.players[this.localPlayerIndex].hand.length : 'undefined');
         
+        // The controls are drawn by p5.js, so we just need to update the turn state
+        // The actual button visibility is handled in drawMainPlayerHand()
         if (this.isMyTurn && this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand.length > 0) {
-            console.log('🎮 Showing controls for player', this.localPlayerIndex);
-            this.showPlayerSelector();
-            this.showActionControls();
+            console.log('🎮 Controls should be visible for player', this.localPlayerIndex);
             this.updatePlayerSelector();
         } else {
-            console.log('🎮 Hiding controls for player', this.localPlayerIndex);
-            this.hidePlayerSelector();
-            this.hideActionControls();
+            console.log('🎮 Controls should be hidden for player', this.localPlayerIndex);
         }
     }
 
@@ -1619,7 +1627,7 @@ function drawModernTable() {
 }
 
 function drawOpponentHands() {
-    if (!window.game.players || window.game.players.length < 3) return;
+    if (!window.game.players || window.game.players.length < 2) return;
     
     const cardWidth = 40;
     const cardHeight = 56;
@@ -1631,16 +1639,31 @@ function drawOpponentHands() {
     
     if (opponents.length === 0) return;
     
-    // Bot 1 (top left) - moved down to avoid score panel
-    const bot1X = 50;
-    const bot1Y = 80;
-    drawOpponentHand(bot1X, bot1Y, opponents[0], cardWidth, cardHeight, spacing);
-    
-    // Bot 2 (top right) - moved down and left to avoid score panel
-    const bot2X = width - 250;
-    const bot2Y = 80;
-    if (opponents.length > 1) {
-        drawOpponentHand(bot2X, bot2Y, opponents[1], cardWidth, cardHeight, spacing);
+    // Position opponents dynamically based on how many there are
+    if (opponents.length === 1) {
+        // Single opponent - center top
+        const opponentX = width / 2 - 75;
+        const opponentY = 80;
+        drawOpponentHand(opponentX, opponentY, opponents[0], cardWidth, cardHeight, spacing);
+    } else if (opponents.length === 2) {
+        // Two opponents - left and right
+        const opponent1X = 50;
+        const opponent1Y = 80;
+        drawOpponentHand(opponent1X, opponent1Y, opponents[0], cardWidth, cardHeight, spacing);
+        
+        const opponent2X = width - 250;
+        const opponent2Y = 80;
+        drawOpponentHand(opponent2X, opponent2Y, opponents[1], cardWidth, cardHeight, spacing);
+    } else {
+        // Three or more opponents - arrange in a row
+        const startX = 50;
+        const opponentY = 80;
+        const opponentSpacing = (width - 100) / opponents.length;
+        
+        opponents.forEach((opponent, index) => {
+            const opponentX = startX + (index * opponentSpacing);
+            drawOpponentHand(opponentX, opponentY, opponent, cardWidth, cardHeight, spacing);
+        });
     }
 }
 
@@ -1763,7 +1786,9 @@ function drawMainPlayerHand() {
     });
     
     // Draw action buttons next to the cards
+    console.log('🎮 drawMainPlayerHand - currentPlayer:', window.game.currentPlayer, 'localPlayerIndex:', window.game.localPlayerIndex, 'isMyTurn:', window.goFishClient ? window.goFishClient.isMyTurn : 'undefined');
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
+        console.log('🎮 Drawing buttons for current player');
         const buttonY = handY + 20;
         
         // Ask button
@@ -1799,6 +1824,8 @@ function drawMainPlayerHand() {
         textStyle(BOLD);
         noStroke();
         text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
+    } else {
+        console.log('🎮 Not drawing buttons - not current player');
     }
     
     // Draw pair-making area
