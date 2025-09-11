@@ -1167,8 +1167,11 @@ class GoFishClient {
             // Only show hand cards for the local player, others show card count
             const showHand = (index === this.localPlayerIndex);
             
+            // Show "You" for the local player, actual name for others
+            const displayName = (index === this.localPlayerIndex) ? 'You' : player.name;
+            
             area.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 10px;">${player.name}</div>
+                <div style="font-weight: bold; margin-bottom: 10px;">${displayName}</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">Cards: ${player.hand ? player.hand.length : 0}</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">Pairs: ${player.pairs || 0}</div>
                 <div class="hand-cards">
@@ -1431,7 +1434,6 @@ function drawGameState() {
     
     // Draw pond background image
     if (window.pondImage) {
-        console.log('🐟 Drawing pond background image');
         // Draw the pond image to fill the entire canvas
         image(window.pondImage, 0, 0, width, height);
     } else {
@@ -1598,44 +1600,7 @@ function drawMainPlayerHand() {
         }
     });
     
-    // Draw action buttons next to the cards
-    if (window.game.currentPlayer === 0) {
-        const buttonY = handY + 20;
-        
-        // Ask button
-        const askX = buttonsStartX;
-        const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
-                             mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        
-        fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
-        stroke(255);
-        strokeWeight(1);
-        rect(askX, buttonY, buttonWidth, buttonHeight, 5);
-        
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(14);
-        textStyle(BOLD);
-        noStroke();
-        text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
-        
-        // Go Fish button
-        const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
-        const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
-                                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        
-        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
-        stroke(255);
-        strokeWeight(1);
-        rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
-        
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(14);
-        textStyle(BOLD);
-        noStroke();
-        text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
-    }
+    // Action buttons are now handled by HTML elements, not p5.js drawing
     
     // Draw pair-making area
     drawPairMakingArea();
@@ -2164,71 +2129,7 @@ function drawGameControls() {
     }
 }
 
-function drawActionButtons() {
-    if (!window.game || window.game.gameOver) return;
-    
-    const buttonY = height - 50; // Adjusted for bigger control box
-    const buttonX = 200; // Moved to left side to match control box
-    const buttonWidth = 100;
-    const buttonHeight = 30;
-    
-    // Only show buttons for human player's turn
-    if (window.game.currentPlayer === 0) {
-        // Ask button
-        const askButtonX = buttonX - 120;
-        const isHoveringAsk = mouseX >= askButtonX - buttonWidth/2 && mouseX <= askButtonX + buttonWidth/2 &&
-                          mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
-        
-        if (isHoveringAsk) {
-            cursor(HAND);
-        }
-        
-        // Draw Ask button shadow
-        fill(0, 0, 0, 100);
-        noStroke();
-        rect(askButtonX - buttonWidth/2 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
-        
-        // Draw Ask button with hover effect
-        fill(isHoveringAsk ? 69 : 76, isHoveringAsk ? 160 : 175, isHoveringAsk ? 73 : 80);
-        stroke(255);
-        strokeWeight(2);
-        rect(askButtonX - buttonWidth/2, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
-        
-        // Draw Ask button text
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(11);
-        noStroke();
-        text('Ask', askButtonX, buttonY);
-    
-    // Go Fish button
-        const goFishButtonX = buttonX + 120;
-        const isHoveringGoFish = mouseX >= goFishButtonX - buttonWidth/2 && mouseX <= goFishButtonX + buttonWidth/2 &&
-                          mouseY >= buttonY - buttonHeight/2 && mouseY <= buttonY + buttonHeight/2;
-    
-        if (isHoveringGoFish) {
-        cursor(HAND);
-    }
-    
-        // Draw Go Fish button shadow
-    fill(0, 0, 0, 100);
-    noStroke();
-        rect(goFishButtonX - buttonWidth/2 + 2, buttonY - buttonHeight/2 + 2, buttonWidth, buttonHeight, 8);
-    
-        // Draw Go Fish button with hover effect
-        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
-    stroke(255);
-    strokeWeight(2);
-        rect(goFishButtonX - buttonWidth/2, buttonY - buttonHeight/2, buttonWidth, buttonHeight, 8);
-    
-        // Draw Go Fish button text
-    fill(255);
-    textAlign(CENTER, CENTER);
-        textSize(11);
-        noStroke();
-        text('🐟 Go Fish!', goFishButtonX, buttonY);
-    }
-}
+// drawActionButtons function removed - using HTML buttons instead
 
 function drawGameMessages() {
     if (!window.gameMessages) return;
@@ -2392,23 +2293,7 @@ function mousePressed() {
             }
         }
         
-        // Check if Ask button was clicked
-        const askX = buttonsStartX;
-        if (mouseX >= askX && mouseX <= askX + buttonWidth &&
-            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
-            console.log('🎯 Ask button clicked');
-        showAskForCardsDialog();
-    }
-    
-    // Check if Go Fish button was clicked
-        const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
-        if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
-            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
-        console.log('🐟 Go Fish button clicked');
-        if (window.goFishClient) {
-            window.goFishClient.goFish();
-        }
-        }
+        // Button interactions are now handled by HTML elements, not p5.js
     }
     
     // Check if View Full History button was clicked
@@ -3041,60 +2926,4 @@ function drawGameHistoryPanel() {
     }
 }
 
-function drawModernControlPanel() {
-    if (!window.game || window.game.gameOver) return;
-    
-    const panelWidth = 200;
-    const panelHeight = 60;
-    const panelX = (width - panelWidth) / 2; // Center horizontally
-    const panelY = height - 100; // Move to bottom center
-    
-    // Draw control panel background
-    fill(0, 0, 0, 200);
-    stroke(100, 150, 200);
-    strokeWeight(2);
-    rect(panelX, panelY, panelWidth, panelHeight, 10);
-    
-    // Current player info
-    // Only show p5.js buttons if HTML buttons are not visible
-    const actionControls = document.getElementById('actionControls');
-    const htmlButtonsVisible = actionControls && actionControls.style.display !== 'none';
-    
-    if (window.game.currentPlayer === this.localPlayerIndex && !htmlButtonsVisible) {
-        // Action buttons - centered in smaller panel
-        const buttonY = panelY + 15;
-        const buttonWidth = 70;
-        const buttonHeight = 30;
-        const buttonSpacing = 20;
-        
-        // Ask button
-        const askX = panelX + 15;
-        const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
-                             mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        
-        fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
-        stroke(255);
-        strokeWeight(1);
-        rect(askX, buttonY, buttonWidth, buttonHeight, 5);
-        
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(12);
-        text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
-        
-        // Go Fish button
-        const goFishX = panelX + 15 + buttonWidth + buttonSpacing;
-        const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
-                                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        
-        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
-        stroke(255);
-        strokeWeight(1);
-        rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
-        
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(12);
-        text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
-    }
-}
+// drawModernControlPanel function removed - using HTML buttons instead
