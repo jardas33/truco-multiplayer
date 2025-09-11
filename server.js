@@ -1261,54 +1261,22 @@ io.on('connection', (socket) => {
                         console.log(`🐟 Sending to player ${playerIndex}: ${player.name} (socket ID: ${player.id})`);
                         console.log(`🔍 DEBUG: Looking up socket for player ${playerIndex} with ID: ${player.id}`);
                         
-                        // Try multiple methods to get the socket
-                        const socket1 = io.sockets.sockets.get(player.id);
-                        const socket2 = io.to(player.id);
+                        const gameStartedData = {
+                            players: room.players.map((p, index) => ({
+                                ...p,
+                                hand: index === playerIndex ? (room.game.hands[index] || []) : [], // Only show own hand
+                                pairs: p.pairs || 0
+                            })),
+                            pond: room.game.pond,
+                            localPlayerIndex: playerIndex, // Each player gets their correct index
+                            currentPlayer: room.game.currentPlayer
+                        };
                         
-                        console.log(`🔍 DEBUG: Socket lookup method 1 (get):`, !!socket1);
-                        console.log(`🔍 DEBUG: Socket lookup method 2 (to):`, !!socket2);
+                        console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${player.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
                         
-                        if (socket1) {
-                            console.log(`✅ Socket found for player ${playerIndex}, sending gameStarted`);
-                            console.log(`🔍 Socket ID lookup: ${player.id} -> ${socket1.id}`);
-                            console.log(`🔍 DEBUG: Socket connected: ${socket1.connected}`);
-                            console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket1.rooms));
-                            
-                            const gameStartedData = {
-                                players: room.players.map((p, index) => ({
-                                    ...p,
-                                    hand: index === playerIndex ? (room.game.hands[index] || []) : [], // Only show own hand
-                                    pairs: p.pairs || 0
-                                })),
-                                pond: room.game.pond,
-                                localPlayerIndex: playerIndex, // Each player gets their correct index
-                                currentPlayer: room.game.currentPlayer
-                            };
-                            
-                            console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${socket1.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
-                            
-                            // Try both direct socket emission and targeted emission
-                            socket1.emit('gameStarted', gameStartedData);
-                            io.to(player.id).emit('gameStarted_backup', gameStartedData);
-                            
-                            console.log(`🔍 DEBUG: gameStarted event emitted to socket ${socket1.id}`);
-                        } else {
-                            console.log(`❌ Socket not found for player ${playerIndex}: ${player.name} (ID: ${player.id})`);
-                            console.log(`🔍 Available sockets:`, Array.from(io.sockets.sockets.keys()));
-                            
-                            // Try sending to the socket ID directly as a fallback
-                            console.log(`🔍 DEBUG: Trying fallback emission to ${player.id}`);
-                            io.to(player.id).emit('gameStarted_fallback', {
-                                players: room.players.map((p, index) => ({
-                                    ...p,
-                                    hand: index === playerIndex ? (room.game.hands[index] || []) : [], // Only show own hand
-                                    pairs: p.pairs || 0
-                                })),
-                                pond: room.game.pond,
-                                localPlayerIndex: playerIndex,
-                                currentPlayer: room.game.currentPlayer
-                            });
-                        }
+                        // Use targeted emission to the specific socket ID
+                        io.to(player.id).emit('gameStarted', gameStartedData);
+                        console.log(`🔍 DEBUG: gameStarted event emitted to socket ${player.id}`);
                     }
                 });
                 

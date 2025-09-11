@@ -611,16 +611,7 @@ class GoFishClient {
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
         document.getElementById('startGameBtn').onclick = () => this.emitStartGame();
         
-        // Game controls (only if elements exist)
-        const askBtn = document.getElementById('askBtn');
-        const goFishBtn = document.getElementById('goFishBtn');
-        
-        if (askBtn) {
-            askBtn.onclick = () => this.handleAskForCards();
-        }
-        if (goFishBtn) {
-            goFishBtn.onclick = () => this.handleGoFish();
-        }
+        // Game controls - using p5.js buttons instead of HTML buttons
         
         // Copy room code
         document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
@@ -706,6 +697,27 @@ class GoFishClient {
             // Set localPlayerIndex from backup event
             if (data.localPlayerIndex !== undefined) {
                 console.log('🎮 Setting localPlayerIndex from gameStarted_backup to:', data.localPlayerIndex);
+                this.localPlayerIndex = data.localPlayerIndex;
+            }
+            
+            this.startGame(data);
+        });
+
+        // Fallback event listener for gameStarted_fallback
+        socket.on('gameStarted_fallback', (data) => {
+            console.log('🎮 Game started FALLBACK event received:', data);
+            console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
+            console.log('🔍 DEBUG: Client socket ID:', socket.id);
+            
+            // Prevent multiple game initializations
+            if (this.game && this.game.state === 'playing') {
+                console.log('🎮 Game already started, ignoring gameStarted_fallback event');
+                return;
+            }
+            
+            // Set localPlayerIndex from fallback event
+            if (data.localPlayerIndex !== undefined) {
+                console.log('🎮 Setting localPlayerIndex from gameStarted_fallback to:', data.localPlayerIndex);
                 this.localPlayerIndex = data.localPlayerIndex;
             }
             
