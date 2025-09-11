@@ -20,6 +20,103 @@ function getCardValue(rank) {
     return values[rank] || 0;
 }
 
+// Helper function to advance turn in Go Fish
+function advanceTurn(roomCode, room) {
+    try {
+        console.log(`🔄 Advancing turn in Go Fish game`);
+        
+        // Move to next player
+        room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+        
+        // Handle players with empty hands
+        while (room.game.hands[room.game.currentPlayer].length === 0 && !checkGoFishGameOver(room)) {
+            const currentPlayer = room.players[room.game.currentPlayer];
+            console.log(`🔄 ${currentPlayer.name} has no cards - going fishing`);
+            
+            // Draw a card from pond
+            if (room.game.pond.length > 0) {
+                const drawnCard = room.game.pond.pop();
+                room.game.hands[room.game.currentPlayer] = [...(room.game.hands[room.game.currentPlayer] || []), drawnCard];
+                
+                // Check for pairs in the player's hand after fishing
+                const newHand = room.game.hands[room.game.currentPlayer];
+                const pairsFound = checkForPairs(newHand);
+                if (pairsFound > 0) {
+                    // Remove pairs from hand
+                    room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                    // Update pair count
+                    currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
+                    console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                }
+                
+                io.to(roomCode).emit('goFish', {
+                    player: currentPlayer.name,
+                    playerIndex: room.game.currentPlayer,
+                    drawnCard: drawnCard,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: p.pairs || 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer,
+                    pairsFound: pairsFound
+                });
+                
+                // If pairs were found, player gets another turn
+                if (pairsFound > 0) {
+                    console.log(`🎯 ${currentPlayer.name} found pairs after fishing - gets another turn`);
+                    return; // Don't advance turn further
+                }
+            } else {
+                // Pond is empty - end turn
+                io.to(roomCode).emit('goFish', {
+                    player: currentPlayer.name,
+                    playerIndex: room.game.currentPlayer,
+                    drawnCard: null,
+                    players: room.players.map((p, index) => ({
+                        ...p,
+                        hand: room.game.hands[index] || [],
+                        pairs: p.pairs || 0
+                    })),
+                    pond: room.game.pond,
+                    currentPlayer: room.game.currentPlayer
+                });
+            }
+            
+            // Check if game is over
+            if (checkGoFishGameOver(room)) {
+                return;
+            }
+            
+            // Move to next player
+            room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+        }
+        
+        // Emit turn changed event
+        io.to(roomCode).emit('turnChanged', {
+            currentPlayer: room.game.currentPlayer,
+            players: room.players.map((p, index) => ({
+                ...p,
+                hand: room.game.hands[index] || [],
+                pairs: p.pairs || 0
+            }))
+        });
+        
+        // Handle bot turns
+        const currentPlayer = room.players[room.game.currentPlayer];
+        if (currentPlayer && currentPlayer.isBot) {
+            console.log(`🤖 Go Fish bot ${currentPlayer.name} turn - will play in 2 seconds`);
+            setTimeout(() => {
+                handleGoFishBotTurn(roomCode, room);
+            }, 2000);
+        }
+        
+    } catch (error) {
+        console.error(`❌ Error in advanceTurn:`, error);
+    }
+}
+
 // Handle Go Fish bot turns
 function handleGoFishBotTurn(roomCode, room) {
     try {
@@ -1288,6 +1385,17 @@ io.on('connection', (socket) => {
                 room.game.hands[data.targetPlayerIndex] = targetPlayerHand.filter(card => card.rank !== data.rank);
                 room.game.hands[data.playerIndex] = [...askingPlayerHand, ...requestedCards];
                 
+                // Check for pairs in asking player's hand after receiving cards
+                const newHand = room.game.hands[data.playerIndex];
+                const pairsFound = checkForPairs(newHand);
+                if (pairsFound > 0) {
+                    // Remove pairs from hand
+                    room.game.hands[data.playerIndex] = removePairs(newHand);
+                    // Update pair count
+                    askingPlayer.pairs = (askingPlayer.pairs || 0) + pairsFound;
+                    console.log(`🎯 ${askingPlayer.name} found ${pairsFound} pair(s) after receiving cards`);
+                }
+                
                 // Broadcast successful ask
                 io.to(roomCode).emit('cardsGiven', {
                     askingPlayer: askingPlayer.name,
@@ -1297,19 +1405,88 @@ io.on('connection', (socket) => {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: p.pairs || 0 // Will be calculated on client side
+                        pairs: p.pairs || 0
                     })),
-                    currentPlayer: room.game.currentPlayer
+                    currentPlayer: room.game.currentPlayer,
+                    pairsFound: pairsFound
                 });
+                
+                // Check if game is over after this action
+                if (checkGoFishGameOver(room)) {
+                    return; // Game over handled by checkGoFishGameOver
+                }
+                
+                // Ask again if player got cards (Go Fish rule)
+                console.log(`🎯 ${askingPlayer.name} got cards - gets another turn`);
+                
             } else {
                 // Target player doesn't have the cards - Go Fish
-                io.to(roomCode).emit('goFish', {
-                    askingPlayer: askingPlayer.name,
-                    targetPlayer: targetPlayer.name,
-                    rank: data.rank,
-                    playerIndex: data.playerIndex,
-                    targetPlayerIndex: data.targetPlayerIndex
-                });
+                console.log(`🐟 ${askingPlayer.name} asked ${targetPlayer.name} for ${data.rank}s - Go Fish!`);
+                
+                // Draw a card from pond
+                if (room.game.pond.length > 0) {
+                    const drawnCard = room.game.pond.pop();
+                    room.game.hands[data.playerIndex] = [...askingPlayerHand, drawnCard];
+                    
+                    // Check for pairs in the player's hand after fishing
+                    const newHand = room.game.hands[data.playerIndex];
+                    const pairsFound = checkForPairs(newHand);
+                    if (pairsFound > 0) {
+                        // Remove pairs from hand
+                        room.game.hands[data.playerIndex] = removePairs(newHand);
+                        // Update pair count
+                        askingPlayer.pairs = (askingPlayer.pairs || 0) + pairsFound;
+                        console.log(`🎯 ${askingPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                    }
+                    
+                    io.to(roomCode).emit('goFish', {
+                        askingPlayer: askingPlayer.name,
+                        targetPlayer: targetPlayer.name,
+                        rank: data.rank,
+                        playerIndex: data.playerIndex,
+                        targetPlayerIndex: data.targetPlayerIndex,
+                        drawnCard: drawnCard,
+                        players: room.players.map((p, index) => ({
+                            ...p,
+                            hand: room.game.hands[index] || [],
+                            pairs: p.pairs || 0
+                        })),
+                        pond: room.game.pond,
+                        currentPlayer: room.game.currentPlayer,
+                        pairsFound: pairsFound
+                    });
+                    
+                    // If pairs were found, player gets another turn
+                    if (pairsFound > 0) {
+                        console.log(`🎯 ${askingPlayer.name} found pairs after fishing - gets another turn`);
+                        return; // Don't advance turn
+                    }
+                } else {
+                    // Pond is empty - end turn
+                    io.to(roomCode).emit('goFish', {
+                        askingPlayer: askingPlayer.name,
+                        targetPlayer: targetPlayer.name,
+                        rank: data.rank,
+                        playerIndex: data.playerIndex,
+                        targetPlayerIndex: data.targetPlayerIndex,
+                        drawnCard: null,
+                        players: room.players.map((p, index) => ({
+                            ...p,
+                            hand: room.game.hands[index] || [],
+                            pairs: p.pairs || 0
+                        })),
+                        pond: room.game.pond,
+                        currentPlayer: room.game.currentPlayer
+                    });
+                }
+                
+                // Check if game is over after this action
+                if (checkGoFishGameOver(room)) {
+                    return; // Game over handled by checkGoFishGameOver
+                }
+                
+                // Advance to next player
+                advanceTurn(roomCode, room);
             }
             
         } catch (error) {
@@ -1348,6 +1525,17 @@ io.on('connection', (socket) => {
                 const drawnCard = room.game.pond.pop();
                 room.game.hands[data.playerIndex] = [...(room.game.hands[data.playerIndex] || []), drawnCard];
                 
+                // Check for pairs in the player's hand after fishing
+                const newHand = room.game.hands[data.playerIndex];
+                const pairsFound = checkForPairs(newHand);
+                if (pairsFound > 0) {
+                    // Remove pairs from hand
+                    room.game.hands[data.playerIndex] = removePairs(newHand);
+                    // Update pair count
+                    player.pairs = (player.pairs || 0) + pairsFound;
+                    console.log(`🎯 ${player.name} found ${pairsFound} pair(s) after fishing`);
+                }
+                
                 // Broadcast go fish with drawn card
                 io.to(roomCode).emit('goFish', {
                     player: player.name,
@@ -1356,11 +1544,23 @@ io.on('connection', (socket) => {
                     players: room.players.map((p, index) => ({
                         ...p,
                         hand: room.game.hands[index] || [],
-                        pairs: p.pairs || 0 // Will be calculated on client side
+                        pairs: p.pairs || 0
                     })),
                     pond: room.game.pond,
-                    currentPlayer: room.game.currentPlayer
+                    currentPlayer: room.game.currentPlayer,
+                    pairsFound: pairsFound
                 });
+                
+                // Check if game is over after this action
+                if (checkGoFishGameOver(room)) {
+                    return; // Game over handled by checkGoFishGameOver
+                }
+                
+                // If pairs were found, player gets another turn
+                if (pairsFound > 0) {
+                    console.log(`🎯 ${player.name} found pairs after fishing - gets another turn`);
+                    return; // Don't advance turn
+                }
             } else {
                 // Pond is empty - end turn
                 io.to(roomCode).emit('goFish', {
@@ -1376,6 +1576,14 @@ io.on('connection', (socket) => {
                     currentPlayer: room.game.currentPlayer
                 });
             }
+            
+            // Check if game is over after this action
+            if (checkGoFishGameOver(room)) {
+                return; // Game over handled by checkGoFishGameOver
+            }
+            
+            // Advance to next player
+            advanceTurn(roomCode, room);
             
         } catch (error) {
             console.error(`❌ Error in goFish handler:`, error);

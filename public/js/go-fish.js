@@ -1014,6 +1014,8 @@ class GoFishClient {
 
     // Update cards given
     updateCardsGiven(data) {
+        console.log('🎮 Cards given event received:', data);
+        
         // Update game state from server
         this.game.players = data.players;
         this.game.currentPlayer = data.currentPlayer;
@@ -1021,12 +1023,20 @@ class GoFishClient {
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
         
-        this.addGameMessage(`${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`, 'success');
+        // Show appropriate message
+        if (data.pairsFound > 0) {
+            this.addGameMessage(`${data.askingPlayer} got ${data.cardsGiven} ${data.rank}(s) from ${data.targetPlayer} and made ${data.pairsFound} pair(s)!`, 'success');
+        } else {
+            this.addGameMessage(`${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`, 'success');
+        }
+        
         this.updateUI();
     }
 
     // Update go fish
     updateGoFish(data) {
+        console.log('🎮 Go fish event received:', data);
+        
         // Update game state from server
         this.game.players = data.players;
         this.game.pond = data.pond;
@@ -1035,10 +1045,29 @@ class GoFishClient {
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
         
-        if (data.drawnCard) {
-            this.addGameMessage(`${data.player} went fishing and drew a card`, 'info');
+        // Show appropriate message based on context
+        if (data.askingPlayer && data.targetPlayer) {
+            // This is a result of asking for cards
+            if (data.drawnCard) {
+                if (data.pairsFound > 0) {
+                    this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card and made ${data.pairsFound} pair(s)!`, 'info');
+                } else {
+                    this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card`, 'info');
+                }
+            } else {
+                this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! But the pond is empty`, 'warning');
+            }
         } else {
-            this.addGameMessage(`${data.player} went fishing but the pond is empty`, 'warning');
+            // This is a direct go fish action
+            if (data.drawnCard) {
+                if (data.pairsFound > 0) {
+                    this.addGameMessage(`${data.player} went fishing and drew a card, made ${data.pairsFound} pair(s)!`, 'info');
+                } else {
+                    this.addGameMessage(`${data.player} went fishing and drew a card`, 'info');
+                }
+            } else {
+                this.addGameMessage(`${data.player} went fishing but the pond is empty`, 'warning');
+            }
         }
         
         this.updateUI();
@@ -1046,6 +1075,8 @@ class GoFishClient {
 
     // Update turn changed
     updateTurnChanged(data) {
+        console.log('🎮 Turn changed event received:', data);
+        
         this.game.currentPlayer = data.currentPlayer;
         this.game.players = data.players;
         
@@ -1054,6 +1085,12 @@ class GoFishClient {
         
         console.log(`🔄 Turn changed to ${this.game.players[this.game.currentPlayer]?.name}, isMyTurn: ${this.isMyTurn}`);
         
+        // Show turn change message
+        const currentPlayer = this.game.players[this.game.currentPlayer];
+        if (currentPlayer) {
+            this.addGameMessage(`🔄 ${currentPlayer.name}'s turn`, 'info');
+        }
+        
         this.updateUI();
         
         // Bot logic is now handled by the server
@@ -1061,9 +1098,14 @@ class GoFishClient {
 
     // Update pair made
     updatePairMade(data) {
+        console.log('🎮 Pair made event received:', data);
+        
         // Update game state from server
         this.game.players = data.players;
         this.game.currentPlayer = data.currentPlayer;
+        
+        this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn;
         
         this.addGameMessage(`${data.player} made a pair of ${data.rank}s!`, 'success');
         this.updateUI();
