@@ -514,13 +514,13 @@ class GoFishGame {
     // Get available target players
     getAvailableTargets(playerIndex) {
         console.log('🎯 getAvailableTargets called for playerIndex:', playerIndex);
-        console.log('🎯 All players:', this.players.map((p, i) => ({ index: i, name: p.name, handLength: p.hand ? p.hand.length : 'undefined' })));
+        console.log('🎯 All players:', this.players.map((p, i) => ({ index: i, name: p.name, handLength: p.hand ? p.hand.length : 'undefined', isBot: p.isBot })));
         
         const targets = this.players
             .map((player, index) => ({ player, index }))
             .filter(({ player, index }) => {
                 const isValid = index !== playerIndex && player.hand && player.hand.length > 0;
-                console.log(`🎯 Player ${index} (${player.name}): handLength=${player.hand ? player.hand.length : 'undefined'}, isValid=${isValid}`);
+                console.log(`🎯 Player ${index} (${player.name}): handLength=${player.hand ? player.hand.length : 'undefined'}, isBot=${player.isBot}, isValid=${isValid}`);
                 return isValid;
             })
             .map(({ player, index }) => ({ name: player.name, index }));
@@ -1583,13 +1583,15 @@ function drawGameState() {
     // Draw modern game elements
     drawModernTable();
     drawOpponentHands();
-    drawMainPlayerHand();
     drawDraggedCard();
     drawModernFishPond();
     drawModernScorePanel();
     drawGameHistoryPanel();
     drawGameMessages();
     drawGameMenu();
+    
+    // Draw main player hand LAST to ensure buttons are on top
+    drawMainPlayerHand();
     
     // Validate layout spacing (only in development)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -1636,6 +1638,8 @@ function drawOpponentHands() {
     // Get opponents (all players except the local player)
     const localPlayerIndex = window.game.localPlayerIndex || 0;
     const opponents = window.game.players.filter((player, index) => index !== localPlayerIndex);
+    
+    console.log('🎮 drawOpponentHands - total players:', window.game.players.length, 'localPlayerIndex:', localPlayerIndex, 'opponents:', opponents.length);
     
     if (opponents.length === 0) return;
     
