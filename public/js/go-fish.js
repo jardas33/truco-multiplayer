@@ -691,7 +691,26 @@ class GoFishClient {
             this.startGame(data);
         });
 
-        // Backup event listeners removed to prevent duplicate game initialization
+        // Backup event listener for gameStarted
+        socket.on('gameStarted_backup', (data) => {
+            console.log('🎮 Game started BACKUP event received:', data);
+            console.log('🎮 Data localPlayerIndex:', data.localPlayerIndex);
+            console.log('🔍 DEBUG: Client socket ID:', socket.id);
+            
+            // Prevent multiple game initializations
+            if (this.game && this.game.state === 'playing') {
+                console.log('🎮 Game already started, ignoring gameStarted_backup event');
+                return;
+            }
+            
+            // Set localPlayerIndex from backup event
+            if (data.localPlayerIndex !== undefined) {
+                console.log('🎮 Setting localPlayerIndex from gameStarted_backup to:', data.localPlayerIndex);
+                this.localPlayerIndex = data.localPlayerIndex;
+            }
+            
+            this.startGame(data);
+        });
 
         // gameStart event handler removed for Go Fish - using gameStarted instead
         
@@ -809,8 +828,10 @@ class GoFishClient {
         console.log('🎮 Current localPlayerIndex before startGame:', this.localPlayerIndex);
         
         if (data && data.players) {
-            // Initialize with server data
+            // Initialize with server data - server sends player-specific data
+            console.log('🎮 Initializing game with server data');
             this.game.initialize(data.players);
+            
             // Only set localPlayerIndex if it's not already set or if data provides it
             if (data.localPlayerIndex !== undefined) {
                 console.log('🎮 Setting localPlayerIndex from data:', data.localPlayerIndex);
@@ -1167,11 +1188,8 @@ class GoFishClient {
             // Only show hand cards for the local player, others show card count
             const showHand = (index === this.localPlayerIndex);
             
-            // Show "You" for the local player, actual name for others
-            const displayName = (index === this.localPlayerIndex) ? 'You' : player.name;
-            
             area.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 10px;">${displayName}</div>
+                <div style="font-weight: bold; margin-bottom: 10px;">${player.name}</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">Cards: ${player.hand ? player.hand.length : 0}</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">Pairs: ${player.pairs || 0}</div>
                 <div class="hand-cards">
@@ -1600,7 +1618,44 @@ function drawMainPlayerHand() {
         }
     });
     
-    // Action buttons are now handled by HTML elements, not p5.js drawing
+    // Draw action buttons next to the cards
+    if (window.game.currentPlayer === 0) {
+        const buttonY = handY + 20;
+        
+        // Ask button
+        const askX = buttonsStartX;
+        const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
+                             mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        
+        fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
+        stroke(255);
+        strokeWeight(1);
+        rect(askX, buttonY, buttonWidth, buttonHeight, 5);
+        
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(14);
+        textStyle(BOLD);
+        noStroke();
+        text('Ask', askX + buttonWidth/2, buttonY + buttonHeight/2);
+        
+        // Go Fish button
+        const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
+        const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+                                mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        
+        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
+        stroke(255);
+        strokeWeight(1);
+        rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
+        
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(14);
+        textStyle(BOLD);
+        noStroke();
+        text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
+    }
     
     // Draw pair-making area
     drawPairMakingArea();
@@ -2293,7 +2348,23 @@ function mousePressed() {
             }
         }
         
-        // Button interactions are now handled by HTML elements, not p5.js
+        // Check if Ask button was clicked
+        const askX = buttonsStartX;
+        if (mouseX >= askX && mouseX <= askX + buttonWidth &&
+            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+            console.log('🎯 Ask button clicked');
+            showAskForCardsDialog();
+        }
+        
+        // Check if Go Fish button was clicked
+        const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
+        if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+            console.log('🐟 Go Fish button clicked');
+            if (window.goFishClient) {
+                window.goFishClient.goFish();
+            }
+        }
     }
     
     // Check if View Full History button was clicked
