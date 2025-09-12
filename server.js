@@ -33,21 +33,28 @@ function advanceTurn(roomCode, room) {
             const currentPlayer = room.players[room.game.currentPlayer];
             console.log(`🔄 ${currentPlayer.name} has no cards - going fishing`);
             
-            // Draw a card from pond
-            if (room.game.pond.length > 0) {
-                const drawnCard = room.game.pond.pop();
-                room.game.hands[room.game.currentPlayer] = [...(room.game.hands[room.game.currentPlayer] || []), drawnCard];
-                
-                // Check for pairs in the player's hand after fishing
-                const newHand = room.game.hands[room.game.currentPlayer];
-                const pairsFound = checkForPairs(newHand);
-                if (pairsFound > 0) {
-                    // Remove pairs from hand
-                    room.game.hands[room.game.currentPlayer] = removePairs(newHand);
-                    // Update pair count
-                    currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
-                    console.log(`🎯 ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
-                }
+                // Draw a card from pond
+                if (room.game.pond.length > 0) {
+                    const drawnCard = room.game.pond.pop();
+                    room.game.hands[room.game.currentPlayer] = [...(room.game.hands[room.game.currentPlayer] || []), drawnCard];
+                    
+                    // Check for pairs in the player's hand after fishing
+                    const newHand = room.game.hands[room.game.currentPlayer];
+                    const pairsFound = checkForPairs(newHand);
+                    if (pairsFound > 0) {
+                        // Only automatically remove pairs for bots, not human players
+                        if (currentPlayer.isBot) {
+                            // Remove pairs from hand for bots
+                            room.game.hands[room.game.currentPlayer] = removePairs(newHand);
+                            // Update pair count
+                            currentPlayer.pairs = (currentPlayer.pairs || 0) + pairsFound;
+                            console.log(`🎯 Bot ${currentPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                        } else {
+                            // For human players, just count the pairs but don't remove them from hand
+                            // They need to manually drag the pairs
+                            console.log(`🎯 Human player ${currentPlayer.name} has ${pairsFound} pair(s) available after fishing - must drag manually`);
+                        }
+                    }
                 
                 io.to(roomCode).emit('goFish', {
                     player: currentPlayer.name,
@@ -1348,11 +1355,18 @@ io.on('connection', (socket) => {
                 const newHand = room.game.hands[data.playerIndex];
                 const pairsFound = checkForPairs(newHand);
                 if (pairsFound > 0) {
-                    // Remove pairs from hand
-                    room.game.hands[data.playerIndex] = removePairs(newHand);
-                    // Update pair count
-                    askingPlayer.pairs = (askingPlayer.pairs || 0) + pairsFound;
-                    console.log(`🎯 ${askingPlayer.name} found ${pairsFound} pair(s) after receiving cards`);
+                    // Only automatically remove pairs for bots, not human players
+                    if (askingPlayer.isBot) {
+                        // Remove pairs from hand for bots
+                        room.game.hands[data.playerIndex] = removePairs(newHand);
+                        // Update pair count
+                        askingPlayer.pairs = (askingPlayer.pairs || 0) + pairsFound;
+                        console.log(`🎯 Bot ${askingPlayer.name} found ${pairsFound} pair(s) after receiving cards`);
+                    } else {
+                        // For human players, just count the pairs but don't remove them from hand
+                        // They need to manually drag the pairs
+                        console.log(`🎯 Human player ${askingPlayer.name} has ${pairsFound} pair(s) available - must drag manually`);
+                    }
                 }
                 
                 // Broadcast successful ask
@@ -1392,11 +1406,18 @@ io.on('connection', (socket) => {
                     const newHand = room.game.hands[data.playerIndex];
                     const pairsFound = checkForPairs(newHand);
                     if (pairsFound > 0) {
-                        // Remove pairs from hand
-                        room.game.hands[data.playerIndex] = removePairs(newHand);
-                        // Update pair count
-                        askingPlayer.pairs = (askingPlayer.pairs || 0) + pairsFound;
-                        console.log(`🎯 ${askingPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                        // Only automatically remove pairs for bots, not human players
+                        if (askingPlayer.isBot) {
+                            // Remove pairs from hand for bots
+                            room.game.hands[data.playerIndex] = removePairs(newHand);
+                            // Update pair count
+                            askingPlayer.pairs = (askingPlayer.pairs || 0) + pairsFound;
+                            console.log(`🎯 Bot ${askingPlayer.name} found ${pairsFound} pair(s) after fishing`);
+                        } else {
+                            // For human players, just count the pairs but don't remove them from hand
+                            // They need to manually drag the pairs
+                            console.log(`🎯 Human player ${askingPlayer.name} has ${pairsFound} pair(s) available after fishing - must drag manually`);
+                        }
                     }
                     
                     io.to(roomCode).emit('goFish', {
@@ -1489,11 +1510,18 @@ io.on('connection', (socket) => {
                 const newHand = room.game.hands[data.playerIndex];
                 const pairsFound = checkForPairs(newHand);
                 if (pairsFound > 0) {
-                    // Remove pairs from hand
-                    room.game.hands[data.playerIndex] = removePairs(newHand);
-                    // Update pair count
-                    player.pairs = (player.pairs || 0) + pairsFound;
-                    console.log(`🎯 ${player.name} found ${pairsFound} pair(s) after fishing`);
+                    // Only automatically remove pairs for bots, not human players
+                    if (player.isBot) {
+                        // Remove pairs from hand for bots
+                        room.game.hands[data.playerIndex] = removePairs(newHand);
+                        // Update pair count
+                        player.pairs = (player.pairs || 0) + pairsFound;
+                        console.log(`🎯 Bot ${player.name} found ${pairsFound} pair(s) after fishing`);
+                    } else {
+                        // For human players, just count the pairs but don't remove them from hand
+                        // They need to manually drag the pairs
+                        console.log(`🎯 Human player ${player.name} has ${pairsFound} pair(s) available after fishing - must drag manually`);
+                    }
                 }
                 
                 // Broadcast go fish with drawn card

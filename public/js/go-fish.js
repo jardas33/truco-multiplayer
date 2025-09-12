@@ -1340,6 +1340,8 @@ class GoFishClient {
 
     // Update controls
     updateControls() {
+        // For Go Fish, controls are drawn by p5.js in drawMainPlayerHand()
+        // No HTML manipulation needed - just log the state for debugging
         console.log('🎮 updateControls called:');
         console.log('🎮   isMyTurn:', this.isMyTurn);
         console.log('🎮   localPlayerIndex:', this.localPlayerIndex);
@@ -1349,14 +1351,7 @@ class GoFishClient {
         console.log('🎮   my hand exists:', !!(this.game && this.game.players && this.game.players[this.localPlayerIndex]));
         console.log('🎮   my hand length:', this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand ? this.game.players[this.localPlayerIndex].hand.length : 'undefined');
         
-        // The controls are drawn by p5.js, so we just need to update the turn state
-        // The actual button visibility is handled in drawMainPlayerHand()
-        if (this.isMyTurn && this.game && this.game.players && this.game.players[this.localPlayerIndex] && this.game.players[this.localPlayerIndex].hand.length > 0) {
-            console.log('🎮 Controls should be visible for player', this.localPlayerIndex);
-            this.updatePlayerSelector();
-        } else {
-            console.log('🎮 Controls should be hidden for player', this.localPlayerIndex);
-        }
+        // Controls are handled by p5.js rendering - no HTML manipulation needed
     }
 
     // Show player selector (if element exists)
