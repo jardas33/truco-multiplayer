@@ -2842,6 +2842,9 @@ function showAskForCardsDialog() {
         });
     }
     
+    // Get local player index
+    const localPlayerIndex = window.game.localPlayerIndex || 0;
+    
     // For Go Fish, we need to filter out card details for other players to maintain privacy
     // but keep the hand length for Ask functionality
     const filteredPlayers = window.game.players.map((player, index) => {
