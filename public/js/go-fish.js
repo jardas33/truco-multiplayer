@@ -1826,42 +1826,20 @@ function drawMainPlayerHand() {
         const buttonY = handY + 20;
         console.log('🎮 Button positions - buttonsStartX:', buttonsStartX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
         
-        // Ask button
+        // Ask button (green style to match Go Fish button)
         const askX = buttonsStartX;
         const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
                              mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
-        // Draw a bright red test rectangle first to verify positioning
-        fill(255, 0, 0);
-        rect(askX, buttonY, buttonWidth, buttonHeight, 5);
-        
-        // Draw a bright yellow border around the button area
-        stroke(255, 255, 0);
-        strokeWeight(3);
-        noFill();
-        rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
-        
-        // Add a pulsing effect to make the button more visible
-        const askPulseAlpha = 100 + 50 * sin(millis() * 0.01);
-        fill(255, 255, 0, askPulseAlpha);
-        noStroke();
-        rect(askX - 8, buttonY - 8, buttonWidth + 16, buttonHeight + 16, 8);
-        
-        // Then draw the actual button
-        fill(isHoveringAsk ? 100 : 150, isHoveringAsk ? 200 : 255, isHoveringAsk ? 100 : 150);
+        // Green button with same style as Go Fish button
+        fill(isHoveringAsk ? 50 : 100, isHoveringAsk ? 200 : 255, isHoveringAsk ? 50 : 100); // Green color
         stroke(0);
         strokeWeight(2);
         console.log('🎮 Drawing Ask button at:', askX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringAsk ? 'hover' : 'normal');
         
-        // DEBUG: Draw bright green rectangle around Ask button for visibility
-        fill(0, 255, 0, 100);
-        stroke(0, 255, 0);
-        strokeWeight(3);
-        rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
-        
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
-        fill(0);
+        fill(255); // White text
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
@@ -1873,30 +1851,14 @@ function drawMainPlayerHand() {
         const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
 
-        // Draw a bright red test rectangle first to verify positioning
-        fill(255, 0, 0);
-        rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
-        
-        // Draw a bright yellow border around the button area
-        stroke(255, 255, 0);
-        strokeWeight(3);
-        noFill();
-        rect(goFishX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
-        
-        // Add a pulsing effect to make the button more visible
-        const goFishPulseAlpha = 100 + 50 * sin(millis() * 0.01);
-        fill(0, 255, 255, goFishPulseAlpha);
-        noStroke();
-        rect(goFishX - 8, buttonY - 8, buttonWidth + 16, buttonHeight + 16, 8);
-        
-        // Then draw the actual button
-        fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255);
+        // Blue button
+        fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
         stroke(0);
         strokeWeight(2);
         console.log('🎮 Drawing Go Fish button at:', goFishX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringGoFish ? 'hover' : 'normal');
         rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
         
-        fill(0);
+        fill(255); // White text
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
@@ -3305,8 +3267,8 @@ function drawModernScorePanel() {
         yOffset += 20;
         
         window.game.players.forEach((player, index) => {
-            const isCurrentPlayer = index === window.game.currentPlayer;
-            const textColor = isCurrentPlayer ? color(255, 215, 0) : color(255, 255, 255);
+            const isLocalPlayer = index === window.game.localPlayerIndex;
+            const textColor = isLocalPlayer ? color(255, 215, 0) : color(255, 255, 255);
             
             // Calculate display name from local player's perspective
             let displayName = player.name;
@@ -3344,8 +3306,8 @@ function drawModernScorePanel() {
         yOffset += 18;
         
         window.game.players.forEach((player, index) => {
-            const isCurrentPlayer = index === window.game.currentPlayer;
-            const textColor = isCurrentPlayer ? color(255, 215, 0) : color(200, 200, 200);
+            const isLocalPlayer = index === window.game.localPlayerIndex;
+            const textColor = isLocalPlayer ? color(255, 215, 0) : color(200, 200, 200);
             
             // Calculate display name from local player's perspective
             let displayName = player.name;
