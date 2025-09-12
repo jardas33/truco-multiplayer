@@ -2775,6 +2775,35 @@ function mouseReleased() {
     }
 }
 
+// Helper function to get available targets from a players array
+function getAvailableTargetsFromPlayers(players, localPlayerIndex) {
+    console.log('🎯 getAvailableTargetsFromPlayers called for playerIndex:', localPlayerIndex);
+    console.log('🎯 All players:', players);
+    
+    const availableTargets = [];
+    
+    for (let i = 0; i < players.length; i++) {
+        if (i === localPlayerIndex) continue; // Skip self
+        
+        const player = players[i];
+        const handLength = player.hand ? player.hand.length : 0;
+        const isValid = handLength > 0 && !player.isBot; // Only human players with cards
+        
+        console.log(`🎯 Player ${i} (${player.name}): handLength=${handLength}, isBot=${player.isBot}, isValid=${isValid}`);
+        
+        if (isValid) {
+            availableTargets.push({
+                index: i,
+                name: player.name,
+                handLength: handLength
+            });
+        }
+    }
+    
+    console.log('🎯 Available targets result:', availableTargets);
+    return availableTargets;
+}
+
 function showAskForCardsDialog() {
     console.log('🎯 showAskForCardsDialog called');
     console.log('🎯 window.game:', window.game);
@@ -2787,6 +2816,21 @@ function showAskForCardsDialog() {
             console.log(`🎯 Player ${index} (${player.name}): handLength=${player.hand ? player.hand.length : 'undefined'}, isBot=${player.isBot}, hand=${player.hand}`);
         });
     }
+    
+    // For Go Fish, we need to filter out card details for other players to maintain privacy
+    // but keep the hand length for Ask functionality
+    const filteredPlayers = window.game.players.map((player, index) => {
+        if (index === localPlayerIndex) {
+            // Local player gets full hand details
+            return player;
+        } else {
+            // Other players get hand length but no card details
+            return {
+                ...player,
+                hand: player.hand ? Array(player.hand.length).fill({ hidden: true }) : []
+            };
+        }
+    });
     
     if (!window.game || !window.game.players) {
         console.log('❌ No game or players available');
@@ -2812,8 +2856,8 @@ function showAskForCardsDialog() {
         return;
     }
     
-    // Get available target players
-    const availableTargets = window.game.getAvailableTargets(localPlayerIndex);
+    // Get available target players using filtered players
+    const availableTargets = getAvailableTargetsFromPlayers(filteredPlayers, localPlayerIndex);
     console.log('🎯 availableTargets:', availableTargets);
     if (availableTargets.length === 0) {
         console.log('❌ No available targets - all other players have empty hands');

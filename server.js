@@ -1264,7 +1264,7 @@ io.on('connection', (socket) => {
                         const gameStartedData = {
                             players: room.players.map((p, index) => ({
                                 ...p,
-                                hand: index === playerIndex ? (room.game.hands[index] || []) : [], // Only show own hand
+                                hand: room.game.hands[index] || [], // Send actual hand data to all players for Ask functionality
                                 pairs: p.pairs || 0
                             })),
                             pond: room.game.pond,
