@@ -504,10 +504,16 @@ class GoFishGame {
 
     // Get available ranks for a player
     getAvailableRanks(playerIndex) {
+        console.log('🎯 getAvailableRanks called for playerIndex:', playerIndex);
         const player = this.players[playerIndex];
-        if (!player) return [];
+        if (!player) {
+            console.log('🎯 No player found for index:', playerIndex);
+            return [];
+        }
         
+        console.log('🎯 Player hand:', player.hand);
         const ranks = [...new Set(player.hand.map(card => card.rank))];
+        console.log('🎯 Available ranks result:', ranks.sort());
         return ranks.sort();
     }
 
@@ -1727,11 +1733,13 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
         }
     }
     
+    console.log('🎮 Drawing text for', player.name, 'displayName:', displayName, 'at position:', x + 10, y + 20);
     text(displayName, x + 10, y + 20);
     
     // Card count
     fill(200, 200, 200);
     textSize(12);
+    console.log('🎮 Drawing card count for', player.name, 'at position:', x + 10, y + 40);
     text(`Cards: ${player.hand.length}`, x + 10, y + 40);
     
     // Pairs count
@@ -1840,13 +1848,13 @@ function drawMainPlayerHand() {
         rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
         
         // Then draw the actual button
-        fill(isHoveringAsk ? 50 : 76, isHoveringAsk ? 150 : 175, isHoveringAsk ? 50 : 80);
-        stroke(255);
-        strokeWeight(1);
+        fill(isHoveringAsk ? 100 : 150, isHoveringAsk ? 200 : 255, isHoveringAsk ? 100 : 150);
+        stroke(0);
+        strokeWeight(2);
         console.log('🎮 Drawing Ask button at:', askX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringAsk ? 'hover' : 'normal');
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
-        fill(255);
+        fill(0);
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
@@ -1869,13 +1877,13 @@ function drawMainPlayerHand() {
         rect(goFishX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
         
         // Then draw the actual button
-        fill(isHoveringGoFish ? 25 : 33, isHoveringGoFish ? 118 : 150, isHoveringGoFish ? 210 : 255);
-        stroke(255);
-        strokeWeight(1);
+        fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255);
+        stroke(0);
+        strokeWeight(2);
         console.log('🎮 Drawing Go Fish button at:', goFishX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringGoFish ? 'hover' : 'normal');
         rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
         
-        fill(255);
+        fill(0);
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
