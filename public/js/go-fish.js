@@ -1848,8 +1848,8 @@ function drawMainPlayerHand() {
         rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
         
         // Add a pulsing effect to make the button more visible
-        const pulseAlpha = 100 + 50 * sin(millis() * 0.01);
-        fill(255, 255, 0, pulseAlpha);
+        const askPulseAlpha = 100 + 50 * sin(millis() * 0.01);
+        fill(255, 255, 0, askPulseAlpha);
         noStroke();
         rect(askX - 8, buttonY - 8, buttonWidth + 16, buttonHeight + 16, 8);
         
@@ -1871,7 +1871,7 @@ function drawMainPlayerHand() {
         const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
         const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        
+
         // Draw a bright red test rectangle first to verify positioning
         fill(255, 0, 0);
         rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
@@ -1883,8 +1883,8 @@ function drawMainPlayerHand() {
         rect(goFishX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
         
         // Add a pulsing effect to make the button more visible
-        const pulseAlpha = 100 + 50 * sin(millis() * 0.01);
-        fill(0, 255, 255, pulseAlpha);
+        const goFishPulseAlpha = 100 + 50 * sin(millis() * 0.01);
+        fill(0, 255, 255, goFishPulseAlpha);
         noStroke();
         rect(goFishX - 8, buttonY - 8, buttonWidth + 16, buttonHeight + 16, 8);
         
