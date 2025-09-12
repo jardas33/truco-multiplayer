@@ -1724,11 +1724,11 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = "Player 1";
+                displayName = player.isBot ? "Bot" : "Player 1";
             } else if (relativePosition === 2) {
-                displayName = "Player 2";
+                displayName = player.isBot ? "Bot" : "Player 2";
             } else {
-                displayName = `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
             }
         }
     }
@@ -1847,6 +1847,12 @@ function drawMainPlayerHand() {
         noFill();
         rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
         
+        // Add a pulsing effect to make the button more visible
+        const pulseAlpha = 100 + 50 * sin(millis() * 0.01);
+        fill(255, 255, 0, pulseAlpha);
+        noStroke();
+        rect(askX - 8, buttonY - 8, buttonWidth + 16, buttonHeight + 16, 8);
+        
         // Then draw the actual button
         fill(isHoveringAsk ? 100 : 150, isHoveringAsk ? 200 : 255, isHoveringAsk ? 100 : 150);
         stroke(0);
@@ -1875,6 +1881,12 @@ function drawMainPlayerHand() {
         strokeWeight(3);
         noFill();
         rect(goFishX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
+        
+        // Add a pulsing effect to make the button more visible
+        const pulseAlpha = 100 + 50 * sin(millis() * 0.01);
+        fill(0, 255, 255, pulseAlpha);
+        noStroke();
+        rect(goFishX - 8, buttonY - 8, buttonWidth + 16, buttonHeight + 16, 8);
         
         // Then draw the actual button
         fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255);
@@ -2265,11 +2277,11 @@ function drawGameInfo() {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = "Player 1";
+                displayName = player.isBot ? "Bot" : "Player 1";
             } else if (relativePosition === 2) {
-                displayName = "Player 2";
+                displayName = player.isBot ? "Bot" : "Player 2";
             } else {
-                displayName = `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
             }
         }
         
@@ -2365,11 +2377,11 @@ function drawScores() {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = "Player 1";
+                displayName = player.isBot ? "Bot" : "Player 1";
             } else if (relativePosition === 2) {
-                displayName = "Player 2";
+                displayName = player.isBot ? "Bot" : "Player 2";
             } else {
-                displayName = `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
             }
         }
         
@@ -2653,6 +2665,7 @@ function mousePressed() {
         console.log('🎯 Mouse click detection - mouseX:', mouseX, 'mouseY:', mouseY);
         console.log('🎯 Ask button bounds - askX:', askX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
         console.log('🎯 Ask button click check:', mouseX >= askX && mouseX <= askX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight);
+        console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
         if (mouseX >= askX && mouseX <= askX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🎯 Ask button clicked');
@@ -3213,11 +3226,11 @@ function drawModernScorePanel() {
                 if (relativePosition === 0) {
                     displayName = "You";
                 } else if (relativePosition === 1) {
-                    displayName = "Player 1";
+                    displayName = player.isBot ? "Bot" : "Player 1";
                 } else if (relativePosition === 2) {
-                    displayName = "Player 2";
+                    displayName = player.isBot ? "Bot" : "Player 2";
                 } else {
-                    displayName = `Player ${relativePosition}`;
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
                 }
             }
             
@@ -3252,11 +3265,11 @@ function drawModernScorePanel() {
                 if (relativePosition === 0) {
                     displayName = "You";
                 } else if (relativePosition === 1) {
-                    displayName = "Player 1";
+                    displayName = player.isBot ? "Bot" : "Player 1";
                 } else if (relativePosition === 2) {
-                    displayName = "Player 2";
+                    displayName = player.isBot ? "Bot" : "Player 2";
                 } else {
-                    displayName = `Player ${relativePosition}`;
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
                 }
             }
             
