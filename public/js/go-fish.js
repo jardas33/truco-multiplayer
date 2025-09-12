@@ -3256,7 +3256,7 @@ function drawModernScorePanel() {
         
         fill(100, 200, 255);
         textSize(14);
-        text(`Current Turn: ${displayName}`, panelX + 15, panelY + 50);
+        text(`Current Turn: You`, panelX + 15, panelY + 50);
     }
     
     // Player scores
