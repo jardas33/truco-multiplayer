@@ -1703,6 +1703,22 @@ io.on('connection', (socket) => {
             // Update the player's pairs count
             player.pairs = (player.pairs || 0) + 1;
             
+            // Remove the pair of cards from the server-side hand
+            const hand = room.game.hands[data.playerIndex] || [];
+            const cardsToRemove = hand.filter(card => card.rank === data.rank);
+            if (cardsToRemove.length >= 2) {
+                // Remove the first two cards of the matching rank
+                const firstCardIndex = hand.findIndex(card => card.rank === data.rank);
+                const secondCardIndex = hand.findIndex((card, index) => card.rank === data.rank && index > firstCardIndex);
+                
+                if (firstCardIndex !== -1 && secondCardIndex !== -1) {
+                    // Remove the second card first (higher index) to avoid index shifting
+                    hand.splice(secondCardIndex, 1);
+                    hand.splice(firstCardIndex, 1);
+                    console.log(`🎯 Removed pair of ${data.rank}s from server-side hand`);
+                }
+            }
+            
             // Broadcast the pair made event
             io.to(roomCode).emit('pairMade', {
                 player: player.name,

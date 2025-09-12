@@ -1218,6 +1218,12 @@ class GoFishClient {
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn;
         
+        // Clear the pair-making area to prevent stale cards
+        if (window.pairMakingArea) {
+            window.pairMakingArea.cards = [];
+            console.log('🎯 Cleared pair-making area after pair made event');
+        }
+        
         this.addGameMessage(`${data.player} made a pair of ${data.rank}s!`, 'success');
         this.updateUI();
     }
@@ -2738,13 +2744,25 @@ function mouseReleased() {
             if (window.pairMakingArea.cards.length >= 2) {
                 const lastTwo = window.pairMakingArea.cards.slice(-2);
                 if (lastTwo[0].rank === lastTwo[1].rank) {
-                    // Make the pair
+                    // Verify that both cards are still in the player's hand
                     const localPlayerIndex = window.game.localPlayerIndex || 0;
-                    if (window.game.makePairManually(lastTwo[0], lastTwo[1], localPlayerIndex)) {
-                        // Remove the paired cards from pair-making area
-                        window.pairMakingArea.cards = window.pairMakingArea.cards.filter(
-                            card => card !== lastTwo[0] && card !== lastTwo[1]
-                        );
+                    const playerHand = window.game.players[localPlayerIndex]?.hand || [];
+                    const card1InHand = playerHand.some(card => card === lastTwo[0]);
+                    const card2InHand = playerHand.some(card => card === lastTwo[1]);
+                    
+                    if (card1InHand && card2InHand) {
+                        // Make the pair
+                        if (window.game.makePairManually(lastTwo[0], lastTwo[1], localPlayerIndex)) {
+                            // Remove the paired cards from pair-making area
+                            window.pairMakingArea.cards = window.pairMakingArea.cards.filter(
+                                card => card !== lastTwo[0] && card !== lastTwo[1]
+                            );
+                            console.log(`🎯 Successfully made pair of ${lastTwo[0].rank}s and cleared pair-making area`);
+                        }
+                    } else {
+                        console.log(`🎯 Cards are no longer in hand - clearing pair-making area`);
+                        // Clear the pair-making area if cards are not in hand
+                        window.pairMakingArea.cards = [];
                     }
                 }
             }
