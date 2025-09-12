@@ -1724,11 +1724,11 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 1";
-            } else if (relativePosition === 2) {
                 displayName = player.isBot ? "Bot" : "Player 2";
+            } else if (relativePosition === 2) {
+                displayName = player.isBot ? "Bot" : "Player 3";
             } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
             }
         }
     }
@@ -1820,12 +1820,6 @@ function drawMainPlayerHand() {
     console.log('🎮 Canvas dimensions - width:', width, 'height:', height);
     
     // Draw a large test rectangle to verify canvas is working
-    fill(0, 255, 0, 100);
-    rect(50, 50, 200, 100);
-    fill(0);
-    textAlign(LEFT, TOP);
-    textSize(16);
-    text('CANVAS TEST', 60, 70);
     
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
         console.log('🎮 Drawing buttons for current player');
@@ -2277,11 +2271,11 @@ function drawGameInfo() {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 1";
-            } else if (relativePosition === 2) {
                 displayName = player.isBot ? "Bot" : "Player 2";
+            } else if (relativePosition === 2) {
+                displayName = player.isBot ? "Bot" : "Player 3";
             } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
             }
         }
         
@@ -2377,11 +2371,11 @@ function drawScores() {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 1";
-            } else if (relativePosition === 2) {
                 displayName = player.isBot ? "Bot" : "Player 2";
+            } else if (relativePosition === 2) {
+                displayName = player.isBot ? "Bot" : "Player 3";
             } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
             }
         }
         
@@ -3226,11 +3220,11 @@ function drawModernScorePanel() {
                 if (relativePosition === 0) {
                     displayName = "You";
                 } else if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 1";
-                } else if (relativePosition === 2) {
                     displayName = player.isBot ? "Bot" : "Player 2";
+                } else if (relativePosition === 2) {
+                    displayName = player.isBot ? "Bot" : "Player 3";
                 } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
                 }
             }
             
@@ -3265,11 +3259,11 @@ function drawModernScorePanel() {
                 if (relativePosition === 0) {
                     displayName = "You";
                 } else if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 1";
-                } else if (relativePosition === 2) {
                     displayName = player.isBot ? "Bot" : "Player 2";
+                } else if (relativePosition === 2) {
+                    displayName = player.isBot ? "Bot" : "Player 3";
                 } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
                 }
             }
             
