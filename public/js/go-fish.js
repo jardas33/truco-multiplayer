@@ -1724,11 +1724,11 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 2";
+                displayName = player.isBot ? "Bot" : "Player 1";
             } else if (relativePosition === 2) {
-                displayName = player.isBot ? "Bot" : "Player 3";
+                displayName = player.isBot ? "Bot" : "Player 2";
             } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
             }
         }
     }
@@ -2829,6 +2829,8 @@ function showAskForCardsDialog() {
         min-width: 300px;
     `;
     
+    console.log('🎯 Creating Ask dialog with availableRanks:', availableRanks, 'availableTargets:', availableTargets);
+    
     dialog.innerHTML = `
         <h3 style="margin: 0 0 15px 0; color: #FFD700;">Ask for Cards</h3>
         <div style="margin: 10px 0;">
@@ -2850,6 +2852,7 @@ function showAskForCardsDialog() {
     `;
     
     document.body.appendChild(dialog);
+    console.log('🎯 Ask dialog added to DOM');
     
     // Add event listeners
     document.getElementById('askButton').onclick = function() {
@@ -3220,11 +3223,11 @@ function drawModernScorePanel() {
                 if (relativePosition === 0) {
                     displayName = "You";
                 } else if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 2";
+                    displayName = player.isBot ? "Bot" : "Player 1";
                 } else if (relativePosition === 2) {
-                    displayName = player.isBot ? "Bot" : "Player 3";
+                    displayName = player.isBot ? "Bot" : "Player 2";
                 } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
                 }
             }
             
@@ -3259,11 +3262,11 @@ function drawModernScorePanel() {
                 if (relativePosition === 0) {
                     displayName = "You";
                 } else if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 2";
+                    displayName = player.isBot ? "Bot" : "Player 1";
                 } else if (relativePosition === 2) {
-                    displayName = player.isBot ? "Bot" : "Player 3";
+                    displayName = player.isBot ? "Bot" : "Player 2";
                 } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
                 }
             }
             
