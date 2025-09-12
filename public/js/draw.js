@@ -443,6 +443,15 @@ function drawBasicGameState() {
 
 // Add mouse click detection for card gameplay
 function mousePressed() {
+    // Check if we're in Go Fish mode and delegate to Go Fish handler
+    if (window.location.pathname === '/go-fish.html' || window.location.pathname === '/go-fish') {
+        // Delegate to Go Fish mouse handler if it exists
+        if (typeof window.goFishMousePressed === 'function') {
+            window.goFishMousePressed();
+            return;
+        }
+    }
+    
     // Allow button clicks in non-playing states (Menu, Instructions, Card Values, etc.)
     if (gameState !== gameStateEnum.Playing) {
         return; // Let p5.js buttons handle their own clicks

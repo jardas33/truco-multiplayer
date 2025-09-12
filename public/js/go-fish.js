@@ -2616,7 +2616,23 @@ function drawConfetti() {
 
 // Mouse interaction for Go Fish
 function mousePressed() {
-    if (!window.game || window.game.gameOver) return;
+    console.log('🎯 mousePressed function called!');
+    if (!window.game || window.game.gameOver) {
+        console.log('🎯 mousePressed - game not ready or game over');
+        return;
+    }
+    
+    // Call the Go Fish specific handler
+    goFishMousePressed();
+}
+
+// Go Fish specific mouse handler - make it globally accessible
+window.goFishMousePressed = function goFishMousePressed() {
+    console.log('🎯 goFishMousePressed function called!');
+    if (!window.game || window.game.gameOver) {
+        console.log('🎯 goFishMousePressed - game not ready or game over');
+        return;
+    }
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
