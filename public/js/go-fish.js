@@ -1852,6 +1852,13 @@ function drawMainPlayerHand() {
         stroke(0);
         strokeWeight(2);
         console.log('🎮 Drawing Ask button at:', askX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringAsk ? 'hover' : 'normal');
+        
+        // DEBUG: Draw bright red rectangle around Ask button for visibility
+        fill(255, 0, 0, 100);
+        stroke(255, 0, 0);
+        strokeWeight(3);
+        rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
+        
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
         fill(0);
@@ -2660,6 +2667,8 @@ function mousePressed() {
         console.log('🎯 Ask button bounds - askX:', askX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
         console.log('🎯 Ask button click check:', mouseX >= askX && mouseX <= askX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight);
         console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
+        console.log('🎯 Canvas dimensions in mousePressed - width:', width, 'height:', height);
+        console.log('🎯 Button calculation details - cardsWidth:', cardsWidth, 'buttonsWidth:', buttonsWidth, 'totalWidth:', totalWidth, 'startX:', startX);
         if (mouseX >= askX && mouseX <= askX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
             console.log('🎯 Ask button clicked');
