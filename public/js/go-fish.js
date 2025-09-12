@@ -1853,9 +1853,9 @@ function drawMainPlayerHand() {
         strokeWeight(2);
         console.log('🎮 Drawing Ask button at:', askX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringAsk ? 'hover' : 'normal');
         
-        // DEBUG: Draw bright red rectangle around Ask button for visibility
-        fill(255, 0, 0, 100);
-        stroke(255, 0, 0);
+        // DEBUG: Draw bright green rectangle around Ask button for visibility
+        fill(0, 255, 0, 100);
+        stroke(0, 255, 0);
         strokeWeight(3);
         rect(askX - 5, buttonY - 5, buttonWidth + 10, buttonHeight + 10, 5);
         
@@ -2812,14 +2812,30 @@ function getAvailableTargetsFromPlayers(players, localPlayerIndex) {
         
         const player = players[i];
         const handLength = player.hand ? player.hand.length : 0;
-        const isValid = handLength > 0 && !player.isBot; // Only human players with cards
+        const isValid = handLength > 0; // Any player with cards (human or bot)
         
         console.log(`🎯 Player ${i} (${player.name}): handLength=${handLength}, isBot=${player.isBot}, isValid=${isValid}`);
         
         if (isValid) {
+            // Calculate display name from local player's perspective
+            let displayName = player.name;
+            if (localPlayerIndex !== undefined) {
+                let relativePosition = i - localPlayerIndex;
+                if (relativePosition < 0) {
+                    relativePosition += players.length;
+                }
+                if (relativePosition === 1) {
+                    displayName = player.isBot ? "Bot" : "Player 1";
+                } else if (relativePosition === 2) {
+                    displayName = player.isBot ? "Bot" : "Player 2";
+                } else {
+                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                }
+            }
+            
             availableTargets.push({
                 index: i,
-                name: player.name,
+                name: displayName,
                 handLength: handLength
             });
         }
