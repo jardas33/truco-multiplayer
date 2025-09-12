@@ -2780,6 +2780,14 @@ function showAskForCardsDialog() {
     console.log('🎯 window.game:', window.game);
     console.log('🎯 window.game.players:', window.game?.players);
     
+    // Debug: Log all player hands
+    if (window.game && window.game.players) {
+        console.log('🎯 All player hands debug:');
+        window.game.players.forEach((player, index) => {
+            console.log(`🎯 Player ${index} (${player.name}): handLength=${player.hand ? player.hand.length : 'undefined'}, isBot=${player.isBot}, hand=${player.hand}`);
+        });
+    }
+    
     if (!window.game || !window.game.players) {
         console.log('❌ No game or players available');
         return;
@@ -2808,7 +2816,9 @@ function showAskForCardsDialog() {
     const availableTargets = window.game.getAvailableTargets(localPlayerIndex);
     console.log('🎯 availableTargets:', availableTargets);
     if (availableTargets.length === 0) {
-        console.log('❌ No available targets');
+        console.log('❌ No available targets - all other players have empty hands');
+        // Show a message instead of blocking the dialog
+        alert('Cannot ask for cards right now - other players have no cards in their hands. This might be a synchronization issue. Try "Go Fish" instead.');
         return;
     }
     
