@@ -2866,7 +2866,6 @@ function showAskForCardsDialog() {
     }
     
     // Use local player index instead of current player index
-    const localPlayerIndex = window.game.localPlayerIndex || 0;
     const localPlayer = window.game.players[localPlayerIndex];
     console.log('🎯 localPlayer:', localPlayer);
     console.log('🎯 localPlayer hand length:', localPlayer?.hand?.length);
