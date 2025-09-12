@@ -1377,6 +1377,7 @@ io.on('connection', (socket) => {
                 
                 // Ask again if player got cards (Go Fish rule)
                 console.log(`🎯 ${askingPlayer.name} got cards - gets another turn`);
+                // Note: Turn doesn't advance - player gets another turn
                 
             } else {
                 // Target player doesn't have the cards - Go Fish

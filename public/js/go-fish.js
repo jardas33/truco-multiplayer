@@ -1230,9 +1230,7 @@ class GoFishClient {
 
     // Update UI
     updateUI() {
-        this.updateGameInfo();
-        this.updateScores();
-        this.updatePlayerAreas();
+        // For Go Fish, we only need to update controls since rendering is handled by p5.js
         this.updateControls();
     }
 
