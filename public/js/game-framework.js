@@ -274,10 +274,35 @@ class UIUtils {
             error: '#e74c3c'
         };
         
-        const popup = this.showPopup(message, 4000);
-        popup.style.borderColor = colors[type] || colors.info;
-        return popup;
+        // Add message to queue
+        this.messageQueue.push({ message, type, colors });
+        
+        // Process queue if not already processing
+        if (!this.processingQueue) {
+            this.processMessageQueue();
+        }
     }
+    
+    static processMessageQueue() {
+        if (this.messageQueue.length === 0) {
+            this.processingQueue = false;
+            return;
+        }
+        
+        this.processingQueue = true;
+        const { message, type, colors } = this.messageQueue.shift();
+        
+        const popup = this.showPopup(message, 3000); // Reduced duration to 3 seconds
+        popup.style.borderColor = colors[type] || colors.info;
+        
+        // Process next message after current one finishes
+        setTimeout(() => {
+            this.processMessageQueue();
+        }, 3500); // 3.5 seconds delay between messages
+    }
+    
+    static messageQueue = [];
+    static processingQueue = false;
 }
 
 // GAME STATE MANAGEMENT
