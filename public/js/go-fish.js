@@ -571,6 +571,29 @@ class GoFishGame {
 // Global variables for drag and drop
 window.draggedCard = null;
 window.dragOffset = { x: 0, y: 0 };
+
+// Centralized function to get player display name from local player's perspective
+function getPlayerDisplayName(playerIndex, player) {
+    if (!window.game || !window.game.players || window.game.localPlayerIndex === undefined) {
+        return player.name;
+    }
+    
+    const localPlayerIndex = window.game.localPlayerIndex;
+    let relativePosition = playerIndex - localPlayerIndex;
+    if (relativePosition < 0) {
+        relativePosition += window.game.players.length;
+    }
+    
+    if (relativePosition === 0) {
+        return "You";
+    } else if (relativePosition === 1) {
+        return player.isBot ? "Bot" : "Player 1";
+    } else if (relativePosition === 2) {
+        return player.isBot ? "Bot" : "Player 2";
+    } else {
+        return player.isBot ? "Bot" : `Player ${relativePosition}`;
+    }
+}
 window.pairMakingArea = { cards: [] };
 
 // 🎮 GO FISH CLIENT LOGIC
@@ -2335,24 +2358,7 @@ function drawGameInfo() {
         const localPlayerIndex = window.game.localPlayerIndex || 0;
         
         // Calculate display name from local player's perspective
-        let displayName = currentPlayer.name;
-        if (window.game.localPlayerIndex !== undefined) {
-            const playerIndex = window.game.currentPlayer;
-            let relativePosition = playerIndex - localPlayerIndex;
-            if (relativePosition < 0) {
-                relativePosition += window.game.players.length;
-            }
-            
-            if (relativePosition === 0) {
-                displayName = "You";
-            } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 2";
-            } else if (relativePosition === 2) {
-                displayName = player.isBot ? "Bot" : "Player 3";
-            } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
-            }
-        }
+        const displayName = getPlayerDisplayName(window.game.currentPlayer, currentPlayer);
         
         textSize(12);
         text(`Current Player: ${displayName}`, boxX + 10, boxY + 30);
@@ -2435,24 +2441,7 @@ function drawScores() {
         }
         
         // Calculate display name from local player's perspective
-        let displayName = player.name;
-        if (window.game.localPlayerIndex !== undefined) {
-            const localPlayerIndex = window.game.localPlayerIndex;
-            let relativePosition = index - localPlayerIndex;
-            if (relativePosition < 0) {
-                relativePosition += window.game.players.length;
-            }
-            
-            if (relativePosition === 0) {
-                displayName = "You";
-            } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 2";
-            } else if (relativePosition === 2) {
-                displayName = player.isBot ? "Bot" : "Player 3";
-            } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
-            }
-        }
+        const displayName = getPlayerDisplayName(index, player);
         
         text(`${displayName}: ${player.pairs || 0}`, scoresX + 10, scoresY + yOffset);
         yOffset += 20;
@@ -2477,24 +2466,7 @@ function drawGameControls() {
         const localPlayerIndex = window.game.localPlayerIndex || 0;
         
         // Calculate display name from local player's perspective
-        let displayName = currentPlayer.name;
-        if (window.game.localPlayerIndex !== undefined) {
-            const playerIndex = window.game.currentPlayer;
-            let relativePosition = playerIndex - localPlayerIndex;
-            if (relativePosition < 0) {
-                relativePosition += window.game.players.length;
-            }
-            
-            if (relativePosition === 0) {
-                displayName = "You";
-            } else if (relativePosition === 1) {
-                displayName = "Player 1";
-            } else if (relativePosition === 2) {
-                displayName = "Player 2";
-            } else {
-                displayName = `Player ${relativePosition}`;
-            }
-        }
+        const displayName = getPlayerDisplayName(window.game.currentPlayer, currentPlayer);
         
         fill(255, 215, 0);
         textAlign(CENTER, CENTER);
@@ -2898,20 +2870,7 @@ function getAvailableTargetsFromPlayers(players, localPlayerIndex) {
         
         if (isValid) {
             // Calculate display name from local player's perspective
-            let displayName = player.name;
-            if (localPlayerIndex !== undefined) {
-                let relativePosition = i - localPlayerIndex;
-                if (relativePosition < 0) {
-                    relativePosition += players.length;
-                }
-                if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 1";
-                } else if (relativePosition === 2) {
-                    displayName = player.isBot ? "Bot" : "Player 2";
-                } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
-                }
-            }
+            const displayName = getPlayerDisplayName(i, player);
             
             availableTargets.push({
                 index: i,
@@ -3358,28 +3317,11 @@ function drawModernScorePanel() {
         const localPlayerIndex = window.game.localPlayerIndex || 0;
         
         // Calculate display name from local player's perspective
-        let displayName = currentPlayer.name;
-        if (window.game.localPlayerIndex !== undefined) {
-            const playerIndex = window.game.currentPlayer;
-            let relativePosition = playerIndex - localPlayerIndex;
-            if (relativePosition < 0) {
-                relativePosition += window.game.players.length;
-            }
-            
-            if (relativePosition === 0) {
-                displayName = "You";
-            } else if (relativePosition === 1) {
-                displayName = "Player 1";
-            } else if (relativePosition === 2) {
-                displayName = "Player 2";
-            } else {
-                displayName = `Player ${relativePosition}`;
-            }
-        }
+        const displayName = getPlayerDisplayName(window.game.currentPlayer, currentPlayer);
         
         fill(100, 200, 255);
         textSize(14);
-        text(`Current Turn: You`, panelX + 15, panelY + 50);
+        text(`Current Turn: ${displayName}`, panelX + 15, panelY + 50);
     }
     
     // Player scores
