@@ -102,6 +102,8 @@ function advanceTurn(roomCode, room) {
         
         // Emit turn changed event
         console.log(`🔄 Emitting turnChanged event - currentPlayer: ${room.game.currentPlayer}`);
+        console.log(`🔄 Room code: ${roomCode}`);
+        console.log(`🔄 Sockets in room:`, Array.from(io.sockets.adapter.rooms.get(roomCode) || []));
         io.to(roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             players: room.players.map((p, index) => ({

@@ -750,12 +750,18 @@ class GoFishClient {
         });
         
         socket.on('goFish', (data) => {
+            console.log('🔍 goFish event received on client!', data);
             this.updateGoFish(data);
         });
         
         socket.on('turnChanged', (data) => {
+            console.log('🔍 turnChanged event received on client!', data);
             this.updateTurnChanged(data);
         });
+        
+        // Debug socket connection
+        console.log('🔍 Socket connected:', socket.connected);
+        console.log('🔍 Socket ID:', socket.id);
         
         socket.on('gameOver', (data) => {
             this.showGameOver(data);
