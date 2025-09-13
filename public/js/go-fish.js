@@ -644,6 +644,15 @@ class GoFishClient {
 
     // Setup socket event listeners
     setupSocketListeners() {
+        console.log('🔍 Setting up socket listeners...');
+        console.log('🔍 window.gameFramework:', window.gameFramework);
+        console.log('🔍 window.gameFramework.socket:', window.gameFramework?.socket);
+        
+        if (!window.gameFramework || !window.gameFramework.socket) {
+            console.error('❌ No socket available! window.gameFramework.socket is undefined');
+            return;
+        }
+        
         const socket = window.gameFramework.socket;
         
         // Debug: Log all socket events
