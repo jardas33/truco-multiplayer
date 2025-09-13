@@ -1062,7 +1062,7 @@ class GoFishClient {
                         }
                     } else {
                         // For other players, always update pairs from server
-                        this.game.players[index].pairs = playerData.pairs;
+                    this.game.players[index].pairs = playerData.pairs;
                     }
                 }
             });
@@ -1108,7 +1108,7 @@ class GoFishClient {
                         }
                     } else {
                         // For other players, always update pairs from server
-                        this.game.players[index].pairs = playerData.pairs;
+                    this.game.players[index].pairs = playerData.pairs;
                     }
                 }
             });
@@ -1124,41 +1124,41 @@ class GoFishClient {
         
         // Show appropriate message based on context after a delay
         setTimeout(() => {
-            if (data.askingPlayer && data.targetPlayer) {
-                // This is a result of asking for cards
-                if (data.drawnCard) {
-                    if (data.pairsFound > 0) {
+        if (data.askingPlayer && data.targetPlayer) {
+            // This is a result of asking for cards
+            if (data.drawnCard) {
+                if (data.pairsFound > 0) {
                         const message = `${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card and made ${data.pairsFound} pair(s)!`;
                         this.addGameMessage(message, 'info');
                         this.game.addToHistory(message, 'info');
-                    } else {
+                } else {
                         const message = `${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card`;
                         this.addGameMessage(message, 'info');
                         this.game.addToHistory(message, 'info');
-                    }
-                } else {
+                }
+            } else {
                     const message = `${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! But the pond is empty`;
                     this.addGameMessage(message, 'warning');
                     this.game.addToHistory(message, 'warning');
-                }
-            } else {
-                // This is a direct go fish action
-                if (data.drawnCard) {
-                    if (data.pairsFound > 0) {
+            }
+        } else {
+            // This is a direct go fish action
+            if (data.drawnCard) {
+                if (data.pairsFound > 0) {
                         const message = `${data.player} went fishing and drew a card, made ${data.pairsFound} pair(s)!`;
                         this.addGameMessage(message, 'info');
                         this.game.addToHistory(message, 'info');
-                    } else {
+                } else {
                         const message = `${data.player} went fishing and drew a card`;
                         this.addGameMessage(message, 'info');
                         this.game.addToHistory(message, 'info');
-                    }
-                } else {
+                }
+            } else {
                     const message = `${data.player} went fishing but the pond is empty`;
                     this.addGameMessage(message, 'warning');
                     this.game.addToHistory(message, 'warning');
-                }
             }
+        }
         }, 2000); // 2 second delay before showing the result message
         
         this.updateUI();
@@ -1226,6 +1226,9 @@ class GoFishClient {
     // Update turn changed
     updateTurnChanged(data) {
         console.log('🎮 Turn changed event received:', data);
+        console.log('🎮 Previous currentPlayer:', this.game.currentPlayer);
+        console.log('🎮 New currentPlayer:', data.currentPlayer);
+        console.log('🎮 localPlayerIndex:', this.localPlayerIndex);
         
         this.game.currentPlayer = data.currentPlayer;
         
@@ -1247,7 +1250,7 @@ class GoFishClient {
                         }
                     } else {
                         // For other players, always update pairs from server
-                        this.game.players[index].pairs = playerData.pairs;
+                    this.game.players[index].pairs = playerData.pairs;
                     }
                 }
             });
@@ -1293,7 +1296,7 @@ class GoFishClient {
                         }
                     } else {
                         // For other players, always update pairs from server
-                        this.game.players[index].pairs = playerData.pairs;
+                    this.game.players[index].pairs = playerData.pairs;
                     }
                 }
             });
@@ -1938,7 +1941,7 @@ function drawMainPlayerHand() {
         const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
         const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-
+        
         // Blue button
         fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
         stroke(0);
@@ -2840,12 +2843,12 @@ function mouseReleased() {
                     const card2InHand = playerHand.some(card => card === lastTwo[1]);
                     
                     if (card1InHand && card2InHand) {
-                        // Make the pair
+                    // Make the pair
                         if (window.game.makePairManually(lastTwo[0], lastTwo[1], localPlayerIndex)) {
-                            // Remove the paired cards from pair-making area
-                            window.pairMakingArea.cards = window.pairMakingArea.cards.filter(
-                                card => card !== lastTwo[0] && card !== lastTwo[1]
-                            );
+                        // Remove the paired cards from pair-making area
+                        window.pairMakingArea.cards = window.pairMakingArea.cards.filter(
+                            card => card !== lastTwo[0] && card !== lastTwo[1]
+                        );
                             console.log(`🎯 Successfully made pair of ${lastTwo[0].rank}s and cleared pair-making area`);
                         }
                     } else {

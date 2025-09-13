@@ -101,6 +101,7 @@ function advanceTurn(roomCode, room) {
         }
         
         // Emit turn changed event
+        console.log(`🔄 Emitting turnChanged event - currentPlayer: ${room.game.currentPlayer}`);
         io.to(roomCode).emit('turnChanged', {
             currentPlayer: room.game.currentPlayer,
             players: room.players.map((p, index) => ({
@@ -109,6 +110,7 @@ function advanceTurn(roomCode, room) {
                 pairs: p.pairs || 0
             }))
         });
+        console.log(`🔄 turnChanged event emitted successfully`);
         
         // Handle bot turns
         const currentPlayer = room.players[room.game.currentPlayer];
