@@ -1166,7 +1166,10 @@ class GoFishClient {
 
     // Show fishing emoji popup
     showFishingPopup(data) {
-        const playerName = data.askingPlayer || data.player;
+        // Get the correct player name from the current player index
+        const currentPlayerIndex = data.currentPlayer;
+        const currentPlayer = this.game.players[currentPlayerIndex];
+        const playerName = currentPlayer ? currentPlayer.name : (data.askingPlayer || data.player);
         const message = `🐟 ${playerName} is fishing...`;
         
         // Create a special fishing popup with animation
