@@ -228,6 +228,9 @@ class GoFishGame {
         
         console.log(`🎯 Human player made a pair of ${card1.rank}s manually`);
         
+        // Add to game history
+        this.addToHistory(`🎯 You made a pair of ${card1.rank}s!`, 'success');
+        
         // Emit to server to update other players
         if (window.gameFramework && window.gameFramework.socket) {
             const socket = window.gameFramework.socket;
@@ -1071,9 +1074,13 @@ class GoFishClient {
         
         // Show appropriate message
         if (data.pairsFound > 0) {
-            this.addGameMessage(`${data.askingPlayer} got ${data.cardsGiven} ${data.rank}(s) from ${data.targetPlayer} and made ${data.pairsFound} pair(s)!`, 'success');
+            const message = `${data.askingPlayer} got ${data.cardsGiven} ${data.rank}(s) from ${data.targetPlayer} and made ${data.pairsFound} pair(s)!`;
+            this.addGameMessage(message, 'success');
+            this.game.addToHistory(message, 'success');
         } else {
-            this.addGameMessage(`${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`, 'success');
+            const message = `${data.targetPlayer} gave ${data.cardsGiven} ${data.rank}(s) to ${data.askingPlayer}`;
+            this.addGameMessage(message, 'success');
+            this.game.addToHistory(message, 'success');
         }
         
         this.updateUI();
@@ -1121,23 +1128,35 @@ class GoFishClient {
                 // This is a result of asking for cards
                 if (data.drawnCard) {
                     if (data.pairsFound > 0) {
-                        this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card and made ${data.pairsFound} pair(s)!`, 'info');
+                        const message = `${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card and made ${data.pairsFound} pair(s)!`;
+                        this.addGameMessage(message, 'info');
+                        this.game.addToHistory(message, 'info');
                     } else {
-                        this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card`, 'info');
+                        const message = `${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card`;
+                        this.addGameMessage(message, 'info');
+                        this.game.addToHistory(message, 'info');
                     }
                 } else {
-                    this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! But the pond is empty`, 'warning');
+                    const message = `${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! But the pond is empty`;
+                    this.addGameMessage(message, 'warning');
+                    this.game.addToHistory(message, 'warning');
                 }
             } else {
                 // This is a direct go fish action
                 if (data.drawnCard) {
                     if (data.pairsFound > 0) {
-                        this.addGameMessage(`${data.player} went fishing and drew a card, made ${data.pairsFound} pair(s)!`, 'info');
+                        const message = `${data.player} went fishing and drew a card, made ${data.pairsFound} pair(s)!`;
+                        this.addGameMessage(message, 'info');
+                        this.game.addToHistory(message, 'info');
                     } else {
-                        this.addGameMessage(`${data.player} went fishing and drew a card`, 'info');
+                        const message = `${data.player} went fishing and drew a card`;
+                        this.addGameMessage(message, 'info');
+                        this.game.addToHistory(message, 'info');
                     }
                 } else {
-                    this.addGameMessage(`${data.player} went fishing but the pond is empty`, 'warning');
+                    const message = `${data.player} went fishing but the pond is empty`;
+                    this.addGameMessage(message, 'warning');
+                    this.game.addToHistory(message, 'warning');
                 }
             }
         }, 2000); // 2 second delay before showing the result message
@@ -1227,7 +1246,9 @@ class GoFishClient {
         // Show turn change message
         const currentPlayer = this.game.players[this.game.currentPlayer];
         if (currentPlayer) {
-            this.addGameMessage(`🔄 ${currentPlayer.name}'s turn`, 'info');
+            const message = `🔄 ${currentPlayer.name}'s turn`;
+            this.addGameMessage(message, 'info');
+            this.game.addToHistory(message, 'info');
         }
         
         this.updateUI();
@@ -1273,13 +1294,17 @@ class GoFishClient {
             console.log('🎯 Cleared pair-making area after pair made event');
         }
         
-        this.addGameMessage(`${data.player} made a pair of ${data.rank}s!`, 'success');
+        const message = `${data.player} made a pair of ${data.rank}s!`;
+        this.addGameMessage(message, 'success');
+        this.game.addToHistory(message, 'success');
         this.updateUI();
     }
 
     // Show game over
     showGameOver(data) {
-        UIUtils.showGameMessage(`🏆 ${data.winner.name} wins with ${data.winner.pairs} pairs!`, 'success');
+        const message = `🏆 ${data.winner.name} wins with ${data.winner.pairs} pairs!`;
+        UIUtils.showGameMessage(message, 'success');
+        this.game.addToHistory(message, 'success');
         this.updateUI();
     }
 
