@@ -1434,6 +1434,13 @@ io.on('connection', (socket) => {
                             }
                         }
                         
+                        // Debug logging
+                        console.log('🐟 DEBUG goFish emission:');
+                        console.log('🐟   askingPlayer.name:', askingPlayer.name);
+                        console.log('🐟   room.game.currentPlayer:', room.game.currentPlayer);
+                        console.log('🐟   room.players[room.game.currentPlayer]:', room.players[room.game.currentPlayer]?.name);
+                        console.log('🐟   data.playerIndex:', data.playerIndex);
+                        
                         io.to(roomCode).emit('goFish', {
                             askingPlayer: askingPlayer.name,
                             targetPlayer: targetPlayer.name,

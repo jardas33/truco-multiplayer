@@ -1169,8 +1169,20 @@ class GoFishClient {
         // Get the correct player name from the current player index
         const currentPlayerIndex = data.currentPlayer;
         const currentPlayer = this.game.players[currentPlayerIndex];
+        
+        // Debug logging
+        console.log('🐟 DEBUG showFishingPopup:');
+        console.log('🐟   data.currentPlayer:', currentPlayerIndex);
+        console.log('🐟   this.game.players:', this.game.players.map((p, i) => ({ index: i, name: p.name })));
+        console.log('🐟   currentPlayer:', currentPlayer);
+        console.log('🐟   data.askingPlayer:', data.askingPlayer);
+        console.log('🐟   data.player:', data.player);
+        
         const playerName = currentPlayer ? currentPlayer.name : (data.askingPlayer || data.player);
         const message = `🐟 ${playerName} is fishing...`;
+        
+        console.log('🐟   Final playerName:', playerName);
+        console.log('🐟   Final message:', message);
         
         // Create a special fishing popup with animation
         if (typeof UIUtils !== 'undefined' && UIUtils.showPopup) {
