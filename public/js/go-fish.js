@@ -3232,8 +3232,17 @@ function drawGameMenu() {
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    window.goFishClient = new GoFishClient();
-    window.goFishClient.initialize();
+    console.log('🔍 DOMContentLoaded event fired');
+    try {
+        console.log('🔍 Creating GoFishClient...');
+        window.goFishClient = new GoFishClient();
+        console.log('🔍 GoFishClient created successfully');
+        console.log('🔍 Calling initialize()...');
+        window.goFishClient.initialize();
+        console.log('🔍 initialize() called successfully');
+    } catch (error) {
+        console.error('❌ Error during GoFishClient initialization:', error);
+    }
 });
 
 // Handle window resize to fix layout issues when console opens/closes
