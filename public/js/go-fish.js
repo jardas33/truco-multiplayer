@@ -1112,32 +1112,81 @@ class GoFishClient {
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
         
-        // Show appropriate message based on context
-        if (data.askingPlayer && data.targetPlayer) {
-            // This is a result of asking for cards
-            if (data.drawnCard) {
-                if (data.pairsFound > 0) {
-                    this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card and made ${data.pairsFound} pair(s)!`, 'info');
+        // Show fishing emoji popup first
+        this.showFishingPopup(data);
+        
+        // Show appropriate message based on context after a delay
+        setTimeout(() => {
+            if (data.askingPlayer && data.targetPlayer) {
+                // This is a result of asking for cards
+                if (data.drawnCard) {
+                    if (data.pairsFound > 0) {
+                        this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card and made ${data.pairsFound} pair(s)!`, 'info');
+                    } else {
+                        this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card`, 'info');
+                    }
                 } else {
-                    this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! Drew a card`, 'info');
+                    this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! But the pond is empty`, 'warning');
                 }
             } else {
-                this.addGameMessage(`${data.askingPlayer} asked ${data.targetPlayer} for ${data.rank}s - Go Fish! But the pond is empty`, 'warning');
-            }
-        } else {
-            // This is a direct go fish action
-            if (data.drawnCard) {
-                if (data.pairsFound > 0) {
-                    this.addGameMessage(`${data.player} went fishing and drew a card, made ${data.pairsFound} pair(s)!`, 'info');
+                // This is a direct go fish action
+                if (data.drawnCard) {
+                    if (data.pairsFound > 0) {
+                        this.addGameMessage(`${data.player} went fishing and drew a card, made ${data.pairsFound} pair(s)!`, 'info');
+                    } else {
+                        this.addGameMessage(`${data.player} went fishing and drew a card`, 'info');
+                    }
                 } else {
-                    this.addGameMessage(`${data.player} went fishing and drew a card`, 'info');
+                    this.addGameMessage(`${data.player} went fishing but the pond is empty`, 'warning');
                 }
-            } else {
-                this.addGameMessage(`${data.player} went fishing but the pond is empty`, 'warning');
             }
-        }
+        }, 2000); // 2 second delay before showing the result message
         
         this.updateUI();
+    }
+
+    // Show fishing emoji popup
+    showFishingPopup(data) {
+        const playerName = data.askingPlayer || data.player;
+        const message = `🐟 ${playerName} is fishing...`;
+        
+        // Create a special fishing popup with animation
+        if (typeof UIUtils !== 'undefined' && UIUtils.showPopup) {
+            const popup = UIUtils.showPopup(message, 2000); // Show for 2 seconds
+            popup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #3498db, #2980b9);
+                color: white;
+                padding: 30px 40px;
+                border-radius: 15px;
+                box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+                z-index: 10001;
+                font-size: 24px;
+                text-align: center;
+                border: 3px solid #FFD700;
+                animation: fishingPulse 1s ease-in-out infinite;
+            `;
+            
+            // Add CSS animation for fishing effect
+            if (!document.getElementById('fishingAnimation')) {
+                const style = document.createElement('style');
+                style.id = 'fishingAnimation';
+                style.textContent = `
+                    @keyframes fishingPulse {
+                        0% { transform: translate(-50%, -50%) scale(1); }
+                        50% { transform: translate(-50%, -50%) scale(1.1); }
+                        100% { transform: translate(-50%, -50%) scale(1); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        } else {
+            // Fallback to regular message
+            this.addGameMessage(message, 'info');
+        }
     }
 
     // Update turn changed

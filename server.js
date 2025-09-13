@@ -116,7 +116,7 @@ function advanceTurn(roomCode, room) {
             console.log(`🤖 Go Fish bot ${currentPlayer.name} turn - will play in 3 seconds`);
             setTimeout(() => {
                 handleGoFishBotTurn(roomCode, room);
-            }, 3000);
+            }, 4000);
         }
         
     } catch (error) {
@@ -167,7 +167,7 @@ function handleGoFishBotTurn(roomCode, room) {
                 if (pairsFound > 0) {
                     setTimeout(() => {
                         handleGoFishBotTurn(roomCode, room);
-                    }, 3000);
+                    }, 4000);
                 } else {
                     // No pairs found, end turn
                     room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
@@ -240,7 +240,7 @@ function handleGoFishBotTurn(roomCode, room) {
                 if (pairsFound > 0) {
                     setTimeout(() => {
                         handleGoFishBotTurn(roomCode, room);
-                    }, 3000);
+                    }, 4000);
                 } else {
                     // No pairs found, end turn
                     room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
@@ -321,7 +321,7 @@ function handleGoFishBotTurn(roomCode, room) {
                     if (pairsFound > 0) {
                         setTimeout(() => {
                             handleGoFishBotTurn(roomCode, room);
-                        }, 3000); // 3 seconds delay for next turn
+                        }, 4000); // 4 seconds delay for next turn
                     } else {
                         // No pairs found, end turn
                         room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
@@ -393,7 +393,7 @@ function handleGoFishBotTurn(roomCode, room) {
                             if (pairsFound > 0) {
                                 setTimeout(() => {
                                     handleGoFishBotTurn(roomCode, room);
-                                }, 3000); // 3 seconds delay for next turn
+                                }, 4000); // 4 seconds delay for next turn
                             } else {
                                 // No pairs found, end turn
                                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
@@ -418,8 +418,8 @@ function handleGoFishBotTurn(roomCode, room) {
                                 }))
                             });
                         }
-                    }, 2000); // 2 seconds delay before processing result
-                }, 1500); // 1.5 seconds delay before go fish event
+                    }, 4000); // 3 seconds delay before processing result
+                }, 2500); // 2.5 seconds delay before go fish event
             } else {
                 // Pond is empty - check for game over
                 if (checkGoFishGameOver(room)) {
@@ -1403,7 +1403,7 @@ io.on('connection', (socket) => {
                     // Ask again if player got cards (Go Fish rule)
                     console.log(`🎯 ${askingPlayer.name} got cards - gets another turn`);
                     // Note: Turn doesn't advance - player gets another turn
-                }, 2000); // 2 seconds delay before processing result
+                }, 4000); // 3 seconds delay before processing result
                 
             } else {
                 // Target player doesn't have the cards - Go Fish
@@ -1466,7 +1466,7 @@ io.on('connection', (socket) => {
                             
                             // Advance to next player
                             advanceTurn(roomCode, room);
-                        }, 2000); // 2 seconds delay before processing result
+                        }, 4000); // 3 seconds delay before processing result
                         
                     } else {
                         // Pond is empty - end turn
@@ -1495,9 +1495,9 @@ io.on('connection', (socket) => {
                             
                             // Advance to next player
                             advanceTurn(roomCode, room);
-                        }, 2000); // 2 seconds delay before advancing turn
+                        }, 4000); // 3 seconds delay before advancing turn
                     }
-                }, 1500); // 1.5 seconds delay before go fish event
+                }, 2500); // 2.5 seconds delay before go fish event
             }
             
         } catch (error) {
@@ -1584,7 +1584,7 @@ io.on('connection', (socket) => {
                     
                     // Advance to next player
                     advanceTurn(roomCode, room);
-                }, 2000); // 2 seconds delay before processing result
+                }, 4000); // 3 seconds delay before processing result
             } else {
                 // Pond is empty - end turn
                 io.to(roomCode).emit('goFish', {
@@ -1609,7 +1609,7 @@ io.on('connection', (socket) => {
                     
                     // Advance to next player
                     advanceTurn(roomCode, room);
-                }, 2000); // 2 seconds delay before advancing turn
+                }, 4000); // 3 seconds delay before advancing turn
             }
             
         } catch (error) {
@@ -1680,7 +1680,7 @@ io.on('connection', (socket) => {
                     console.log(`🤖 Go Fish bot ${currentPlayer.name} turn - will play in 3 seconds`);
                     setTimeout(() => {
                         handleGoFishBotTurn(roomCode, room);
-                    }, 3000);
+                    }, 4000);
                 }
             }
             
@@ -2962,7 +2962,7 @@ io.on('connection', (socket) => {
                 
                 startNewGame(room, winningTeam, roomCode);
                 console.log(`🔍 DEBUG: startNewGame call completed`);
-            }, 3000);
+            }, 4000);
 
         } else if (response === 3) {
             // ✅ Raise Truco - Handle raise in processTrucoResponse

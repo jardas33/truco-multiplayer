@@ -292,13 +292,13 @@ class UIUtils {
         this.processingQueue = true;
         const { message, type, colors } = this.messageQueue.shift();
         
-        const popup = this.showPopup(message, 3000); // Reduced duration to 3 seconds
+        const popup = this.showPopup(message, 4000); // 4 seconds duration
         popup.style.borderColor = colors[type] || colors.info;
         
         // Process next message after current one finishes
         setTimeout(() => {
             this.processMessageQueue();
-        }, 3500); // 3.5 seconds delay between messages
+        }, 4500); // 4.5 seconds delay between messages
     }
     
     static messageQueue = [];
