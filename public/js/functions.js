@@ -430,39 +430,7 @@ function startGame() {
   gameDiv.class('active');
 }
 
-function windowResized() {
-  // Don't resize canvas during active gameplay to prevent button position issues
-  if (window.game && window.game.players && window.game.players.length > 0) {
-    console.log('Game active - skipping canvas resize to prevent button position issues');
-    return;
-  }
-  
-  resizeCanvas(windowWidth, windowHeight);
-  
-  // Update player positions - ensure PERFECT 4-corner layout - FIXED positioning
-  if (playerPositions) {
-    const scoringPanelHeight = 150; // Height of the scoring panel at top
-    const topMargin = scoringPanelHeight + 100; // Increased margin below scoring panel for better spacing
-    const leftMargin = 100; // Left margin from screen edge
-    const rightMargin = width - 100; // Right margin from screen edge
-    const bottomMargin = height - 150; // Bottom margin from screen edge
-    
-    playerPositions[0].x = leftMargin;          // Player 1 (TOP-LEFT) - Top position - ACTUAL PLAYER ORDER
-    playerPositions[0].y = topMargin + 50;      // Below scoring panel, top-left corner - MOVED DOWN MORE
-    playerPositions[1].x = rightMargin;         // Bot 1 (TOP-RIGHT) - Top position - ACTUAL PLAYER ORDER
-    playerPositions[1].y = topMargin + 50;      // Below scoring panel, top-right corner - MOVED DOWN MORE
-    playerPositions[2].x = leftMargin;          // Bot 2 (BOTTOM-LEFT) - Bottom position - ACTUAL PLAYER ORDER
-    playerPositions[2].y = bottomMargin;        // Bottom-left corner
-    playerPositions[3].x = rightMargin;         // Bot 3 (BOTTOM-RIGHT) - Bottom position - ACTUAL PLAYER ORDER
-    playerPositions[3].y = bottomMargin;        // Bottom-right corner
-    
-    // Update label offsets to maintain proper spacing
-    playerPositions[0].labelOffset = -80;       // Bot 1 - above cards (top player) - REASONABLE distance
-    playerPositions[1].labelOffset = -80;       // Bot 2 - above cards (bottom player) - CONSISTENT with top
-    playerPositions[2].labelOffset = -80;       // Bot 3 - above cards (bottom player) - CONSISTENT with top
-    playerPositions[3].labelOffset = -80;       // Player 1 - above cards (top player) - REASONABLE distance
-  }
-}
+// REMOVED: windowResized function - consolidated into setup.js
 
 // Add the missing drawGameState function
 function drawGameState() {
