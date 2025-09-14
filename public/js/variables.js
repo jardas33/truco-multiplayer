@@ -68,8 +68,21 @@ let height = window.innerHeight || 600; // Default height
 
 // ✅ Add window resize handler to update dimensions
 function updateDimensions() {
+    // Don't update dimensions during active gameplay to prevent button position issues
+    if (window.game && window.game.players && window.game.players.length > 0) {
+        console.log('Game active - skipping dimension update to prevent button position issues');
+        return;
+    }
+    
+    // Additional check for gameState if window.game is not available
+    if (typeof gameState !== 'undefined' && gameState === gameStateEnum.Playing) {
+        console.log('Game state indicates playing - skipping dimension update to prevent button position issues');
+        return;
+    }
+    
     width = window.innerWidth || 800;
     height = window.innerHeight || 600;
+    console.log('Dimensions updated - width:', width, 'height:', height);
 }
 
 // Add event listener for window resize
