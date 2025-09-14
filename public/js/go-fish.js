@@ -1951,10 +1951,10 @@ function drawMainPlayerHand() {
     const player = window.game.players[window.game.localPlayerIndex];
     // Get canvas dimensions from the actual canvas element to ensure consistency
     const canvas = document.querySelector('canvas');
-    const canvasWidth = canvas ? canvas.width : width;
-    const canvasHeight = canvas ? canvas.height : height;
+    const canvasWidth = width;
+    const canvasHeight = height;
     
-    const handY = canvasHeight - 150; // Moved up more to give space for pair-making area
+    const handY = height - 150; // Moved up more to give space for pair-making area
     console.log('🎮 handY calculated as:', handY, 'from canvasHeight:', canvasHeight, 'p5 height:', height);
     const cardWidth = 60;
     const cardHeight = 84;
@@ -1970,7 +1970,7 @@ function drawMainPlayerHand() {
     const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
     
     // Center everything
-    const startX = (canvasWidth - totalWidth) / 2;
+    const startX = (width - totalWidth) / 2;
     const cardsStartX = startX;
     const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
     
@@ -2098,10 +2098,10 @@ function drawPairMakingArea() {
     const player = window.game.players[window.game.localPlayerIndex];
     // Get canvas dimensions from the actual canvas element to ensure consistency
     const canvas = document.querySelector('canvas');
-    const canvasWidth = canvas ? canvas.width : width;
-    const canvasHeight = canvas ? canvas.height : height;
+    const canvasWidth = width;
+    const canvasHeight = height;
     
-    const handY = canvasHeight - 150; // Match the main player hand position
+    const handY = height - 150; // Match the main player hand position
     const pairAreaWidth = 200;
     const pairAreaHeight = 100; // Taller to accommodate cards
     const pairAreaX = canvasWidth - 500; // More to the left to avoid score box overlap
@@ -2774,8 +2774,8 @@ window.goFishMousePressed = function goFishMousePressed() {
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
         // Get canvas dimensions from the actual canvas element to ensure consistency
         const canvas = document.querySelector('canvas');
-        const canvasWidth = canvas ? canvas.width : width;
-        const canvasHeight = canvas ? canvas.height : height;
+        const canvasWidth = width;
+        const canvasHeight = height;
         
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
@@ -2804,7 +2804,7 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('⚠️ Consider checking browser zoom level or CSS scaling.');
     }
         
-        const handY = canvasHeight - 150; // Match the new position from drawMainPlayerHand
+        const handY = height - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
         const buttonWidth = 70;
@@ -2816,7 +2816,7 @@ window.goFishMousePressed = function goFishMousePressed() {
         const cardsWidth = (window.game.players[window.game.localPlayerIndex].hand.length - 1) * (cardWidth + spacing) + cardWidth;
         const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
         const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
-        const startX = (canvasWidth - totalWidth) / 2;
+        const startX = (width - totalWidth) / 2;
         const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
         const buttonY = handY + 20;
         
@@ -2948,10 +2948,10 @@ function mouseReleased() {
     if (window.draggedCard) {
         // Get canvas dimensions from the actual canvas element to ensure consistency
         const canvas = document.querySelector('canvas');
-        const canvasWidth = canvas ? canvas.width : width;
-        const canvasHeight = canvas ? canvas.height : height;
+        const canvasWidth = width;
+        const canvasHeight = height;
         
-        const handY = canvasHeight - 150;
+        const handY = height - 150;
         const pairAreaWidth = 200;
         const pairAreaHeight = 100;
         const pairAreaX = canvasWidth - 500;
