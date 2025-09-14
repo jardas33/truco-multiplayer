@@ -3625,26 +3625,25 @@ function drawGameHistoryPanel() {
 }
 
 // drawModernControlPanel function removed - using HTML buttons instead
- 
- / /   G o   F i s h   s p e c i f i c   w i n d o w R e s i z e d   h a n d l e r   t o   p r e v e n t   c a n v a s   r e s i z i n g   d u r i n g   g a m e p l a y  
- w i n d o w . g o F i s h W i n d o w R e s i z e d   =   f u n c t i o n ( )   {  
-         c o n s o l e . l o g ( '   D E B U G :   g o F i s h W i n d o w R e s i z e d   c a l l e d ' ) ;  
-         c o n s o l e . l o g ( '   D E B U G :   w i n d o w . g a m e   e x i s t s : ' ,   ! ! w i n d o w . g a m e ) ;  
-         / /   C R I T I C A L :   D o n ' t   r e s i z e   c a n v a s   d u r i n g   a c t i v e   G o   F i s h   g a m e p l a y   t o   p r e v e n t   b u t t o n   p o s i t i o n   i s s u e s  
-         / /   C h e c k   i f   w e ' r e   o n   t h e   g o - f i s h   p a g e  
-         c o n s t   c u r r e n t P a t h   =   w i n d o w . l o c a t i o n . p a t h n a m e ;  
-         i f   ( c u r r e n t P a t h   = = =   ' / g o - f i s h '   | |   c u r r e n t P a t h   = = =   ' / g o - f i s h . h t m l ' )   {  
-                 c o n s o l e . l o g ( ' O n   g o - f i s h   p a g e   -   c h e c k i n g   g a m e   s t a t e ' ) ;  
-                 / /   C h e c k   i f   g a m e   i s   a c t i v e   a n d   i n   p l a y i n g   p h a s e  
-                 i f   ( w i n d o w . g a m e   & &   w i n d o w . g a m e . g a m e P h a s e   = = =   ' p l a y i n g ' )   {  
-                         c o n s o l e . l o g ( ' G o   F i s h   g a m e   a c t i v e   -   s k i p p i n g   c a n v a s   r e s i z e   t o   p r e v e n t   b u t t o n   p o s i t i o n   i s s u e s ' ) ;  
-                         r e t u r n ;  
-                 }  
-         }  
-         c o n s o l e . l o g ( ' G o   F i s h   w i n d o w R e s i z e d   -   p r o c e e d i n g   w i t h   r e s i z e ' ) ;  
-         c o n s o l e . l o g ( ' G o   F i s h   w i n d o w R e s i z e d   -   p r o c e e d i n g   w i t h   r e s i z e ' ) ;  
-         r e s i z e C a n v a s ( w i n d o w W i d t h ,   w i n d o w H e i g h t ) ;  
-         r e s i z e C a n v a s ( w i n d o w W i d t h ,   w i n d o w H e i g h t ) ;  
- } ;  
- } ;  
- 
+
+// Go Fish specific windowResized handler to prevent canvas resizing during gameplay
+window.goFishWindowResized = function() {
+    console.log('🔍 DEBUG: goFishWindowResized called');
+    console.log('🔍 DEBUG: window.game exists:', !!window.game);
+    
+    // CRITICAL: Don't resize canvas during active Go Fish gameplay to prevent button position issues
+    // Check if we're on the go-fish page
+    const currentPath = window.location.pathname;
+    if (currentPath === '/go-fish' || currentPath === '/go-fish.html') {
+        console.log('On go-fish page - checking game state');
+        
+        // Check if game is active and in playing phase
+        if (window.game && window.game.gamePhase === 'playing') {
+            console.log('Go Fish game active - skipping canvas resize to prevent button position issues');
+            return;
+        }
+    }
+    
+    console.log('Go Fish windowResized - proceeding with resize');
+    resizeCanvas(windowWidth, windowHeight);
+};
