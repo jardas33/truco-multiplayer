@@ -777,11 +777,16 @@ class GoFishClient {
         
         socket.on('goFish', (data) => {
             console.log('🔍 goFish event received on client!', data);
+            console.log('🔍 goFish - askingPlayer:', data.askingPlayer);
+            console.log('🔍 goFish - targetPlayer:', data.targetPlayer);
+            console.log('🔍 goFish - currentPlayer:', data.currentPlayer);
             this.updateGoFish(data);
         });
         
         socket.on('turnChanged', (data) => {
             console.log('🔍 turnChanged event received on client!', data);
+            console.log('🔍 turnChanged - currentPlayer:', data.currentPlayer);
+            console.log('🔍 turnChanged - players count:', data.players?.length);
             this.updateTurnChanged(data);
         });
         
@@ -1141,6 +1146,10 @@ class GoFishClient {
         console.log('🎮 Go fish - currentPlayer before update:', this.game.currentPlayer);
         console.log('🎮 Go fish - localPlayerIndex:', this.localPlayerIndex);
         console.log('🎮 Go fish - isMyTurn before update:', this.isMyTurn);
+        console.log('🎮 Go fish - askingPlayer:', data.askingPlayer);
+        console.log('🎮 Go fish - targetPlayer:', data.targetPlayer);
+        console.log('🎮 Go fish - playerIndex:', data.playerIndex);
+        console.log('🎮 Go fish - targetPlayerIndex:', data.targetPlayerIndex);
         
         // Update game state from server - only update current player's hand
         if (data.players) {
@@ -1286,6 +1295,8 @@ class GoFishClient {
         console.log('🎮 New currentPlayer:', data.currentPlayer);
         console.log('🎮 localPlayerIndex:', this.localPlayerIndex);
         console.log('🎮 Turn changed - isMyTurn before update:', this.isMyTurn);
+        console.log('🎮 Turn changed - players data:', data.players);
+        console.log('🎮 Turn changed - current player name:', this.game.players[data.currentPlayer]?.name);
         
         this.game.currentPlayer = data.currentPlayer;
         
