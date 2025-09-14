@@ -419,6 +419,24 @@ function createCanvasSafely() {
     }
 }
 
+// Handle mouse clicks
+function mousePressed() {
+    console.log('🖱️ p5.js mousePressed called - mouseX:', mouseX, 'mouseY:', mouseY);
+    console.log('🖱️ Game state - gamePhase:', window.game?.gamePhase, 'currentPlayer:', window.game?.currentPlayer, 'localPlayerIndex:', window.game?.localPlayerIndex);
+    
+    if (window.game && window.game.gamePhase === 'playing') {
+        console.log('🖱️ Game is playing - calling goFishMousePressed');
+        if (typeof window.goFishMousePressed === 'function') {
+            console.log('🖱️ goFishMousePressed function exists - calling it');
+            window.goFishMousePressed();
+        } else {
+            console.log('❌ goFishMousePressed function does not exist!');
+        }
+    } else {
+        console.log('🖱️ Game not in playing phase or game object missing');
+    }
+}
+
 // Handle window resize events (like when console opens/closes)
 function windowResized() {
     console.log('Window resized - updating canvas dimensions');
