@@ -677,6 +677,19 @@ class GoFishClient {
             console.log('🔍 Socket event received:', eventName, args);
         });
         
+        // Add comprehensive socket debugging
+        console.log('🔍 Socket connection status:', socket.connected);
+        console.log('🔍 Socket ID:', socket.id);
+        console.log('🔍 Socket transport:', socket.io.engine.transport.name);
+        
+        // Test socket communication immediately
+        socket.emit('test', { message: 'Client socket test' });
+        
+        // Add test event listener
+        socket.on('test', (data) => {
+            console.log('🔍 Test event received from server:', data);
+        });
+        
         socket.on('roomCreated', (data) => {
             console.log('🏠 Room created:', data);
             const roomCode = data.roomId || data; // Handle both old and new formats
@@ -786,8 +799,12 @@ class GoFishClient {
             console.log('🔍 goFish - pairsFound:', data.pairsFound);
             console.log('🔍 goFish - Socket ID:', socket.id);
             console.log('🔍 goFish - Socket connected:', socket.connected);
+            console.log('🔍 goFish - this context:', this);
+            console.log('🔍 goFish - updateGoFish method exists:', typeof this.updateGoFish);
             this.updateGoFish(data);
         });
+        
+        console.log('🔍 goFish event listener registered');
         
         socket.on('turnChanged', (data) => {
             console.log('🔍 turnChanged event received on client!', data);
@@ -796,8 +813,12 @@ class GoFishClient {
             console.log('🔍 turnChanged - players:', data.players);
             console.log('🔍 turnChanged - Socket ID:', socket.id);
             console.log('🔍 turnChanged - Socket connected:', socket.connected);
+            console.log('🔍 turnChanged - this context:', this);
+            console.log('🔍 turnChanged - updateTurnChanged method exists:', typeof this.updateTurnChanged);
             this.updateTurnChanged(data);
         });
+        
+        console.log('🔍 turnChanged event listener registered');
         
         // Debug socket connection
         console.log('🔍 Socket connected:', socket.connected);

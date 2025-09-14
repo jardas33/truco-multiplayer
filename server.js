@@ -1338,6 +1338,12 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Test event handler
+    socket.on('test', (data) => {
+        console.log('🔍 Test event received from client:', data);
+        socket.emit('test', { message: 'Server socket test response', timestamp: Date.now() });
+    });
+
     // 🐟 GO FISH SPECIFIC EVENT HANDLERS
     socket.on('askForCards', (data) => {
         try {
