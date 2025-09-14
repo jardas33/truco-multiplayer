@@ -1057,7 +1057,7 @@ class GoFishClient {
         const targetPlayerIndex = parseInt(targetSelect.value);
         const rank = rankSelect.value;
         
-        if (!targetPlayerIndex || !rank) {
+        if (targetPlayerIndex === undefined || targetPlayerIndex === null || !rank) {
             console.log('❌ Missing target player or rank selection');
             return;
         }
@@ -1087,7 +1087,7 @@ class GoFishClient {
             return;
         }
         
-        if (!targetPlayerIndex || !rank) {
+        if (targetPlayerIndex === undefined || targetPlayerIndex === null || !rank) {
             console.log('❌ Missing target player or rank');
             console.log('❌ targetPlayerIndex:', targetPlayerIndex, 'rank:', rank);
             return;
@@ -1875,7 +1875,6 @@ function drawOpponentHands() {
 }
 
 function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
-    console.log('🎮 drawOpponentHand called for:', player.name, 'at position:', x, y);
     
     // Draw a bright test rectangle first
     fill(255, 0, 255, 150);
@@ -1897,7 +1896,6 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
     const playerIndex = window.game.players.indexOf(player);
     const displayName = getPlayerDisplayName(playerIndex, player);
     
-    console.log('🎮 Drawing text for', player.name, 'displayName:', displayName, 'at position:', x + 10, y + 20);
     text(displayName, x + 10, y + 20);
     
     // Card count
@@ -1931,7 +1929,6 @@ function drawMainPlayerHand() {
     const canvasHeight = height;
     
     const handY = height - 150; // Moved up more to give space for pair-making area
-    console.log('🎮 handY calculated as:', handY, 'from canvasHeight:', canvasHeight, 'p5 height:', height);
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
