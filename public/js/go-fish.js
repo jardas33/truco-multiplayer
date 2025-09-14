@@ -1965,7 +1965,8 @@ function drawMainPlayerHand() {
     const cardsToButtonsGap = 30; // Gap between cards and buttons
     
     // Calculate total width needed for cards and buttons
-    const cardsWidth = (player.hand.length - 1) * (cardWidth + spacing) + cardWidth;
+    const handLength = player.hand.length;
+    const cardsWidth = (handLength - 1) * (cardWidth + spacing) + cardWidth;
     const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
     const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
     
@@ -1973,6 +1974,8 @@ function drawMainPlayerHand() {
     const startX = (width - totalWidth) / 2;
     const cardsStartX = startX;
     const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
+    
+    console.log(`🎮 Draw function - handLength: ${handLength}, cardsWidth: ${cardsWidth}, buttonsStartX: ${buttonsStartX}`);
     
     // Draw hand background - centered
     fill(0, 0, 0, 150);
@@ -2813,15 +2816,18 @@ window.goFishMousePressed = function goFishMousePressed() {
         const cardsToButtonsGap = 30;
         
         // Calculate positions (same as in drawMainPlayerHand)
-        const cardsWidth = (window.game.players[window.game.localPlayerIndex].hand.length - 1) * (cardWidth + spacing) + cardWidth;
+        const player = window.game.players[window.game.localPlayerIndex];
+        const handLength = player.hand.length;
+        const cardsWidth = (handLength - 1) * (cardWidth + spacing) + cardWidth;
         const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
         const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
         const startX = (width - totalWidth) / 2;
         const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
         const buttonY = handY + 20;
         
+        console.log(`🎯 Click detection - handLength: ${handLength}, cardsWidth: ${cardsWidth}, buttonsStartX: ${buttonsStartX}`);
+        
         // Check for card dragging
-        const player = window.game.players[window.game.localPlayerIndex];
         for (let i = 0; i < player.hand.length; i++) {
             const cardX = startX + i * (cardWidth + spacing);
             const cardY = handY;
