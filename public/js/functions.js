@@ -431,6 +431,12 @@ function startGame() {
 }
 
 function windowResized() {
+  // Don't resize canvas during active gameplay to prevent button position issues
+  if (window.game && window.game.players && window.game.players.length > 0) {
+    console.log('Game active - skipping canvas resize to prevent button position issues');
+    return;
+  }
+  
   resizeCanvas(windowWidth, windowHeight);
   
   // Update player positions - ensure PERFECT 4-corner layout - FIXED positioning

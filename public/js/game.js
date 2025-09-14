@@ -998,6 +998,12 @@ function createDeck() {
 
 // Add window resize handler
 function windowResized() {
+    // Don't resize canvas during active gameplay to prevent button position issues
+    if (window.game && window.game.players && window.game.players.length > 0) {
+        console.log('Game active - skipping canvas resize to prevent button position issues');
+        return;
+    }
+    
     if (gameState === gameStateEnum.Playing) {
         resizeCanvas(windowWidth, windowHeight);
         redrawGame();
