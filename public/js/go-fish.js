@@ -1152,26 +1152,17 @@ class GoFishClient {
     updateCardsGiven(data) {
         console.log('🎮 Cards given event received:', data);
         
-        // Update game state from server - only update current player's hand
+        // Update game state from server - update all players' hands and pairs
         if (data.players) {
             data.players.forEach((playerData, index) => {
                 if (this.game.players[index]) {
-                    // Only update hand if it's the local player
-                    if (index === this.localPlayerIndex) {
-                        this.game.players[index].hand = playerData.hand;
-                        
-                        // For human players, don't automatically update pairs from server
-                        // Let them make pairs manually by dragging cards
-                        if (!this.game.players[index].isBot) {
-                            console.log('🎯 Human player - skipping automatic pair update from server');
-                        } else {
-                            // For bots, update pairs from server
-                            this.game.players[index].pairs = playerData.pairs;
-                        }
-                    } else {
-                        // For other players, always update pairs from server
+                    // Update hand for ALL players (not just local player)
+                    this.game.players[index].hand = playerData.hand;
+                    
+                    // Update pairs for all players
                     this.game.players[index].pairs = playerData.pairs;
-                    }
+                    
+                    console.log(`🎯 Updated player ${index} (${this.game.players[index].name}): hand length=${playerData.hand.length}, pairs=${playerData.pairs}`);
                 }
             });
         }
@@ -1205,26 +1196,17 @@ class GoFishClient {
         console.log('🎮 Go fish - playerIndex:', data.playerIndex);
         console.log('🎮 Go fish - targetPlayerIndex:', data.targetPlayerIndex);
         
-        // Update game state from server - only update current player's hand
+        // Update game state from server - update all players' hands and pairs
         if (data.players) {
             data.players.forEach((playerData, index) => {
                 if (this.game.players[index]) {
-                    // Only update hand if it's the local player
-                    if (index === this.localPlayerIndex) {
-                        this.game.players[index].hand = playerData.hand;
-                        
-                        // For human players, don't automatically update pairs from server
-                        // Let them make pairs manually by dragging cards
-                        if (!this.game.players[index].isBot) {
-                            console.log('🎯 Human player - skipping automatic pair update from server');
-                        } else {
-                            // For bots, update pairs from server
-                            this.game.players[index].pairs = playerData.pairs;
-                        }
-                    } else {
-                        // For other players, always update pairs from server
+                    // Update hand for ALL players (not just local player)
+                    this.game.players[index].hand = playerData.hand;
+                    
+                    // Update pairs for all players
                     this.game.players[index].pairs = playerData.pairs;
-                    }
+                    
+                    console.log(`🎯 Updated player ${index} (${this.game.players[index].name}): hand length=${playerData.hand.length}, pairs=${playerData.pairs}`);
                 }
             });
         }
@@ -1354,26 +1336,17 @@ class GoFishClient {
         
         this.game.currentPlayer = data.currentPlayer;
         
-        // Update game state from server - only update current player's hand
+        // Update game state from server - update all players' hands and pairs
         if (data.players) {
             data.players.forEach((playerData, index) => {
                 if (this.game.players[index]) {
-                    // Only update hand if it's the local player
-                    if (index === this.localPlayerIndex) {
-                        this.game.players[index].hand = playerData.hand;
-                        
-                        // For human players, don't automatically update pairs from server
-                        // Let them make pairs manually by dragging cards
-                        if (!this.game.players[index].isBot) {
-                            console.log('🎯 Human player - skipping automatic pair update from server');
-                        } else {
-                            // For bots, update pairs from server
-                            this.game.players[index].pairs = playerData.pairs;
-                        }
-                    } else {
-                        // For other players, always update pairs from server
+                    // Update hand for ALL players (not just local player)
+                    this.game.players[index].hand = playerData.hand;
+                    
+                    // Update pairs for all players
                     this.game.players[index].pairs = playerData.pairs;
-                    }
+                    
+                    console.log(`🎯 Updated player ${index} (${this.game.players[index].name}): hand length=${playerData.hand.length}, pairs=${playerData.pairs}`);
                 }
             });
         }
@@ -1402,26 +1375,17 @@ class GoFishClient {
     updatePairMade(data) {
         console.log('🎮 Pair made event received:', data);
         
-        // Update game state from server - only update current player's hand
+        // Update game state from server - update all players' hands and pairs
         if (data.players) {
             data.players.forEach((playerData, index) => {
                 if (this.game.players[index]) {
-                    // Only update hand if it's the local player
-                    if (index === this.localPlayerIndex) {
-                        this.game.players[index].hand = playerData.hand;
-                        
-                        // For human players, don't automatically update pairs from server
-                        // Let them make pairs manually by dragging cards
-                        if (!this.game.players[index].isBot) {
-                            console.log('🎯 Human player - skipping automatic pair update from server');
-                        } else {
-                            // For bots, update pairs from server
-                            this.game.players[index].pairs = playerData.pairs;
-                        }
-                    } else {
-                        // For other players, always update pairs from server
+                    // Update hand for ALL players (not just local player)
+                    this.game.players[index].hand = playerData.hand;
+                    
+                    // Update pairs for all players
                     this.game.players[index].pairs = playerData.pairs;
-                    }
+                    
+                    console.log(`🎯 Updated player ${index} (${this.game.players[index].name}): hand length=${playerData.hand.length}, pairs=${playerData.pairs}`);
                 }
             });
         }
