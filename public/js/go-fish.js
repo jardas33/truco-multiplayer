@@ -1138,6 +1138,9 @@ class GoFishClient {
     // Update go fish
     updateGoFish(data) {
         console.log('🎮 Go fish event received:', data);
+        console.log('🎮 Go fish - currentPlayer before update:', this.game.currentPlayer);
+        console.log('🎮 Go fish - localPlayerIndex:', this.localPlayerIndex);
+        console.log('🎮 Go fish - isMyTurn before update:', this.isMyTurn);
         
         // Update game state from server - only update current player's hand
         if (data.players) {
@@ -1167,6 +1170,10 @@ class GoFishClient {
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
+        
+        console.log('🎮 Go fish - currentPlayer after update:', this.game.currentPlayer);
+        console.log('🎮 Go fish - isMyTurn after update:', this.isMyTurn);
+        console.log('🎮 Go fish - canAct after update:', this.canAct);
         
         // Show fishing emoji popup first
         this.showFishingPopup(data);
@@ -1278,6 +1285,7 @@ class GoFishClient {
         console.log('🎮 Previous currentPlayer:', this.game.currentPlayer);
         console.log('🎮 New currentPlayer:', data.currentPlayer);
         console.log('🎮 localPlayerIndex:', this.localPlayerIndex);
+        console.log('🎮 Turn changed - isMyTurn before update:', this.isMyTurn);
         
         this.game.currentPlayer = data.currentPlayer;
         
@@ -1308,6 +1316,8 @@ class GoFishClient {
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
         
+        console.log('🎮 Turn changed - isMyTurn after update:', this.isMyTurn);
+        console.log('🎮 Turn changed - canAct after update:', this.canAct);
         console.log(`🔄 Turn changed to ${this.game.players[this.game.currentPlayer]?.name}, isMyTurn: ${this.isMyTurn}`);
         
         // Show turn change message
