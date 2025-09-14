@@ -3340,24 +3340,7 @@ function drawModernScorePanel() {
             const textColor = isLocalPlayer ? color(255, 215, 0) : color(255, 255, 255);
             
             // Calculate display name from local player's perspective
-            let displayName = player.name;
-            if (window.game.localPlayerIndex !== undefined) {
-                const localPlayerIndex = window.game.localPlayerIndex;
-                let relativePosition = index - localPlayerIndex;
-                if (relativePosition < 0) {
-                    relativePosition += window.game.players.length;
-                }
-                
-                if (relativePosition === 0) {
-                    displayName = "You";
-                } else if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 1";
-                } else if (relativePosition === 2) {
-                    displayName = player.isBot ? "Bot" : "Player 2";
-                } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
-                }
-            }
+            const displayName = getPlayerDisplayName(index, player);
             
             fill(textColor);
             textSize(12);
@@ -3379,24 +3362,7 @@ function drawModernScorePanel() {
             const textColor = isLocalPlayer ? color(255, 215, 0) : color(200, 200, 200);
             
             // Calculate display name from local player's perspective
-            let displayName = player.name;
-            if (window.game.localPlayerIndex !== undefined) {
-                const localPlayerIndex = window.game.localPlayerIndex;
-                let relativePosition = index - localPlayerIndex;
-                if (relativePosition < 0) {
-                    relativePosition += window.game.players.length;
-                }
-                
-                if (relativePosition === 0) {
-                    displayName = "You";
-                } else if (relativePosition === 1) {
-                    displayName = player.isBot ? "Bot" : "Player 1";
-                } else if (relativePosition === 2) {
-                    displayName = player.isBot ? "Bot" : "Player 2";
-                } else {
-                    displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
-                }
-            }
+            const displayName = getPlayerDisplayName(index, player);
             
             fill(textColor);
             textSize(11);
