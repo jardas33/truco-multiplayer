@@ -1531,6 +1531,13 @@ class BattleshipClient {
     }
     
     setupResizeHandler() {
+        // CRITICAL: Only set up resize handler when on battleship page
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/battleship') {
+            console.log('Not on battleship page - skipping battleship resize handler setup');
+            return;
+        }
+        
         window.addEventListener('resize', () => {
             // Set resizing flag to prevent phantom mouse events
             this.isResizing = true;
@@ -1609,6 +1616,12 @@ class BattleshipClient {
         
         // Add window resize handler to redraw when console opens/closes
         this.resizeHandler = () => {
+            // CRITICAL: Only handle resize when on battleship page
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/battleship') {
+                console.log('Not on battleship page - skipping battleship resize handler');
+                return;
+            }
             if (this.initialized) {
                 // Set flag immediately to prevent any clicks during resize
                 this.isResizing = true;
@@ -1620,7 +1633,14 @@ class BattleshipClient {
                 }, 300); // Increased delay to prevent clicks during resize
             }
         };
-        window.addEventListener('resize', this.resizeHandler);
+        
+        // CRITICAL: Only set up resize listener when on battleship page
+        const currentPath = window.location.pathname;
+        if (currentPath === '/battleship') {
+            window.addEventListener('resize', this.resizeHandler);
+        } else {
+            console.log('Not on battleship page - skipping battleship resize listener setup');
+        }
     }
     
     cleanupEventListeners() {
