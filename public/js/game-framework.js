@@ -217,11 +217,35 @@ class UIUtils {
     }
     
     static showMenu() {
+        // Move canvas back to Menu div when returning to menu
+        const canvas = document.querySelector('canvas');
+        const menuDiv = document.getElementById('Menu');
+        if (canvas && menuDiv) {
+            try {
+                canvas.parent(menuDiv);
+                console.log('✅ Canvas moved back to Menu div');
+            } catch (error) {
+                console.error('❌ Error moving canvas to Menu div:', error);
+            }
+        }
+        
         this.showElement('Menu');
         this.hideElement('Game');
     }
     
     static showGame() {
+        // Move canvas to Game div before hiding Menu to keep it clickable
+        const canvas = document.querySelector('canvas');
+        const gameDiv = document.getElementById('Game');
+        if (canvas && gameDiv) {
+            try {
+                canvas.parent(gameDiv);
+                console.log('✅ Canvas moved to Game div for gameplay');
+            } catch (error) {
+                console.error('❌ Error moving canvas to Game div:', error);
+            }
+        }
+        
         this.hideElement('Menu');
         this.showElement('Game');
     }

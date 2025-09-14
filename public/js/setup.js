@@ -49,12 +49,11 @@ function createCanvasSafely() {
             canvas.parent('body'); // Fallback to body
         }
     } else {
-        // For other games, use body to ensure canvas stays clickable during gameplay
+        // For other games, use Menu div
         try {
-            canvas.parent('body');
-            console.log('✅ Canvas attached to body for game');
+            canvas.parent('Menu');
         } catch (error) {
-            console.error('❌ Error attaching canvas to body:', error);
+            console.error('❌ Error attaching canvas to Menu div:', error);
             canvas.parent('body'); // Fallback to body
         }
     }
