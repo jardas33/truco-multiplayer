@@ -2051,6 +2051,14 @@ function drawMainPlayerHand() {
         
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
+        // Visual debugging: Draw button outline in blue during drawing
+        push();
+        stroke(0, 0, 255);
+        strokeWeight(3);
+        noFill();
+        rect(askX, buttonY, buttonWidth, buttonHeight);
+        pop();
+        
         fill(255); // White text
         textAlign(CENTER, CENTER);
         textSize(14);
@@ -2877,6 +2885,30 @@ window.goFishMousePressed = function goFishMousePressed() {
         line(askX - 20, buttonY, askX + buttonWidth + 20, buttonY); // Horizontal line
         line(askX + buttonWidth/2, buttonY - 20, askX + buttonWidth/2, buttonY + buttonHeight + 20); // Vertical line
         pop();
+        
+        // Additional visual debugging: Draw button outline in red
+        push();
+        stroke(255, 0, 0);
+        strokeWeight(2);
+        noFill();
+        rect(askX, buttonY, buttonWidth, buttonHeight);
+        pop();
+        
+        // Draw mouse position in yellow
+        push();
+        fill(255, 255, 0);
+        noStroke();
+        ellipse(mouseX, mouseY, 10, 10);
+        pop();
+        
+        // Log all coordinate information
+        console.log('🎯 COORDINATE DEBUG:');
+        console.log('  Button calculated at:', askX, buttonY, 'size:', buttonWidth, 'x', buttonHeight);
+        console.log('  Mouse click at:', mouseX, mouseY);
+        console.log('  Distance from button center:', dist(mouseX, mouseY, askX + buttonWidth/2, buttonY + buttonHeight/2));
+        console.log('  Canvas dimensions:', width, 'x', height);
+        console.log('  Canvas element dimensions:', canvasWidth, 'x', canvasHeight);
+        console.log('  Scale factors:', scaleX, 'x', scaleY);
         
         if (isAskButtonClicked) {
             console.log('🎯 Ask button clicked');
