@@ -2075,6 +2075,20 @@ function drawMainPlayerHand() {
         noStroke();
         text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
         
+        // VISUAL DEBUG: Draw a bright red outline around the button to show exact bounds
+        stroke(255, 0, 0); // Bright red outline
+        strokeWeight(3);
+        noFill();
+        rect(goFishX, buttonY, buttonWidth, buttonHeight);
+        
+        // VISUAL DEBUG: Draw corner markers
+        fill(255, 0, 0);
+        noStroke();
+        rect(goFishX - 2, buttonY - 2, 4, 4); // Top-left corner
+        rect(goFishX + buttonWidth - 2, buttonY - 2, 4, 4); // Top-right corner
+        rect(goFishX - 2, buttonY + buttonHeight - 2, 4, 4); // Bottom-left corner
+        rect(goFishX + buttonWidth - 2, buttonY + buttonHeight - 2, 4, 4); // Bottom-right corner
+        
         // Visual debugging: Draw last click position
         if (window.lastClickX !== undefined && window.lastClickY !== undefined) {
             fill(255, 255, 0); // Yellow
@@ -2792,9 +2806,10 @@ window.goFishMousePressed = function goFishMousePressed() {
     const canvasRect = canvas.getBoundingClientRect();
     const scaleX = canvasWidth / canvasRect.width;
     const scaleY = canvasHeight / canvasRect.height;
-    console.log('🎯 Canvas scaling - scaleX:', scaleX, 'scaleY:', scaleY);
-    console.log('🎯 Canvas rect - width:', canvasRect.width, 'height:', canvasRect.height);
-    console.log('🎯 Canvas rect - left:', canvasRect.left, 'top:', canvasRect.top);
+    console.log('🚨 CRITICAL SCALING INFO - scaleX:', scaleX, 'scaleY:', scaleY);
+    console.log('🚨 Canvas rect - width:', canvasRect.width, 'height:', canvasRect.height);
+    console.log('🚨 Canvas rect - left:', canvasRect.left, 'top:', canvasRect.top);
+    console.log('🚨 P5 dimensions - width:', width, 'height:', height);
     
     // Check if there's a significant scaling difference
     if (Math.abs(scaleX - 1) > 0.1 || Math.abs(scaleY - 1) > 0.1) {
