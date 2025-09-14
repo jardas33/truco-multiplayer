@@ -1839,8 +1839,7 @@ function drawOpponentHands() {
     const localPlayerIndex = window.game.localPlayerIndex || 0;
     const opponents = window.game.players.filter((player, index) => index !== localPlayerIndex);
     
-    console.log('🎮 drawOpponentHands - total players:', window.game.players.length, 'localPlayerIndex:', localPlayerIndex, 'opponents:', opponents.length);
-    console.log('🎮 Opponents array:', opponents.map((opp, i) => ({ index: i, name: opp.name, isBot: opp.isBot })));
+    // Removed repetitive opponent hands logs to reduce console spam
     
     if (opponents.length === 0) {
         console.log('🎮 No opponents to draw, returning');
@@ -1960,9 +1959,7 @@ function drawMainPlayerHand() {
     const cardsStartX = startX;
     const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
     
-    console.log(`🎮 Draw function - handLength: ${handLength}, cardsWidth: ${cardsWidth}, buttonsStartX: ${buttonsStartX}`);
-    console.log('🎮 Draw function - p5 width:', width, 'p5 height:', height);
-    console.log('🎮 Draw function - handY:', handY, 'startX:', startX);
+    // Removed repetitive draw logs to reduce console spam
     
     // Draw hand background - centered
     fill(0, 0, 0, 150);
@@ -1998,25 +1995,23 @@ function drawMainPlayerHand() {
     });
     
     // Draw action buttons next to the cards
-    console.log('🎮 drawMainPlayerHand - currentPlayer:', window.game.currentPlayer, 'localPlayerIndex:', window.game.localPlayerIndex, 'isMyTurn:', window.goFishClient ? window.goFishClient.isMyTurn : 'undefined');
+    // Removed repetitive main player hand log to reduce console spam
     
-    // Track canvas dimension changes
+    // Track canvas dimension changes (reduced logging)
     if (window.lastDrawCanvasWidth !== canvasWidth || window.lastDrawCanvasHeight !== canvasHeight) {
-        console.log('🔄 Canvas dimensions changed during draw!');
-        console.log('🔄 Previous:', window.lastDrawCanvasWidth, 'x', window.lastDrawCanvasHeight);
-        console.log('🔄 Current:', canvasWidth, 'x', canvasHeight);
+        console.log('🔄 Canvas dimensions changed during draw!', canvasWidth, 'x', canvasHeight);
         window.lastDrawCanvasWidth = canvasWidth;
         window.lastDrawCanvasHeight = canvasHeight;
     }
     
-    console.log('🎮 Canvas dimensions - canvasWidth:', canvasWidth, 'canvasHeight:', canvasHeight, 'p5 width:', width, 'p5 height:', height);
+    // Removed repetitive canvas dimensions log to reduce console spam
     
     // Draw a large test rectangle to verify canvas is working
     
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
-        console.log('🎮 Drawing buttons for current player');
+        // Removed repetitive button drawing log to reduce console spam
         const buttonY = handY + 20;
-        console.log('🎮 Button positions - buttonsStartX:', buttonsStartX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
+        // Removed repetitive button positions log to reduce console spam
         
         // Ask button (green style to match Go Fish button)
         const askX = buttonsStartX;
@@ -2065,7 +2060,7 @@ function drawMainPlayerHand() {
         fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
         stroke(0);
         strokeWeight(2);
-        console.log('🎮 Drawing Go Fish button at:', goFishX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringGoFish ? 'hover' : 'normal');
+        // Removed repetitive button drawing log to reduce console spam
         rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
         
         fill(255); // White text
@@ -2094,7 +2089,7 @@ function drawMainPlayerHand() {
             fill(255, 255, 0); // Yellow
             noStroke();
             ellipse(window.lastClickX, window.lastClickY, 10, 10);
-            console.log('🎮 Drawing last click indicator at:', window.lastClickX, window.lastClickY);
+            // Removed repetitive click indicator log to reduce console spam
         }
     } else {
         console.log('🎮 Not drawing buttons - not current player');
