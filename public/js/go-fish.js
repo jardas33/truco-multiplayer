@@ -780,6 +780,10 @@ class GoFishClient {
             console.log('🔍 goFish - askingPlayer:', data.askingPlayer);
             console.log('🔍 goFish - targetPlayer:', data.targetPlayer);
             console.log('🔍 goFish - currentPlayer:', data.currentPlayer);
+            console.log('🔍 goFish - playerIndex:', data.playerIndex);
+            console.log('🔍 goFish - targetPlayerIndex:', data.targetPlayerIndex);
+            console.log('🔍 goFish - drawnCard:', data.drawnCard);
+            console.log('🔍 goFish - pairsFound:', data.pairsFound);
             this.updateGoFish(data);
         });
         
@@ -787,6 +791,7 @@ class GoFishClient {
             console.log('🔍 turnChanged event received on client!', data);
             console.log('🔍 turnChanged - currentPlayer:', data.currentPlayer);
             console.log('🔍 turnChanged - players count:', data.players?.length);
+            console.log('🔍 turnChanged - players:', data.players);
             this.updateTurnChanged(data);
         });
         

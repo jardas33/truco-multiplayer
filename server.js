@@ -31,6 +31,16 @@ function advanceTurn(roomCode, room) {
         room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
         console.log(`🔄 New current player: ${room.game.currentPlayer}`);
         
+        console.log(`🔄 EMITTING turnChanged event to room: ${roomCode}`);
+        console.log(`🔄 turnChanged event data:`, {
+            currentPlayer: room.game.currentPlayer,
+            players: room.players.map((p, index) => ({
+                ...p,
+                hand: room.game.hands[index] || [],
+                pairs: p.pairs || 0
+            }))
+        });
+        
         // Handle players with empty hands
         while (room.game.hands[room.game.currentPlayer].length === 0 && !checkGoFishGameOver(room)) {
             const currentPlayer = room.players[room.game.currentPlayer];
@@ -115,6 +125,7 @@ function advanceTurn(roomCode, room) {
                 pairs: p.pairs || 0
             }))
         });
+        
         console.log(`🔄 turnChanged event emitted successfully`);
         
         // Handle bot turns
@@ -1452,6 +1463,18 @@ io.on('connection', (socket) => {
                         console.log('🐟   room.players[room.game.currentPlayer]:', room.players[room.game.currentPlayer]?.name);
                         console.log('🐟   data.playerIndex:', data.playerIndex);
                         
+                        console.log('🐟 EMITTING goFish event to room:', roomCode);
+                        console.log('🐟 goFish event data:', {
+                            askingPlayer: askingPlayer.name,
+                            targetPlayer: targetPlayer.name,
+                            rank: data.rank,
+                            playerIndex: data.playerIndex,
+                            targetPlayerIndex: data.targetPlayerIndex,
+                            drawnCard: drawnCard,
+                            currentPlayer: room.game.currentPlayer,
+                            pairsFound: pairsFound
+                        });
+                        
                         io.to(roomCode).emit('goFish', {
                             askingPlayer: askingPlayer.name,
                             targetPlayer: targetPlayer.name,
@@ -1468,6 +1491,8 @@ io.on('connection', (socket) => {
                             currentPlayer: room.game.currentPlayer,
                             pairsFound: pairsFound
                         });
+                        
+                        console.log('🐟 goFish event emitted successfully');
                         
                         // Add another delay before processing result
                         setTimeout(() => {
