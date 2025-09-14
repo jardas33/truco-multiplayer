@@ -587,11 +587,11 @@ function getPlayerDisplayName(playerIndex, player) {
     if (relativePosition === 0) {
         return "You";
     } else if (relativePosition === 1) {
-        return player.isBot ? "Bot" : "Player 1";
-    } else if (relativePosition === 2) {
         return player.isBot ? "Bot" : "Player 2";
+    } else if (relativePosition === 2) {
+        return player.isBot ? "Bot" : "Player 3";
     } else {
-        return player.isBot ? "Bot" : `Player ${relativePosition}`;
+        return player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
     }
 }
 window.pairMakingArea = { cards: [] };
