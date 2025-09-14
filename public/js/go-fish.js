@@ -574,24 +574,14 @@ window.dragOffset = { x: 0, y: 0 };
 
 // Centralized function to get player display name from local player's perspective
 function getPlayerDisplayName(playerIndex, player) {
-    if (!window.game || !window.game.players || window.game.localPlayerIndex === undefined) {
-        return player.name;
+    if (!window.game || window.game.localPlayerIndex === undefined) {
+        return player.name; // Fallback if game not fully initialized
     }
     
-    const localPlayerIndex = window.game.localPlayerIndex;
-    let relativePosition = playerIndex - localPlayerIndex;
-    if (relativePosition < 0) {
-        relativePosition += window.game.players.length;
-    }
-    
-    if (relativePosition === 0) {
+    if (playerIndex === window.game.localPlayerIndex) {
         return "You";
-    } else if (relativePosition === 1) {
-        return player.isBot ? "Bot" : "Player 2";
-    } else if (relativePosition === 2) {
-        return player.isBot ? "Bot" : "Player 3";
     } else {
-        return player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
+        return player.name; // Use the actual name from the server (e.g., "Player 1", "Player 2", "Bot 3")
     }
 }
 window.pairMakingArea = { cards: [] };
