@@ -2875,6 +2875,23 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 handY calculation - height:', height, 'handY:', handY);
         console.log('🎯 buttonsStartX calculation - startX:', startX, 'cardsWidth:', cardsWidth, 'cardsToButtonsGap:', cardsToButtonsGap);
         
+        // Debug canvas element properties
+        const canvasElement = document.querySelector('canvas');
+        if (canvasElement) {
+            const rect = canvasElement.getBoundingClientRect();
+            console.log('🎯 Canvas element rect - left:', rect.left, 'top:', rect.top, 'width:', rect.width, 'height:', rect.height);
+            console.log('🎯 Canvas element style - width:', canvasElement.style.width, 'height:', canvasElement.style.height);
+            console.log('🎯 Canvas element attributes - width:', canvasElement.width, 'height:', canvasElement.height);
+        }
+        
+        // Add visual debugging for button position
+        fill(255, 0, 0, 100); // Red with transparency
+        rect(askX, buttonY, buttonWidth, buttonHeight);
+        
+        // Add visual debugging for click position
+        fill(255, 255, 0); // Yellow
+        ellipse(mouseX, mouseY, 10, 10);
+        
         // p5.js mouseX and mouseY are already in p5.js coordinate system
         // No need to scale them - they should match the button positions directly
         const isAskButtonClicked = mouseX >= askX && mouseX <= askX + buttonWidth &&
