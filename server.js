@@ -116,6 +116,7 @@ function advanceTurn(roomCode, room) {
         
         // Handle bot turns
         const currentPlayer = room.players[room.game.currentPlayer];
+        console.log(`🔍 DEBUG: Checking bot turn - currentPlayer: ${room.game.currentPlayer}, player: ${currentPlayer?.name}, isBot: ${currentPlayer?.isBot}`);
         if (currentPlayer && currentPlayer.isBot) {
             console.log(`🤖 Go Fish bot ${currentPlayer.name} turn - will play in 3 seconds`);
             setTimeout(() => {
@@ -1234,6 +1235,8 @@ io.on('connection', (socket) => {
                 // For Go Fish, always start with Player 1
                 room.game.currentPlayer = 0;
                 console.log(`🐟 Go Fish game starting with Player 1: ${room.players[0]?.name}`);
+                console.log(`🔍 DEBUG: Player 1 isBot: ${room.players[0]?.isBot}`);
+                console.log(`🔍 DEBUG: All players:`, room.players.map((p, i) => `${i}: ${p.name} (isBot: ${p.isBot})`));
             } else {
                 // For Truco and other games, use the existing logic
                 if (!room.isFirstGame) {
@@ -1293,6 +1296,7 @@ io.on('connection', (socket) => {
                         };
                         
                         console.log(`🐟 Sending gameStarted data to player ${playerIndex} (socket ${player.id}):`, JSON.stringify({ localPlayerIndex: gameStartedData.localPlayerIndex, currentPlayer: gameStartedData.currentPlayer }, null, 2));
+                        console.log(`🔍 DEBUG: Player ${playerIndex} will receive currentPlayer: ${gameStartedData.currentPlayer} (${room.players[gameStartedData.currentPlayer]?.name})`);
                         
                         // Use targeted emission to the specific socket ID
                         io.to(player.id).emit('gameStarted', gameStartedData);
