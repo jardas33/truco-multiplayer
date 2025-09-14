@@ -1876,8 +1876,13 @@ function drawMainPlayerHand() {
     if (!window.game.players || !window.game.players[window.game.localPlayerIndex]) return;
     
     const player = window.game.players[window.game.localPlayerIndex];
-    const handY = height - 150; // Moved up more to give space for pair-making area
-    console.log('🎮 handY calculated as:', handY, 'from height:', height);
+    // Get canvas dimensions from the actual canvas element to ensure consistency
+    const canvas = document.querySelector('canvas');
+    const canvasWidth = canvas ? canvas.width : width;
+    const canvasHeight = canvas ? canvas.height : height;
+    
+    const handY = canvasHeight - 150; // Moved up more to give space for pair-making area
+    console.log('🎮 handY calculated as:', handY, 'from canvasHeight:', canvasHeight, 'p5 height:', height);
     const cardWidth = 60;
     const cardHeight = 84;
     const spacing = 15;
@@ -1892,7 +1897,7 @@ function drawMainPlayerHand() {
     const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
     
     // Center everything
-    const startX = (width - totalWidth) / 2;
+    const startX = (canvasWidth - totalWidth) / 2;
     const cardsStartX = startX;
     const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
     
@@ -1931,7 +1936,7 @@ function drawMainPlayerHand() {
     
     // Draw action buttons next to the cards
     console.log('🎮 drawMainPlayerHand - currentPlayer:', window.game.currentPlayer, 'localPlayerIndex:', window.game.localPlayerIndex, 'isMyTurn:', window.goFishClient ? window.goFishClient.isMyTurn : 'undefined');
-    console.log('🎮 Canvas dimensions - width:', width, 'height:', height);
+    console.log('🎮 Canvas dimensions - canvasWidth:', canvasWidth, 'canvasHeight:', canvasHeight, 'p5 width:', width, 'p5 height:', height);
     
     // Draw a large test rectangle to verify canvas is working
     
@@ -1990,10 +1995,15 @@ function drawPairMakingArea() {
     if (!window.game.players || !window.game.players[window.game.localPlayerIndex]) return;
     
     const player = window.game.players[window.game.localPlayerIndex];
-    const handY = height - 150; // Match the main player hand position
+    // Get canvas dimensions from the actual canvas element to ensure consistency
+    const canvas = document.querySelector('canvas');
+    const canvasWidth = canvas ? canvas.width : width;
+    const canvasHeight = canvas ? canvas.height : height;
+    
+    const handY = canvasHeight - 150; // Match the main player hand position
     const pairAreaWidth = 200;
     const pairAreaHeight = 100; // Taller to accommodate cards
-    const pairAreaX = width - 500; // More to the left to avoid score box overlap
+    const pairAreaX = canvasWidth - 500; // More to the left to avoid score box overlap
     const pairAreaY = handY - 20; // 10px higher than before
     
     // Check if player has pairs in hand
@@ -2661,7 +2671,15 @@ window.goFishMousePressed = function goFishMousePressed() {
     
     // Only handle clicks for human player's turn
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
-        const handY = height - 150; // Match the new position from drawMainPlayerHand
+        // Get canvas dimensions from the actual canvas element to ensure consistency
+        const canvas = document.querySelector('canvas');
+        const canvasWidth = canvas ? canvas.width : width;
+        const canvasHeight = canvas ? canvas.height : height;
+        
+        console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
+        console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
+        
+        const handY = canvasHeight - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
         const buttonWidth = 70;
@@ -2673,7 +2691,7 @@ window.goFishMousePressed = function goFishMousePressed() {
         const cardsWidth = (window.game.players[window.game.localPlayerIndex].hand.length - 1) * (cardWidth + spacing) + cardWidth;
         const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
         const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
-        const startX = (width - totalWidth) / 2;
+        const startX = (canvasWidth - totalWidth) / 2;
         const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
         const buttonY = handY + 20;
         
@@ -2708,7 +2726,8 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 Ask button bounds - askX:', askX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
         console.log('🎯 Ask button click check:', mouseX >= askX && mouseX <= askX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight);
         console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
-        console.log('🎯 Canvas dimensions in mousePressed - width:', width, 'height:', height);
+        console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
+        console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
         console.log('🎯 Button calculation details - cardsWidth:', cardsWidth, 'buttonsWidth:', buttonsWidth, 'totalWidth:', totalWidth, 'startX:', startX);
         if (mouseX >= askX && mouseX <= askX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
@@ -2786,10 +2805,15 @@ function mouseReleased() {
     if (!window.game || window.game.gameOver) return;
     
     if (window.draggedCard) {
-        const handY = height - 150;
+        // Get canvas dimensions from the actual canvas element to ensure consistency
+        const canvas = document.querySelector('canvas');
+        const canvasWidth = canvas ? canvas.width : width;
+        const canvasHeight = canvas ? canvas.height : height;
+        
+        const handY = canvasHeight - 150;
         const pairAreaWidth = 200;
         const pairAreaHeight = 100;
-        const pairAreaX = width - 500;
+        const pairAreaX = canvasWidth - 500;
         const pairAreaY = handY - 20;
         
         // Check if dropped on pair-making area
