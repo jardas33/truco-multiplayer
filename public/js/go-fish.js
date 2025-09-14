@@ -3183,8 +3183,14 @@ function showAskForCardsDialog() {
     document.body.appendChild(dialog);
     console.log('🎯 Ask dialog added to DOM');
     
+    // Debug: Check if buttons exist
+    const askButton = document.getElementById('askButton');
+    const cancelButton = document.getElementById('cancelButton');
+    console.log('🎯 askButton found:', !!askButton);
+    console.log('🎯 cancelButton found:', !!cancelButton);
+    
     // Add event listeners
-    document.getElementById('askButton').onclick = function() {
+    askButton.onclick = function() {
         console.log('🎯 Dialog Ask button clicked!');
         const targetPlayerIndex = parseInt(document.getElementById('targetPlayerSelect').value);
         const rank = document.getElementById('rankSelect').value;
@@ -3221,10 +3227,13 @@ function showAskForCardsDialog() {
         console.log('🎯 Removing dialog from DOM');
         document.body.removeChild(dialog);
     };
+    console.log('🎯 Ask button onclick handler attached');
     
-    document.getElementById('cancelButton').onclick = function() {
+    cancelButton.onclick = function() {
+        console.log('🎯 Dialog Cancel button clicked!');
         document.body.removeChild(dialog);
     };
+    console.log('🎯 Cancel button onclick handler attached');
 }
 
 function showFullGameHistory() {
