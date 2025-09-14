@@ -579,7 +579,7 @@ function getPlayerDisplayName(playerIndex, player) {
     }
     
     if (playerIndex === window.game.localPlayerIndex) {
-        return "You";
+        return `${player.name} (You)`; // Show player name with (You) indicator
     } else {
         return player.name; // Use the actual name from the server (e.g., "Player 1", "Player 2", "Bot 3")
     }
