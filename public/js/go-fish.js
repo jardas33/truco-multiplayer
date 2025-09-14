@@ -1976,6 +1976,8 @@ function drawMainPlayerHand() {
     const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
     
     console.log(`🎮 Draw function - handLength: ${handLength}, cardsWidth: ${cardsWidth}, buttonsStartX: ${buttonsStartX}`);
+    console.log('🎮 Draw function - p5 width:', width, 'p5 height:', height);
+    console.log('🎮 Draw function - handY:', handY, 'startX:', startX);
     
     // Draw hand background - centered
     fill(0, 0, 0, 150);
@@ -2855,6 +2857,9 @@ window.goFishMousePressed = function goFishMousePressed() {
         const askX = buttonsStartX;
         console.log('🎯 Mouse click detection - mouseX:', mouseX, 'mouseY:', mouseY);
         console.log('🎯 Ask button bounds - askX:', askX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
+        console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
+        console.log('🎯 handY calculation - height:', height, 'handY:', handY);
+        console.log('🎯 buttonsStartX calculation - startX:', startX, 'cardsWidth:', cardsWidth, 'cardsToButtonsGap:', cardsToButtonsGap);
         
         // p5.js mouseX and mouseY are already in p5.js coordinate system
         // No need to scale them - they should match the button positions directly
@@ -2864,8 +2869,14 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 Ask button click check:', isAskButtonClicked);
         console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
-        console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
-        console.log('🎯 Button calculation details - cardsWidth:', cardsWidth, 'buttonsWidth:', buttonsWidth, 'totalWidth:', totalWidth, 'startX:', startX);
+        
+        // Visual debugging: Draw crosshair at button position during click detection
+        push();
+        stroke(255, 0, 0); // Red crosshair
+        strokeWeight(3);
+        line(askX - 20, buttonY, askX + buttonWidth + 20, buttonY); // Horizontal line
+        line(askX + buttonWidth/2, buttonY - 20, askX + buttonWidth/2, buttonY + buttonHeight + 20); // Vertical line
+        pop();
         
         if (isAskButtonClicked) {
             console.log('🎯 Ask button clicked');
