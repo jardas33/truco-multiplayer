@@ -784,6 +784,8 @@ class GoFishClient {
             console.log('🔍 goFish - targetPlayerIndex:', data.targetPlayerIndex);
             console.log('🔍 goFish - drawnCard:', data.drawnCard);
             console.log('🔍 goFish - pairsFound:', data.pairsFound);
+            console.log('🔍 goFish - Socket ID:', socket.id);
+            console.log('🔍 goFish - Socket connected:', socket.connected);
             this.updateGoFish(data);
         });
         
@@ -792,6 +794,8 @@ class GoFishClient {
             console.log('🔍 turnChanged - currentPlayer:', data.currentPlayer);
             console.log('🔍 turnChanged - players count:', data.players?.length);
             console.log('🔍 turnChanged - players:', data.players);
+            console.log('🔍 turnChanged - Socket ID:', socket.id);
+            console.log('🔍 turnChanged - Socket connected:', socket.connected);
             this.updateTurnChanged(data);
         });
         
@@ -802,10 +806,21 @@ class GoFishClient {
         // Test socket communication
         socket.on('connect', () => {
             console.log('🔍 Socket connected successfully!');
+            console.log('🔍 Socket ID after connect:', socket.id);
         });
         
         socket.on('disconnect', () => {
             console.log('🔍 Socket disconnected!');
+        });
+        
+        // Add error handling
+        socket.on('error', (error) => {
+            console.error('🔍 Socket error:', error);
+        });
+        
+        // Add reconnect handling
+        socket.on('reconnect', () => {
+            console.log('🔍 Socket reconnected!');
         });
         
         // Debug: Listen to all socket events
@@ -1058,12 +1073,19 @@ class GoFishClient {
         // Emit to server if connected
         if (window.gameFramework && window.gameFramework.socket) {
             const socket = window.gameFramework.socket;
+            console.log('🎯 Socket status - connected:', socket.connected);
+            console.log('🎯 Socket ID:', socket.id);
+            console.log('🎯 Room ID:', window.gameFramework.roomId);
+            console.log('🎯 Emitting askForCards event to server...');
             socket.emit('askForCards', {
                 roomId: window.gameFramework.roomId,
                 playerIndex: this.localPlayerIndex,
                 targetPlayerIndex: targetPlayerIndex,
                 rank: rank
             });
+            console.log('🎯 askForCards event emitted successfully');
+        } else {
+            console.error('❌ Cannot emit askForCards - socket not found or gameFramework not available');
         }
     }
 
