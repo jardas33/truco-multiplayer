@@ -2711,15 +2711,29 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
         
-        // Store last click for visual debugging
-        window.lastClickX = mouseX;
-        window.lastClickY = mouseY;
-        console.log('🎯 Stored last click for visual debug:', window.lastClickX, window.lastClickY);
-        
-        // Store canvas dimensions at click time for debugging
-        window.clickTimeCanvasWidth = canvasWidth;
-        window.clickTimeCanvasHeight = canvasHeight;
-        console.log('🎯 Canvas dimensions at click time:', canvasWidth, 'x', canvasHeight);
+    // Store last click for visual debugging
+    window.lastClickX = mouseX;
+    window.lastClickY = mouseY;
+    console.log('🎯 Stored last click for visual debug:', window.lastClickX, window.lastClickY);
+    
+    // Store canvas dimensions at click time for debugging
+    window.clickTimeCanvasWidth = canvasWidth;
+    window.clickTimeCanvasHeight = canvasHeight;
+    console.log('🎯 Canvas dimensions at click time:', canvasWidth, 'x', canvasHeight);
+    
+    // Check for scaling issues
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasWidth / canvasRect.width;
+    const scaleY = canvasHeight / canvasRect.height;
+    console.log('🎯 Canvas scaling - scaleX:', scaleX, 'scaleY:', scaleY);
+    console.log('🎯 Canvas rect - width:', canvasRect.width, 'height:', canvasRect.height);
+    console.log('🎯 Canvas rect - left:', canvasRect.left, 'top:', canvasRect.top);
+    
+    // Check if there's a significant scaling difference
+    if (Math.abs(scaleX - 1) > 0.1 || Math.abs(scaleY - 1) > 0.1) {
+        console.log('⚠️ WARNING: Canvas scaling detected! This may cause click detection issues.');
+        console.log('⚠️ Consider checking browser zoom level or CSS scaling.');
+    }
         
         const handY = canvasHeight - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
@@ -2766,21 +2780,37 @@ window.goFishMousePressed = function goFishMousePressed() {
         const askX = buttonsStartX;
         console.log('🎯 Mouse click detection - mouseX:', mouseX, 'mouseY:', mouseY);
         console.log('🎯 Ask button bounds - askX:', askX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
-        console.log('🎯 Ask button click check:', mouseX >= askX && mouseX <= askX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight);
+        
+        // Calculate scaled coordinates for more accurate click detection
+        const scaledMouseX = mouseX * scaleX;
+        const scaledMouseY = mouseY * scaleY;
+        console.log('🎯 Scaled mouse coordinates - scaledMouseX:', scaledMouseX, 'scaledMouseY:', scaledMouseY);
+        
+        const isAskButtonClicked = mouseX >= askX && mouseX <= askX + buttonWidth &&
+                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        const isAskButtonClickedScaled = scaledMouseX >= askX && scaledMouseX <= askX + buttonWidth &&
+                                        scaledMouseY >= buttonY && scaledMouseY <= buttonY + buttonHeight;
+        
+        console.log('🎯 Ask button click check (normal):', isAskButtonClicked);
+        console.log('🎯 Ask button click check (scaled):', isAskButtonClickedScaled);
         console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
         console.log('🎯 Button calculation details - cardsWidth:', cardsWidth, 'buttonsWidth:', buttonsWidth, 'totalWidth:', totalWidth, 'startX:', startX);
-        if (mouseX >= askX && mouseX <= askX + buttonWidth &&
-            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+        
+        if (isAskButtonClicked || isAskButtonClickedScaled) {
             console.log('🎯 Ask button clicked');
             showAskForCardsDialog();
         }
         
         // Check if Go Fish button was clicked
         const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
-        if (mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
-            mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+        const isGoFishButtonClicked = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+                                     mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
+        const isGoFishButtonClickedScaled = scaledMouseX >= goFishX && scaledMouseX <= goFishX + buttonWidth &&
+                                           scaledMouseY >= buttonY && scaledMouseY <= buttonY + buttonHeight;
+        
+        if (isGoFishButtonClicked || isGoFishButtonClickedScaled) {
             console.log('🐟 Go Fish button clicked');
             if (window.goFishClient) {
                 window.goFishClient.goFish();
