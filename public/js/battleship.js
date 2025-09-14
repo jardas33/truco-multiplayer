@@ -1543,6 +1543,13 @@ class BattleshipClient {
             
             // Debounce resize events to prevent excessive redraws
             this.resizeTimeout = setTimeout(() => {
+                // CRITICAL: Only resize if we're actually playing battleship
+                const currentPath = window.location.pathname;
+                if (currentPath !== '/battleship') {
+                    console.log('Not on battleship page - skipping battleship resize');
+                    return;
+                }
+                
                 if (this.canvas) {
                     // Recalculate canvas size and grid positions
                     const newWidth = Math.min(1400, windowWidth - 30);
@@ -2679,7 +2686,43 @@ function keyPressed() {
 }
 
 function windowResized() {
+    console.log('🔍 DEBUG: battleship windowResized called');
+    console.log('🔍 DEBUG: window.game exists:', !!window.game);
+    console.log('🔍 DEBUG: window.game.players exists:', !!(window.game && window.game.players));
+    console.log('🔍 DEBUG: players length:', window.game?.players?.length || 0);
+    console.log('🔍 DEBUG: gameState:', typeof gameState !== 'undefined' ? gameState : 'undefined');
+    console.log('🔍 DEBUG: gamePhase:', window.game?.gamePhase);
+    
+    // CRITICAL: Don't resize canvas during active gameplay to prevent button position issues
+    // Check multiple conditions to ensure we don't resize during gameplay
+    
+    // Check if we're on a game page (not just menu) - this is the most important check
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/' && currentPath !== '/main-menu' && currentPath !== '/index.html') {
+        console.log('On game page - skipping canvas resize to prevent button position issues');
+        return;
+    }
+    
+    // Check if game is in playing phase
+    if (window.game && window.game.gamePhase === 'playing') {
+        console.log('Game phase is playing - skipping canvas resize to prevent button position issues');
+        return;
+    }
+    
+    // Check if we have active players
+    if (window.game && window.game.players && window.game.players.length > 0) {
+        console.log('Game active - skipping canvas resize to prevent button position issues');
+        return;
+    }
+    
+    // Additional check for gameState if window.game is not available
+    if (typeof gameState !== 'undefined' && gameState === gameStateEnum.Playing) {
+        console.log('Game state indicates playing - skipping canvas resize to prevent button position issues');
+        return;
+    }
+    
     if (battleshipClient && battleshipClient.canvas) {
+        console.log('Proceeding with battleship canvas resize...');
         resizeCanvas(windowWidth, windowHeight);
     }
 }
