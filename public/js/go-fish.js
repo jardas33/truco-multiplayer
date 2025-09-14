@@ -1847,27 +1847,21 @@ function drawOpponentHands() {
     }
     
     // Position opponents dynamically based on how many there are
-    console.log('🎮 Checking opponent count:', opponents.length);
     if (opponents.length === 1) {
         // Single opponent - center top
         const opponentX = width / 2 - 75;
         const opponentY = 80;
-        console.log('🎮 Drawing single opponent at position:', opponentX, opponentY, 'name:', opponents[0].name);
         drawOpponentHand(opponentX, opponentY, opponents[0], cardWidth, cardHeight, spacing);
     } else if (opponents.length === 2) {
-        console.log('🎮 Drawing 2 opponents - left and right');
         // Two opponents - left and right
         const opponent1X = 50;
         const opponent1Y = 80;
-        console.log('🎮 Drawing opponent 1 at position:', opponent1X, opponent1Y, 'name:', opponents[0].name);
         drawOpponentHand(opponent1X, opponent1Y, opponents[0], cardWidth, cardHeight, spacing);
         
         const opponent2X = width - 250;
         const opponent2Y = 80;
-        console.log('🎮 Drawing opponent 2 at position:', opponent2X, opponent2Y, 'name:', opponents[1].name);
         drawOpponentHand(opponent2X, opponent2Y, opponents[1], cardWidth, cardHeight, spacing);
     } else {
-        console.log('🎮 Drawing 3+ opponents in a row');
         // Three or more opponents - arrange in a row
         const startX = 50;
         const opponentY = 80;
@@ -1875,7 +1869,6 @@ function drawOpponentHands() {
         
         opponents.forEach((opponent, index) => {
             const opponentX = startX + (index * opponentSpacing);
-            console.log('🎮 Drawing opponent', index, 'at position:', opponentX, opponentY, 'name:', opponent.name);
             drawOpponentHand(opponentX, opponentY, opponent, cardWidth, cardHeight, spacing);
         });
     }
@@ -1910,7 +1903,6 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
     // Card count
     fill(200, 200, 200);
     textSize(12);
-    console.log('🎮 Drawing card count for', player.name, 'at position:', x + 10, y + 40);
     text(`Cards: ${player.hand.length}`, x + 10, y + 40);
     
     // Pairs count
@@ -2027,7 +2019,6 @@ function drawMainPlayerHand() {
         fill(isHoveringAsk ? 50 : 100, isHoveringAsk ? 200 : 255, isHoveringAsk ? 50 : 100); // Green color
         stroke(0);
         strokeWeight(2);
-        console.log('🎮 Drawing Ask button at:', askX, buttonY, 'size:', buttonWidth, buttonHeight, 'color:', isHoveringAsk ? 'hover' : 'normal');
         
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
