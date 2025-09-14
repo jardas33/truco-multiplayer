@@ -2876,10 +2876,8 @@ window.goFishMousePressed = function goFishMousePressed() {
         const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
         const isGoFishButtonClicked = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                      mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        const isGoFishButtonClickedScaled = scaledMouseX >= goFishX && scaledMouseX <= goFishX + buttonWidth &&
-                                           scaledMouseY >= buttonY && scaledMouseY <= buttonY + buttonHeight;
         
-        if (isGoFishButtonClicked || isGoFishButtonClickedScaled) {
+        if (isGoFishButtonClicked) {
             console.log('🐟 Go Fish button clicked');
             if (window.goFishClient) {
                 window.goFishClient.goFish();
