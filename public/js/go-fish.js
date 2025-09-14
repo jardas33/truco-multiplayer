@@ -773,19 +773,26 @@ class GoFishClient {
         
         socket.on('goFish', (data) => {
             console.log('🔍 goFish event received on client!', data);
-            console.log('🔍 goFish data:', JSON.stringify(data, null, 2));
             this.updateGoFish(data);
         });
         
         socket.on('turnChanged', (data) => {
             console.log('🔍 turnChanged event received on client!', data);
-            console.log('🔍 turnChanged data:', JSON.stringify(data, null, 2));
             this.updateTurnChanged(data);
         });
         
         // Debug socket connection
         console.log('🔍 Socket connected:', socket.connected);
         console.log('🔍 Socket ID:', socket.id);
+        
+        // Test socket communication
+        socket.on('connect', () => {
+            console.log('🔍 Socket connected successfully!');
+        });
+        
+        socket.on('disconnect', () => {
+            console.log('🔍 Socket disconnected!');
+        });
         
         // Debug: Listen to all socket events
         const originalEmit = socket.emit;
@@ -794,15 +801,6 @@ class GoFishClient {
             return originalEmit.apply(this, args);
         };
         
-        // Debug: Log all incoming events
-        const originalOn = socket.on;
-        socket.on = function(event, callback) {
-            const wrappedCallback = function(...args) {
-                console.log('🔍 Client received event:', event, args[0]);
-                return callback.apply(this, args);
-            };
-            return originalOn.call(this, event, wrappedCallback);
-        };
         
         socket.on('gameOver', (data) => {
             this.showGameOver(data);
