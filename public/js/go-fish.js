@@ -1826,31 +1826,9 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
     textSize(14);
     noStroke();
     
-    // Calculate relative player position from local player's perspective
-    let displayName = player.name;
-    if (window.game && window.game.localPlayerIndex !== undefined) {
-        const localIndex = window.game.localPlayerIndex;
-        const playerIndex = window.game.players.indexOf(player);
-        
-        if (playerIndex !== -1) {
-            // Calculate relative position (0 = local player, 1 = next player, etc.)
-            let relativePosition = playerIndex - localIndex;
-            if (relativePosition < 0) {
-                relativePosition += window.game.players.length;
-            }
-            
-            // Convert to display name
-            if (relativePosition === 0) {
-                displayName = "You";
-            } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 2";
-            } else if (relativePosition === 2) {
-                displayName = player.isBot ? "Bot" : "Player 3";
-            } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
-            }
-        }
-    }
+    // Use centralized function to get player display name
+    const playerIndex = window.game.players.indexOf(player);
+    const displayName = getPlayerDisplayName(playerIndex, player);
     
     console.log('🎮 Drawing text for', player.name, 'displayName:', displayName, 'at position:', x + 10, y + 20);
     text(displayName, x + 10, y + 20);
