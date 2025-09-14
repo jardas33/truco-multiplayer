@@ -1069,14 +1069,20 @@ class GoFishClient {
     askForCards(targetPlayerIndex, rank) {
         console.log('🎯 askForCards method called with:', { targetPlayerIndex, rank });
         console.log('🎯 askForCards - canAct:', this.canAct, 'isMyTurn:', this.isMyTurn);
+        console.log('🎯 askForCards - this.game exists:', !!this.game);
+        console.log('🎯 askForCards - this.localPlayerIndex:', this.localPlayerIndex);
+        console.log('🎯 askForCards - this.game.players exists:', !!this.game?.players);
+        console.log('🎯 askForCards - this.game.players.length:', this.game?.players?.length);
         
         if (!this.canAct || !this.isMyTurn) {
             console.log('❌ Cannot ask for cards - not my turn or cannot act');
+            console.log('❌ canAct:', this.canAct, 'isMyTurn:', this.isMyTurn);
             return;
         }
         
         if (!targetPlayerIndex || !rank) {
             console.log('❌ Missing target player or rank');
+            console.log('❌ targetPlayerIndex:', targetPlayerIndex, 'rank:', rank);
             return;
         }
         
@@ -1113,6 +1119,8 @@ class GoFishClient {
             console.log('🎯 askForCards event emitted successfully');
         } else {
             console.error('❌ Cannot emit askForCards - socket not found or gameFramework not available');
+            console.error('❌ window.gameFramework exists:', !!window.gameFramework);
+            console.error('❌ window.gameFramework.socket exists:', !!window.gameFramework?.socket);
         }
     }
 
@@ -3176,14 +3184,23 @@ function showAskForCardsDialog() {
         
         console.log('🎯 Dialog Ask button - targetPlayerIndex:', targetPlayerIndex, 'rank:', rank);
         console.log('🎯 Dialog Ask button - window.goFishClient exists:', !!window.goFishClient);
+        console.log('🎯 Dialog Ask button - window.game exists:', !!window.game);
+        console.log('🎯 Dialog Ask button - window.game.currentPlayer:', window.game?.currentPlayer);
+        console.log('🎯 Dialog Ask button - window.game.localPlayerIndex:', window.game?.localPlayerIndex);
         
         if (window.goFishClient) {
             console.log('🎯 Calling goFishClient.askForCards...');
-            window.goFishClient.askForCards(targetPlayerIndex, rank);
+            try {
+                window.goFishClient.askForCards(targetPlayerIndex, rank);
+                console.log('🎯 askForCards call completed');
+            } catch (error) {
+                console.error('❌ Error calling askForCards:', error);
+            }
         } else {
             console.log('❌ goFishClient not available!');
         }
         
+        console.log('🎯 Removing dialog from DOM');
         document.body.removeChild(dialog);
     };
     
