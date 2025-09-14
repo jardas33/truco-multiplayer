@@ -1,5 +1,9 @@
 // 🐟 GO FISH GAME LOGIC
 
+// Global debug variables for visual debugging
+window.lastClickX = undefined;
+window.lastClickY = undefined;
+
 class GoFishGame {
     constructor() {
         this.deck = [];
@@ -1950,6 +1954,11 @@ function drawMainPlayerHand() {
         const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
                              mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
+        // Visual debugging: Draw button area highlight
+        fill(255, 0, 0, 50); // Semi-transparent red
+        noStroke();
+        rect(askX, buttonY, buttonWidth, buttonHeight);
+        
         // Green button with same style as Go Fish button
         fill(isHoveringAsk ? 50 : 100, isHoveringAsk ? 200 : 255, isHoveringAsk ? 50 : 100); // Green color
         stroke(0);
@@ -1970,6 +1979,11 @@ function drawMainPlayerHand() {
         const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
+        // Visual debugging: Draw button area highlight
+        fill(0, 0, 255, 50); // Semi-transparent blue
+        noStroke();
+        rect(goFishX, buttonY, buttonWidth, buttonHeight);
+        
         // Blue button
         fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
         stroke(0);
@@ -1983,6 +1997,14 @@ function drawMainPlayerHand() {
         textStyle(BOLD);
         noStroke();
         text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
+        
+        // Visual debugging: Draw last click position
+        if (window.lastClickX !== undefined && window.lastClickY !== undefined) {
+            fill(255, 255, 0); // Yellow
+            noStroke();
+            ellipse(window.lastClickX, window.lastClickY, 10, 10);
+            console.log('🎮 Drawing last click indicator at:', window.lastClickX, window.lastClickY);
+        }
     } else {
         console.log('🎮 Not drawing buttons - not current player');
     }
@@ -2678,6 +2700,11 @@ window.goFishMousePressed = function goFishMousePressed() {
         
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
+        
+        // Store last click for visual debugging
+        window.lastClickX = mouseX;
+        window.lastClickY = mouseY;
+        console.log('🎯 Stored last click for visual debug:', window.lastClickX, window.lastClickY);
         
         const handY = canvasHeight - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
