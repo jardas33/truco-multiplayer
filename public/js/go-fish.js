@@ -1940,6 +1940,16 @@ function drawMainPlayerHand() {
     
     // Draw action buttons next to the cards
     console.log('🎮 drawMainPlayerHand - currentPlayer:', window.game.currentPlayer, 'localPlayerIndex:', window.game.localPlayerIndex, 'isMyTurn:', window.goFishClient ? window.goFishClient.isMyTurn : 'undefined');
+    
+    // Track canvas dimension changes
+    if (window.lastDrawCanvasWidth !== canvasWidth || window.lastDrawCanvasHeight !== canvasHeight) {
+        console.log('🔄 Canvas dimensions changed during draw!');
+        console.log('🔄 Previous:', window.lastDrawCanvasWidth, 'x', window.lastDrawCanvasHeight);
+        console.log('🔄 Current:', canvasWidth, 'x', canvasHeight);
+        window.lastDrawCanvasWidth = canvasWidth;
+        window.lastDrawCanvasHeight = canvasHeight;
+    }
+    
     console.log('🎮 Canvas dimensions - canvasWidth:', canvasWidth, 'canvasHeight:', canvasHeight, 'p5 width:', width, 'p5 height:', height);
     
     // Draw a large test rectangle to verify canvas is working
@@ -2706,6 +2716,11 @@ window.goFishMousePressed = function goFishMousePressed() {
         window.lastClickY = mouseY;
         console.log('🎯 Stored last click for visual debug:', window.lastClickX, window.lastClickY);
         
+        // Store canvas dimensions at click time for debugging
+        window.clickTimeCanvasWidth = canvasWidth;
+        window.clickTimeCanvasHeight = canvasHeight;
+        console.log('🎯 Canvas dimensions at click time:', canvasWidth, 'x', canvasHeight);
+        
         const handY = canvasHeight - 150; // Match the new position from drawMainPlayerHand
         const cardWidth = 60;
         const spacing = 15;
@@ -3243,6 +3258,12 @@ document.addEventListener('DOMContentLoaded', function() {
 // Handle window resize to fix layout issues when console opens/closes
 window.addEventListener('resize', function() {
     console.log('Window resize detected - fixing layout');
+    
+    // Don't resize canvas during active gameplay to prevent button position shifts
+    if (window.game && window.game.players && window.game.players.length > 0) {
+        console.log('Game active - skipping canvas resize to prevent button position issues');
+        return;
+    }
     
     // Small delay to ensure the resize is complete
     setTimeout(function() {

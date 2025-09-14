@@ -423,6 +423,12 @@ function createCanvasSafely() {
 function windowResized() {
     console.log('Window resized - updating canvas dimensions');
     
+    // Don't resize canvas during active gameplay to prevent button position issues
+    if (window.game && window.game.players && window.game.players.length > 0) {
+        console.log('Game active - skipping canvas resize to prevent button position issues');
+        return;
+    }
+    
     // Update canvas size to match new window dimensions
     resizeCanvas(windowWidth, windowHeight);
     
