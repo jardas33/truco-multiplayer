@@ -584,6 +584,8 @@ function getPlayerDisplayName(playerIndex, player) {
         relativePosition += window.game.players.length;
     }
     
+    console.log(`🔍 getPlayerDisplayName: playerIndex=${playerIndex}, localPlayerIndex=${localPlayerIndex}, relativePosition=${relativePosition}, player.name=${player.name}, isBot=${player.isBot}`);
+    
     if (relativePosition === 0) {
         return "You";
     } else if (relativePosition === 1) {
