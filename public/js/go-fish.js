@@ -584,8 +584,6 @@ function getPlayerDisplayName(playerIndex, player) {
         relativePosition += window.game.players.length;
     }
     
-    console.log(`🔍 getPlayerDisplayName: playerIndex=${playerIndex}, localPlayerIndex=${localPlayerIndex}, relativePosition=${relativePosition}, player.name=${player.name}, isBot=${player.isBot}`);
-    
     if (relativePosition === 0) {
         return "You";
     } else if (relativePosition === 1) {
@@ -1855,11 +1853,11 @@ function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
             if (relativePosition === 0) {
                 displayName = "You";
             } else if (relativePosition === 1) {
-                displayName = player.isBot ? "Bot" : "Player 1";
-            } else if (relativePosition === 2) {
                 displayName = player.isBot ? "Bot" : "Player 2";
+            } else if (relativePosition === 2) {
+                displayName = player.isBot ? "Bot" : "Player 3";
             } else {
-                displayName = player.isBot ? "Bot" : `Player ${relativePosition}`;
+                displayName = player.isBot ? "Bot" : `Player ${relativePosition + 1}`;
             }
         }
     }
