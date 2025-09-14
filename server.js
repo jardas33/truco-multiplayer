@@ -24,9 +24,12 @@ function getCardValue(rank) {
 function advanceTurn(roomCode, room) {
     try {
         console.log(`🔄 Advancing turn in Go Fish game`);
+        console.log(`🔄 Current player before advance: ${room.game.currentPlayer}`);
+        console.log(`🔄 Total players: ${room.players.length}`);
         
         // Move to next player
         room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+        console.log(`🔄 New current player: ${room.game.currentPlayer}`);
         
         // Handle players with empty hands
         while (room.game.hands[room.game.currentPlayer].length === 0 && !checkGoFishGameOver(room)) {
@@ -1468,6 +1471,7 @@ io.on('connection', (socket) => {
                         
                         // Add another delay before processing result
                         setTimeout(() => {
+                            console.log(`🐟 Processing Go Fish result for ${askingPlayer.name}`);
                             // If pairs were found, player gets another turn
                             if (pairsFound > 0) {
                                 console.log(`🎯 ${askingPlayer.name} found pairs after fishing - gets another turn`);
@@ -1476,10 +1480,12 @@ io.on('connection', (socket) => {
                             
                             // Check if game is over after this action
                             if (checkGoFishGameOver(room)) {
+                                console.log(`🏆 Game over after Go Fish`);
                                 return; // Game over handled by checkGoFishGameOver
                             }
                             
                             // Advance to next player
+                            console.log(`🔄 Advancing turn after Go Fish for ${askingPlayer.name}`);
                             advanceTurn(roomCode, room);
                         }, 4000); // 3 seconds delay before processing result
                         
