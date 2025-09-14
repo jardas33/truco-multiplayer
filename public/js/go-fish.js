@@ -3285,29 +3285,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Handle window resize to fix layout issues when console opens/closes
-window.addEventListener('resize', function() {
-    console.log('Window resize detected - fixing layout');
-    
-    // Don't resize canvas during active gameplay to prevent button position shifts
-    if (window.game && window.game.players && window.game.players.length > 0) {
-        console.log('Game active - skipping canvas resize to prevent button position issues');
-        return;
-    }
-    
-    // Small delay to ensure the resize is complete
-    setTimeout(function() {
-        // Force a redraw regardless of game state
-        if (typeof draw === 'function') {
-            draw();
-        }
-        
-        // If game is active, also trigger any game-specific resize handling
-        if (window.game && window.game.players && window.game.players.length > 0) {
-            console.log('Game active - ensuring proper layout after resize');
-        }
-    }, 150);
-});
+// Window resize handling is now consolidated in setup.js
 
 // Modern UI Functions
 // cardImages and cardBackImage are loaded globally by preload.js
