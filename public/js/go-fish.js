@@ -1074,6 +1074,13 @@ class GoFishClient {
         console.log('🎯 askForCards - this.game.players exists:', !!this.game?.players);
         console.log('🎯 askForCards - this.game.players.length:', this.game?.players?.length);
         
+        // CRITICAL: Check if this is Player 2 and what's different
+        console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this context:', this);
+        console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this.game.currentPlayer:', this.game?.currentPlayer);
+        console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this.game.localPlayerIndex:', this.game?.localPlayerIndex);
+        console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - targetPlayerIndex:', targetPlayerIndex);
+        console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this.game.players[targetPlayerIndex]:', this.game?.players?.[targetPlayerIndex]);
+        
         if (!this.canAct || !this.isMyTurn) {
             console.log('❌ Cannot ask for cards - not my turn or cannot act');
             console.log('❌ canAct:', this.canAct, 'isMyTurn:', this.isMyTurn);
@@ -3187,6 +3194,17 @@ function showAskForCardsDialog() {
         console.log('🎯 Dialog Ask button - window.game exists:', !!window.game);
         console.log('🎯 Dialog Ask button - window.game.currentPlayer:', window.game?.currentPlayer);
         console.log('🎯 Dialog Ask button - window.game.localPlayerIndex:', window.game?.localPlayerIndex);
+        
+        // CRITICAL: Check Player 2 specific state
+        console.log('🎯 PLAYER 2 DEBUG - goFishClient.canAct:', window.goFishClient?.canAct);
+        console.log('🎯 PLAYER 2 DEBUG - goFishClient.isMyTurn:', window.goFishClient?.isMyTurn);
+        console.log('🎯 PLAYER 2 DEBUG - goFishClient.localPlayerIndex:', window.goFishClient?.localPlayerIndex);
+        console.log('🎯 PLAYER 2 DEBUG - goFishClient.game exists:', !!window.goFishClient?.game);
+        console.log('🎯 PLAYER 2 DEBUG - goFishClient.game.players length:', window.goFishClient?.game?.players?.length);
+        console.log('🎯 PLAYER 2 DEBUG - goFishClient.game.players:', window.goFishClient?.game?.players);
+        console.log('🎯 PLAYER 2 DEBUG - target player exists:', !!window.goFishClient?.game?.players?.[targetPlayerIndex]);
+        console.log('🎯 PLAYER 2 DEBUG - target player name:', window.goFishClient?.game?.players?.[targetPlayerIndex]?.name);
+        console.log('🎯 PLAYER 2 DEBUG - target player isBot:', window.goFishClient?.game?.players?.[targetPlayerIndex]?.isBot);
         
         if (window.goFishClient) {
             console.log('🎯 Calling goFishClient.askForCards...');
