@@ -2856,24 +2856,18 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 Mouse click detection - mouseX:', mouseX, 'mouseY:', mouseY);
         console.log('🎯 Ask button bounds - askX:', askX, 'buttonY:', buttonY, 'buttonWidth:', buttonWidth, 'buttonHeight:', buttonHeight);
         
-        // Calculate scaled coordinates for more accurate click detection
-        const scaledMouseX = mouseX * scaleX;
-        const scaledMouseY = mouseY * scaleY;
-        console.log('🎯 Scaled mouse coordinates - scaledMouseX:', scaledMouseX, 'scaledMouseY:', scaledMouseY);
-        
+        // p5.js mouseX and mouseY are already in p5.js coordinate system
+        // No need to scale them - they should match the button positions directly
         const isAskButtonClicked = mouseX >= askX && mouseX <= askX + buttonWidth &&
                                  mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
-        const isAskButtonClickedScaled = scaledMouseX >= askX && scaledMouseX <= askX + buttonWidth &&
-                                        scaledMouseY >= buttonY && scaledMouseY <= buttonY + buttonHeight;
         
-        console.log('🎯 Ask button click check (normal):', isAskButtonClicked);
-        console.log('🎯 Ask button click check (scaled):', isAskButtonClickedScaled);
+        console.log('🎯 Ask button click check:', isAskButtonClicked);
         console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
         console.log('🎯 Button calculation details - cardsWidth:', cardsWidth, 'buttonsWidth:', buttonsWidth, 'totalWidth:', totalWidth, 'startX:', startX);
         
-        if (isAskButtonClicked || isAskButtonClickedScaled) {
+        if (isAskButtonClicked) {
             console.log('🎯 Ask button clicked');
             showAskForCardsDialog();
         }
