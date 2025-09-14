@@ -1067,6 +1067,9 @@ class GoFishClient {
 
     // Ask for cards
     askForCards(targetPlayerIndex, rank) {
+        console.log('🎯 askForCards method called with:', { targetPlayerIndex, rank });
+        console.log('🎯 askForCards - canAct:', this.canAct, 'isMyTurn:', this.isMyTurn);
+        
         if (!this.canAct || !this.isMyTurn) {
             console.log('❌ Cannot ask for cards - not my turn or cannot act');
             return;
@@ -1079,6 +1082,9 @@ class GoFishClient {
         
         // Validate that the local player has the rank they're asking for
         const localPlayer = this.game.players[this.localPlayerIndex];
+        console.log('🎯 askForCards - localPlayer hand:', localPlayer?.hand);
+        console.log('🎯 askForCards - checking for rank:', rank, 'in hand');
+        
         if (!localPlayer.hand.some(card => card.rank === rank)) {
             console.log('❌ Cannot ask for a rank you don\'t have');
             this.addGameMessage('You can only ask for ranks you have in your hand!', 'error');
@@ -3183,11 +3189,18 @@ function showAskForCardsDialog() {
     
     // Add event listeners
     document.getElementById('askButton').onclick = function() {
+        console.log('🎯 Dialog Ask button clicked!');
         const targetPlayerIndex = parseInt(document.getElementById('targetPlayerSelect').value);
         const rank = document.getElementById('rankSelect').value;
         
+        console.log('🎯 Dialog Ask button - targetPlayerIndex:', targetPlayerIndex, 'rank:', rank);
+        console.log('🎯 Dialog Ask button - window.goFishClient exists:', !!window.goFishClient);
+        
         if (window.goFishClient) {
+            console.log('🎯 Calling goFishClient.askForCards...');
             window.goFishClient.askForCards(targetPlayerIndex, rank);
+        } else {
+            console.log('❌ goFishClient not available!');
         }
         
         document.body.removeChild(dialog);
