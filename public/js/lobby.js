@@ -218,8 +218,11 @@ function initSocket() {
                     }
                     
                     // ✅ CRITICAL FIX: Prevent bot from playing multiple times
-                    if (currentPlayer.hasPlayedThisTurn) {
-                        console.log(`🤖 Bot ${currentPlayer.name} already played this turn - skipping`);
+                    // Use the bot object from the game players array for consistency
+                    const bot = window.game.players[data.currentPlayer];
+                    console.log(`🔍 DEBUG: Bot ${bot?.name} hasPlayedThisTurn: ${bot?.hasPlayedThisTurn}, isPlaying: ${bot?.isPlaying}`);
+                    if (bot && bot.hasPlayedThisTurn) {
+                        console.log(`🤖 Bot ${bot.name} already played this turn - skipping`);
                         return;
                     }
                     
@@ -239,11 +242,10 @@ function initSocket() {
                         }
                         
                         // ✅ CRITICAL FIX: Check flags first to prevent race conditions
-                        const bot = window.game.players[data.currentPlayer];
                         if (bot && bot.isBot) {
-                            // ✅ CRITICAL FIX: Check if bot is already playing or played this turn
-                            if (bot.isPlaying || bot.hasPlayedThisTurn) {
-                                console.log(`🤖 Bot ${bot.name} already playing or played this turn - skipping duplicate`);
+                            // ✅ CRITICAL FIX: Only check hasPlayedThisTurn, not isPlaying (since we set isPlaying immediately)
+                            if (bot.hasPlayedThisTurn) {
+                                console.log(`🤖 Bot ${bot.name} already played this turn - skipping duplicate`);
                                 return;
                             }
                         }
@@ -265,11 +267,9 @@ function initSocket() {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
-                            // ✅ CRITICAL FIX: Reset flags first, then set them immediately after validation to prevent race conditions
-                            bot.hasPlayedThisTurn = false;
-                            bot.isPlaying = false;
+                            // ✅ CRITICAL FIX: Set isPlaying flag immediately to prevent duplicates, but don't set hasPlayedThisTurn yet
                             bot.isPlaying = true;
-                            bot.hasPlayedThisTurn = true;
+                            bot.hasPlayedThisTurn = false; // Don't set this until the card is actually played
                             
                             // ✅ PACING FIX: Execute bot play with visual delay for better UX
                             const turnChangedTimeoutId = setTimeout(() => {
@@ -279,7 +279,8 @@ function initSocket() {
                                     if (selectedCard && selectedCard.name) {
                                     console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
                                         
-                                    // ✅ CRITICAL FIX: Flags already set above to prevent duplicates
+                                    // ✅ CRITICAL FIX: Set hasPlayedThisTurn flag only when actually playing the card
+                                    bot.hasPlayedThisTurn = true;
                                         
                                         // Emit playCard event
                                         socket.emit('playCard', {
@@ -966,6 +967,13 @@ function setupSocketListeners() {
             // ✅ CRITICAL FIX: Update player active states for turn indicator in new round
             window.game.players.forEach((player, index) => {
                 player.isActive = (index === data.currentPlayer);
+                // ✅ CRITICAL FIX: Reset bot flags for new round
+                if (player.isBot) {
+                    player.hasPlayedThisTurn = false;
+                    player.isPlaying = false;
+                    player.botTriggeredByRoundComplete = false;
+                    console.log(`🔄 New round - Reset bot flags for ${player.name}: hasPlayedThisTurn=false, isPlaying=false`);
+                }
                 console.log(`🔄 New round - Player ${player.name} (${index}) isActive: ${player.isActive}`);
             });
             

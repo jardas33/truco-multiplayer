@@ -2737,7 +2737,7 @@ io.on('connection', (socket) => {
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event timestamp`);
         
         // ✅ PACING FIX: Add delay for visual pacing while maintaining game flow
-        console.log(`🎯 Adding 1-second delay for visual pacing`);
+        console.log(`🎯 Adding 1.5-second delay for visual pacing to match client timing`);
         
         setTimeout(() => {
         // Emit turn change event with the new current player
@@ -2753,7 +2753,7 @@ io.on('connection', (socket) => {
         });
         console.log(`✅ turnChanged event emitted successfully to room ${roomCode}`);
         console.log(`🔍 CRITICAL DEBUG: [${timestamp}] botTurnComplete turnChanged event COMPLETED`);
-        }, 1000); // 1-second delay for visual pacing
+        }, 1500); // 1.5-second delay for visual pacing to match client timing
     });
 
     // ✅ Handle Truco requests with proper game logic
