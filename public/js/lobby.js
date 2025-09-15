@@ -995,10 +995,15 @@ function setupSocketListeners() {
         
         // ✅ CRITICAL FIX: Clear ALL timeouts to prevent any lingering bot actions
         // This is a nuclear option to ensure no bot actions from previous round interfere
+        // BUT preserve popup timer to avoid breaking auto-close functionality
+        const currentPopupTimeout = popupTimeout;
         for (let i = 1; i < 10000; i++) {
-            clearTimeout(i);
+            // Skip clearing the popup timer to preserve auto-close functionality
+            if (i !== currentPopupTimeout) {
+                clearTimeout(i);
+            }
         }
-        console.log('🚫 NUCLEAR OPTION: Cleared all timeouts to prevent lingering bot actions');
+        console.log('🚫 NUCLEAR OPTION: Cleared all timeouts to prevent lingering bot actions (preserved popup timer)');
         
         // ✅ CRITICAL FIX: NEVER trigger bot play immediately from roundComplete
         // This prevents bots from playing cards super fast and bypassing turn flow
