@@ -2462,37 +2462,28 @@ io.on('connection', (socket) => {
             });
             console.log(`✅ roundComplete event emitted with round winner: ${roundWinner ? roundWinner.name : 'Draw - no winner'} and currentPlayer: ${room.game.currentPlayer}`);
             
-            // ✅ CRITICAL FIX: Only emit turnChanged immediately if the round winner is NOT a bot
-            // If the round winner is a bot, wait for them to play their card first
-            if (nextRoundStarter && !nextRoundStarter.isBot) {
-                // Human player starts next round - emit turnChanged immediately
-                console.log(`🔄 Human player ${nextRoundStarter.name} starts next round - emitting turnChanged immediately`);
-                
-                // ✅ UI FIX: Emit turnChanged immediately for round completion
-                console.log(`🎯 Emitting turnChanged immediately for round completion`);
-                console.log(`🔍 DEBUG: About to emit turnChanged for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-                console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
-                
-                // ✅ CRITICAL DEBUG: Track roundComplete turnChanged emission
-                const timestamp = new Date().toISOString();
-                console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged emission for ${nextRoundStarter.name}`);
-                console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for round completion`);
-                
-                console.log(`🔍 DEBUG: Emitting turnChanged event for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
-                console.log(`🔍 DEBUG: Round completion turnChanged event stack trace:`, new Error().stack);
-                io.to(roomCode).emit('turnChanged', {
-                    currentPlayer: room.game.currentPlayer,
-                    allHands: room.game.hands
-                });
-                
-                console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged event COMPLETED`);
-            } else if (nextRoundStarter && nextRoundStarter.isBot) {
-                // Bot starts next round - DON'T emit turnChanged yet, wait for bot to play
-                console.log(`🤖 Bot ${nextRoundStarter.name} starts next round - NOT emitting turnChanged yet, waiting for bot to play`);
-                // The turnChanged will be emitted after the bot plays their card via botTurnComplete
-            } else {
-                console.log(`⚠️ WARNING: Could not determine next round starter`);
-            }
+            // ✅ CRITICAL FIX: ALWAYS emit turnChanged after roundComplete to trigger bot play
+            // This ensures bots get the turnChanged event they need to start playing
+            console.log(`🔄 Round winner ${nextRoundStarter?.name} starts next round - emitting turnChanged to trigger bot play`);
+            
+            // ✅ UI FIX: Emit turnChanged immediately for round completion
+            console.log(`🎯 Emitting turnChanged immediately for round completion`);
+            console.log(`🔍 DEBUG: About to emit turnChanged for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
+            
+            // ✅ CRITICAL DEBUG: Track roundComplete turnChanged emission
+            const timestamp = new Date().toISOString();
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged emission for ${nextRoundStarter?.name}`);
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] This turnChanged is for round completion`);
+            
+            console.log(`🔍 DEBUG: Emitting turnChanged event for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+            console.log(`🔍 DEBUG: Round completion turnChanged event stack trace:`, new Error().stack);
+            io.to(roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                allHands: room.game.hands
+            });
+            
+            console.log(`🔍 CRITICAL DEBUG: [${timestamp}] ROUND COMPLETE turnChanged event COMPLETED`);
             
             // ✅ CRITICAL FIX: Played cards already cleared before roundComplete emission
             // No need for delayed clearing as it's already done above

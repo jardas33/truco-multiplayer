@@ -99,13 +99,20 @@ function initSocket() {
                 return;
             }
             
-            // ✅ CRITICAL FIX: Check if this turnChanged is from a previous round
-            // If we just completed a round and the round winner is starting, ignore old turnChanged events
-            if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
-                console.log('🚫 Ignoring turnChanged event from previous round - round winner is starting new round');
-                console.log('🔍 DEBUG: roundJustCompleted:', window.game.roundJustCompleted, 'roundWinnerStarting:', window.game.roundWinnerStarting);
-                return;
-            }
+        // ✅ CRITICAL FIX: Check if this turnChanged is from a previous round
+        // If we just completed a round and the round winner is starting, ignore old turnChanged events
+        // BUT allow the first turnChanged event after roundComplete to trigger bot play
+        if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
+            // ✅ CRITICAL FIX: Allow the first turnChanged event after roundComplete to trigger bot play
+            // This is the event that tells the round winner to start playing
+            console.log('✅ Allowing turnChanged event from round completion - this triggers bot play for round winner');
+            console.log('🔍 DEBUG: roundJustCompleted:', window.game.roundJustCompleted, 'roundWinnerStarting:', window.game.roundWinnerStarting);
+            
+            // Reset the flags immediately since this is the legitimate turnChanged event
+            window.game.roundJustCompleted = false;
+            window.game.roundWinnerStarting = false;
+            console.log('🔓 Reset round transition flags - received legitimate turnChanged from round completion');
+        }
             
             // ✅ CRITICAL FIX: Update current player FIRST to prevent race conditions
             console.log(`🔍 DEBUG: About to update currentPlayerIndex from ${window.game.currentPlayerIndex} to ${data.currentPlayer}`);
