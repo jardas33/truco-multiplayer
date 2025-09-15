@@ -3434,18 +3434,19 @@ let popupTimeout = null;
 
 function addToPopupQueue(type, data, duration = 4000) { // ✅ UI FIX: Default 4 seconds for better visibility
     popupQueue.push({ type, data, duration });
-    console.log(`📋 Added ${type} popup to queue. Queue length: ${popupQueue.length}`);
+    console.log(`📋 Added ${type} popup to queue with duration ${duration}ms. Queue length: ${popupQueue.length}`);
     processPopupQueue();
 }
 
 function processPopupQueue() {
     // If there's already a popup showing or no popups in queue, return
     if (currentPopup || popupQueue.length === 0) {
+        console.log(`📋 processPopupQueue: currentPopup=${!!currentPopup}, queueLength=${popupQueue.length} - returning`);
         return;
     }
     
     const nextPopup = popupQueue.shift();
-    console.log(`📋 Processing ${nextPopup.type} popup from queue. Remaining: ${popupQueue.length}`);
+    console.log(`📋 Processing ${nextPopup.type} popup from queue with duration ${nextPopup.duration}ms. Remaining: ${popupQueue.length}`);
     
     showPopup(nextPopup.type, nextPopup.data, nextPopup.duration);
 }
@@ -3475,17 +3476,23 @@ function showPopup(type, data, duration) {
     }
     
     // Auto-remove after duration
+    console.log(`⏰ Setting popup auto-close timer for ${duration}ms`);
     popupTimeout = setTimeout(() => {
+        console.log(`⏰ Popup auto-close timer fired after ${duration}ms`);
         clearCurrentPopup();
     }, duration);
 }
 
 function clearCurrentPopup() {
+    console.log(`🧹 clearCurrentPopup called - currentPopup:`, currentPopup);
     if (currentPopup) {
+        console.log(`🧹 Clearing popup of type: ${currentPopup.type}`);
         // Remove any existing popup elements
         const existingMessages = document.querySelectorAll('[id$="Message"]');
+        console.log(`🧹 Found ${existingMessages.length} popup elements to remove`);
         existingMessages.forEach(msg => {
             if (msg.parentNode) {
+                console.log(`🧹 Removing popup element: ${msg.id}`);
                 msg.remove();
             }
         });
