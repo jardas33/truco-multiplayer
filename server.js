@@ -31,6 +31,9 @@ function advanceTurn(roomCode, room) {
         room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
         console.log(`🔄 New current player: ${room.game.currentPlayer}`);
         
+        // Clear cards obtained this turn for the new player
+        room.game.cardsObtainedThisTurn = [];
+        
         console.log(`🔄 EMITTING turnChanged event to room: ${roomCode}`);
         console.log(`🔄 turnChanged event data:`, {
             currentPlayer: room.game.currentPlayer,
@@ -1213,7 +1216,8 @@ io.on('connection', (socket) => {
                     gameType: 'go-fish',
                     hands: hands,
                     pond: pond,
-                    deck: []
+                    deck: [],
+                    cardsObtainedThisTurn: [] // Track cards obtained in current turn for pair logic
                 };
                 
                 console.log(`🐟 Go Fish game created with hands:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
@@ -1387,6 +1391,9 @@ io.on('connection', (socket) => {
                 // Target player has the cards - transfer them
                 room.game.hands[data.targetPlayerIndex] = targetPlayerHand.filter(card => card.rank !== data.rank);
                 room.game.hands[data.playerIndex] = [...askingPlayerHand, ...requestedCards];
+                
+                // Track cards obtained this turn for pair logic
+                room.game.cardsObtainedThisTurn = [...(room.game.cardsObtainedThisTurn || []), ...requestedCards];
                 
                 // Check for pairs in asking player's hand after receiving cards
                 const newHand = room.game.hands[data.playerIndex];
@@ -1587,6 +1594,9 @@ io.on('connection', (socket) => {
             if (room.game.pond.length > 0) {
                 const drawnCard = room.game.pond.pop();
                 room.game.hands[data.playerIndex] = [...(room.game.hands[data.playerIndex] || []), drawnCard];
+                
+                // Track card obtained this turn for pair logic
+                room.game.cardsObtainedThisTurn = [...(room.game.cardsObtainedThisTurn || []), drawnCard];
                 
                 // Check for pairs in the player's hand after fishing
                 const newHand = room.game.hands[data.playerIndex];
@@ -1792,12 +1802,21 @@ io.on('connection', (socket) => {
                 return;
             }
             
+            // Check if the pair contains a card obtained this turn
+            const hand = room.game.hands[data.playerIndex] || [];
+            const cardsToRemove = hand.filter(card => card.rank === data.rank);
+            const cardsObtainedThisTurn = room.game.cardsObtainedThisTurn || [];
+            
+            // Check if any of the cards in the pair were obtained this turn
+            const pairContainsCardFromThisTurn = cardsToRemove.some(card => 
+                cardsObtainedThisTurn.some(obtainedCard => 
+                    obtainedCard.rank === card.rank && obtainedCard.suit === card.suit
+                )
+            );
+            
             // Update the player's pairs count
             player.pairs = (player.pairs || 0) + 1;
             
-            // Remove the pair of cards from the server-side hand
-            const hand = room.game.hands[data.playerIndex] || [];
-            const cardsToRemove = hand.filter(card => card.rank === data.rank);
             if (cardsToRemove.length >= 2) {
                 // Remove the first two cards of the matching rank
                 const firstCardIndex = hand.findIndex(card => card.rank === data.rank);
@@ -1824,9 +1843,17 @@ io.on('connection', (socket) => {
                 currentPlayer: room.game.currentPlayer
             });
             
-            // Give the player another turn after making a pair
-            console.log(`🎯 ${player.name} made a pair - gets another turn`);
-            // Don't advance turn - player gets to continue
+            // Only give the player another turn if the pair contains a card obtained this turn
+            if (pairContainsCardFromThisTurn) {
+                console.log(`🎯 ${player.name} made a pair with card from this turn - gets another turn`);
+                // Don't advance turn - player gets to continue
+            } else {
+                console.log(`🎯 ${player.name} made a pair with old cards - advancing turn`);
+                // Advance turn after a delay
+                setTimeout(() => {
+                    advanceTurn(roomCode, room);
+                }, 2000);
+            }
             
         } catch (error) {
             console.error(`❌ Error in makePair handler:`, error);
