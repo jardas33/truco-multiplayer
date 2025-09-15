@@ -137,6 +137,10 @@ class BattleshipGame {
             if (this.socket && this.socket.connected) {
                 console.log('🚢 Using battleship socket, player ID:', this.playerId);
                 this.setupMultiplayerListeners();
+                
+                // ✅ CRITICAL FIX: Update UI to show multiplayer mode
+                this.updateUI();
+                console.log('🚢 UI updated for multiplayer mode');
             } else {
                 console.log('🚢 Socket not ready yet, retrying in 100ms...');
                 setTimeout(waitForSocket, 100);

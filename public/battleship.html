@@ -645,6 +645,27 @@
                 });
             });
             
+            // ✅ CRITICAL FIX: Handle room joined event
+            window.battleshipSocket.on('roomJoined', (data) => {
+                console.log('🚢 Room joined successfully:', data);
+                console.log('🚢 Player ID:', data.playerId);
+                console.log('🚢 Player Index:', data.playerIndex);
+                console.log('🚢 Is Host:', data.isHost);
+                
+                // Store room information
+                window.battleshipRoomId = data.roomId;
+                window.battleshipPlayerId = data.playerId;
+                window.battleshipPlayerIndex = data.playerIndex;
+                window.battleshipIsHost = data.isHost;
+                
+                console.log('🚢 Battleship room info stored:', {
+                    roomId: window.battleshipRoomId,
+                    playerId: window.battleshipPlayerId,
+                    playerIndex: window.battleshipPlayerIndex,
+                    isHost: window.battleshipIsHost
+                });
+            });
+            
             // Handle player ready events
             window.battleshipSocket.on('battleshipPlayerReady', (data) => {
                 console.log('🚢 Received player ready event:', data);
@@ -688,6 +709,23 @@
                     window.battleshipGame.handleGameStart(data);
                 }
             });
+            
+            // ✅ CRITICAL FIX: Initialize multiplayer mode when game instance is ready
+            const initializeMultiplayerWhenReady = () => {
+                if (window.battleshipGame && window.battleshipRoomId) {
+                    console.log('🚢 Game instance found and room joined, initializing multiplayer mode');
+                    console.log('🚢 Using room ID:', window.battleshipRoomId);
+                    window.battleshipGame.initializeMultiplayer(window.battleshipRoomId);
+                } else {
+                    console.log('🚢 Game instance or room not ready yet, retrying in 100ms');
+                    console.log('🚢 Game instance:', !!window.battleshipGame);
+                    console.log('🚢 Room ID:', window.battleshipRoomId);
+                    setTimeout(initializeMultiplayerWhenReady, 100);
+                }
+            };
+            
+            // Start checking for game instance and room join
+            setTimeout(initializeMultiplayerWhenReady, 200);
             
             // Handle turn change events
             window.battleshipSocket.on('battleshipTurnChange', (data) => {
