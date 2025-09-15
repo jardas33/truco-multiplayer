@@ -3109,10 +3109,13 @@ function triggerBotPlay(botPlayerIndex) {
                     botPlayer.botTriggeredByRoundComplete = false;
                     
                     // ✅ CRITICAL FIX: Reset round transition flags when round winner calls Truco
+                    // BUT with a delay to ensure all old turnChanged events are processed first
                     if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
-                        window.game.roundJustCompleted = false;
-                        window.game.roundWinnerStarting = false;
-                        console.log('🔓 Reset round transition flags - round winner called Truco');
+                        setTimeout(() => {
+                            window.game.roundJustCompleted = false;
+                            window.game.roundWinnerStarting = false;
+                            console.log('🔓 Reset round transition flags - round winner called Truco (delayed)');
+                        }, 2000); // 2 second delay to ensure all old events are processed
                     }
                     
                     // ✅ CRITICAL FIX: Don't mark as played yet - wait for Truco response
@@ -3271,10 +3274,13 @@ function triggerBotPlay(botPlayerIndex) {
                         botPlayer.botTriggeredByRoundComplete = false;
                         
                         // ✅ CRITICAL FIX: Reset round transition flags when round winner plays
+                        // BUT with a delay to ensure all old turnChanged events are processed first
                         if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
-                            window.game.roundJustCompleted = false;
-                            window.game.roundWinnerStarting = false;
-                            console.log('🔓 Reset round transition flags - round winner has started playing');
+                            setTimeout(() => {
+                                window.game.roundJustCompleted = false;
+                                window.game.roundWinnerStarting = false;
+                                console.log('🔓 Reset round transition flags - round winner has started playing (delayed)');
+                            }, 2000); // 2 second delay to ensure all old events are processed
                         }
                 
                     // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
