@@ -3486,19 +3486,28 @@ function showTrucoResponseButtons() {
     // Add event listeners
     acceptBtn.addEventListener('click', () => {
         console.log('👤 Human player accepted Truco');
-        socket.emit('respondTruco', { response: 1 });
+        socket.emit('respondTruco', { 
+            roomCode: getRoomCode(),
+            response: 1 
+        });
         hideTrucoResponseButtons();
     });
     
     rejectBtn.addEventListener('click', () => {
         console.log('👤 Human player rejected Truco');
-        socket.emit('respondTruco', { response: 2 });
+        socket.emit('respondTruco', { 
+            roomCode: getRoomCode(),
+            response: 2 
+        });
         hideTrucoResponseButtons();
     });
     
     raiseBtn.addEventListener('click', () => {
         console.log('👤 Human player raised Truco');
-        socket.emit('respondTruco', { response: 3 });
+        socket.emit('respondTruco', { 
+            roomCode: getRoomCode(),
+            response: 3 
+        });
         hideTrucoResponseButtons();
     });
     
