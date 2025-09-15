@@ -1466,12 +1466,12 @@ function showDrawMessagePopup() {
 // ✅ CRITICAL FIX: Function to display combined game winner + new game message
 function showCombinedGameMessage() {
     const winningTeam = window.lastGameWinner || null;
-    addToPopupQueue('combinedGame', winningTeam, 6000); // Longer duration for combined message
+    addToPopupQueue('combinedGame', winningTeam, 5000); // ✅ UI FIX: 5 seconds for combined message
 }
 
 // ✅ DEPRECATED: Function to display game winner message (now combined)
 function showGameWinnerMessage(winningTeam) {
-    addToPopupQueue('gameWinner', winningTeam, 5000); // Longer duration for game winner
+    addToPopupQueue('gameWinner', winningTeam, 5000); // ✅ UI FIX: 5 seconds for game winner
     }
 
 function showCombinedGameMessagePopup(winningTeam) {
@@ -3432,7 +3432,7 @@ let popupQueue = [];
 let currentPopup = null;
 let popupTimeout = null;
 
-function addToPopupQueue(type, data, duration = 2000) {
+function addToPopupQueue(type, data, duration = 4000) { // ✅ UI FIX: Default 4 seconds for better visibility
     popupQueue.push({ type, data, duration });
     console.log(`📋 Added ${type} popup to queue. Queue length: ${popupQueue.length}`);
     processPopupQueue();

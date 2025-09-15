@@ -258,7 +258,7 @@ class UIUtils {
         return button;
     }
     
-    static showPopup(message, duration = 3000) {
+    static showPopup(message, duration = 4000) { // ✅ UI FIX: 4 seconds for better visibility
         // Create popup element
         const popup = document.createElement('div');
         popup.style.cssText = `

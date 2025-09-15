@@ -411,7 +411,7 @@ class GoFishGame {
     }
     
     // Show game message popup
-    showGameMessage(message, duration = 2000) {
+    showGameMessage(message, duration = 4000) { // ✅ UI FIX: 4 seconds for better visibility
         // Remove existing message
         const existingMessage = document.getElementById('game-message');
         if (existingMessage) {
