@@ -235,6 +235,20 @@ function initSocket() {
                             return; // Skip this trigger to prevent duplicate bot plays
                         }
                         
+                        // ✅ CRITICAL FIX: Set flags immediately to prevent race conditions
+                        const bot = window.game.players[data.currentPlayer];
+                        if (bot && bot.isBot) {
+                            // ✅ CRITICAL FIX: Check if bot is already playing or played this turn
+                            if (bot.isPlaying || bot.hasPlayedThisTurn) {
+                                console.log(`🤖 Bot ${bot.name} already playing or played this turn - skipping duplicate`);
+                                return;
+                            }
+                            
+                            // ✅ CRITICAL FIX: Set flags immediately to prevent race conditions
+                            bot.isPlaying = true;
+                            bot.hasPlayedThisTurn = true;
+                        }
+                        
                         // ✅ PACING FIX: Use immediate validation but delayed execution for visual pacing
                         if (window.game && 
                             !window.gameCompleted &&
@@ -242,8 +256,6 @@ function initSocket() {
                             window.game.players[data.currentPlayer].isBot &&
                             window.game.players[data.currentPlayer].hand && 
                             window.game.players[data.currentPlayer].hand.length > 0 &&
-                                    !window.game.players[data.currentPlayer].hasPlayedThisTurn &&
-                            !window.game.players[data.currentPlayer].isPlaying &&
                             // ✅ CRITICAL FIX: Don't play card if bot needs to respond to Truco
                             !(window.game.trucoState && window.game.trucoState.waitingForResponse && 
                               window.game.trucoState.responsePlayerIndex === data.currentPlayer) &&
@@ -253,17 +265,6 @@ function initSocket() {
                             !currentPlayer.botTriggeredByRoundComplete) {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
-                            
-                            // ✅ CRITICAL FIX: Set flags immediately to prevent duplicate plays
-                            const bot = window.game.players[data.currentPlayer];
-                            bot.isPlaying = true;
-                            bot.hasPlayedThisTurn = true;
-                            
-                            // ✅ CRITICAL FIX: Check if bot is already in process of playing
-                            if (bot.botPlayingTimeout) {
-                                console.log(`🤖 Bot ${bot.name} already has a pending play - skipping duplicate`);
-                                return;
-                            }
                             
                             // ✅ PACING FIX: Execute bot play with visual delay for better UX
                             const turnChangedTimeoutId = setTimeout(() => {
