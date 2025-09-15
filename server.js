@@ -1970,10 +1970,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ CRITICAL FIX: Check if game is completed - don't allow card plays if game is over
+        // ✅ CRITICAL FIX: Check if game is completed - silently ignore card plays if game is over
         if (room.game.gameCompleted) {
-            console.log(`🏁 Game is completed - rejecting card play from ${player.name} (${socket.id})`);
-            socket.emit('error', 'Game has been completed');
+            console.log(`🏁 Game is completed - silently ignoring card play from ${player.name} (${socket.id}) (no error sent)`);
             return;
         }
 
@@ -2597,9 +2596,9 @@ io.on('connection', (socket) => {
         
         room.game.lastBotTurnComplete = now;
         
-        // ✅ CRITICAL FIX: Check if game is completed - don't process botTurnComplete if game is over
+        // ✅ CRITICAL FIX: Check if game is completed - silently ignore botTurnComplete if game is over
         if (room.game.gameCompleted) {
-            console.log(`🏁 Game is completed - ignoring botTurnComplete from ${socket.id}`);
+            console.log(`🏁 Game is completed - silently ignoring botTurnComplete from ${socket.id} (no error sent)`);
             return;
         }
         
@@ -2775,10 +2774,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ CRITICAL FIX: Check if game is completed - don't allow Truco calls if game is over
+        // ✅ CRITICAL FIX: Check if game is completed - silently ignore Truco calls if game is over
         if (room.game.gameCompleted) {
-            console.log(`🏁 Game is completed - rejecting Truco request from ${socket.id}`);
-            socket.emit('error', 'Game has been completed');
+            console.log(`🏁 Game is completed - silently ignoring Truco request from ${socket.id} (no error sent)`);
             return;
         }
 
@@ -3306,10 +3304,9 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ CRITICAL FIX: Check if game is completed - don't allow Truco responses if game is over
+        // ✅ CRITICAL FIX: Check if game is completed - silently ignore Truco responses if game is over
         if (room.game.gameCompleted) {
-            console.log(`🏁 Game is completed - rejecting Truco response from ${socket.id}`);
-            socket.emit('error', 'Game has been completed');
+            console.log(`🏁 Game is completed - silently ignoring Truco response from ${socket.id} (no error sent)`);
             return;
         }
 
