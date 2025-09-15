@@ -235,7 +235,7 @@ function initSocket() {
                             return; // Skip this trigger to prevent duplicate bot plays
                         }
                         
-                        // ✅ CRITICAL FIX: Set flags immediately to prevent race conditions
+                        // ✅ CRITICAL FIX: Check flags first to prevent race conditions
                         const bot = window.game.players[data.currentPlayer];
                         if (bot && bot.isBot) {
                             // ✅ CRITICAL FIX: Check if bot is already playing or played this turn
@@ -243,10 +243,6 @@ function initSocket() {
                                 console.log(`🤖 Bot ${bot.name} already playing or played this turn - skipping duplicate`);
                                 return;
                             }
-                            
-                            // ✅ CRITICAL FIX: Set flags immediately to prevent race conditions
-                            bot.isPlaying = true;
-                            bot.hasPlayedThisTurn = true;
                         }
                         
                         // ✅ PACING FIX: Use immediate validation but delayed execution for visual pacing
@@ -265,6 +261,10 @@ function initSocket() {
                             !currentPlayer.botTriggeredByRoundComplete) {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
+                            
+                            // ✅ CRITICAL FIX: Set flags immediately after validation to prevent race conditions
+                            bot.isPlaying = true;
+                            bot.hasPlayedThisTurn = true;
                             
                             // ✅ PACING FIX: Execute bot play with visual delay for better UX
                             const turnChangedTimeoutId = setTimeout(() => {
