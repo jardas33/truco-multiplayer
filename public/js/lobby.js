@@ -3490,11 +3490,22 @@ function showPopup(type, data, duration) {
     // ✅ DEBUG: Test if timer is working at all
     setTimeout(() => {
         console.log(`⏰ DEBUG: 1 second test - popupTimeout still exists:`, !!popupTimeout);
+        console.log(`⏰ DEBUG: 1 second test - popupTimeout value:`, popupTimeout);
+        console.log(`⏰ DEBUG: 1 second test - currentPopup:`, currentPopup);
     }, 1000);
+    
+    // ✅ DEBUG: Test if timer is working at 2 seconds
+    setTimeout(() => {
+        console.log(`⏰ DEBUG: 2 second test - popupTimeout still exists:`, !!popupTimeout);
+        console.log(`⏰ DEBUG: 2 second test - popupTimeout value:`, popupTimeout);
+        console.log(`⏰ DEBUG: 2 second test - currentPopup:`, currentPopup);
+    }, 2000);
 }
 
 function clearCurrentPopup() {
     console.log(`🧹 clearCurrentPopup called - currentPopup:`, currentPopup);
+    console.log(`🧹 clearCurrentPopup called - popupTimeout:`, popupTimeout);
+    console.log(`🧹 clearCurrentPopup called - stack trace:`, new Error().stack);
     if (currentPopup) {
         console.log(`🧹 Clearing popup of type: ${currentPopup.type}`);
         // Remove any existing popup elements
