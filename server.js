@@ -2324,6 +2324,10 @@ io.on('connection', (socket) => {
                 // Clear played cards immediately for game winner
                 room.game.playedCards = [];
                 
+                // ✅ CRITICAL FIX: Set game completed flag to prevent further botTurnComplete processing
+                room.game.gameCompleted = true;
+                console.log(`🏁 Game completed - set gameCompleted flag to prevent further bot actions`);
+                
                 // Emit game complete event instead of round complete
                 console.log(`🔍 DEBUG: Emitting gameComplete event to room ${roomCode}`);
                 console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, sets: room.game.sets, gameWinner, setWinner });
@@ -2582,6 +2586,12 @@ io.on('connection', (socket) => {
         }
         
         room.game.lastBotTurnComplete = now;
+        
+        // ✅ CRITICAL FIX: Check if game is completed - don't process botTurnComplete if game is over
+        if (room.game.gameCompleted) {
+            console.log(`🏁 Game is completed - ignoring botTurnComplete from ${socket.id}`);
+            return;
+        }
         
         // ✅ CRITICAL FIX: Check if we're in a new round (after round completion)
         // If so, don't change the current player - the round winner should start
@@ -3583,6 +3593,10 @@ function startNewGame(room, winningTeam, roomId) {
         // Clear played cards
         room.game.playedCards = [];
         console.log(`🔄 Cleared played cards`);
+        
+        // ✅ CRITICAL FIX: Reset game completed flag for new game
+        room.game.gameCompleted = false;
+        console.log(`🔄 Reset gameCompleted flag for new game`);
         
         // ✅ CRITICAL FIX: Reset Truco state for new game
         room.game.trucoState = {
