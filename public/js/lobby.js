@@ -914,47 +914,14 @@ function setupSocketListeners() {
         }
         console.log('🚫 NUCLEAR OPTION: Cleared all timeouts to prevent lingering bot actions');
         
+        // ✅ CRITICAL FIX: NEVER trigger bot play immediately from roundComplete
+        // This prevents bots from playing cards super fast and bypassing turn flow
+        console.log(`🚫 MANDATORY DELAY: Not triggering bot play immediately from roundComplete - waiting for turnChanged event`);
+        
         // ✅ CRITICAL FIX: Set flags to ignore old turnChanged events from previous round
         window.game.roundJustCompleted = true;
         window.game.roundWinnerStarting = true;
         console.log('🔒 Set flags to ignore old turnChanged events from previous round');
-        
-        // ✅ CRITICAL FIX: Only trigger bot play immediately for actual round winners, not draw rounds
-        if (!data.isDraw) {
-            const nextRoundStarter = window.game.players[data.currentPlayer];
-            if (nextRoundStarter && nextRoundStarter.isBot) {
-                console.log(`🤖 Bot ${nextRoundStarter.name} starts new round - triggering bot play immediately`);
-                
-                // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
-                nextRoundStarter.hasPlayedThisTurn = false;
-                
-                // ✅ CRITICAL FIX: Set flag to prevent duplicate bot triggers
-                nextRoundStarter.botTriggeredByRoundComplete = true;
-                    
-                    // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
-                    const roundCompleteTimeoutId = setTimeout(() => {
-                        if (window.game && 
-                            !window.gameCompleted &&
-                            window.game.players[data.currentPlayer] &&
-                            window.game.players[data.currentPlayer].isBot &&
-                            window.game.players[data.currentPlayer].hand && 
-                            window.game.players[data.currentPlayer].hand.length > 0 &&
-                            !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
-                            
-                            console.log(`🤖 Triggering bot play for ${nextRoundStarter.name} in new round`);
-                            triggerBotPlay(data.currentPlayer);
-                        }
-                    }, 500); // Small delay to ensure state is fully synchronized
-                    
-                    // ✅ CRITICAL FIX: Track timeout ID for cancellation
-                    if (!window.pendingBotTimeouts) {
-                        window.pendingBotTimeouts = [];
-                    }
-                    window.pendingBotTimeouts.push(roundCompleteTimeoutId);
-                }
-        } else {
-            console.log(`🤝 Draw round - not triggering bot play immediately, waiting for turnChanged event`);
-        }
         }
         
         // ✅ CRITICAL FIX: Ensure this is NOT a game completion (should be handled by gameComplete)
@@ -3256,14 +3223,14 @@ function triggerBotPlay(botPlayerIndex) {
             } catch (botTrucoError) {
                 console.error(`❌ Bot Truco call failed for ${botPlayer.name}:`, botTrucoError);
             }
-        }, 500); // Increased delay to ensure server has processed card play and updated turn state
+        }, 1000); // MANDATORY DELAY - bots must wait at least 1 second before calling Truco
         
         // ✅ CRITICAL FIX: Track timeout ID for cancellation
         window.pendingBotTimeouts.push(trucoTimeoutId);
     } else {
-        console.log(`🤖 Bot ${botPlayer.name} will play a card immediately`);
+        console.log(`🤖 Bot ${botPlayer.name} will play a card with MANDATORY DELAY`);
         
-        // ✅ CRITICAL FIX: Execute immediately to prevent race conditions
+        // ✅ CRITICAL FIX: MANDATORY DELAY - bots must wait at least 1 second before playing
         const cardTimeoutId = setTimeout(() => {
         try {
             // ✅ CRITICAL FIX: Validate bot can still play
@@ -3325,7 +3292,7 @@ function triggerBotPlay(botPlayerIndex) {
         } catch (botPlayError) {
             console.error(`❌ Bot play failed for ${botPlayer.name}:`, botPlayError);
         }
-        }, 100); // Minimal delay to prevent race conditions
+        }, 1000); // MANDATORY DELAY - bots must wait at least 1 second before playing
         
         // ✅ CRITICAL FIX: Track timeout ID for cancellation
         window.pendingBotTimeouts.push(cardTimeoutId);
