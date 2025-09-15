@@ -941,11 +941,12 @@ function setupSocketListeners() {
                 const wasActive = player.isActive;
                 player.isActive = (index === data.currentPlayer);
                 
-                // Reset flags for new round
-                if (index === data.currentPlayer) {
+                // ✅ CRITICAL FIX: Don't reset bot flags here - let bot validation handle it
+                // This prevents race conditions where flags are reset before validation
+                if (index === data.currentPlayer && !player.isBot) {
                     player.hasPlayedThisTurn = false;
                     player.isPlaying = false;
-                    console.log(`🔄 Reset flags for round winner ${player.name} (new round)`);
+                    console.log(`🔄 Reset flags for human round winner ${player.name} (new round)`);
                 }
                 
                 console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
