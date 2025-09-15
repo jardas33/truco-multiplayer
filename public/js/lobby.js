@@ -3452,8 +3452,8 @@ function processPopupQueue() {
 }
 
 function showPopup(type, data, duration) {
-    // Clear any existing popup
-    clearCurrentPopup();
+    // ✅ CRITICAL FIX: Don't clear current popup here - processPopupQueue already ensures currentPopup is null
+    // clearCurrentPopup(); // REMOVED - this was causing the timer to be cleared immediately
     
     currentPopup = { type, data, duration };
     
@@ -3478,7 +3478,7 @@ function showPopup(type, data, duration) {
     // Auto-remove after duration
     console.log(`⏰ Setting popup auto-close timer for ${duration}ms`);
     popupTimeout = setTimeout(() => {
-        console.log(`⏰ Popup auto-close timer fired after ${duration}ms`);
+        console.log(`⏰ Popup auto-close timer fired after ${duration}ms - currentPopup:`, currentPopup);
         clearCurrentPopup();
     }, duration);
 }
@@ -3504,7 +3504,7 @@ function clearCurrentPopup() {
             popupTimeout = null;
         }
         
-        // Process next popup in queue
+        // ✅ CRITICAL FIX: Process next popup in queue after a small delay to prevent race conditions
         setTimeout(() => {
             processPopupQueue();
         }, 100); // Small delay to ensure smooth transition
