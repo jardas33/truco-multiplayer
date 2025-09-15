@@ -2767,6 +2767,8 @@ io.on('connection', (socket) => {
         console.log(`🔍 TRUCO REQUEST DEBUG - Is current player? ${room.game.currentPlayer === playerIndex}`);
         console.log(`🔍 TRUCO REQUEST DEBUG - Room players: [${room.players.map(p => `${p.name}(${p.isBot ? 'bot' : 'human'})`).join(', ')}]`);
         console.log(`🔍 TRUCO REQUEST DEBUG - Current player name: ${room.players[room.game.currentPlayer]?.name}`);
+        console.log(`🔍 TRUCO REQUEST DEBUG - Round just completed: ${room.game.roundJustCompleted}`);
+        console.log(`🔍 TRUCO REQUEST DEBUG - Round winner starting: ${room.game.roundWinnerStarting}`);
         
         if (room.game.currentPlayer !== playerIndex) {
             console.log(`❌ Player ${requestingPlayer?.name} tried to call Truco out of turn`);

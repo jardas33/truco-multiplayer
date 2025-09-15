@@ -3188,7 +3188,7 @@ function triggerBotPlay(botPlayerIndex) {
             } catch (botTrucoError) {
                 console.error(`❌ Bot Truco call failed for ${botPlayer.name}:`, botTrucoError);
             }
-        }, 100); // Minimal delay to prevent race conditions
+        }, 500); // Increased delay to ensure server has processed card play and updated turn state
         
         // ✅ CRITICAL FIX: Track timeout ID for cancellation
         window.pendingBotTimeouts.push(trucoTimeoutId);
