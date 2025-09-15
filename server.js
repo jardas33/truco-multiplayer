@@ -2198,15 +2198,18 @@ io.on('connection', (socket) => {
             // ✅ CRITICAL FIX: Check for game winner with proper draw resolution logic
             if (roundWinner) {
                 // Clear round winner - check if team has enough wins
-            if (room.game.scores.team1 >= roundsToWin) {
-                gameWinner = 'team1';
-                console.log(`🎮 Team 1 wins the game!`);
-            } else if (room.game.scores.team2 >= roundsToWin) {
-                gameWinner = 'team2';
-                console.log(`🎮 Team 2 wins the game!`);
+                if (room.game.scores.team1 >= roundsToWin) {
+                    gameWinner = 'team1';
+                    console.log(`🎮 Team 1 wins the game!`);
+                } else if (room.game.scores.team2 >= roundsToWin) {
+                    gameWinner = 'team2';
+                    console.log(`🎮 Team 2 wins the game!`);
                 }
-            } else if (currentRound === 2 && room.game.roundResults.length >= 2) {
-                // ✅ CRITICAL FIX: Handle special case - Round 1 was draw, Round 2 has winner
+            }
+            
+            // ✅ CRITICAL FIX: Check draw resolution logic regardless of current round winner
+            if (!gameWinner && currentRound === 2 && room.game.roundResults.length >= 2) {
+                // Handle special case - Round 1 was draw, Round 2 has winner
                 const firstRound = room.game.roundResults[0];
                 const secondRound = room.game.roundResults[1];
                 
@@ -2219,7 +2222,7 @@ io.on('connection', (socket) => {
                     gameWinner = firstRound.winner;
                     console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins due to Round 2 draw!`);
                 }
-            } else if (currentRound === 3 && room.game.roundResults.length >= 3) {
+            } else if (!gameWinner && currentRound === 3 && room.game.roundResults.length >= 3) {
                 // ✅ CRITICAL FIX: Handle Round 3 draw resolution
                 const firstRound = room.game.roundResults[0];
                 const secondRound = room.game.roundResults[1];
