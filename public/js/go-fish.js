@@ -2847,6 +2847,10 @@ window.goFishMousePressed = function goFishMousePressed() {
         
         if (isAskButtonClicked) {
             console.log('🎯 Ask button clicked');
+            // Set acting state to prevent additional clicks
+            if (window.goFishClient) {
+                window.goFishClient.isActing = true;
+            }
             showAskForCardsDialog();
         }
         
@@ -2857,7 +2861,9 @@ window.goFishMousePressed = function goFishMousePressed() {
         
         if (isGoFishButtonClicked) {
             console.log('🐟 Go Fish button clicked');
+            // Set acting state to prevent additional clicks
             if (window.goFishClient) {
+                window.goFishClient.isActing = true;
                 window.goFishClient.goFish();
             }
         }
@@ -3165,12 +3171,17 @@ function showAskForCardsDialog() {
         }
         
         console.log('🎯 Removing dialog from DOM');
+        // Note: isActing will be reset by server events (cardsGiven, goFish, turnChanged)
         document.body.removeChild(dialog);
     };
     console.log('🎯 Ask button onclick handler attached');
     
     cancelButton.onclick = function() {
         console.log('🎯 Dialog Cancel button clicked!');
+        // Reset acting state when dialog is cancelled
+        if (window.goFishClient) {
+            window.goFishClient.isActing = false;
+        }
         document.body.removeChild(dialog);
     };
     console.log('🎯 Cancel button onclick handler attached');
