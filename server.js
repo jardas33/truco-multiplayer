@@ -1962,18 +1962,18 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ CRITICAL FIX: Check if game is completed - don't allow card plays if game is over
-        if (room.game.gameCompleted) {
-            console.log(`🏁 Game is completed - rejecting card play from ${player.name} (${socket.id})`);
-            socket.emit('error', 'Game has been completed');
-            return;
-        }
-
         // ✅ Find the player who played the card
         const player = room.players.find(p => p.id === socket.id);
         if (!player) {
             console.log(`❌ Player ${socket.id} not found in room`);
             socket.emit('error', 'Player not found in room');
+            return;
+        }
+
+        // ✅ CRITICAL FIX: Check if game is completed - don't allow card plays if game is over
+        if (room.game.gameCompleted) {
+            console.log(`🏁 Game is completed - rejecting card play from ${player.name} (${socket.id})`);
+            socket.emit('error', 'Game has been completed');
             return;
         }
 
