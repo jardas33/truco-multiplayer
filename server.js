@@ -2172,9 +2172,14 @@ io.on('connection', (socket) => {
             console.log(`🏁 Round completion check triggered - 4 cards played!`);
             console.log(`🏁 Round complete in room ${roomCode}`);
             
-            // ✅ CRITICAL FIX: Implement proper scoring logic with draw handling
-            const roundWinner = determineRoundWinner(room.game.playedCards, room);
-            console.log(`🏆 Round winner: ${roundWinner ? roundWinner.name : 'Draw - no winner yet'} (${roundWinner ? roundWinner.team : 'N/A'})`);
+            // ✅ UI FIX: Add delay to show cards on table before round completion
+            console.log(`⏱️ Adding 3-second delay to show played cards before round completion`);
+            setTimeout(() => {
+                console.log(`🏁 Round completion delay finished - proceeding with round completion`);
+                
+                // ✅ CRITICAL FIX: Implement proper scoring logic with draw handling
+                const roundWinner = determineRoundWinner(room.game.playedCards, room);
+                console.log(`🏆 Round winner: ${roundWinner ? roundWinner.name : 'Draw - no winner yet'} (${roundWinner ? roundWinner.team : 'N/A'})`);
             
             // ✅ Update team scores based on round winner (only if there's a clear winner)
             if (roundWinner && roundWinner.team === 'team1') {
@@ -2337,18 +2342,23 @@ io.on('connection', (socket) => {
                 room.game.gameCompleted = true;
                 console.log(`🏁 Game completed - set gameCompleted flag to prevent further bot actions`);
                 
-                // Emit game complete event instead of round complete
-                console.log(`🔍 DEBUG: Emitting gameComplete event to room ${roomCode}`);
-                console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, sets: room.game.sets, gameWinner, setWinner });
-                io.to(roomCode).emit('gameComplete', {
-                    roundWinner: roundWinner,
-                    scores: room.game.scores,
-                    games: room.game.games,
-                    sets: room.game.sets,
-                    gameWinner: gameWinner,
-                    setWinner: setWinner
-                });
-                console.log(`🔍 DEBUG: gameComplete event emitted successfully`);
+                // ✅ UI FIX: Add delay to show cards on table before game completion
+                console.log(`⏱️ Adding 3-second delay to show played cards before game completion`);
+                setTimeout(() => {
+                    console.log(`🏁 Game completion delay finished - proceeding with game completion`);
+                    
+                    // Emit game complete event instead of round complete
+                    console.log(`🔍 DEBUG: Emitting gameComplete event to room ${roomCode}`);
+                    console.log(`🔍 DEBUG: gameComplete data:`, { roundWinner, scores: room.game.scores, games: room.game.games, sets: room.game.sets, gameWinner, setWinner });
+                    io.to(roomCode).emit('gameComplete', {
+                        roundWinner: roundWinner,
+                        scores: room.game.scores,
+                        games: room.game.games,
+                        sets: room.game.sets,
+                        gameWinner: gameWinner,
+                        setWinner: setWinner
+                    });
+                    console.log(`🔍 DEBUG: gameComplete event emitted successfully`);
                 
                 // Start new game after 5 seconds
                 console.log(`SERVER: Scheduling new game start in 5 seconds for room ${roomCode}. Game winner: ${gameWinner}`);
@@ -2358,6 +2368,8 @@ io.on('connection', (socket) => {
                     console.log(`🔍 DEBUG: setTimeout callback executed, calling startNewGame`);
                     startNewGame(room, gameWinner, roomCode);
                 }, 5000);
+                
+                }, 3000); // 3-second delay to show played cards before game completion
                 
                 return; // Don't continue with normal round logic
             }
@@ -2504,6 +2516,7 @@ io.on('connection', (socket) => {
             
             // ✅ CRITICAL FIX: Played cards already cleared before roundComplete emission
             // No need for delayed clearing as it's already done above
+            }, 3000); // 3-second delay to show played cards before round completion
         } else {
                     // ✅ CRITICAL DEBUG: Log EXACTLY what type of player this is
         console.log(`🔍 CRITICAL DEBUG: Player type check for ${targetPlayer.name} (index ${clientPlayerIndex})`);
