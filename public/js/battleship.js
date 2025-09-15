@@ -184,6 +184,12 @@ class BattleshipGame {
             this.handleOpponentAttack(data);
         });
         
+        // Handle attack confirmation events (for the attacker)
+        this.socket.on('battleshipAttackResult', (data) => {
+            console.log('🚢 Received attack result confirmation:', data);
+            this.handleAttackResult(data);
+        });
+        
         // Handle turn change events
         this.socket.on('battleshipTurnChange', (data) => {
             console.log('🚢 Turn change received:', data);
@@ -295,17 +301,19 @@ class BattleshipGame {
             return;
         }
         
+        // Initialize processed attacks set if it doesn't exist
+        if (!this.processedAttacks) {
+            this.processedAttacks = new Set();
+        }
+        
         // Check if this attack has already been processed (deduplication)
         const attackKey = `${attackingPlayerId}-${x}-${y}`;
-        if (this.processedAttacks && this.processedAttacks.has(attackKey)) {
+        if (this.processedAttacks.has(attackKey)) {
             console.log('🚢 Ignoring duplicate attack:', attackKey);
             return;
         }
         
         // Mark this attack as processed
-        if (!this.processedAttacks) {
-            this.processedAttacks = new Set();
-        }
         this.processedAttacks.add(attackKey);
         
         console.log(`🚢 Attack coordinates: x=${x}, y=${y}`);
@@ -331,23 +339,24 @@ class BattleshipGame {
             console.log(`🚢 ERROR: Player grid [${y}][${x}] not found!`);
         }
         
-        // Update the attack grid to show the opponent's attack result
-        if (gameInstance.attackGrids[0][y] && gameInstance.attackGrids[0][y][x]) {
-            gameInstance.attackGrids[0][y][x].hit = isHit;
-            gameInstance.attackGrids[0][y][x].miss = !isHit;
-            console.log(`🚢 Updated attack grid [${y}][${x}]: hit=${isHit}, miss=${!isHit}`);
-        } else {
-            console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
-        }
+        // ✅ CRITICAL FIX: Don't update attack grid here - this is the defender's view
+        // The attack grid should only be updated when the attacker receives confirmation
+        // from the server, not when processing the opponent's attack
+        console.log(`🚢 Defender processing attack - not updating attack grid`);
         
         // Handle ship damage if it's a hit
+        let shipSunk = false;
+        let shipName = null;
+        
         if (isHit && cell.ship) {
             cell.ship.hits++;
+            shipName = cell.ship.name;
             console.log(`🚢 Ship ${cell.ship.name} hit! Hits: ${cell.ship.hits}/${cell.ship.size}`);
             
             // Check if ship is sunk
             if (cell.ship.hits >= cell.ship.size) {
                 cell.ship.sunk = true;
+                shipSunk = true;
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
                 gameInstance.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
             } else {
@@ -355,6 +364,57 @@ class BattleshipGame {
             }
         } else {
             gameInstance.addToHistory(`💧 Opponent missed!`, 'miss');
+        }
+        
+        // ✅ CRITICAL FIX: Send attack result back to server for the attacker
+        if (this.isMultiplayer && this.socket && this.roomCode) {
+            this.socket.emit('battleshipAttackResult', {
+                roomId: this.roomCode,
+                x: x,
+                y: y,
+                hit: isHit,
+                shipSunk: shipSunk,
+                shipName: shipName,
+                attackingPlayerId: attackingPlayerId
+            });
+            console.log(`🚢 Sent attack result to server: hit=${isHit}, shipSunk=${shipSunk}, shipName=${shipName}`);
+        }
+        
+        // Force redraw
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
+    }
+    
+    handleAttackResult(data) {
+        // Handle attack result confirmation for the attacker
+        console.log('🚢 Handling attack result confirmation:', data);
+        const { x, y, hit, shipSunk, shipName } = data;
+        
+        const gameInstance = window.battleshipGame || this.game;
+        if (!gameInstance) {
+            console.log('🚢 ERROR: No game instance available for attack result handling');
+            return;
+        }
+        
+        // Update the attacker's attack grid with the confirmed result
+        if (gameInstance.attackGrids[0][y] && gameInstance.attackGrids[0][y][x]) {
+            gameInstance.attackGrids[0][y][x].hit = hit;
+            gameInstance.attackGrids[0][y][x].miss = !hit;
+            console.log(`🚢 Updated attacker's attack grid [${y}][${x}]: hit=${hit}, miss=${!hit}`);
+        } else {
+            console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
+        }
+        
+        // Add to history
+        if (hit) {
+            if (shipSunk) {
+                gameInstance.addToHistory(`💥 You sunk opponent's ${shipName}!`, 'sunk');
+            } else {
+                gameInstance.addToHistory(`💥 You hit opponent's ${shipName}!`, 'hit');
+            }
+        } else {
+            gameInstance.addToHistory(`💧 You missed!`, 'miss');
         }
         
         // Force redraw
@@ -854,16 +914,15 @@ class BattleshipGame {
             
             // In multiplayer, we can't determine hit/miss on the attacking client
             // because we don't have the opponent's ship data
-            // The hit/miss will be determined by the server or the target player
-            // For now, we'll mark it as a miss and let the server response override it
-            attackGrid[y][x].miss = true;
+            // Don't mark as miss yet - wait for server response
+            // The hit/miss will be determined by the server response
             
             // Send attack to server - the server will determine hit/miss
             this.emitAttack(x, y);
             
             this.addToHistory(`💧 You attacked ${String.fromCharCode(65 + y)}${x + 1}!`, 'info');
             this.showGameMessage(`🎯 Attack sent!`, 2000);
-            return { valid: true, hit: false, sunk: false };
+            return { valid: true, hit: null, sunk: false };
         } else {
             // Single player mode - original logic
             const targetPlayer = 1 - player;

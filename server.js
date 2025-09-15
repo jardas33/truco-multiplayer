@@ -966,10 +966,57 @@ io.on('connection', (socket) => {
     
     socket.on('battleshipAttack', (data) => {
         console.log(`🚢 Attack in room ${data.roomId}:`, data);
+        
+        const room = rooms.get(data.roomId);
+        if (!room) {
+            console.log(`❌ Room ${data.roomId} not found for attack`);
+            return;
+        }
+        
         // Add the attacking player ID to the data
         data.attackingPlayerId = socket.id;
-        // Broadcast attack to other players
+        
+        // ✅ CRITICAL FIX: Process attack logic on server side
+        // Find the defending player (not the attacker)
+        const defendingPlayer = room.players.find(p => p.id !== socket.id);
+        if (!defendingPlayer) {
+            console.log(`❌ No defending player found for attack`);
+            return;
+        }
+        
+        // Get the defending player's ship data from their game state
+        // For now, we'll use a simple approach - the defending player will process the hit/miss
+        // and send back the result
+        
+        // Broadcast attack to other players (defending player)
         socket.to(data.roomId).emit('battleshipAttack', data);
+        
+        // The defending player will process the attack and send back the result
+        // We'll handle the result in a separate event
+    });
+    
+    socket.on('battleshipAttackResult', (data) => {
+        console.log(`🚢 Attack result in room ${data.roomId}:`, data);
+        
+        const room = rooms.get(data.roomId);
+        if (!room) {
+            console.log(`❌ Room ${data.roomId} not found for attack result`);
+            return;
+        }
+        
+        // Broadcast the attack result to the attacking player
+        socket.to(data.roomId).emit('battleshipAttackResult', data);
+        
+        // Also send turn change event
+        const currentPlayerIndex = room.currentPlayer || 0;
+        const nextPlayerIndex = 1 - currentPlayerIndex;
+        room.currentPlayer = nextPlayerIndex;
+        
+        console.log(`🚢 Turn change in room ${data.roomId}: ${nextPlayerIndex}`);
+        io.to(data.roomId).emit('battleshipTurnChange', {
+            roomId: data.roomId,
+            currentPlayer: nextPlayerIndex
+        });
     });
     
     socket.on('battleshipGameOver', (data) => {

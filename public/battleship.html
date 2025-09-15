@@ -684,21 +684,27 @@
                     const player1Name = data.players[0].nickname || data.players[0].name || 'Player 1';
                     const player2Name = data.players[1].nickname || data.players[1].name || 'Player 2';
                     
+                    // ✅ CRITICAL FIX: Add "(you)" to identify the current player
+                    const currentPlayerId = window.battleshipPlayerId;
+                    const isPlayer1 = data.players[0].id === currentPlayerId;
+                    const displayPlayer1Name = isPlayer1 ? `${player1Name} (you)` : player1Name;
+                    const displayPlayer2Name = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                    
                     // Update the scoreboard
                     const playerScoreEl = document.getElementById('playerScore');
                     const aiScoreEl = document.getElementById('aiScore');
                     
                     if (playerScoreEl) {
-                        playerScoreEl.textContent = player1Name;
+                        playerScoreEl.textContent = displayPlayer1Name;
                     }
                     if (aiScoreEl) {
-                        aiScoreEl.textContent = player2Name;
+                        aiScoreEl.textContent = displayPlayer2Name;
                     }
                     
                     // Update player name in game info
                     const playerNameEl = document.getElementById('playerName');
                     if (playerNameEl) {
-                        playerNameEl.textContent = player1Name;
+                        playerNameEl.textContent = displayPlayer1Name;
                     }
                     
                     console.log('🚢 Updated player names:', player1Name, 'vs', player2Name);
