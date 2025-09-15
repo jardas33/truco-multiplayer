@@ -919,38 +919,42 @@ function setupSocketListeners() {
         window.game.roundWinnerStarting = true;
         console.log('🔒 Set flags to ignore old turnChanged events from previous round');
         
-        // ✅ CRITICAL FIX: If the new round starter is a bot, trigger bot play immediately
-        const nextRoundStarter = window.game.players[data.currentPlayer];
-        if (nextRoundStarter && nextRoundStarter.isBot) {
-            console.log(`🤖 Bot ${nextRoundStarter.name} starts new round - triggering bot play immediately`);
-            
-            // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
-            nextRoundStarter.hasPlayedThisTurn = false;
-            
-            // ✅ CRITICAL FIX: Set flag to prevent duplicate bot triggers
-            nextRoundStarter.botTriggeredByRoundComplete = true;
+        // ✅ CRITICAL FIX: Only trigger bot play immediately for actual round winners, not draw rounds
+        if (!data.isDraw) {
+            const nextRoundStarter = window.game.players[data.currentPlayer];
+            if (nextRoundStarter && nextRoundStarter.isBot) {
+                console.log(`🤖 Bot ${nextRoundStarter.name} starts new round - triggering bot play immediately`);
                 
-                // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
-                const roundCompleteTimeoutId = setTimeout(() => {
-                    if (window.game && 
-                        !window.gameCompleted &&
-                        window.game.players[data.currentPlayer] &&
-                        window.game.players[data.currentPlayer].isBot &&
-                        window.game.players[data.currentPlayer].hand && 
-                        window.game.players[data.currentPlayer].hand.length > 0 &&
-                        !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
-                        
-                        console.log(`🤖 Triggering bot play for ${nextRoundStarter.name} in new round`);
-                        triggerBotPlay(data.currentPlayer);
+                // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
+                nextRoundStarter.hasPlayedThisTurn = false;
+                
+                // ✅ CRITICAL FIX: Set flag to prevent duplicate bot triggers
+                nextRoundStarter.botTriggeredByRoundComplete = true;
+                    
+                    // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
+                    const roundCompleteTimeoutId = setTimeout(() => {
+                        if (window.game && 
+                            !window.gameCompleted &&
+                            window.game.players[data.currentPlayer] &&
+                            window.game.players[data.currentPlayer].isBot &&
+                            window.game.players[data.currentPlayer].hand && 
+                            window.game.players[data.currentPlayer].hand.length > 0 &&
+                            !window.game.players[data.currentPlayer].hasPlayedThisTurn) {
+                            
+                            console.log(`🤖 Triggering bot play for ${nextRoundStarter.name} in new round`);
+                            triggerBotPlay(data.currentPlayer);
+                        }
+                    }, 500); // Small delay to ensure state is fully synchronized
+                    
+                    // ✅ CRITICAL FIX: Track timeout ID for cancellation
+                    if (!window.pendingBotTimeouts) {
+                        window.pendingBotTimeouts = [];
                     }
-                }, 500); // Small delay to ensure state is fully synchronized
-                
-                // ✅ CRITICAL FIX: Track timeout ID for cancellation
-                if (!window.pendingBotTimeouts) {
-                    window.pendingBotTimeouts = [];
+                    window.pendingBotTimeouts.push(roundCompleteTimeoutId);
                 }
-                window.pendingBotTimeouts.push(roundCompleteTimeoutId);
-            }
+        } else {
+            console.log(`🤝 Draw round - not triggering bot play immediately, waiting for turnChanged event`);
+        }
         }
         
         // ✅ CRITICAL FIX: Ensure this is NOT a game completion (should be handled by gameComplete)
