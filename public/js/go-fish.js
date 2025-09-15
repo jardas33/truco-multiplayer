@@ -594,6 +594,7 @@ class GoFishClient {
         this.localPlayerIndex = 0;
         this.isMyTurn = false;
         this.canAct = false;
+        this.isActing = false; // Track if player is in middle of an action (fishing, asking, etc.)
         this.currentTargetIndex = 0; // Track selected target
         this.currentRankIndex = 0;   // Track selected rank
     }
@@ -1071,6 +1072,9 @@ class GoFishClient {
         console.log('🎯 askForCards - this.game.players exists:', !!this.game?.players);
         console.log('🎯 askForCards - this.game.players.length:', this.game?.players?.length);
         
+        // Set acting state to prevent additional clicks
+        this.isActing = true;
+        
         // CRITICAL: Check if this is Player 2 and what's different
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this context:', this);
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this.game.currentPlayer:', this.game?.currentPlayer);
@@ -1145,6 +1149,9 @@ class GoFishClient {
             return;
         }
         
+        // Set acting state to prevent additional clicks
+        this.isActing = true;
+        
         console.log('🐟 Going fishing!');
         
         // Don't process game logic on client - let server handle it
@@ -1182,6 +1189,7 @@ class GoFishClient {
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
+        this.isActing = false; // Reset acting state when action completes
         
         // Show appropriate message
         if (data.pairsFound > 0) {
@@ -1227,6 +1235,7 @@ class GoFishClient {
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
+        this.isActing = false; // Reset acting state when action completes
         
         console.log('🎮 Go fish - currentPlayer after update:', this.game.currentPlayer);
         console.log('🎮 Go fish - isMyTurn after update:', this.isMyTurn);
@@ -1365,6 +1374,7 @@ class GoFishClient {
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
         this.canAct = this.isMyTurn; // Allow action when it's my turn
+        this.isActing = false; // Reset acting state when turn changes
         
         console.log('🎮 Turn changed - isMyTurn after update:', this.isMyTurn);
         console.log('🎮 Turn changed - canAct after update:', this.canAct);
@@ -1736,6 +1746,7 @@ class GoFishClient {
         this.localPlayerIndex = 0;
         this.isMyTurn = false;
         this.canAct = false;
+        this.isActing = false;
         this.game = new GoFishGame();
         console.log('✅ Go Fish client state reset');
     }
@@ -2723,8 +2734,9 @@ window.goFishMousePressed = function goFishMousePressed() {
         return;
     }
     
-    // Only handle clicks for human player's turn
-    if (window.game.currentPlayer === window.game.localPlayerIndex) {
+    // Only handle clicks for human player's turn and when not acting
+    if (window.game.currentPlayer === window.game.localPlayerIndex && 
+        window.goFishClient && !window.goFishClient.isActing) {
         // Get canvas dimensions from the actual canvas element to ensure consistency
         const canvas = document.querySelector('canvas');
         const canvasWidth = width;
@@ -2902,6 +2914,13 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🐟 Back to Go Fish Menu clicked');
         window.location.href = '/go-fish.html';
         return;
+    } else {
+        // Player is acting or not their turn - ignore clicks
+        if (window.goFishClient && window.goFishClient.isActing) {
+            console.log('🎯 Ignoring click - player is acting');
+        } else {
+            console.log('🎯 Ignoring click - not player\'s turn');
+        }
     }
 }
 
