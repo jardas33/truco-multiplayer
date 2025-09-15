@@ -69,6 +69,12 @@ class Player {
         console.error('❌ No game instance or Truco state found for bot Truco response');
         return;
       }
+      
+      // ✅ CRITICAL FIX: Reset bot flags when responding to Truco
+      // This ensures the bot can play normally after Truco interactions
+      this.hasPlayedThisTurn = false;
+      this.isPlaying = false;
+      console.log(`🔄 Bot ${this.name} flags reset for Truco response: hasPlayedThisTurn=false, isPlaying=false`);
 
       // Bot makes decision based on current potential value
       let decision;

@@ -138,12 +138,10 @@ function initSocket() {
                 
                 // ✅ CRITICAL FIX: Reset hasPlayedThisTurn and isPlaying flags for new turn (but not for bots yet)
                 if (index === data.currentPlayer) {
-                    // ✅ CRITICAL FIX: Only reset flags for human players, not bots
-                    if (!player.isBot) {
-                        player.hasPlayedThisTurn = false;
-                        player.isPlaying = false;
-                        console.log(`🔄 Reset hasPlayedThisTurn and isPlaying for ${player.name} (new turn)`);
-                    }
+                    // ✅ CRITICAL FIX: Reset flags for ALL players (human and bot) to ensure they can play
+                    player.hasPlayedThisTurn = false;
+                    player.isPlaying = false;
+                    console.log(`🔄 Reset hasPlayedThisTurn and isPlaying for ${player.name} (new turn)`);
                     // ✅ CRITICAL FIX: Clear any pending bot timeout
                     if (player.botPlayingTimeout) {
                         clearTimeout(player.botPlayingTimeout);
@@ -3230,6 +3228,7 @@ function triggerBotPlay(botPlayerIndex) {
                         if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco call successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
+                            botPlayer.isPlaying = false; // Reset isPlaying flag
                             setTimeout(() => {
                                 socket.emit('botTurnComplete', {
                                     roomCode: getRoomCode(),
@@ -3251,6 +3250,7 @@ function triggerBotPlay(botPlayerIndex) {
                         if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco raise successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
+                            botPlayer.isPlaying = false; // Reset isPlaying flag
                             setTimeout(() => {
                                 socket.emit('botTurnComplete', {
                                     roomCode: getRoomCode(),
