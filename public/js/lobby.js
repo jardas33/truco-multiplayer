@@ -77,6 +77,10 @@ function initSocket() {
             console.log(`🔍 DEBUG: turnChanged event stack trace:`, new Error().stack);
             console.log(`🔍 DEBUG: turnChanged event timestamp: ${new Date().toISOString()}`);
             console.log(`🔍 DEBUG: Previous currentPlayerIndex: ${window.game?.currentPlayerIndex}`);
+            console.log(`🔍 DEBUG: Current player name: ${window.game.players[data.currentPlayer]?.name}`);
+            console.log(`🔍 DEBUG: Current player isBot: ${window.game.players[data.currentPlayer]?.isBot}`);
+            console.log(`🔍 DEBUG: roundJustCompleted: ${window.game.roundJustCompleted}`);
+            console.log(`🔍 DEBUG: roundWinnerStarting: ${window.game.roundWinnerStarting}`);
             // ✅ turnChanged event received and processed
             
             // ✅ CRITICAL TEST: Log that we're in the turnChanged handler

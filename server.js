@@ -2478,6 +2478,10 @@ io.on('connection', (socket) => {
             
             console.log(`🔍 DEBUG: Emitting turnChanged event for round completion with currentPlayer: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
             console.log(`🔍 DEBUG: Round completion turnChanged event stack trace:`, new Error().stack);
+            console.log(`🔍 DEBUG: Round winner name: ${roundWinner?.name}`);
+            console.log(`🔍 DEBUG: Round winner team: ${roundWinner?.team}`);
+            console.log(`🔍 DEBUG: Next round starter name: ${nextRoundStarter?.name}`);
+            console.log(`🔍 DEBUG: Next round starter isBot: ${nextRoundStarter?.isBot}`);
             io.to(roomCode).emit('turnChanged', {
                 currentPlayer: room.game.currentPlayer,
                 allHands: room.game.hands
