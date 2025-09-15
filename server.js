@@ -2659,12 +2659,12 @@ io.on('connection', (socket) => {
             console.log(`🔄 Reset bot played flags for new turn`);
         }
         
-        // ✅ CRITICAL TEST: Send a test event first
-        console.log(`🧪 TEST: Sending testTurnChanged event to room ${roomCode}`);
-        io.to(roomCode).emit('testTurnChanged', {
-            message: 'Test event from server',
-            currentPlayer: room.game.currentPlayer
-        });
+        // ✅ CRITICAL TEST: Send a test event first (REMOVED - was interfering with game flow)
+        // console.log(`🧪 TEST: Sending testTurnChanged event to room ${roomCode}`);
+        // io.to(roomCode).emit('testTurnChanged', {
+        //     message: 'Test event from server',
+        //     currentPlayer: room.game.currentPlayer
+        // });
 
         // ✅ UI FIX: Emit turnChanged immediately for UI updates, then add pacing for next turn
         console.log(`🎯 Emitting turnChanged immediately for UI updates`);
