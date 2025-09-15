@@ -97,10 +97,16 @@ function initSocket() {
                 return;
             }
             
-            // ✅ CRITICAL FIX: Prevent duplicate turnChanged processing for the same player
-            if (window.game.currentPlayerIndex === data.currentPlayer) {
+            // ✅ CRITICAL FIX: Prevent duplicate turnChanged processing for the same player, BUT allow legitimate round completion events
+            if (window.game.currentPlayerIndex === data.currentPlayer && !window.game.roundJustCompleted) {
                 console.log(`⚠️ Duplicate turnChanged event for player ${data.currentPlayer} - ignoring to prevent loop`);
                 return;
+            }
+            
+            // ✅ CRITICAL FIX: If this is a legitimate turnChanged after round completion, allow it
+            if (window.game.currentPlayerIndex === data.currentPlayer && window.game.roundJustCompleted) {
+                console.log(`✅ Allowing legitimate turnChanged event for round winner ${data.currentPlayer} after round completion`);
+                // Don't return - continue processing this legitimate event
             }
             
         // ✅ CRITICAL FIX: Check if this turnChanged is from a previous round
