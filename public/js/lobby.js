@@ -136,16 +136,19 @@ function initSocket() {
                 const wasActive = player.isActive;
                 player.isActive = (index === data.currentPlayer);
                 
-                // ✅ CRITICAL FIX: Reset hasPlayedThisTurn and isPlaying flags for new turn
+                // ✅ CRITICAL FIX: Reset hasPlayedThisTurn and isPlaying flags for new turn (but not for bots yet)
                 if (index === data.currentPlayer) {
-                    player.hasPlayedThisTurn = false;
-                    player.isPlaying = false;
+                    // ✅ CRITICAL FIX: Only reset flags for human players, not bots
+                    if (!player.isBot) {
+                        player.hasPlayedThisTurn = false;
+                        player.isPlaying = false;
+                        console.log(`🔄 Reset hasPlayedThisTurn and isPlaying for ${player.name} (new turn)`);
+                    }
                     // ✅ CRITICAL FIX: Clear any pending bot timeout
                     if (player.botPlayingTimeout) {
                         clearTimeout(player.botPlayingTimeout);
                         player.botPlayingTimeout = null;
                     }
-                    console.log(`🔄 Reset hasPlayedThisTurn and isPlaying for ${player.name} (new turn)`);
                 }
                 
                 console.log(`🔄 Player ${player.name} (${index}) isActive: ${wasActive} -> ${player.isActive}`);
@@ -262,7 +265,9 @@ function initSocket() {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
-                            // ✅ CRITICAL FIX: Set flags immediately after validation to prevent race conditions
+                            // ✅ CRITICAL FIX: Reset flags first, then set them immediately after validation to prevent race conditions
+                            bot.hasPlayedThisTurn = false;
+                            bot.isPlaying = false;
                             bot.isPlaying = true;
                             bot.hasPlayedThisTurn = true;
                             
