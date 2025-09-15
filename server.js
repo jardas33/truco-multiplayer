@@ -1843,9 +1843,11 @@ io.on('connection', (socket) => {
                 currentPlayer: room.game.currentPlayer
             });
             
-            // Only give the player another turn if the pair contains a card obtained this turn
-            if (pairContainsCardFromThisTurn) {
-                console.log(`🎯 ${player.name} made a pair with card from this turn - gets another turn`);
+            // Give another turn if:
+            // 1. Pair contains a card obtained this turn, OR
+            // 2. Pair is made from initial cards (cardsObtainedThisTurn is empty - start of turn)
+            if (pairContainsCardFromThisTurn || cardsObtainedThisTurn.length === 0) {
+                console.log(`🎯 ${player.name} made a pair - gets another turn`);
                 // Don't advance turn - player gets to continue
             } else {
                 console.log(`🎯 ${player.name} made a pair with old cards - advancing turn`);
