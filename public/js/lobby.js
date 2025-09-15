@@ -622,9 +622,15 @@ function setupSocketListeners() {
             if (responsePlayer && responsePlayer.isBot) {
                 // Bot response - always allow human player's client to trigger bot responses
                 console.log(`🤖 Bot ${responsePlayer.name} needs to respond to Truco`);
-                setTimeout(() => {
+                const botResponseTimeoutId = setTimeout(() => {
                     responsePlayer.botRespondTruco();
                 }, 1500);
+                
+                // ✅ CRITICAL FIX: Track timeout ID for cancellation
+                if (!window.pendingBotTimeouts) {
+                    window.pendingBotTimeouts = [];
+                }
+                window.pendingBotTimeouts.push(botResponseTimeoutId);
             } else if (responsePlayer && !responsePlayer.isBot) {
                 // Human response - only show response buttons to the specific player who needs to respond
                 if (localPlayerIndex === data.responsePlayerIndex) {
@@ -772,9 +778,15 @@ function setupSocketListeners() {
             
             if (responsePlayer && responsePlayer.isBot) {
                 console.log(`🤖 Bot ${responsePlayer.name} needs to respond to raised Truco`);
-                setTimeout(() => {
+                const botRaiseResponseTimeoutId = setTimeout(() => {
                     responsePlayer.botRespondTruco();
                 }, 1500);
+                
+                // ✅ CRITICAL FIX: Track timeout ID for cancellation
+                if (!window.pendingBotTimeouts) {
+                    window.pendingBotTimeouts = [];
+                }
+                window.pendingBotTimeouts.push(botRaiseResponseTimeoutId);
             } else if (responsePlayer && !responsePlayer.isBot) {
                 // Human response - only show response buttons to the specific player who needs to respond
                 if (localPlayerIndex === data.responsePlayerIndex) {
@@ -894,6 +906,13 @@ function setupSocketListeners() {
             window.pendingBotTimeouts = [];
             console.log('🚫 All pending bot plays cancelled due to round completion');
         }
+        
+        // ✅ CRITICAL FIX: Clear ALL timeouts to prevent any lingering bot actions
+        // This is a nuclear option to ensure no bot actions from previous round interfere
+        for (let i = 1; i < 10000; i++) {
+            clearTimeout(i);
+        }
+        console.log('🚫 NUCLEAR OPTION: Cleared all timeouts to prevent lingering bot actions');
         
         // ✅ CRITICAL FIX: Set flags to ignore old turnChanged events from previous round
         window.game.roundJustCompleted = true;
