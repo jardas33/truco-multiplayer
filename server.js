@@ -1328,7 +1328,7 @@ io.on('connection', (socket) => {
                 // For other games (Truco, etc.), emit gameStart event
                 io.to(roomCode).emit('gameStart', {
                     players: room.players,
-                    hands: hands,
+                    hands: room.game.hands,
                     currentPlayer: room.game.currentPlayer  // ✅ FIX: Use the actual random starting player
                 });
             }
