@@ -267,19 +267,21 @@ function initSocket() {
                                         
                                     console.log(`🤖 Bot ${bot.name} card play event sent`);
                                         
-                                    // ✅ CRITICAL FIX: Send botTurnComplete immediately to prevent game getting stuck
-                                    // Don't use setTimeout as it gets cancelled by nuclear option
-                                    try {
-                                        console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                        socket.emit('botTurnComplete', {
-                                            roomCode: getRoomCode(),
-                                            playerIndex: data.currentPlayer,
-                                            roundNumber: window.game?.currentRound || 0
-                                        });
-                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
-                                    } catch (turnCompleteError) {
-                                        console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                                    }
+                                    // ✅ CRITICAL FIX: Send botTurnComplete with small delay to avoid rate limiting
+                                    // Use setTimeout with short delay to ensure server processes card play first
+                                    setTimeout(() => {
+                                        try {
+                                            console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                            socket.emit('botTurnComplete', {
+                                                roomCode: getRoomCode(),
+                                                playerIndex: data.currentPlayer,
+                                                roundNumber: window.game?.currentRound || 0
+                                            });
+                                            console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                                        } catch (turnCompleteError) {
+                                            console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                        }
+                                    }, 100); // 100ms delay to avoid rate limiting
                                     }
                             }, 1500); // 1.5 second visual delay for pacing
                             
@@ -3144,11 +3146,13 @@ function triggerBotPlay(botPlayerIndex) {
                             
                             // Mark as played and complete turn
                             botPlayer.hasPlayedThisTurn = true;
-                            socket.emit('botTurnComplete', {
-                                roomCode: getRoomCode(),
-                                playerIndex: botPlayerIndex,
-                                roundNumber: window.game?.currentRound || 0
-                            });
+                            setTimeout(() => {
+                                socket.emit('botTurnComplete', {
+                                    roomCode: getRoomCode(),
+                                    playerIndex: botPlayerIndex,
+                                    roundNumber: window.game?.currentRound || 0
+                                });
+                            }, 100); // 100ms delay to avoid rate limiting
                         }
                     }, 2000); // 2 second timeout for Truco response
                     
@@ -3161,11 +3165,13 @@ function triggerBotPlay(botPlayerIndex) {
                         if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco call successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
-                            socket.emit('botTurnComplete', {
-                                roomCode: getRoomCode(),
-                                playerIndex: botPlayerIndex,
-                                roundNumber: window.game?.currentRound || 0
-                            });
+                            setTimeout(() => {
+                                socket.emit('botTurnComplete', {
+                                    roomCode: getRoomCode(),
+                                    playerIndex: botPlayerIndex,
+                                    roundNumber: window.game?.currentRound || 0
+                                });
+                            }, 100); // 100ms delay to avoid rate limiting
                             // Remove the fallback timeout since Truco was successful
                             clearTimeout(trucoFallbackTimeout);
                             // Remove both listeners since Truco was successful
@@ -3180,11 +3186,13 @@ function triggerBotPlay(botPlayerIndex) {
                         if (data.callerName === botPlayer.name) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco raise successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
-                            socket.emit('botTurnComplete', {
-                                roomCode: getRoomCode(),
-                                playerIndex: botPlayerIndex,
-                                roundNumber: window.game?.currentRound || 0
-                            });
+                            setTimeout(() => {
+                                socket.emit('botTurnComplete', {
+                                    roomCode: getRoomCode(),
+                                    playerIndex: botPlayerIndex,
+                                    roundNumber: window.game?.currentRound || 0
+                                });
+                            }, 100); // 100ms delay to avoid rate limiting
                             // Remove the fallback timeout since Truco raise was successful
                             clearTimeout(trucoFallbackTimeout);
                             // Remove both listeners since Truco raise was successful
@@ -3221,11 +3229,13 @@ function triggerBotPlay(botPlayerIndex) {
                                 
                                 // Mark as played and complete turn
                                 botPlayer.hasPlayedThisTurn = true;
-                                socket.emit('botTurnComplete', {
-                                    roomCode: window.roomId,
-                                    playerIndex: botPlayerIndex,
-                                    roundNumber: window.game?.currentRound || 0
-                                });
+                                setTimeout(() => {
+                                    socket.emit('botTurnComplete', {
+                                        roomCode: window.roomId,
+                                        playerIndex: botPlayerIndex,
+                                        roundNumber: window.game?.currentRound || 0
+                                    });
+                                }, 100); // 100ms delay to avoid rate limiting
                             }
                         }
                     };
@@ -3289,18 +3299,20 @@ function triggerBotPlay(botPlayerIndex) {
                             }, 3000); // 3 second delay to ensure all old events are processed
                         }
                 
-                    // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
-                    try {
-                        console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} immediately`);
-                        socket.emit('botTurnComplete', {
-                            roomCode: window.roomId,
-                            playerIndex: botPlayerIndex,
-                            roundNumber: window.game?.currentRound || 0
-                        });
-                        console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
-                    } catch (botCompleteError) {
-                        console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
-                    }
+                    // ✅ CRITICAL FIX: Emit botTurnComplete with small delay to avoid rate limiting
+                    setTimeout(() => {
+                        try {
+                            console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} with delay`);
+                            socket.emit('botTurnComplete', {
+                                roomCode: window.roomId,
+                                playerIndex: botPlayerIndex,
+                                roundNumber: window.game?.currentRound || 0
+                            });
+                            console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
+                        } catch (botCompleteError) {
+                            console.error(`❌ Bot turn complete failed for ${botPlayer.name}:`, botCompleteError);
+                        }
+                    }, 100); // 100ms delay to avoid rate limiting
                 
             } else {
                 console.log(`🤖 Bot ${botPlayer.name} can no longer play - state changed`);
