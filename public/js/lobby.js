@@ -2893,10 +2893,17 @@ function copyRoomCode() {
         return;
     }
     
+    // Use the helper function to get the room code properly
+    const roomCode = getRoomCode();
+    if (!roomCode) {
+        console.error('No room code to copy');
+        return;
+    }
+    
     try {
         // Use modern clipboard API if available
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(window.roomId).then(() => {
+            navigator.clipboard.writeText(roomCode).then(() => {
                 showCopySuccess();
             }).catch(err => {
                 console.error('Failed to copy using clipboard API:', err);
