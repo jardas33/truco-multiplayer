@@ -1020,13 +1020,8 @@ function setupSocketListeners() {
             });
         }
         
-        // ✅ CRITICAL FIX: Reset bot flags for new round
-        window.game.players.forEach(player => {
-            if (player.isBot) {
-                player.hasPlayedThisTurn = false;
-                console.log(`🔄 New round - reset hasPlayedThisTurn for ${player.name}`);
-            }
-        });
+        // ✅ CRITICAL FIX: Don't reset bot flags here - let bot validation handle it
+        // This prevents race conditions where flags are reset before validation
         
         // ✅ CRITICAL FIX: Don't clear played cards immediately on roundComplete
         // Keep them visible until the next round actually starts with new cards
