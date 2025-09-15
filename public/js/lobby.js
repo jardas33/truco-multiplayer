@@ -140,6 +140,11 @@ function initSocket() {
                 if (index === data.currentPlayer) {
                     player.hasPlayedThisTurn = false;
                     player.isPlaying = false;
+                    // ✅ CRITICAL FIX: Clear any pending bot timeout
+                    if (player.botPlayingTimeout) {
+                        clearTimeout(player.botPlayingTimeout);
+                        player.botPlayingTimeout = null;
+                    }
                     console.log(`🔄 Reset hasPlayedThisTurn and isPlaying for ${player.name} (new turn)`);
                 }
                 
@@ -243,22 +248,32 @@ function initSocket() {
                             !(window.game.trucoState && window.game.trucoState.waitingForResponse && 
                               window.game.trucoState.responsePlayerIndex === data.currentPlayer) &&
                             // ✅ CRITICAL FIX: Ensure this turnChanged event is actually for this bot
-                            data.currentPlayer === window.game.currentPlayerIndex) {
+                            data.currentPlayer === window.game.currentPlayerIndex &&
+                            // ✅ CRITICAL FIX: Prevent duplicate bot triggers
+                            !currentPlayer.botTriggeredByRoundComplete) {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
+                            // ✅ CRITICAL FIX: Set flags immediately to prevent duplicate plays
+                            const bot = window.game.players[data.currentPlayer];
+                            bot.isPlaying = true;
+                            bot.hasPlayedThisTurn = true;
+                            
+                            // ✅ CRITICAL FIX: Check if bot is already in process of playing
+                            if (bot.botPlayingTimeout) {
+                                console.log(`🤖 Bot ${bot.name} already has a pending play - skipping duplicate`);
+                                return;
+                            }
+                            
                             // ✅ PACING FIX: Execute bot play with visual delay for better UX
                             const turnChangedTimeoutId = setTimeout(() => {
-                                    const bot = window.game.players[data.currentPlayer];
                                     const cardIndex = 0;
                                     const selectedCard = bot.hand[cardIndex];
                                     
                                     if (selectedCard && selectedCard.name) {
                                     console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
                                         
-                                    // Mark bot as playing and played BEFORE sending event to prevent duplicates
-                                    bot.isPlaying = true;
-                                        bot.hasPlayedThisTurn = true;
+                                    // ✅ CRITICAL FIX: Flags already set above to prevent duplicates
                                         
                                         // Emit playCard event
                                         socket.emit('playCard', {
@@ -285,7 +300,13 @@ function initSocket() {
                                         }
                                     }, 100); // 100ms delay to avoid rate limiting
                                     }
+                                    
+                                    // ✅ CRITICAL FIX: Clear the timeout reference when done
+                                    bot.botPlayingTimeout = null;
                             }, 1500); // 1.5 second visual delay for pacing
+                            
+                            // ✅ CRITICAL FIX: Track the timeout to prevent duplicates
+                            bot.botPlayingTimeout = turnChangedTimeoutId;
                             
                             // ✅ CRITICAL FIX: Track timeout ID for cancellation
                             if (!window.pendingBotTimeouts) {
