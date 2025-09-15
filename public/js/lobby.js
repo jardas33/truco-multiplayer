@@ -877,16 +877,26 @@ function setupSocketListeners() {
                 console.log(`🔄 New round - Player ${player.name} (${index}) isActive: ${player.isActive}`);
             });
             
-            // ✅ CRITICAL FIX: If the new round starter is a bot, trigger bot play immediately
-            const nextRoundStarter = window.game.players[data.currentPlayer];
-            if (nextRoundStarter && nextRoundStarter.isBot) {
-                console.log(`🤖 Bot ${nextRoundStarter.name} starts new round - triggering bot play immediately`);
-                
-                // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
-                nextRoundStarter.hasPlayedThisTurn = false;
-                
-                // ✅ CRITICAL FIX: Set flag to prevent duplicate bot triggers
-                nextRoundStarter.botTriggeredByRoundComplete = true;
+        // ✅ CRITICAL FIX: Cancel any pending bot actions from the previous round
+        if (window.pendingBotTimeouts) {
+            window.pendingBotTimeouts.forEach(timeoutId => {
+                clearTimeout(timeoutId);
+                console.log('🚫 Cancelled pending bot timeout from previous round:', timeoutId);
+            });
+            window.pendingBotTimeouts = [];
+            console.log('🚫 All pending bot plays cancelled due to round completion');
+        }
+        
+        // ✅ CRITICAL FIX: If the new round starter is a bot, trigger bot play immediately
+        const nextRoundStarter = window.game.players[data.currentPlayer];
+        if (nextRoundStarter && nextRoundStarter.isBot) {
+            console.log(`🤖 Bot ${nextRoundStarter.name} starts new round - triggering bot play immediately`);
+            
+            // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
+            nextRoundStarter.hasPlayedThisTurn = false;
+            
+            // ✅ CRITICAL FIX: Set flag to prevent duplicate bot triggers
+            nextRoundStarter.botTriggeredByRoundComplete = true;
                 
                 // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
                 const roundCompleteTimeoutId = setTimeout(() => {
