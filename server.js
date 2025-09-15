@@ -2539,9 +2539,12 @@ io.on('connection', (socket) => {
 
     // ✅ CRITICAL FIX: Handle bot turn completion to move to next player
     socket.on('botTurnComplete', (data) => {
-        console.log(`🤖 Bot turn complete in room: ${roomCode}`);
+        console.log(`🤖 Bot turn complete with data:`, data);
+        
+        // ✅ CRITICAL FIX: Use room code from data or fallback to socket.roomCode
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: botTurnComplete event received from socket ${socket.id}`);
-        console.log(`🔍 DEBUG: botTurnComplete data:`, data);
         
         if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
