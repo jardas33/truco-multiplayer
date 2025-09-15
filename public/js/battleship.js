@@ -2309,6 +2309,9 @@ class BattleshipClient {
     }
     
     mousePressed() {
+        console.log(`🎯 BattleshipClient.mousePressed called - mouseX: ${mouseX}, mouseY: ${mouseY}`);
+        console.log(`🎯 Game state - game: ${!!this.game}, gamePhase: ${this.game?.gamePhase}, currentShip: ${!!this.currentShip}`);
+        
         // Prevent clicks during resize events
         if (this.isResizing) {
             console.log(`🎯 Click ignored - window is resizing`);
@@ -2333,7 +2336,8 @@ class BattleshipClient {
             return;
         }
         
-        if (this.gamePhase === 'placement') {
+        if (this.game && this.game.gamePhase === 'placement') {
+            console.log(`🎯 In placement phase - calling handleShipPlacement`);
             // In placement mode, always try to place the ship first
             // Only check for ship item clicks if placement fails
             this.handleShipPlacement();
@@ -2349,7 +2353,7 @@ class BattleshipClient {
             // Ship selection is handled by the event listeners in setupShipPlacement
             // No need to do anything here as the click will be handled by the ship item's click listener
             return;
-        } else if (this.gamePhase === 'playing') {
+        } else if (this.game && this.game.gamePhase === 'playing') {
             this.handleAttack();
         }
     }

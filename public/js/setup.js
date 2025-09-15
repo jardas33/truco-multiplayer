@@ -427,6 +427,18 @@ function mousePressed() {
     console.log('🖱️ p5.js mousePressed called - mouseX:', mouseX, 'mouseY:', mouseY);
     console.log('🖱️ Game state - gamePhase:', window.game?.gamePhase, 'currentPlayer:', window.game?.currentPlayer, 'localPlayerIndex:', window.game?.localPlayerIndex);
     
+    // ✅ CRITICAL FIX: Handle battleship game clicks
+    if (window.battleshipGame && window.battleshipClient) {
+        console.log('🖱️ Battleship game detected - calling battleshipClient.mousePressed');
+        if (typeof window.battleshipClient.mousePressed === 'function') {
+            console.log('🖱️ battleshipClient.mousePressed function exists - calling it');
+            window.battleshipClient.mousePressed();
+        } else {
+            console.log('❌ battleshipClient.mousePressed function does not exist!');
+        }
+        return; // Exit early to prevent other game handling
+    }
+    
     if (window.game && window.game.gamePhase === 'playing') {
         console.log('🖱️ Game is playing - calling goFishMousePressed');
         if (typeof window.goFishMousePressed === 'function') {
