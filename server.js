@@ -1628,9 +1628,10 @@ io.on('connection', (socket) => {
                         return; // Game over handled by checkGoFishGameOver
                     }
                     
-                    // If pairs were found, player gets another turn
-                    if (pairsFound > 0) {
-                        console.log(`🎯 ${player.name} found pairs after fishing - gets another turn`);
+                    // Only give another turn if pairs were found AND player is a bot (pairs auto-removed)
+                    // For human players, they need to manually make pairs to get another turn
+                    if (pairsFound > 0 && player.isBot) {
+                        console.log(`🎯 Bot ${player.name} found pairs after fishing - gets another turn`);
                         return; // Don't advance turn
                     }
                     
@@ -1822,6 +1823,10 @@ io.on('connection', (socket) => {
                 })),
                 currentPlayer: room.game.currentPlayer
             });
+            
+            // Give the player another turn after making a pair
+            console.log(`🎯 ${player.name} made a pair - gets another turn`);
+            // Don't advance turn - player gets to continue
             
         } catch (error) {
             console.error(`❌ Error in makePair handler:`, error);
