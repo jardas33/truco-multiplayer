@@ -2765,8 +2765,11 @@ io.on('connection', (socket) => {
             room.game.currentRound = 0;
         }
 
-        // ✅ Check if Truco is already active
-        if (room.game.trucoState.isActive) {
+        // ✅ Check if Truco is already active and this is not a raise
+        if (room.game.trucoState.isActive && room.game.trucoState.waitingForResponse) {
+            // This is a raise - allow it to proceed
+            console.log(`📈 Truco raise attempt by ${requestingPlayer.name}`);
+        } else if (room.game.trucoState.isActive && !room.game.trucoState.waitingForResponse) {
             console.log(`❌ Truco is already active in room ${roomCode}`);
             socket.emit('error', 'Truco already active');
             return;
@@ -2805,11 +2808,11 @@ io.on('connection', (socket) => {
             }
         }
 
+        // Check if this is a raise (Truco was already called and waiting for response)
+        const isRaise = room.game.trucoState.isActive && room.game.trucoState.callerTeam !== null;
+        
         // ✅ Start Truco or Raise
         room.game.trucoState.isActive = true;
-        
-        // Check if this is a raise (Truco was already accepted)
-        const isRaise = room.game.trucoState.callerTeam !== null && room.game.trucoState.currentValue > 1;
         
         if (isRaise) {
             // ✅ CRITICAL FIX: Check if we can raise further (max 12 games)
@@ -3006,6 +3009,7 @@ io.on('connection', (socket) => {
 
         } else if (response === 2) {
             // ✅ Reject Truco
+            // ✅ CRITICAL FIX: The team that raised (current callerTeam) should win when rejected
             const winningTeam = room.game.trucoState.callerTeam;
             const winningTeamName = winningTeam === 'team1' ? 'Team Alfa' : 'Team Beta';
             
