@@ -1394,9 +1394,15 @@ function showRoundWinnerMessagePopup(data) {
             e.preventDefault();
             e.stopPropagation();
             console.log('✅ Round winner popup closed - no game logic triggered');
+            console.log('✅ Round winner popup close button clicked - calling clearCurrentPopup');
             clearCurrentPopup();
         });
     }
+    
+    // ✅ DEBUG: Check if popup was created successfully
+    console.log('✅ Round winner popup created with ID:', messageDiv.id);
+    console.log('✅ Round winner popup element:', messageDiv);
+    console.log('✅ Round winner popup parent:', messageDiv.parentNode);
 }
 
 // ✅ CRITICAL FIX: Function to display draw message
@@ -3455,7 +3461,14 @@ function showPopup(type, data, duration) {
     // ✅ CRITICAL FIX: Don't clear current popup here - processPopupQueue already ensures currentPopup is null
     // clearCurrentPopup(); // REMOVED - this was causing the timer to be cleared immediately
     
+    console.log(`🎯 showPopup called with type: ${type}, duration: ${duration}ms`);
+    console.log(`🎯 showPopup - currentPopup before:`, currentPopup);
+    console.log(`🎯 showPopup - popupTimeout before:`, popupTimeout);
+    
     currentPopup = { type, data, duration };
+    
+    console.log(`🎯 showPopup - currentPopup after:`, currentPopup);
+    console.log(`🎯 showPopup - popupTimeout after:`, popupTimeout);
     
     switch (type) {
         case 'truco':
