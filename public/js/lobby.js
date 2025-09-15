@@ -242,7 +242,8 @@ function initSocket() {
                                                 console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
                                                 socket.emit('botTurnComplete', {
                                                     roomCode: getRoomCode(),
-                                                    playerIndex: data.currentPlayer
+                                                    playerIndex: data.currentPlayer,
+                                                    roundNumber: window.game?.currentRound || 0
                                                 });
                                             console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
                                             } catch (turnCompleteError) {
@@ -833,6 +834,10 @@ function setupSocketListeners() {
         if (typeof data.currentPlayer !== 'undefined') {
             console.log(`🔄 roundComplete: Updating currentPlayer from ${window.game.currentPlayerIndex} to ${data.currentPlayer}`);
             window.game.currentPlayerIndex = data.currentPlayer;
+            
+            // ✅ CRITICAL FIX: Update round counter for client
+            window.game.currentRound = (window.game.currentRound || 0) + 1;
+            console.log(`🔄 Round counter updated to: ${window.game.currentRound}`);
             
             // ✅ Update player active states
             window.game.players.forEach((player, index) => {
@@ -3090,7 +3095,8 @@ function triggerBotPlay(botPlayerIndex) {
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
                                 roomCode: getRoomCode(),
-                                playerIndex: botPlayerIndex
+                                playerIndex: botPlayerIndex,
+                                roundNumber: window.game?.currentRound || 0
                             });
                         }
                     }, 2000); // 2 second timeout for Truco response
@@ -3106,7 +3112,8 @@ function triggerBotPlay(botPlayerIndex) {
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
                                 roomCode: getRoomCode(),
-                                playerIndex: botPlayerIndex
+                                playerIndex: botPlayerIndex,
+                                roundNumber: window.game?.currentRound || 0
                             });
                             // Remove the fallback timeout since Truco was successful
                             clearTimeout(trucoFallbackTimeout);
@@ -3124,7 +3131,8 @@ function triggerBotPlay(botPlayerIndex) {
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
                                 roomCode: getRoomCode(),
-                                playerIndex: botPlayerIndex
+                                playerIndex: botPlayerIndex,
+                                roundNumber: window.game?.currentRound || 0
                             });
                             // Remove the fallback timeout since Truco raise was successful
                             clearTimeout(trucoFallbackTimeout);
@@ -3164,7 +3172,8 @@ function triggerBotPlay(botPlayerIndex) {
                                 botPlayer.hasPlayedThisTurn = true;
                                 socket.emit('botTurnComplete', {
                                     roomCode: window.roomId,
-                                    playerIndex: botPlayerIndex
+                                    playerIndex: botPlayerIndex,
+                                    roundNumber: window.game?.currentRound || 0
                                 });
                             }
                         }
@@ -3221,7 +3230,8 @@ function triggerBotPlay(botPlayerIndex) {
                         console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} immediately`);
                         socket.emit('botTurnComplete', {
                             roomCode: window.roomId,
-                            playerIndex: botPlayerIndex
+                            playerIndex: botPlayerIndex,
+                            roundNumber: window.game?.currentRound || 0
                         });
                         console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
                     } catch (botCompleteError) {

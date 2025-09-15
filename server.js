@@ -2427,6 +2427,10 @@ io.on('connection', (socket) => {
             room.game.roundJustCompleted = true;
             console.log(`🔄 Set roundJustCompleted flag to prevent botTurnComplete from overriding round winner`);
             
+            // ✅ CRITICAL FIX: Increment round counter to identify current round
+            room.game.currentRound = (room.game.currentRound || 0) + 1;
+            console.log(`🔄 Round counter incremented to: ${room.game.currentRound}`);
+            
             // ✅ CRITICAL FIX: Reset rate limiting timestamp for new round
             room.game.lastBotTurnComplete = null;
             console.log(`🔄 Reset rate limiting timestamp for new round`);
@@ -2591,6 +2595,15 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // ✅ CRITICAL FIX: Check if this botTurnComplete is from a previous round using round number
+        const eventRoundNumber = data.roundNumber;
+        const currentRoundNumber = room.game.currentRound || 0;
+        if (eventRoundNumber !== undefined && eventRoundNumber < currentRoundNumber) {
+            console.log(`⚠️ botTurnComplete from previous round - event round ${eventRoundNumber} but current round is ${currentRoundNumber}`);
+            console.log(`🔍 DEBUG: Ignoring old botTurnComplete event from previous round`);
+            return;
+        }
+        
         // ✅ Move to next player after bot turn is complete
         const previousPlayer = room.game.currentPlayer;
         console.log(`🔍 DEBUG: botTurnComplete processing - previousPlayer: ${previousPlayer} (${room.players[previousPlayer]?.name})`);
@@ -2742,6 +2755,11 @@ io.on('connection', (socket) => {
                 waitingForResponse: false,
                 responsePlayerIndex: null
             };
+        }
+        
+        // ✅ Initialize round counter if not already set
+        if (!room.game.currentRound) {
+            room.game.currentRound = 0;
         }
 
         // ✅ Check if Truco is already active
