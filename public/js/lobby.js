@@ -262,6 +262,8 @@ function initSocket() {
                               window.game.trucoState.responsePlayerIndex === data.currentPlayer) &&
                             // ✅ CRITICAL FIX: Ensure this turnChanged event is actually for this bot
                             data.currentPlayer === window.game.currentPlayerIndex &&
+                            // ✅ CRITICAL FIX: Double-check that it's actually the bot's turn
+                            window.game.currentPlayerIndex === data.currentPlayer &&
                             // ✅ CRITICAL FIX: Prevent duplicate bot triggers
                             !currentPlayer.botTriggeredByRoundComplete) {
                                     
@@ -278,6 +280,12 @@ function initSocket() {
                                     
                                     if (selectedCard && selectedCard.name) {
                                     console.log(`🤖 Bot ${bot.name} playing card with visual delay: ${selectedCard.name}`);
+                                        
+                                    // ✅ CRITICAL FIX: Final validation - ensure it's still the bot's turn
+                                    if (window.game.currentPlayerIndex !== data.currentPlayer) {
+                                        console.log(`❌ Bot ${bot.name} turn changed during delay - cancelling play`);
+                                        return;
+                                    }
                                         
                                     // ✅ CRITICAL FIX: Set hasPlayedThisTurn flag only when actually playing the card
                                     bot.hasPlayedThisTurn = true;

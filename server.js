@@ -1999,15 +1999,10 @@ io.on('connection', (socket) => {
             console.log(`❌ Play attempt out of turn. Current: ${room.game.currentPlayer}, Client sent: ${clientPlayerIndex}`);
             console.log(`🔍 DEBUG: Current player should be: ${room.players[room.game.currentPlayer]?.name}, Attempted player: ${room.players[clientPlayerIndex]?.name}`);
             
-            // ✅ CRITICAL FIX: For bots, allow a small tolerance window to prevent race conditions
-            if (targetPlayer.isBot) {
-                console.log(`🤖 Bot ${targetPlayer.name} turn validation - allowing small tolerance for race conditions`);
-                // Don't immediately reject bot plays - they might be slightly out of sync
-                // The bot logic will handle this gracefully
-            } else {
-                socket.emit('error', 'Not your turn');
-                return;
-            }
+            // ✅ CRITICAL FIX: NO TOLERANCE - Strict turn validation for ALL players including bots
+            console.log(`🚫 STRICT VALIDATION: Rejecting play attempt from ${room.players[clientPlayerIndex]?.name} - it's ${room.players[room.game.currentPlayer]?.name}'s turn`);
+            socket.emit('error', 'Not your turn');
+            return;
         }
         
         // ✅ CRITICAL FIX: For bot plays, validate that the requesting player can act on behalf of the bot
