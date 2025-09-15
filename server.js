@@ -1932,20 +1932,25 @@ io.on('connection', (socket) => {
 
     // Handle game events
     socket.on('playCard', (data) => {
-        console.log(`🃏 Card played in room: ${socket.roomCode}`);
-        console.log(`🃏 Play data:`, data);
+        console.log(`🃏 Card played with data:`, data);
         
-        if (!socket.roomCode) {
+        // ✅ CRITICAL FIX: Use room code from data or fallback to socket.roomCode
+        const roomCode = data.roomCode || socket.roomCode;
+        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        console.log(`🔍 DEBUG: Socket ID: ${socket.id}`);
+        console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
+        
+        if (!roomCode) {
             console.log(`❌ User ${socket.id} not in a room`);
             socket.emit('error', 'Not in a room');
             return;
         }
         
-        const room = rooms.get(socket.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${socket.roomCode} not found for card play`);
+            console.log(`❌ Room ${roomCode} not found for card play`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
-            console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
+            console.log(`🔍 DEBUG: Room code used:`, roomCode);
             console.log(`🔍 DEBUG: Socket ID:`, socket.id);
             socket.emit('error', 'Room not found');
             return;
