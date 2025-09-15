@@ -1752,6 +1752,8 @@ function startNewGameInHistory() {
 
 // Function to show round history modal
 function showRoundHistory() {
+    console.log('📋 showRoundHistory() called - starting round history display');
+    
     const modal = document.getElementById('roundHistoryModal');
     const content = document.getElementById('roundHistoryContent');
     
@@ -1759,6 +1761,10 @@ function showRoundHistory() {
         console.error('❌ Round history modal elements not found');
         return;
     }
+    
+    // ✅ CRITICAL FIX: Ensure this is purely a UI operation
+    // Don't trigger any game logic or state checks
+    console.log('📋 Round history is purely UI operation - no game logic triggered');
     
     // Generate round history content
     let historyHTML = '';
@@ -1907,9 +1913,18 @@ function showRoundHistory() {
         });
     }
     
-    content.innerHTML = historyHTML;
-    modal.style.display = 'block';
-    console.log(`📋 Round history modal displayed with ${roundHistory.length} rounds`);
+    try {
+        content.innerHTML = historyHTML;
+        modal.style.display = 'block';
+        console.log(`📋 Round history modal displayed with ${roundHistory.length} rounds`);
+        console.log('✅ Round history display completed successfully - no errors');
+    } catch (error) {
+        console.error('❌ Error displaying round history:', error);
+        // Hide modal if there was an error
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
 }
 
 // Function to hide round history modal
@@ -2145,8 +2160,10 @@ function setupButtonListeners() {
     // ✅ Round History button
     const roundHistoryBtn = document.getElementById('roundHistoryBtn');
     if (roundHistoryBtn) {
-        roundHistoryBtn.onclick = () => {
-            console.log('📋 Round History button clicked');
+        roundHistoryBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📋 Round History button clicked - no game logic triggered');
             showRoundHistory();
         };
     }
