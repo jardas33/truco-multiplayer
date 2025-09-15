@@ -1,8 +1,5 @@
 // 🐟 GO FISH GAME LOGIC
 
-// Global debug variables for visual debugging
-window.lastClickX = undefined;
-window.lastClickY = undefined;
 
 class GoFishGame {
     constructor() {
@@ -1876,9 +1873,6 @@ function drawOpponentHands() {
 
 function drawOpponentHand(x, y, player, cardWidth, cardHeight, spacing) {
     
-    // Draw a bright test rectangle first
-    fill(255, 0, 255, 150);
-    rect(x - 10, y - 10, 170, 100, 8);
     
     // Draw player info panel
     fill(0, 0, 0, 200);
@@ -1995,7 +1989,6 @@ function drawMainPlayerHand() {
     
     // Removed repetitive canvas dimensions log to reduce console spam
     
-    // Draw a large test rectangle to verify canvas is working
     
     if (window.game.currentPlayer === window.game.localPlayerIndex) {
         // Removed repetitive button drawing log to reduce console spam
@@ -2007,10 +2000,6 @@ function drawMainPlayerHand() {
         const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
                              mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
-        // Visual debugging: Draw button area highlight
-        fill(255, 0, 0, 50); // Semi-transparent red
-        noStroke();
-        rect(askX, buttonY, buttonWidth, buttonHeight);
         
         // Green button with same style as Go Fish button
         fill(isHoveringAsk ? 50 : 100, isHoveringAsk ? 200 : 255, isHoveringAsk ? 50 : 100); // Green color
@@ -2019,13 +2008,6 @@ function drawMainPlayerHand() {
         
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
-        // Visual debugging: Draw button outline in blue during drawing
-        push();
-        stroke(0, 0, 255);
-        strokeWeight(3);
-        noFill();
-        rect(askX, buttonY, buttonWidth, buttonHeight);
-        pop();
         
         fill(255); // White text
         textAlign(CENTER, CENTER);
@@ -2039,10 +2021,6 @@ function drawMainPlayerHand() {
         const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
-        // Visual debugging: Draw button area highlight
-        fill(0, 0, 255, 50); // Semi-transparent blue
-        noStroke();
-        rect(goFishX, buttonY, buttonWidth, buttonHeight);
         
         // Blue button
         fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
@@ -2058,27 +2036,7 @@ function drawMainPlayerHand() {
         noStroke();
         text('Go Fish', goFishX + buttonWidth/2, buttonY + buttonHeight/2);
         
-        // VISUAL DEBUG: Draw a bright red outline around the button to show exact bounds
-        stroke(255, 0, 0); // Bright red outline
-        strokeWeight(3);
-        noFill();
-        rect(goFishX, buttonY, buttonWidth, buttonHeight);
         
-        // VISUAL DEBUG: Draw corner markers
-        fill(255, 0, 0);
-        noStroke();
-        rect(goFishX - 2, buttonY - 2, 4, 4); // Top-left corner
-        rect(goFishX + buttonWidth - 2, buttonY - 2, 4, 4); // Top-right corner
-        rect(goFishX - 2, buttonY + buttonHeight - 2, 4, 4); // Bottom-left corner
-        rect(goFishX + buttonWidth - 2, buttonY + buttonHeight - 2, 4, 4); // Bottom-right corner
-        
-        // Visual debugging: Draw last click position
-        if (window.lastClickX !== undefined && window.lastClickY !== undefined) {
-            fill(255, 255, 0); // Yellow
-            noStroke();
-            ellipse(window.lastClickX, window.lastClickY, 10, 10);
-            // Removed repetitive click indicator log to reduce console spam
-        }
     } else {
         console.log('🎮 Not drawing buttons - not current player');
     }
@@ -2775,15 +2733,7 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         console.log('🎯 Canvas dimensions in mousePressed - canvas width:', canvasWidth, 'canvas height:', canvasHeight);
         
-    // Store last click for visual debugging
-    window.lastClickX = mouseX;
-    window.lastClickY = mouseY;
-    console.log('🎯 Stored last click for visual debug:', window.lastClickX, window.lastClickY);
     
-    // Store canvas dimensions at click time for debugging
-    window.clickTimeCanvasWidth = canvasWidth;
-    window.clickTimeCanvasHeight = canvasHeight;
-    console.log('🎯 Canvas dimensions at click time:', canvasWidth, 'x', canvasHeight);
     
     // Check for scaling issues
     const canvasRect = canvas.getBoundingClientRect();
@@ -2861,13 +2811,6 @@ window.goFishMousePressed = function goFishMousePressed() {
             console.log('🎯 Canvas element attributes - width:', canvasElement.width, 'height:', canvasElement.height);
         }
         
-        // Add visual debugging for button position
-        fill(255, 0, 0, 100); // Red with transparency
-        rect(askX, buttonY, buttonWidth, buttonHeight);
-        
-        // Add visual debugging for click position
-        fill(255, 255, 0); // Yellow
-        ellipse(mouseX, mouseY, 10, 10);
         
         // p5.js mouseX and mouseY are already in p5.js coordinate system
         // No need to scale them - they should match the button positions directly
@@ -2878,28 +2821,8 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('🎯 Click area info - You clicked at (' + mouseX + ', ' + mouseY + '), but Ask button is at (' + askX + ', ' + buttonY + ') with size ' + buttonWidth + 'x' + buttonHeight);
         console.log('🎯 Canvas dimensions in mousePressed - p5 width:', width, 'p5 height:', height);
         
-        // Visual debugging: Draw crosshair at button position during click detection
-        push();
-        stroke(255, 0, 0); // Red crosshair
-        strokeWeight(3);
-        line(askX - 20, buttonY, askX + buttonWidth + 20, buttonY); // Horizontal line
-        line(askX + buttonWidth/2, buttonY - 20, askX + buttonWidth/2, buttonY + buttonHeight + 20); // Vertical line
-        pop();
         
-        // Additional visual debugging: Draw button outline in red
-        push();
-        stroke(255, 0, 0);
-        strokeWeight(2);
-        noFill();
-        rect(askX, buttonY, buttonWidth, buttonHeight);
-        pop();
         
-        // Draw mouse position in yellow
-        push();
-        fill(255, 255, 0);
-        noStroke();
-        ellipse(mouseX, mouseY, 10, 10);
-        pop();
         
         // Log all coordinate information
         console.log('🎯 COORDINATE DEBUG:');
