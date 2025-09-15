@@ -134,14 +134,10 @@ function closePopup() {
   }
 
   try {
-    if (popupOnlyClose) {
-      popup.hide();
-    } else {
-      popup.hide();
-      if (window.game && window.game.startGame) {
-        window.game.startGame();
-      }
-    }
+    // ✅ CRITICAL FIX: Popup closing should ONLY hide the popup
+    // Never trigger game logic like startGame() which can cause "not your turn" errors
+    popup.hide();
+    console.log('✅ Popup closed successfully - no game logic triggered');
   } catch (error) {
     console.error('❌ Error closing popup:', error);
   }

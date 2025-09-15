@@ -1390,7 +1390,10 @@ function showRoundWinnerMessagePopup(data) {
     // Add close button functionality
     const closeBtn = document.getElementById('closeRoundWinnerBtn');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('✅ Round winner popup closed - no game logic triggered');
             clearCurrentPopup();
         });
     }
@@ -1451,7 +1454,10 @@ function showDrawMessagePopup() {
     // Add close button functionality
     const closeBtn = document.getElementById('closeDrawBtn');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('✅ Draw popup closed - no game logic triggered');
             clearCurrentPopup();
         });
     }
@@ -1534,7 +1540,10 @@ function showCombinedGameMessagePopup(winningTeam) {
     // Add close button functionality
     const closeBtn = document.getElementById('closeCombinedGameBtn');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('✅ Combined game popup closed - no game logic triggered');
             clearCurrentPopup();
         });
     }
@@ -1593,7 +1602,10 @@ function showGameWinnerMessagePopup(winningTeam) {
     // Add close button functionality
     const closeBtn = document.getElementById('closeGameWinnerBtn');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('✅ Game winner popup closed - no game logic triggered');
             clearCurrentPopup();
         });
     }
@@ -2142,8 +2154,10 @@ function setupButtonListeners() {
     // ✅ Close Round History button
     const closeRoundHistoryBtn = document.getElementById('closeRoundHistoryBtn');
     if (closeRoundHistoryBtn) {
-        closeRoundHistoryBtn.onclick = () => {
-            console.log('📋 Close Round History button clicked');
+        closeRoundHistoryBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📋 Close Round History button clicked - no game logic triggered');
             hideRoundHistory();
         };
     }

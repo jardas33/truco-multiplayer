@@ -368,11 +368,14 @@ function createCanvasSafely() {
     // Create close button for popup
     closeButton = createButton("Close");
     closeButton.parent(popup);
-    closeButton.mousePressed(() => {
+    closeButton.mousePressed((e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (typeof closePopup === 'function') {
+            console.log('✅ Setup popup closed - no game logic triggered');
             closePopup();
         } else {
-            console.log('ERROR: Close popup clicked (fallback)');
+            console.log('ERROR: Close popup clicked (fallback) - no game logic triggered');
             popup.hide();
         }
     });
