@@ -199,6 +199,12 @@ function initSocket() {
                     if (currentPlayer.isBot) {
                         console.log(`🤖 Bot ${currentPlayer.name} turn detected - triggering bot play with visual delay`);
                         
+                        // ✅ CRITICAL FIX: Check if bot was already triggered by roundComplete to prevent duplicates
+                        if (currentPlayer.botTriggeredByRoundComplete) {
+                            console.log(`🤖 Bot ${currentPlayer.name} already triggered by roundComplete - skipping turnChanged trigger`);
+                            return; // Skip this trigger to prevent duplicate bot plays
+                        }
+                        
                         // ✅ PACING FIX: Use immediate validation but delayed execution for visual pacing
                         if (window.game && 
                             !window.gameCompleted &&
@@ -878,6 +884,9 @@ function setupSocketListeners() {
                 
                 // ✅ CRITICAL FIX: Ensure bot can play by resetting flags
                 nextRoundStarter.hasPlayedThisTurn = false;
+                
+                // ✅ CRITICAL FIX: Set flag to prevent duplicate bot triggers
+                nextRoundStarter.botTriggeredByRoundComplete = true;
                 
                 // ✅ CRITICAL FIX: Trigger bot play logic for the new round starter
                 const roundCompleteTimeoutId = setTimeout(() => {
@@ -3073,6 +3082,9 @@ function triggerBotPlay(botPlayerIndex) {
                     
                     console.log(`🤖 Bot ${botPlayer.name} Truco request emitted successfully`);
                     
+                    // ✅ CRITICAL FIX: Reset the roundComplete trigger flag
+                    botPlayer.botTriggeredByRoundComplete = false;
+                    
                     // ✅ CRITICAL FIX: Don't mark as played yet - wait for Truco response
                     // If Truco fails, we need to fall back to playing a card
                     
@@ -3220,10 +3232,13 @@ function triggerBotPlay(botPlayerIndex) {
                     cardIndex: randomCardIndex
                 });
                 
-                console.log(`🤖 Bot ${botPlayer.name} playCard event emitted successfully`);
-                
-                // ✅ CRITICAL FIX: Mark bot as having played this turn
-                botPlayer.hasPlayedThisTurn = true;
+                        console.log(`🤖 Bot ${botPlayer.name} playCard event emitted successfully`);
+                        
+                        // ✅ CRITICAL FIX: Mark bot as having played this turn
+                        botPlayer.hasPlayedThisTurn = true;
+                        
+                        // ✅ CRITICAL FIX: Reset the roundComplete trigger flag
+                        botPlayer.botTriggeredByRoundComplete = false;
                 
                     // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
                     try {
