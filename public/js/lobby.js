@@ -3477,10 +3477,20 @@ function showPopup(type, data, duration) {
     
     // Auto-remove after duration
     console.log(`⏰ Setting popup auto-close timer for ${duration}ms`);
+    console.log(`⏰ Timer ID will be:`, popupTimeout);
     popupTimeout = setTimeout(() => {
         console.log(`⏰ Popup auto-close timer fired after ${duration}ms - currentPopup:`, currentPopup);
+        console.log(`⏰ Timer ID when firing:`, popupTimeout);
+        console.log(`⏰ About to call clearCurrentPopup()`);
         clearCurrentPopup();
+        console.log(`⏰ clearCurrentPopup() completed`);
     }, duration);
+    console.log(`⏰ Timer set with ID:`, popupTimeout);
+    
+    // ✅ DEBUG: Test if timer is working at all
+    setTimeout(() => {
+        console.log(`⏰ DEBUG: 1 second test - popupTimeout still exists:`, !!popupTimeout);
+    }, 1000);
 }
 
 function clearCurrentPopup() {
@@ -3500,6 +3510,7 @@ function clearCurrentPopup() {
         currentPopup = null;
         
         if (popupTimeout) {
+            console.log(`🧹 Clearing timer with ID:`, popupTimeout);
             clearTimeout(popupTimeout);
             popupTimeout = null;
         }
