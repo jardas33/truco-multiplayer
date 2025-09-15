@@ -241,7 +241,9 @@ function initSocket() {
                             !window.game.players[data.currentPlayer].isPlaying &&
                             // ✅ CRITICAL FIX: Don't play card if bot needs to respond to Truco
                             !(window.game.trucoState && window.game.trucoState.waitingForResponse && 
-                              window.game.trucoState.responsePlayerIndex === data.currentPlayer)) {
+                              window.game.trucoState.responsePlayerIndex === data.currentPlayer) &&
+                            // ✅ CRITICAL FIX: Ensure this turnChanged event is actually for this bot
+                            data.currentPlayer === window.game.currentPlayerIndex) {
                                     
                             console.log(`🤖 Bot ${currentPlayer.name} validated for play - executing with visual delay`);
                             
@@ -292,6 +294,30 @@ function initSocket() {
                             window.pendingBotTimeouts.push(turnChangedTimeoutId);
                         } else {
                             console.log(`🤖 Bot ${currentPlayer.name} validation failed - cannot play`);
+                            
+                            // ✅ CRITICAL FIX: If bot has no cards, skip its turn immediately
+                            if (window.game.players[data.currentPlayer] && 
+                                window.game.players[data.currentPlayer].hand && 
+                                window.game.players[data.currentPlayer].hand.length === 0) {
+                                console.log(`🤖 Bot ${currentPlayer.name} has no cards - skipping turn immediately`);
+                                
+                                // Mark bot as having played this turn to prevent further attempts
+                                window.game.players[data.currentPlayer].hasPlayedThisTurn = true;
+                                
+                                // Send botTurnComplete to advance the turn
+                                setTimeout(() => {
+                                    try {
+                                        console.log(`🤖 Bot ${currentPlayer.name} turn complete - no cards left`);
+                                        socket.emit('botTurnComplete', {
+                                            roomCode: getRoomCode(),
+                                            playerIndex: data.currentPlayer,
+                                            roundNumber: window.game?.currentRound || 0
+                                        });
+                                    } catch (skipError) {
+                                        console.error(`❌ Bot ${currentPlayer.name} skip turn failed:`, skipError);
+                                    }
+                                }, 100);
+                            }
                         }
                     }
                     
