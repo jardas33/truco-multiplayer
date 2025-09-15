@@ -2516,18 +2516,28 @@ function startMultiplayerGame(data) {
     console.log('🎮 Starting multiplayer game with server data:', data);
     console.log('🔍 DEBUG: Current room ID state:', window.roomId);
     console.log('🔍 DEBUG: Socket state:', socket ? 'Connected' : 'Not connected');
-    // Extract room code from window.roomId (could be object or string)
-    const roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
-    console.log('🔍 DEBUG: Socket room code:', roomCode);
+    
+    // ✅ CRITICAL FIX: Use room code from server data if available, fallback to window.roomId
+    let roomCode = data.roomCode;
+    if (!roomCode) {
+        // Fallback to window.roomId if server didn't send room code
+        roomCode = typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+        console.log('⚠️ Using fallback room code from window.roomId:', roomCode);
+    } else {
+        console.log('✅ Using room code from server data:', roomCode);
+        // Update window.roomId with the server's room code to ensure consistency
+        window.roomId = roomCode;
+    }
+    
+    console.log('🔍 DEBUG: Final room code:', roomCode);
     
     try {
-        // ✅ CRITICAL: Ensure room ID is preserved
-        if (!window.roomId) {
-            console.error('❌ CRITICAL ERROR: Room ID is undefined when starting multiplayer game!');
+        // ✅ CRITICAL: Ensure room ID is available
+        if (!roomCode) {
+            console.error('❌ CRITICAL ERROR: No room code available when starting multiplayer game!');
             console.error('❌ This will prevent all server communication from working!');
-            console.error('❌ Socket room code:', roomCode);
             console.error('❌ Data received:', data);
-            throw new Error('Room ID is undefined - cannot start multiplayer game');
+            throw new Error('No room code available - cannot start multiplayer game');
         }
         
         console.log('✅ Room ID confirmed:', window.roomId);
