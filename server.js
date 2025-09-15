@@ -1962,6 +1962,13 @@ io.on('connection', (socket) => {
             return;
         }
 
+        // ✅ CRITICAL FIX: Check if game is completed - don't allow card plays if game is over
+        if (room.game.gameCompleted) {
+            console.log(`🏁 Game is completed - rejecting card play from ${player.name} (${socket.id})`);
+            socket.emit('error', 'Game has been completed');
+            return;
+        }
+
         // ✅ Find the player who played the card
         const player = room.players.find(p => p.id === socket.id);
         if (!player) {
@@ -2728,6 +2735,13 @@ io.on('connection', (socket) => {
             return;
         }
 
+        // ✅ CRITICAL FIX: Check if game is completed - don't allow Truco calls if game is over
+        if (room.game.gameCompleted) {
+            console.log(`🏁 Game is completed - rejecting Truco request from ${socket.id}`);
+            socket.emit('error', 'Game has been completed');
+            return;
+        }
+
         if (!room.game) {
             console.log(`❌ No active game in room ${roomCode}`);
             socket.emit('error', 'No active game');
@@ -3249,6 +3263,13 @@ io.on('connection', (socket) => {
         if (!room) {
             console.log(`❌ Room ${roomCode} not found for Truco response`);
             socket.emit('error', 'Room not found');
+            return;
+        }
+
+        // ✅ CRITICAL FIX: Check if game is completed - don't allow Truco responses if game is over
+        if (room.game.gameCompleted) {
+            console.log(`🏁 Game is completed - rejecting Truco response from ${socket.id}`);
+            socket.emit('error', 'Game has been completed');
             return;
         }
 
