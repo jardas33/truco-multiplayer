@@ -267,20 +267,19 @@ function initSocket() {
                                         
                                     console.log(`🤖 Bot ${bot.name} card play event sent`);
                                         
-                                    // ✅ PACING FIX: Emit botTurnComplete with additional delay for pacing
-                                        setTimeout(() => {
-                                            try {
-                                                console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
-                                                socket.emit('botTurnComplete', {
-                                                    roomCode: getRoomCode(),
-                                                    playerIndex: data.currentPlayer,
-                                                    roundNumber: window.game?.currentRound || 0
-                                                });
-                                            console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
-                                            } catch (turnCompleteError) {
-                                                console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
-                                            }
-                                    }, 1000); // 1 second delay for pacing
+                                    // ✅ CRITICAL FIX: Send botTurnComplete immediately to prevent game getting stuck
+                                    // Don't use setTimeout as it gets cancelled by nuclear option
+                                    try {
+                                        console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
+                                        socket.emit('botTurnComplete', {
+                                            roomCode: getRoomCode(),
+                                            playerIndex: data.currentPlayer,
+                                            roundNumber: window.game?.currentRound || 0
+                                        });
+                                        console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
+                                    } catch (turnCompleteError) {
+                                        console.error(`❌ Bot ${bot.name} turn complete failed:`, turnCompleteError);
+                                    }
                                     }
                             }, 1500); // 1.5 second visual delay for pacing
                             
