@@ -3115,7 +3115,7 @@ function triggerBotPlay(botPlayerIndex) {
                             window.game.roundJustCompleted = false;
                             window.game.roundWinnerStarting = false;
                             console.log('🔓 Reset round transition flags - round winner called Truco (delayed)');
-                        }, 2000); // 2 second delay to ensure all old events are processed
+                        }, 3000); // 3 second delay to ensure all old events are processed
                     }
                     
                     // ✅ CRITICAL FIX: Don't mark as played yet - wait for Truco response
@@ -3280,7 +3280,7 @@ function triggerBotPlay(botPlayerIndex) {
                                 window.game.roundJustCompleted = false;
                                 window.game.roundWinnerStarting = false;
                                 console.log('🔓 Reset round transition flags - round winner has started playing (delayed)');
-                            }, 2000); // 2 second delay to ensure all old events are processed
+                            }, 3000); // 3 second delay to ensure all old events are processed
                         }
                 
                     // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
