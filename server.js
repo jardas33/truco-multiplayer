@@ -2125,6 +2125,14 @@ io.on('connection', (socket) => {
             console.log(`🔍 DEBUG: roundJustCompleted flag reset - botTurnComplete events can now change turns`);
         }
         
+        // ✅ CRITICAL FIX: Reset roundJustCompleted flag when any player plays a card in the new round
+        // This ensures the flag is reset after the first card is played in the new round
+        if (room.game.roundJustCompleted) {
+            console.log(`🔄 First card played in new round - resetting roundJustCompleted flag`);
+            room.game.roundJustCompleted = false;
+            console.log(`🔍 DEBUG: roundJustCompleted flag reset after first card play in new round`);
+        }
+        
         // ✅ CRITICAL FIX: Reset roundWinnerStarting flag when the round winner starts playing
         if (room.game.roundWinnerStarting && room.game.currentPlayer === clientPlayerIndex) {
             console.log(`🔄 Round winner ${targetPlayer.name} started playing - resetting roundWinnerStarting flag`);
@@ -2644,6 +2652,43 @@ io.on('connection', (socket) => {
         if (eventRoundNumber !== undefined && eventRoundNumber < currentRoundNumber) {
             console.log(`⚠️ botTurnComplete from previous round - event round ${eventRoundNumber} but current round is ${currentRoundNumber}`);
             console.log(`🔍 DEBUG: Ignoring old botTurnComplete event from previous round`);
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Additional check - if the current player is a bot starting a new round
+        // and this botTurnComplete is from a different bot, ignore it
+        if (currentPlayer && currentPlayer.isBot && !currentPlayer.hasPlayedThisTurn) {
+            const completingBotIndex = data.playerIndex;
+            if (completingBotIndex !== undefined && completingBotIndex !== room.game.currentPlayer) {
+                console.log(`🤖 Bot ${currentPlayer.name} is starting new round - ignoring botTurnComplete from Bot ${completingBotIndex}`);
+                console.log(`🔍 DEBUG: This prevents old botTurnComplete events from changing the round starter`);
+                return;
+            }
+        }
+        
+        // ✅ CRITICAL FIX: If current player is a bot that hasn't played yet, don't change turns
+        // This prevents old botTurnComplete events from interfering with round winner
+        if (currentPlayer && currentPlayer.isBot && !currentPlayer.hasPlayedThisTurn) {
+            console.log(`🤖 Bot ${currentPlayer.name} hasn't played yet in new round - ignoring botTurnComplete`);
+            console.log(`🔍 DEBUG: This ensures round winner gets to start the round`);
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Additional check - if the current player is a bot and this botTurnComplete
+        // is from a different bot, it's likely from a previous round - ignore it
+        const completingBotIndex = data.playerIndex;
+        if (completingBotIndex !== undefined && completingBotIndex !== room.game.currentPlayer) {
+            console.log(`⚠️ botTurnComplete from different bot (${completingBotIndex}) than current player (${room.game.currentPlayer})`);
+            console.log(`🔍 DEBUG: This is likely from a previous round - ignoring to protect round winner`);
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: If the current player is a bot that should be starting a new round,
+        // and this botTurnComplete is from a different bot, ignore it completely
+        if (currentPlayer && currentPlayer.isBot && !currentPlayer.hasPlayedThisTurn && 
+            completingBotIndex !== undefined && completingBotIndex !== room.game.currentPlayer) {
+            console.log(`🤖 Bot ${currentPlayer.name} should start new round - ignoring botTurnComplete from Bot ${completingBotIndex}`);
+            console.log(`🔍 DEBUG: This prevents old botTurnComplete events from changing the round starter`);
             return;
         }
         
