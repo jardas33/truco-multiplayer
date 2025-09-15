@@ -99,6 +99,14 @@ function initSocket() {
                 return;
             }
             
+            // ✅ CRITICAL FIX: Check if this turnChanged is from a previous round
+            // If we just completed a round and the round winner is starting, ignore old turnChanged events
+            if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
+                console.log('🚫 Ignoring turnChanged event from previous round - round winner is starting new round');
+                console.log('🔍 DEBUG: roundJustCompleted:', window.game.roundJustCompleted, 'roundWinnerStarting:', window.game.roundWinnerStarting);
+                return;
+            }
+            
             // ✅ CRITICAL FIX: Update current player FIRST to prevent race conditions
             console.log(`🔍 DEBUG: About to update currentPlayerIndex from ${window.game.currentPlayerIndex} to ${data.currentPlayer}`);
             window.game.currentPlayerIndex = data.currentPlayer;
@@ -886,6 +894,11 @@ function setupSocketListeners() {
             window.pendingBotTimeouts = [];
             console.log('🚫 All pending bot plays cancelled due to round completion');
         }
+        
+        // ✅ CRITICAL FIX: Set flags to ignore old turnChanged events from previous round
+        window.game.roundJustCompleted = true;
+        window.game.roundWinnerStarting = true;
+        console.log('🔒 Set flags to ignore old turnChanged events from previous round');
         
         // ✅ CRITICAL FIX: If the new round starter is a bot, trigger bot play immediately
         const nextRoundStarter = window.game.players[data.currentPlayer];
@@ -3095,6 +3108,13 @@ function triggerBotPlay(botPlayerIndex) {
                     // ✅ CRITICAL FIX: Reset the roundComplete trigger flag
                     botPlayer.botTriggeredByRoundComplete = false;
                     
+                    // ✅ CRITICAL FIX: Reset round transition flags when round winner calls Truco
+                    if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
+                        window.game.roundJustCompleted = false;
+                        window.game.roundWinnerStarting = false;
+                        console.log('🔓 Reset round transition flags - round winner called Truco');
+                    }
+                    
                     // ✅ CRITICAL FIX: Don't mark as played yet - wait for Truco response
                     // If Truco fails, we need to fall back to playing a card
                     
@@ -3249,6 +3269,13 @@ function triggerBotPlay(botPlayerIndex) {
                         
                         // ✅ CRITICAL FIX: Reset the roundComplete trigger flag
                         botPlayer.botTriggeredByRoundComplete = false;
+                        
+                        // ✅ CRITICAL FIX: Reset round transition flags when round winner plays
+                        if (window.game.roundJustCompleted && window.game.roundWinnerStarting) {
+                            window.game.roundJustCompleted = false;
+                            window.game.roundWinnerStarting = false;
+                            console.log('🔓 Reset round transition flags - round winner has started playing');
+                        }
                 
                     // ✅ CRITICAL FIX: Emit botTurnComplete immediately to prevent game getting stuck
                     try {
