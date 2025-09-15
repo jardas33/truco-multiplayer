@@ -241,7 +241,8 @@ function initSocket() {
                                             try {
                                                 console.log(`🔍 DEBUG: Sending botTurnComplete event for bot ${bot.name} (${data.currentPlayer})`);
                                                 socket.emit('botTurnComplete', {
-                                                    roomCode: getRoomCode()
+                                                    roomCode: getRoomCode(),
+                                                    playerIndex: data.currentPlayer
                                                 });
                                             console.log(`🤖 Bot ${bot.name} turn complete - notified server`);
                                             } catch (turnCompleteError) {
@@ -3088,7 +3089,8 @@ function triggerBotPlay(botPlayerIndex) {
                             // Mark as played and complete turn
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
-                                roomCode: getRoomCode()
+                                roomCode: getRoomCode(),
+                                playerIndex: botPlayerIndex
                             });
                         }
                     }, 2000); // 2 second timeout for Truco response
@@ -3103,7 +3105,8 @@ function triggerBotPlay(botPlayerIndex) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco call successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
-                                roomCode: getRoomCode()
+                                roomCode: getRoomCode(),
+                                playerIndex: botPlayerIndex
                             });
                             // Remove the fallback timeout since Truco was successful
                             clearTimeout(trucoFallbackTimeout);
@@ -3120,7 +3123,8 @@ function triggerBotPlay(botPlayerIndex) {
                             console.log(`🤖 Bot ${botPlayer.name} Truco raise successful - completing turn`);
                             botPlayer.hasPlayedThisTurn = true;
                             socket.emit('botTurnComplete', {
-                                roomCode: getRoomCode()
+                                roomCode: getRoomCode(),
+                                playerIndex: botPlayerIndex
                             });
                             // Remove the fallback timeout since Truco raise was successful
                             clearTimeout(trucoFallbackTimeout);
@@ -3159,7 +3163,8 @@ function triggerBotPlay(botPlayerIndex) {
                                 // Mark as played and complete turn
                                 botPlayer.hasPlayedThisTurn = true;
                                 socket.emit('botTurnComplete', {
-                                    roomCode: window.roomId
+                                    roomCode: window.roomId,
+                                    playerIndex: botPlayerIndex
                                 });
                             }
                         }
@@ -3215,7 +3220,8 @@ function triggerBotPlay(botPlayerIndex) {
                     try {
                         console.log(`🤖 Emitting botTurnComplete for ${botPlayer.name} immediately`);
                         socket.emit('botTurnComplete', {
-                            roomCode: window.roomId
+                            roomCode: window.roomId,
+                            playerIndex: botPlayerIndex
                         });
                         console.log(`✅ Bot turn complete emitted for ${botPlayer.name}`);
                     } catch (botCompleteError) {

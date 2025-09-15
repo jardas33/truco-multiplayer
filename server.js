@@ -2582,6 +2582,15 @@ io.on('connection', (socket) => {
             return; // Always return early - don't change current player
         }
         
+        // ✅ CRITICAL FIX: Check if this botTurnComplete is from a previous round
+        // by checking if the current player is different from the bot that's completing their turn
+        const botPlayerIndex = data.playerIndex;
+        if (botPlayerIndex !== undefined && botPlayerIndex !== room.game.currentPlayer) {
+            console.log(`⚠️ botTurnComplete from wrong player - bot ${botPlayerIndex} completing turn but current player is ${room.game.currentPlayer}`);
+            console.log(`🔍 DEBUG: This is likely from a previous round - ignoring`);
+            return;
+        }
+        
         // ✅ Move to next player after bot turn is complete
         const previousPlayer = room.game.currentPlayer;
         console.log(`🔍 DEBUG: botTurnComplete processing - previousPlayer: ${previousPlayer} (${room.players[previousPlayer]?.name})`);
