@@ -998,16 +998,36 @@ class BattleshipGame {
         const shipsSunkEl = document.getElementById('shipsSunk');
         const opponentShipsSunkEl = document.getElementById('opponentShipsSunk');
         
-        // CRITICAL FIX: In multiplayer, show correct stats for each player
-        // playerScoreEl = local player's stats (wins, ships destroyed BY local player of opponent)
-        // aiScoreEl = opponent's stats (opponent's wins, ships destroyed BY opponent of local player)
         if (this.isMultiplayer) {
-            // Multiplayer mode - aiScoreEl shows opponent's stats
-            // totalPlayerShipsSunk = ships destroyed BY local player (of opponent) - only increments when WE attack and sink
-            // totalOpponentShipsSunk = ships destroyed BY opponent (of local player) - only increments when OPPONENT attacks and sinks OUR ships
-            if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
-            if (aiScoreEl) aiScoreEl.textContent = `${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships Destroyed`;
-            console.log(`🔍 Scoreboard update - playerGamesWon: ${this.playerGamesWon}, totalPlayerShipsSunk: ${this.totalPlayerShipsSunk} (ships WE destroyed), opponentGamesWon: ${this.opponentGamesWon}, totalOpponentShipsSunk: ${this.totalOpponentShipsSunk} (ships OPPONENT destroyed of ours)`);
+            // CRITICAL FIX: Scoreboard HTML has fixed labels:
+            // - playerScoreEl (first div) = "Player 1" stats
+            // - aiScoreEl (second div) = "Player 2" stats
+            // We need to determine which player we are and show the correct stats
+            
+            // Determine if we are Player 1 (firstPlayerId matches our playerId)
+            const isPlayer1 = this.firstPlayerId && (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
+            
+            if (isPlayer1) {
+                // We are Player 1:
+                // - Player 1's stats (ours): totalPlayerShipsSunk = ships WE destroyed
+                // - Player 2's stats (opponent): totalOpponentShipsSunk = ships opponent destroyed of ours
+                if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
+                if (aiScoreEl) aiScoreEl.textContent = `${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships Destroyed`;
+                console.log(`🔍 Scoreboard update (Player 1): Player 1: ${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships (we destroyed), Player 2: ${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships (destroyed ours)`);
+            } else {
+                // We are Player 2:
+                // - Player 1's stats (opponent): totalOpponentShipsSunk = ships opponent (Player 1) destroyed of ours
+                // - Player 2's stats (ours): totalPlayerShipsSunk = ships WE destroyed (should be 0 if opponent won)
+                // But wait - we need to swap the logic because:
+                // - totalPlayerShipsSunk = ships destroyed BY local player (of opponent)
+                // - totalOpponentShipsSunk = ships destroyed BY opponent (of local player)
+                // So if we're Player 2:
+                //   - Player 1 destroyed our ships = totalOpponentShipsSunk (correct for Player 1's stats)
+                //   - We destroyed Player 1's ships = totalPlayerShipsSunk (correct for Player 2's stats)
+                if (playerScoreEl) playerScoreEl.textContent = `${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships Destroyed`;
+                if (aiScoreEl) aiScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
+                console.log(`🔍 Scoreboard update (Player 2): Player 1: ${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships (destroyed ours), Player 2: ${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships (we destroyed)`);
+            }
         } else {
             // Single player mode - show games won and total ships sunk across all games
             if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
