@@ -61,6 +61,7 @@ class BattleshipGame {
         // Game tracking (persists across games)
         this.playerGamesWon = 0;
         this.aiGamesWon = 0;
+        this.opponentGamesWon = 0; // CRITICAL FIX: Track opponent's wins in multiplayer
         this.totalPlayerShipsSunk = 0; // Total ships sunk by player across all games
         this.totalAiShipsSunk = 0; // Total ships sunk by AI across all games
         this.totalOpponentShipsSunk = 0; // Total ships sunk by opponent (AI) from player across all games
@@ -975,9 +976,19 @@ class BattleshipGame {
         const shipsSunkEl = document.getElementById('shipsSunk');
         const opponentShipsSunkEl = document.getElementById('opponentShipsSunk');
         
-        // Show games won and total ships sunk across all games
-        if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
-        if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.totalAiShipsSunk} Ships Destroyed`;
+        // CRITICAL FIX: In multiplayer, show correct stats for each player
+        // playerScoreEl = local player's stats (wins, ships destroyed by local player)
+        // aiScoreEl = opponent's stats (opponent's wins, ships destroyed by opponent)
+        if (this.isMultiplayer) {
+            // Multiplayer mode - aiScoreEl shows opponent's stats
+            if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
+            if (aiScoreEl) aiScoreEl.textContent = `${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships Destroyed`;
+        } else {
+            // Single player mode - show games won and total ships sunk across all games
+            if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
+            if (aiScoreEl) aiScoreEl.textContent = `${this.aiGamesWon} Wins, ${this.totalAiShipsSunk} Ships Destroyed`;
+        }
+        
         if (shipsSunkEl) shipsSunkEl.textContent = `${this.totalPlayerShipsSunk}`;
         if (opponentShipsSunkEl) opponentShipsSunkEl.textContent = `${this.totalOpponentShipsSunk}`;
     }
@@ -1470,18 +1481,15 @@ class BattleshipGame {
             if (winner === 0) {
                 // Local player won
                 // CRITICAL FIX: Ensure all 5 ships are counted for the winner
-                // Count how many opponent ships are actually sunk
-                if (this.placedShips[1]) {
-                    const actualShipsSunk = this.placedShips[1].filter(ship => ship.hits >= ship.size).length;
-                    console.log(`🚢 Game end - Winner: actual ships sunk=${actualShipsSunk}, currentGamePlayerShipsSunk=${this.currentGamePlayerShipsSunk}, totalPlayerShipsSunk=${this.totalPlayerShipsSunk}`);
-                    
-                    // If actual ships sunk is 5 but our count is less, fix it
-                    if (actualShipsSunk === 5 && this.currentGamePlayerShipsSunk < 5) {
-                        const missingCount = 5 - this.currentGamePlayerShipsSunk;
-                        this.currentGamePlayerShipsSunk = 5;
-                        this.totalPlayerShipsSunk += missingCount;
-                        console.log(`🚢 CRITICAL FIX: Added ${missingCount} missing ship(s) to totalPlayerShipsSunk. New total: ${this.totalPlayerShipsSunk}`);
-                    }
+                // If game ended and we won, we must have sunk all 5 opponent ships
+                // The last ship might have triggered game over before the count was incremented
+                // So if currentGamePlayerShipsSunk is less than 5, set it to 5
+                if (this.currentGamePlayerShipsSunk < 5) {
+                    const missingCount = 5 - this.currentGamePlayerShipsSunk;
+                    const oldTotal = this.totalPlayerShipsSunk;
+                    this.currentGamePlayerShipsSunk = 5;
+                    this.totalPlayerShipsSunk += missingCount;
+                    console.log(`🚢 CRITICAL FIX: Winner - Fixed ship count. Was: ${oldTotal}, Now: ${this.totalPlayerShipsSunk} (added ${missingCount} missing ships)`);
                 }
                 
                 this.playerGamesWon++;
@@ -1490,7 +1498,8 @@ class BattleshipGame {
                 this.triggerVictoryEffect();
             } else {
                 // Opponent won (winner === 1)
-                this.aiGamesWon++;
+                // CRITICAL FIX: Track opponent's win in multiplayer
+                this.opponentGamesWon++;
                 this.addToHistory('💥 Game Over! Your opponent defeated you!', 'error');
                 this.showGameMessage('💥 DEFEAT! Your opponent sunk all your ships!', 5000);
             }
