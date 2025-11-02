@@ -609,6 +609,7 @@ class BattleshipGame {
                 gameInstance.shipsSunk++;
                 gameInstance.currentGamePlayerShipsSunk++;
                 gameInstance.totalPlayerShipsSunk++;
+                console.log(`🚢 Ship sunk by attacker - totalPlayerShipsSunk now: ${gameInstance.totalPlayerShipsSunk}, currentGamePlayerShipsSunk: ${gameInstance.currentGamePlayerShipsSunk}`);
                 gameInstance.playerScore += 50; // Bonus points for sinking
                 
                 // Show ship name when sunk (it's okay to reveal when ship is destroyed)
@@ -616,6 +617,9 @@ class BattleshipGame {
                 // CRITICAL FIX: Show popup message when ship is sunk
                 gameInstance.showGameMessage(`💥 ${shipName.toUpperCase()} SUNK!`, 3000);
                 gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
+                
+                // CRITICAL FIX: Update UI immediately to reflect ship count
+                gameInstance.updateUI();
                 
                 // CRITICAL FIX: Don't check game over here - we don't have opponent's ship data in multiplayer
                 // The defender will check game over and emit battleshipGameOver when all their ships are sunk
@@ -1458,6 +1462,17 @@ class BattleshipGame {
             // Multiplayer mode
             if (winner === 0) {
                 // Local player won
+                // CRITICAL FIX: Ensure all 5 ships are counted for the winner
+                // Check if we have all ships sunk but totalPlayerShipsSunk is less than currentGamePlayerShipsSunk
+                const allOpponentShipsSunk = this.placedShips[1] ? this.placedShips[1].every(ship => ship.hits >= ship.size) : false;
+                if (allOpponentShipsSunk && this.currentGamePlayerShipsSunk === 5 && this.totalPlayerShipsSunk < this.currentGamePlayerShipsSunk + (this.totalPlayerShipsSunk - (this.currentGamePlayerShipsSunk - this.shipsSunk))) {
+                    // Make sure totalPlayerShipsSunk matches the number of ships sunk in this game
+                    const shipsSunkThisGame = this.currentGamePlayerShipsSunk;
+                    const previousTotal = this.totalPlayerShipsSunk - (shipsSunkThisGame - this.shipsSunk);
+                    this.totalPlayerShipsSunk = previousTotal + shipsSunkThisGame;
+                    console.log(`🚢 CRITICAL FIX: Adjusted totalPlayerShipsSunk to ${this.totalPlayerShipsSunk} (ships sunk this game: ${shipsSunkThisGame})`);
+                }
+                
                 this.playerGamesWon++;
                 this.addToHistory('🏆 Congratulations! You won the battle!', 'success');
                 this.showGameMessage('🏆 VICTORY! You sunk all enemy ships!', 5000);
