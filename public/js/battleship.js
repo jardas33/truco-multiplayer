@@ -1220,7 +1220,15 @@ class BattleshipGame {
         }
     }
     
-    aiTurn() {
+    aiTurn(recursionDepth = 0) {
+        // CRITICAL FIX: Prevent infinite recursion
+        if (recursionDepth > 10) {
+            console.error('🤖 AI turn recursion limit reached - ending turn');
+            this.aiTurnScheduled = false;
+            this.endTurn();
+            return;
+        }
+        
         if (this.gamePhase !== 'playing' || this.currentPlayer !== 1 || this.gameOver) {
             console.log(`🤖 AI turn blocked - gamePhase: ${this.gamePhase}, currentPlayer: ${this.currentPlayer}, gameOver: ${this.gameOver}`);
             return;
@@ -1261,24 +1269,53 @@ class BattleshipGame {
                 x = target.x;
                 y = target.y;
             } else {
-                // Fallback to random
+                // Fallback to random - CRITICAL FIX: Prevent infinite loop if all positions are attacked
+                let attempts = 0;
+                const maxAttempts = 1000;
                 do {
                     x = Math.floor(Math.random() * this.gridSize);
                     y = Math.floor(Math.random() * this.gridSize);
+                    attempts++;
+                    if (attempts > maxAttempts) {
+                        console.error('🤖 Could not find valid attack position - ending turn');
+                        this.aiTurnScheduled = false;
+                        this.endTurn();
+                        return;
+                    }
                 } while (this.attackGrids[1][y][x].hit || this.attackGrids[1][y][x].miss);
             }
         } else {
-            // Target mode - attack around last hit
-            const targets = this.getAdjacentTargets(this.aiLastHit.x, this.aiLastHit.y);
+            // Target mode - attack around last hit, but also check other hits if no targets around last hit
+            let targets = this.getAdjacentTargets(this.aiLastHit.x, this.aiLastHit.y);
+            
+            // CRITICAL FIX: If no targets around last hit, try other hits in the aiHits array
+            if (targets.length === 0 && this.aiHits.length > 1) {
+                // Try to find targets around other hits
+                for (const hit of this.aiHits) {
+                    if (hit.x !== this.aiLastHit.x || hit.y !== this.aiLastHit.y) {
+                        const otherTargets = this.getAdjacentTargets(hit.x, hit.y);
+                        if (otherTargets.length > 0) {
+                            targets = otherTargets;
+                            // Update last hit to the one we're now targeting around
+                            this.aiLastHit = { x: hit.x, y: hit.y };
+                            break;
+                        }
+                    }
+                }
+            }
+            
             if (targets.length > 0) {
                 const target = targets[Math.floor(Math.random() * targets.length)];
                 x = target.x;
                 y = target.y;
             } else {
-                // Fall back to hunt mode
+                // No more targets around any hit - fall back to hunt mode
+                console.log('🤖 No more adjacent targets, switching to hunt mode');
                 this.aiMode = 'hunt';
                 this.aiLastHit = null;
-                this.aiTurn();
+                // CRITICAL FIX: Reset flag before recursive call to prevent getting stuck
+                this.aiTurnScheduled = false;
+                this.aiTurn(recursionDepth + 1);
                 return;
             }
         }
@@ -1348,15 +1385,23 @@ class BattleshipGame {
                 }
             }
         } else {
-            // Miss - end turn (switch to player)
+            // Miss - always end turn (switch to player)
+            // CRITICAL FIX: Reset target mode state when missing to prevent getting stuck
+            // Also clear aiHits if we're switching back to hunt after missing
+            // (But keep hits if there are still valid adjacent targets)
             this.aiTurnScheduled = false;
+            
             // Ensure final visual update before ending turn
             if (window.battleshipClient) {
                 window.battleshipClient.staticRender();
             }
+            
             // Small delay before ending turn to show the miss
             setTimeout(() => {
-                this.endTurn();
+                // Double-check we're still in AI turn before ending
+                if (this.currentPlayer === 1 && !this.gameOver) {
+                    this.endTurn();
+                }
             }, 500);
         }
     }
