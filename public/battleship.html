@@ -707,15 +707,15 @@
                     const displayPlayer1Name = isPlayer1 ? `${player1Name} (you)` : player1Name;
                     const displayPlayer2Name = !isPlayer1 ? `${player2Name} (you)` : player2Name;
                     
-                    // Update the scoreboard
-                    const playerScoreEl = document.getElementById('playerScore');
-                    const aiScoreEl = document.getElementById('aiScore');
+                    // CRITICAL FIX: Update the scoreboard player NAMES (not scores)
+                    const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
+                    const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
                     
-                    if (playerScoreEl) {
-                        playerScoreEl.textContent = displayPlayer1Name;
+                    if (playerScoreDiv) {
+                        playerScoreDiv.textContent = displayPlayer1Name;
                     }
-                    if (aiScoreEl) {
-                        aiScoreEl.textContent = displayPlayer2Name;
+                    if (aiScoreDiv) {
+                        aiScoreDiv.textContent = displayPlayer2Name;
                     }
                     
                     // Update player name in game info
@@ -773,15 +773,15 @@
                     const displayPlayer1Name = isPlayer1 ? `${player1Name} (you)` : player1Name;
                     const displayPlayer2Name = !isPlayer1 ? `${player2Name} (you)` : player2Name;
                     
-                    // Update the scoreboard
-                    const playerScoreEl = document.getElementById('playerScore');
-                    const aiScoreEl = document.getElementById('aiScore');
+                    // CRITICAL FIX: Update the scoreboard player NAMES (not scores)
+                    const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
+                    const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
                     
-                    if (playerScoreEl) {
-                        playerScoreEl.textContent = displayPlayer1Name;
+                    if (playerScoreDiv) {
+                        playerScoreDiv.textContent = displayPlayer1Name;
                     }
-                    if (aiScoreEl) {
-                        aiScoreEl.textContent = displayPlayer2Name;
+                    if (aiScoreDiv) {
+                        aiScoreDiv.textContent = displayPlayer2Name;
                     }
                     
                     // Update player name in game info

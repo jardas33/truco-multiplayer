@@ -503,6 +503,7 @@ class BattleshipGame {
                 
                 // Show ship name when sunk (it's okay to reveal when ship is destroyed)
                 gameInstance.addToHistory(`💥 You sunk the ${shipName}!`, 'sunk');
+                // CRITICAL FIX: Show popup message when ship is sunk
                 gameInstance.showGameMessage(`💥 ${shipName.toUpperCase()} SUNK!`, 3000);
                 gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
                 

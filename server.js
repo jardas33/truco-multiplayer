@@ -1041,12 +1041,9 @@ io.on('connection', (socket) => {
             }
             
             console.log(`🚢 Hit detected - keeping turn for current player in room ${data.roomId}, index: ${room.currentPlayer}`);
-            // Don't emit turn change - current player keeps their turn
-            // Optionally, emit a confirmation that the turn stays the same
-            io.to(data.roomId).emit('battleshipTurnChange', {
-                roomId: data.roomId,
-                currentPlayer: room.currentPlayer || 0
-            });
+            // CRITICAL FIX: Don't emit turn change on hit - the attacker already knows they hit
+            // Emitting turn change causes both players to see "Your turn" message incorrectly
+            // The attacker's client already handles showing hit messages in handleAttackResult
         }
     });
     
