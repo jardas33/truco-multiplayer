@@ -144,16 +144,24 @@ class BattleshipGame {
         // Wait for socket to be available and connected
         const waitForSocket = () => {
             this.socket = window.battleshipSocket;
-            this.playerId = this.socket ? this.socket.id : null;
+            // CRITICAL FIX: Use battleshipPlayerId from window if available, otherwise use socket.id
+            this.playerId = window.battleshipPlayerId || (this.socket ? this.socket.id : null);
             
             console.log('🚢 Multiplayer setup:');
             console.log('🚢 - roomCode:', this.roomCode);
             console.log('🚢 - isMultiplayer:', this.isMultiplayer);
             console.log('🚢 - playerId:', this.playerId);
+            console.log('🚢 - battleshipPlayerId:', window.battleshipPlayerId);
             console.log('🚢 - battleshipSocket:', !!this.socket);
             console.log('🚢 - socket.connected:', this.socket?.connected);
+            console.log('🚢 - socket.id:', this.socket?.id);
             
             if (this.socket && this.socket.connected) {
+                // CRITICAL FIX: Refresh playerId when socket connects
+                if (this.socket.id && !this.playerId) {
+                    this.playerId = this.socket.id;
+                    console.log('🚢 Updated playerId from socket.id:', this.playerId);
+                }
                 console.log('🚢 Using battleship socket, player ID:', this.playerId);
                 this.setupMultiplayerListeners();
                 
@@ -246,11 +254,19 @@ class BattleshipGame {
         console.log('🚢 Handling game start:', data);
         console.log('🚢 Game phase before setting:', this.gamePhase);
         
+        // CRITICAL FIX: Ensure playerId is set correctly before comparing
+        if (!this.playerId && this.socket) {
+            this.playerId = window.battleshipPlayerId || this.socket.id;
+            console.log('🚢 Refreshed playerId in handleGameStart:', this.playerId);
+        }
+        
         // Use server-assigned first player instead of random assignment
         if (data.firstPlayerId) {
             this.isPlayerTurn = (data.firstPlayerId === this.playerId);
             this.currentPlayer = this.isPlayerTurn ? 0 : 1;
-            console.log(`🚢 Server assigned first turn to: ${data.firstPlayerId}, isPlayerTurn: ${this.isPlayerTurn}`);
+            console.log(`🚢 Server assigned first turn to: ${data.firstPlayerId}`);
+            console.log(`🚢 Current playerId: ${this.playerId}`);
+            console.log(`🚢 isPlayerTurn: ${this.isPlayerTurn}, currentPlayer: ${this.currentPlayer}`);
         } else {
             // Fallback to random assignment if server doesn't provide firstPlayerId
             const isPlayer1Turn = Math.random() < 0.5;
@@ -377,16 +393,31 @@ class BattleshipGame {
                 cell.ship.sunk = true;
                 shipSunk = true;
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
+                
+                // CRITICAL FIX: Show popup message for opponent's ship sunk
                 gameInstance.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
+                gameInstance.showGameMessage(`💥 Your ${cell.ship.name.toUpperCase()} SUNK!`, 3000);
+                
+                // CRITICAL FIX: Check if all ships are sunk (game over for defender)
+                if (gameInstance.checkGameOver(0)) { // Check if player 0 (defender) has lost all ships
+                    gameInstance.endGame(1); // Player 1 (opponent) won
+                    // Emit game over to server
+                    gameInstance.emitGameOver(1);
+                    return;
+                }
             } else {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
                 const attackerName = gameInstance.isMultiplayer ? 'Player 2' : 'Bot';
                 gameInstance.addToHistory(`💥 ${attackerName} hit your ship!`, 'hit');
+                // CRITICAL FIX: Show popup message for opponent's hit
+                gameInstance.showGameMessage(`💥 Your ship was hit!`, 2000);
             }
         } else {
             // CRITICAL FIX: Show who missed
             const misserName = gameInstance.isMultiplayer ? 'Player 2' : 'Bot';
             gameInstance.addToHistory(`💧 ${misserName} missed!`, 'miss');
+            // CRITICAL FIX: Show popup message for opponent's miss
+            gameInstance.showGameMessage(`💧 ${misserName} missed!`, 1500);
         }
         
         // ✅ CRITICAL FIX: Send attack result back to server for the attacker
@@ -452,11 +483,8 @@ class BattleshipGame {
                 gameInstance.showGameMessage(`💥 ${shipName.toUpperCase()} SUNK!`, 3000);
                 gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
                 
-                // Check for game over
-                if (gameInstance.checkGameOver(1)) { // Check if opponent (player 1) has lost all ships
-                    gameInstance.endGame(0); // Player 0 (you) won
-                    return;
-                }
+                // CRITICAL FIX: Don't check game over here - we don't have opponent's ship data in multiplayer
+                // The defender will check game over and emit battleshipGameOver when all their ships are sunk
             } else {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
                 gameInstance.addToHistory(`🎯 You hit!`, 'hit');
