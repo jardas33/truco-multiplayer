@@ -17,6 +17,7 @@ class BattleshipGame {
         this.winner = null;
         
         // Multiplayer state
+        this.isMultiplayer = false; // Initialize to false for single-player mode
         this.playerReady = false;
         this.opponentReady = false;
         this.playerId = null;
@@ -786,36 +787,66 @@ class BattleshipGame {
         }
         
         // Single player mode - set up AI ships
+        console.log('🚀 Starting single-player game mode');
+        console.log('🚀 isMultiplayer:', this.isMultiplayer);
+        console.log('🚀 roomCode:', this.roomCode);
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
         this.addToHistory('🚀 Battle started! Your turn to attack!', 'success');
         this.updateUI();
+        console.log('🚀 Calling setupAIShips()...');
         this.setupAIShips();
         console.log('✅ Game started successfully!');
     }
     
     setupAIShips() {
+        console.log('🤖 Setting up AI ships...');
+        // Clear any previously placed AI ships
+        this.placedShips[1] = [];
+        this.playerGrids[1] = this.createEmptyGrid();
+        
         // AI places ships randomly using the same rules as human player
         const aiShips = [...this.ships];
         let attempts = 0;
-        const maxAttempts = 2000; // Increased for better success rate with adjacent checking
+        const maxAttempts = 5000; // Increased attempts for better success rate
         
-        while (this.placedShips[1].length < 5 && attempts < maxAttempts) {
-            const ship = aiShips[this.placedShips[1].length];
-            const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
-            const x = Math.floor(Math.random() * (this.gridSize - (orientation === 'horizontal' ? ship.size - 1 : 0)));
-            const y = Math.floor(Math.random() * (this.gridSize - (orientation === 'vertical' ? ship.size - 1 : 0)));
+        console.log(`🤖 Attempting to place ${aiShips.length} ships for AI...`);
+        
+        for (let shipIndex = 0; shipIndex < aiShips.length; shipIndex++) {
+            const ship = aiShips[shipIndex];
+            let placed = false;
+            attempts = 0;
             
-            if (this.canPlaceShip(1, x, y, ship.size, orientation)) {
-                this.placeShip(1, x, y, ship, orientation);
+            // Try to place each ship with multiple attempts
+            while (!placed && attempts < maxAttempts) {
+                const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+                const maxX = this.gridSize - (orientation === 'horizontal' ? ship.size - 1 : 0);
+                const maxY = this.gridSize - (orientation === 'vertical' ? ship.size - 1 : 0);
+                const x = Math.floor(Math.random() * maxX);
+                const y = Math.floor(Math.random() * maxY);
+                
+                if (this.canPlaceShip(1, x, y, ship.size, orientation)) {
+                    this.placeShip(1, x, y, ship, orientation);
+                    console.log(`🤖 Placed ${ship.name} at (${x}, ${y}) with orientation ${orientation}`);
+                    placed = true;
+                }
+                attempts++;
             }
-            attempts++;
+            
+            if (!placed) {
+                console.error(`❌ Failed to place ${ship.name} after ${attempts} attempts`);
+                this.addToHistory(`⚠️ AI had difficulty placing ${ship.name}.`, 'warning');
+            }
         }
+        
+        console.log(`🤖 AI ship placement complete. Placed ${this.placedShips[1].length} out of ${aiShips.length} ships.`);
         
         if (this.placedShips[1].length < 5) {
             this.addToHistory('⚠️ AI had difficulty placing all ships. Game may be unbalanced.', 'warning');
+            console.warn(`⚠️ Only ${this.placedShips[1].length} AI ships placed`);
         } else {
             this.addToHistory('🤖 AI has placed all ships. Battle begins!', 'info');
+            console.log('✅ All AI ships placed successfully!');
         }
     }
     
