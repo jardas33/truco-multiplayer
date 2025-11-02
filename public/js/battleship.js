@@ -2488,32 +2488,47 @@ class BattleshipClient {
         const ship = gameInstance.currentShip;
         if (!ship) return;
         
-        // Draw ship info box
-        fill(0, 0, 0, 200);
-        stroke(255, 215, 0);
-        strokeWeight(2);
+        // CRITICAL FIX: Draw fully opaque background to prevent text bleeding through
+        fill(0, 0, 0, 255); // Fully opaque black background
+        noStroke();
         rect(10, height - 150, 300, 140);
         
-        // Draw ship info text
-        fill(255, 215, 0);
-        textAlign(LEFT, TOP);
-        textSize(16);
-        text(`Placing: ${ship.name}`, 20, height - 140);
+        // CRITICAL FIX: Draw border with good contrast
+        noFill();
+        stroke(255, 215, 0); // Gold border
+        strokeWeight(3); // Thicker border for better visibility
+        rect(10, height - 150, 300, 140);
         
-        fill(255);
-        textSize(14);
+        // CRITICAL FIX: Draw text with proper styling - clear background and high contrast
+        textAlign(LEFT, TOP);
+        noStroke();
+        
+        // Title text - bright gold/yellow for high contrast
+        fill(255, 215, 0); // Bright gold
+        textSize(18); // Larger font
+        textStyle(BOLD);
+        text(`Placing: ${ship.name}`, 20, height - 145);
+        
+        // Body text - bright white for maximum contrast
+        fill(255, 255, 255); // Pure white
+        textSize(15); // Readable size
+        textStyle(NORMAL);
         text(`Size: ${ship.size} squares`, 20, height - 120);
         text(`Orientation: ${ship.orientation || 'horizontal'}`, 20, height - 100);
+        
+        // Instruction text - slightly dimmed but still readable
+        fill(200, 200, 255); // Light blue for instructions
+        textSize(13);
         text(`Click on the left grid to place`, 20, height - 80);
         text(`Press R to rotate, Esc to cancel`, 20, height - 60);
         
-        // Draw ship preview
+        // Draw ship preview with better visibility
         const shipWidth = ship.orientation === 'horizontal' ? ship.size * 15 : 15;
         const shipHeight = ship.orientation === 'vertical' ? ship.size * 15 : 15;
         
         fill(0, 255, 0); // Green for all ship previews
         stroke(255);
-        strokeWeight(1);
+        strokeWeight(2); // Thicker border
         rect(20, height - 40, shipWidth, shipHeight);
     }
     
