@@ -368,9 +368,11 @@ class BattleshipGame {
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
                 gameInstance.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
             } else {
-                gameInstance.addToHistory(`💥 Opponent hit your ${cell.ship.name}!`, 'hit');
+                // CRITICAL FIX: Don't reveal which ship was hit
+                gameInstance.addToHistory(`💥 Opponent hit your ship!`, 'hit');
             }
         } else {
+            // CRITICAL FIX: Show who missed
             gameInstance.addToHistory(`💧 Opponent missed!`, 'miss');
         }
         
@@ -417,11 +419,14 @@ class BattleshipGame {
         // Add to history
         if (hit) {
             if (shipSunk) {
+                // Show ship name when sunk (it's okay to reveal when ship is destroyed)
                 gameInstance.addToHistory(`💥 You sunk opponent's ${shipName}!`, 'sunk');
             } else {
-                gameInstance.addToHistory(`💥 You hit opponent's ${shipName}!`, 'hit');
+                // CRITICAL FIX: Don't reveal which ship was hit
+                gameInstance.addToHistory(`💥 You hit!`, 'hit');
             }
         } else {
+            // CRITICAL FIX: Show who missed (in multiplayer, the attacker is always "You" from attacker's perspective)
             gameInstance.addToHistory(`💧 You missed!`, 'miss');
         }
         
@@ -1026,7 +1031,11 @@ class BattleshipGame {
                         this.totalOpponentShipsSunk++; // Track opponent ships sunk
                     }
                     
-                    this.addToHistory(`💥 ${player === 0 ? 'You' : 'AI'} sunk the ${ship.name}!`, 'sunk');
+                    // CRITICAL FIX: Show who sunk which ship (okay to show ship name when sunk)
+                    const sinkerName = this.isMultiplayer ? 
+                        (player === 0 ? 'Player 1' : 'Player 2') : 
+                        (player === 0 ? 'You' : 'Bot');
+                    this.addToHistory(`💥 ${sinkerName} sunk the ${ship.name}!`, 'sunk');
                     this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
                     
                     // Bonus points for sinking a ship
@@ -1043,8 +1052,12 @@ class BattleshipGame {
                     
                     return { valid: true, hit: true, sunk: true, ship: ship.name };
                 } else {
-                    this.addToHistory(`🎯 ${player === 0 ? 'You' : 'AI'} hit the ${ship.name}!`, 'hit');
-                    this.showGameMessage(`🎯 HIT! ${ship.name} damaged!`, 2000);
+                    // CRITICAL FIX: Don't reveal which ship was hit
+                    const attackerName = this.isMultiplayer ? 
+                        (player === 0 ? 'You' : 'Player 2') : 
+                        (player === 0 ? 'You' : 'Bot');
+                    this.addToHistory(`🎯 ${attackerName} hit!`, 'hit');
+                    this.showGameMessage(`🎯 HIT!`, 2000);
                     return { valid: true, hit: true, sunk: false, ship: ship.name };
                 }
             } else {
@@ -1058,8 +1071,12 @@ class BattleshipGame {
                     this.aiMisses++;
                 }
                 
-                this.addToHistory(`💧 ${player === 0 ? 'You' : 'AI'} missed!`, 'miss');
-                this.showGameMessage(`💧 Miss!`, 1500);
+                // CRITICAL FIX: Show who missed (Bot, Player 1, or Player 2)
+                const misserName = this.isMultiplayer ? 
+                    (player === 0 ? 'Player 1' : 'Player 2') : 
+                    (player === 0 ? 'You' : 'Bot');
+                this.addToHistory(`💧 ${misserName} missed!`, 'miss');
+                this.showGameMessage(`💧 ${misserName} missed!`, 1500);
                 return { valid: true, hit: false };
             }
         }
@@ -2800,7 +2817,8 @@ class BattleshipClient {
                 // Only end turn when you miss
                 if (!result.hit) {
                     // Miss - end turn (switch to AI)
-                    gameInstance.addToHistory('💧 Miss! AI\'s turn now.', 'info');
+                    // CRITICAL FIX: Show who missed
+                    gameInstance.addToHistory('💧 You missed! Bot\'s turn now.', 'info');
                     gameInstance.endTurn();
                 } else {
                     // Hit (whether sunk or not) - player gets another turn
