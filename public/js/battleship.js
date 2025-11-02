@@ -359,6 +359,12 @@ class BattleshipGame {
             console.log('🚢 Stored firstPlayerId:', this.firstPlayerId);
         }
         
+        // CRITICAL FIX: Store firstPlayerId BEFORE storing players array (needed for updatePlayerNamesInUI)
+        if (data.firstPlayerId) {
+            this.firstPlayerId = data.firstPlayerId;
+            console.log('🚢 Stored firstPlayerId:', this.firstPlayerId);
+        }
+        
         // CRITICAL FIX: Store players array for looking up player names
         if (data.players && Array.isArray(data.players)) {
             this.players = data.players;
@@ -368,9 +374,6 @@ class BattleshipGame {
             this.players.forEach((p, index) => {
                 console.log(`🚢 Player ${index}: id=${p.id}, name=${p.name}, nickname=${p.nickname || 'none'}`);
             });
-            
-            // CRITICAL FIX: Update all UI elements with player names immediately
-            this.updatePlayerNamesInUI();
         } else {
             console.log('🚢 WARNING: No players array received in game start data');
         }
@@ -397,6 +400,15 @@ class BattleshipGame {
         
         this.gamePhase = 'playing';
         console.log('🚢 Game phase after setting:', this.gamePhase);
+        
+        // CRITICAL FIX: Update all UI elements with player names AFTER firstPlayerId is set
+        // Wrap in try-catch to prevent errors from blocking game start
+        try {
+            this.updatePlayerNamesInUI();
+        } catch (error) {
+            console.error('🚢 Error updating player names in UI:', error);
+            // Don't block game start if name update fails
+        }
         
         // CRITICAL FIX: Initialize previousPlayerTurn to track turn changes
         this.previousPlayerTurn = this.isPlayerTurn;
@@ -1116,36 +1128,48 @@ class BattleshipGame {
     
     // CRITICAL FIX: Update all player names in UI elements
     updatePlayerNamesInUI() {
-        if (!this.isMultiplayer || !this.players || !Array.isArray(this.players) || this.players.length < 2) {
-            return;
+        try {
+            if (!this.isMultiplayer || !this.players || !Array.isArray(this.players) || this.players.length < 2) {
+                console.log('🚢 updatePlayerNamesInUI: Skipping - not multiplayer or insufficient players');
+                return;
+            }
+            
+            const player1 = this.players[0];
+            const player2 = this.players[1];
+            
+            if (!player1 || !player2) {
+                console.log('🚢 updatePlayerNamesInUI: Skipping - player1 or player2 is missing');
+                return;
+            }
+            
+            const isPlayer1 = this.firstPlayerId && (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
+            
+            // Get display names with nicknames
+            const player1Name = player1.nickname || player1.name || 'Player 1';
+            const player2Name = player2.nickname || player2.name || 'Player 2';
+            
+            // Update scoreboard labels (not scores)
+            const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
+            const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
+            
+            if (playerScoreDiv) {
+                playerScoreDiv.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
+            }
+            if (aiScoreDiv) {
+                aiScoreDiv.textContent = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+            }
+            
+            // Update game info panel
+            const playerNameEl = document.getElementById('playerName');
+            if (playerNameEl) {
+                playerNameEl.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
+            }
+            
+            console.log('🚢 Updated player names in UI:', { player1Name, player2Name, isPlayer1 });
+        } catch (error) {
+            console.error('🚢 Error in updatePlayerNamesInUI:', error);
+            // Don't throw - just log the error
         }
-        
-        const player1 = this.players[0];
-        const player2 = this.players[1];
-        const isPlayer1 = this.firstPlayerId && (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
-        
-        // Get display names with nicknames
-        const player1Name = player1.nickname || player1.name || 'Player 1';
-        const player2Name = player2.nickname || player2.name || 'Player 2';
-        
-        // Update scoreboard labels (not scores)
-        const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
-        const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
-        
-        if (playerScoreDiv) {
-            playerScoreDiv.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
-        }
-        if (aiScoreDiv) {
-            aiScoreDiv.textContent = !isPlayer1 ? `${player2Name} (you)` : player2Name;
-        }
-        
-        // Update game info panel
-        const playerNameEl = document.getElementById('playerName');
-        if (playerNameEl) {
-            playerNameEl.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
-        }
-        
-        console.log('🚢 Updated player names in UI:', { player1Name, player2Name, isPlayer1 });
     }
     
     updateScoreboard() {
