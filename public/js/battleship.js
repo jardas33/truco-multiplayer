@@ -487,11 +487,22 @@ class BattleshipGame {
                 
                 // CRITICAL FIX: Track the ship as sunk for opponent BEFORE checking game over
                 // This ensures the last ship is counted in the statistics
+                // When defender's ship is sunk, ONLY increment opponent's stats (opponent sunk our ship)
+                // DO NOT increment totalPlayerShipsSunk - that's only for ships WE destroy
+                const oldTotalOpponentShipsSunk = gameInstance.totalOpponentShipsSunk;
+                const oldTotalPlayerShipsSunk = gameInstance.totalPlayerShipsSunk;
                 gameInstance.shipsSunk++;
                 gameInstance.currentGameAiShipsSunk++;
                 gameInstance.totalAiShipsSunk++;
                 gameInstance.totalOpponentShipsSunk++;
-                console.log(`🚢 Ship sunk tracking: shipsSunk=${gameInstance.shipsSunk}, totalOpponentShipsSunk=${gameInstance.totalOpponentShipsSunk}`);
+                console.log(`🚢 Ship sunk tracking (defender): shipsSunk=${gameInstance.shipsSunk}, totalOpponentShipsSunk=${oldTotalOpponentShipsSunk} -> ${gameInstance.totalOpponentShipsSunk} (opponent sunk our ship)`);
+                console.log(`🚢 Defender stats after ship sunk: totalPlayerShipsSunk=${oldTotalPlayerShipsSunk} -> ${gameInstance.totalPlayerShipsSunk} (must stay same - we didn't sink any ships)`);
+                
+                // CRITICAL FIX: Ensure totalPlayerShipsSunk didn't accidentally increment
+                if (gameInstance.totalPlayerShipsSunk !== oldTotalPlayerShipsSunk) {
+                    console.error(`🚢 ERROR: totalPlayerShipsSunk incorrectly changed from ${oldTotalPlayerShipsSunk} to ${gameInstance.totalPlayerShipsSunk}! Resetting...`);
+                    gameInstance.totalPlayerShipsSunk = oldTotalPlayerShipsSunk;
+                }
                 
                 // CRITICAL FIX: Check if all ships are sunk (game over for defender)
                 if (gameInstance.checkGameOver(0)) { // Check if player 0 (defender) has lost all ships
@@ -619,11 +630,13 @@ class BattleshipGame {
             gameInstance.playerScore += 10; // 10 points per hit
             
             if (shipSunk) {
-                // CRITICAL FIX: Track ship sinking properly
+                // CRITICAL FIX: Track ship sinking properly (only for attacker)
+                // When attacker sinks opponent's ship, increment attacker's stats
                 gameInstance.shipsSunk++;
                 gameInstance.currentGamePlayerShipsSunk++;
                 gameInstance.totalPlayerShipsSunk++;
                 console.log(`🚢 Ship sunk by attacker - totalPlayerShipsSunk now: ${gameInstance.totalPlayerShipsSunk}, currentGamePlayerShipsSunk: ${gameInstance.currentGamePlayerShipsSunk}`);
+                console.log(`🚢 Attacker stats after ship sunk: totalPlayerShipsSunk=${gameInstance.totalPlayerShipsSunk} (should increment), totalOpponentShipsSunk=${gameInstance.totalOpponentShipsSunk} (should stay same)`);
                 gameInstance.playerScore += 50; // Bonus points for sinking
                 
                 // Show ship name when sunk (it's okay to reveal when ship is destroyed)
@@ -986,15 +999,15 @@ class BattleshipGame {
         const opponentShipsSunkEl = document.getElementById('opponentShipsSunk');
         
         // CRITICAL FIX: In multiplayer, show correct stats for each player
-        // playerScoreEl = local player's stats (wins, ships destroyed by local player of opponent)
-        // aiScoreEl = opponent's stats (opponent's wins, ships destroyed by opponent of local player)
+        // playerScoreEl = local player's stats (wins, ships destroyed BY local player of opponent)
+        // aiScoreEl = opponent's stats (opponent's wins, ships destroyed BY opponent of local player)
         if (this.isMultiplayer) {
             // Multiplayer mode - aiScoreEl shows opponent's stats
-            // totalPlayerShipsSunk = ships destroyed BY local player (of opponent)
-            // totalOpponentShipsSunk = ships destroyed BY opponent (of local player)
+            // totalPlayerShipsSunk = ships destroyed BY local player (of opponent) - only increments when WE attack and sink
+            // totalOpponentShipsSunk = ships destroyed BY opponent (of local player) - only increments when OPPONENT attacks and sinks OUR ships
             if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
             if (aiScoreEl) aiScoreEl.textContent = `${this.opponentGamesWon} Wins, ${this.totalOpponentShipsSunk} Ships Destroyed`;
-            console.log(`🔍 Scoreboard update - playerGamesWon: ${this.playerGamesWon}, totalPlayerShipsSunk: ${this.totalPlayerShipsSunk}, opponentGamesWon: ${this.opponentGamesWon}, totalOpponentShipsSunk: ${this.totalOpponentShipsSunk}`);
+            console.log(`🔍 Scoreboard update - playerGamesWon: ${this.playerGamesWon}, totalPlayerShipsSunk: ${this.totalPlayerShipsSunk} (ships WE destroyed), opponentGamesWon: ${this.opponentGamesWon}, totalOpponentShipsSunk: ${this.totalOpponentShipsSunk} (ships OPPONENT destroyed of ours)`);
         } else {
             // Single player mode - show games won and total ships sunk across all games
             if (playerScoreEl) playerScoreEl.textContent = `${this.playerGamesWon} Wins, ${this.totalPlayerShipsSunk} Ships Destroyed`;
