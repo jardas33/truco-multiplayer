@@ -819,23 +819,22 @@ class BattleshipGame {
     }
     
     emitTurnChange() {
-        console.log('🚢 emitTurnChange called - isMultiplayer:', this.isMultiplayer, 'socket:', !!this.socket, 'roomCode:', this.roomCode);
-        if (this.isMultiplayer && this.socket && this.roomCode) {
-            // Use a simple toggle between players instead of relying on opponentId
-            const nextPlayer = this.currentPlayer === 0 ? 1 : 0;
-            console.log('🚢 Current player:', this.currentPlayer, 'Next player:', nextPlayer);
-            
-            this.socket.emit('battleshipTurnChange', {
-                roomId: this.roomCode,
-                currentPlayer: nextPlayer
-            });
-            console.log('🚢 Turn change emitted');
-            
-            // Update local turn state
-            this.isPlayerTurn = false;
-            this.currentPlayer = nextPlayer;
-            this.updateUI();
+        // CRITICAL FIX: In multiplayer, the server is the authority on turn changes
+        // Clients should NOT emit turn changes - they should only listen to server events
+        // This function should only be used for single-player mode, but even there it's not needed
+        // since turn changes are handled by endTurn() directly
+        console.log('🚢 emitTurnChange called - but should not be used in multiplayer!');
+        console.log('🚢 isMultiplayer:', this.isMultiplayer, 'socket:', !!this.socket, 'roomCode:', this.roomCode);
+        
+        // DO NOT emit turn changes in multiplayer - server handles it via battleshipAttackResult
+        if (this.isMultiplayer) {
+            console.log('⚠️ emitTurnChange called in multiplayer - ignoring! Server controls turn changes.');
+            return;
         }
+        
+        // Single player mode - but this shouldn't be needed either
+        // Turn changes are handled by endTurn() directly
+        console.log('⚠️ emitTurnChange should not be called - use endTurn() instead');
     }
     
     emitGameOver(winner) {
@@ -1696,9 +1695,15 @@ class BattleshipGame {
     endTurn() {
         console.log('🚢 endTurn called - isMultiplayer:', this.isMultiplayer, 'currentPlayer:', this.currentPlayer);
         if (this.isMultiplayer) {
-            // In multiplayer, emit turn change to server
-            console.log('🚢 Emitting turn change');
-            this.emitTurnChange();
+            // CRITICAL FIX: In multiplayer, DO NOT emit turn changes from client
+            // The server is the authority on turn changes and will emit battleshipTurnChange
+            // when it receives battleshipAttackResult with hit: false
+            // This function should not be called in multiplayer for turn changes
+            // It might be called for other purposes (like AI turns), but turn changes
+            // are handled by the server
+            console.log('⚠️ endTurn called in multiplayer - turn changes are handled by server via battleshipAttackResult');
+            // Don't do anything - server will handle turn changes
+            return;
         } else {
             // Single player mode
             this.currentPlayer = 1 - this.currentPlayer;
@@ -3456,25 +3461,34 @@ class BattleshipClient {
             
             const result = gameInstance.attack(0, gridX, gridY);
             if (result.valid) {
-                console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
+                console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit === null ? 'PENDING (multiplayer)' : result.hit ? 'HIT' : 'MISS'}`);
                 
-                // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
-                // Only end turn when you miss
-                if (!result.hit) {
-                    // Miss - end turn (switch to AI)
-                    // CRITICAL FIX: Show who missed
-                    gameInstance.addToHistory('💧 You missed! Bot\'s turn now.', 'info');
-                    gameInstance.endTurn();
+                // CRITICAL FIX: In multiplayer, attack() returns { hit: null } because server handles hit/miss
+                // Turn changes are handled by server via battleshipAttackResult, so don't call endTurn() here
+                if (gameInstance.isMultiplayer) {
+                    // Multiplayer - server will handle turn changes via battleshipAttackResult
+                    // Just wait for server response - don't end turn here
+                    console.log('🚢 Multiplayer attack - waiting for server response');
                 } else {
-                    // Hit (whether sunk or not) - player gets another turn
-                    if (result.sunk) {
-                        gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
+                    // Single player mode - handle turn changes locally
+                    // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
+                    // Only end turn when you miss
+                    if (!result.hit) {
+                        // Miss - end turn (switch to AI)
+                        // CRITICAL FIX: Show who missed
+                        gameInstance.addToHistory('💧 You missed! Bot\'s turn now.', 'info');
+                        gameInstance.endTurn();
                     } else {
-                        gameInstance.addToHistory('🎯 Hit! You get another turn!', 'success');
+                        // Hit (whether sunk or not) - player gets another turn
+                        if (result.sunk) {
+                            gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
+                        } else {
+                            gameInstance.addToHistory('🎯 Hit! You get another turn!', 'success');
+                        }
+                        // Don't end turn - player can click again to attack
+                        // But ensure currentPlayer stays 0
+                        gameInstance.currentPlayer = 0;
                     }
-                    // Don't end turn - player can click again to attack
-                    // But ensure currentPlayer stays 0
-                    gameInstance.currentPlayer = 0;
                 }
                 
                 // Static render after attack
