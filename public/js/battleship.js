@@ -277,8 +277,16 @@ class BattleshipGame {
             return 'Unknown';
         }
         
-        // Priority: nickname > name > fallback
-        const displayName = player.nickname || player.name || `Player ${playerId}`;
+        // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+        // Priority: name (contains nickname if set) > fallback
+        const displayName = player.name || `Player ${playerId}`;
+        
+        console.log(`🚢 getPlayerDisplayName for ${playerId}:`, {
+            playerId: playerId,
+            playerName: player.name,
+            playerNickname: player.nickname,
+            displayName: displayName
+        });
         
         // Optionally add "(you)" indicator
         if (includeYou && playerId === this.playerId) {
@@ -295,7 +303,8 @@ class BattleshipGame {
         }
         
         const player = this.players[playerIndex];
-        const displayName = player.nickname || player.name || `Player ${playerIndex + 1}`;
+        // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+        const displayName = player.name || `Player ${playerIndex + 1}`;
         
         if (includeYou && player.id === this.playerId) {
             return `${displayName} (you)`;
@@ -315,7 +324,8 @@ class BattleshipGame {
             return 'You';
         }
         
-        return localPlayer.nickname || localPlayer.name || 'You';
+        // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+        return localPlayer.name || 'You';
     }
     
     // CRITICAL FIX: Get opponent's display name
@@ -329,7 +339,8 @@ class BattleshipGame {
             return 'Opponent';
         }
         
-        return opponent.nickname || opponent.name || 'Opponent';
+        // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+        return opponent.name || 'Opponent';
     }
 
     handleGameStart(data) {
@@ -1138,9 +1149,18 @@ class BattleshipGame {
             
             const isPlayer1 = this.firstPlayerId && (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
             
-            // Get display names with nicknames
-            const player1Name = player1.nickname || player1.name || 'Player 1';
-            const player2Name = player2.nickname || player2.name || 'Player 2';
+            // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+            // Get display names with nicknames (nickname is stored in name property)
+            const player1Name = player1.name || 'Player 1';
+            const player2Name = player2.name || 'Player 2';
+            
+            console.log('🚢 updatePlayerNamesInUI - Player data:', {
+                player1: { id: player1.id, name: player1.name, nickname: player1.nickname },
+                player2: { id: player2.id, name: player2.name, nickname: player2.nickname },
+                player1Name: player1Name,
+                player2Name: player2Name,
+                isPlayer1: isPlayer1
+            });
             
             // Update scoreboard labels (not scores)
             const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
