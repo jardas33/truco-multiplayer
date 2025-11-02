@@ -985,6 +985,23 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // ✅ CRITICAL FIX: Validate it's the attacker's turn
+        const attackingPlayer = room.players.find(p => p.id === socket.id);
+        if (!attackingPlayer) {
+            console.log(`❌ Attacking player not found in room`);
+            socket.emit('battleshipAttackError', { message: 'Player not found in room' });
+            return;
+        }
+        
+        const attackingPlayerIndex = room.players.findIndex(p => p.id === socket.id);
+        
+        // Validate turn: only allow attack if it's this player's turn
+        if (room.currentPlayer !== attackingPlayerIndex) {
+            console.log(`❌ Attack rejected - not attacker's turn. Current: ${room.currentPlayer}, Attacker: ${attackingPlayerIndex}`);
+            socket.emit('battleshipAttackError', { message: 'Not your turn!' });
+            return;
+        }
+        
         // Add the attacking player ID to the data
         data.attackingPlayerId = socket.id;
         

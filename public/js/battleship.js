@@ -213,6 +213,13 @@ class BattleshipGame {
             this.handleOpponentAttack(data);
         });
         
+        // Handle attack errors (when server rejects attack)
+        this.socket.on('battleshipAttackError', (data) => {
+            console.log('🚢 Attack error received:', data);
+            this.addToHistory(`❌ ${data.message || 'Attack rejected by server'}`, 'error');
+            this.showGameMessage(`❌ ${data.message || 'Attack rejected!'}`, 2000);
+        });
+        
         // Handle attack confirmation events (for the attacker)
         this.socket.on('battleshipAttackResult', (data) => {
             console.log('🚢 Received attack result confirmation:', data);
@@ -570,6 +577,12 @@ class BattleshipGame {
             });
             console.log(`🚢 Sent attack result to server: hit=${isHit}, shipSunk=${shipSunk}, shipName=${shipName}`);
         }
+        
+        // ✅ CRITICAL FIX: When opponent attacks (whether hit or miss), it's their turn
+        // Set local turn state to prevent our player from attacking
+        gameInstance.isPlayerTurn = false;
+        gameInstance.currentPlayer = 1; // Opponent is attacking
+        console.log(`🚢 Opponent attacked - set isPlayerTurn=false, currentPlayer=1`);
         
         // Force redraw
         if (window.battleshipClient) {
