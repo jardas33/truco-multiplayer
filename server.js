@@ -1915,28 +1915,39 @@ io.on('connection', (socket) => {
     socket.on('changeNickname', (data) => {
         try {
             console.log(`🐟 Nickname change event received:`, data);
-            const roomCode = data.roomId;
+            // CRITICAL FIX: Support both roomCode and roomId for compatibility
+            const roomCode = data.roomCode || data.roomId;
             const room = rooms.get(roomCode);
             
             if (!room) {
                 console.log(`❌ Room ${roomCode} not found for changeNickname`);
-                socket.emit('error', 'Room not found');
+                socket.emit('nicknameError', 'Room not found');
                 return;
             }
             
-            // Find and update the player's nickname
-            const player = room.players.find(p => p.id === data.playerId);
+            // CRITICAL FIX: Find player by socket.id (current socket) instead of data.playerId
+            const player = room.players.find(p => p.id === socket.id);
             if (player) {
+                const oldName = player.name;
                 player.name = data.nickname;
-                console.log(`🐟 Player ${data.playerId} changed nickname to ${data.nickname}`);
+                console.log(`🐟 Player ${socket.id} changed nickname from "${oldName}" to "${data.nickname}"`);
                 
                 // Broadcast the nickname change to all players in the room
                 io.to(roomCode).emit('playersUpdated', room.players);
+                
+                // Emit success confirmation to the requesting player
+                socket.emit('nicknameChanged', {
+                    nickname: data.nickname,
+                    playerId: socket.id
+                });
+            } else {
+                console.log(`❌ Player ${socket.id} not found in room ${roomCode}`);
+                socket.emit('nicknameError', 'Player not found in room');
             }
             
         } catch (error) {
             console.error(`❌ Error in changeNickname handler:`, error);
-            socket.emit('error', 'Failed to process nickname change');
+            socket.emit('nicknameError', 'Failed to process nickname change');
         }
     });
 

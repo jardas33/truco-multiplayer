@@ -336,16 +336,19 @@
         }
 
         .controls {
-            position: sticky;
-            bottom: 0;
+            /* CRITICAL FIX: Position controls at bottom center of screen */
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             gap: 15px;
-            margin-top: 20px;
-            padding: 15px 0;
+            padding: 15px 30px;
             background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 10px;
             z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .control-btn {
@@ -504,7 +507,21 @@
         @media (max-width: 768px) {
             .game-title { font-size: 2em; }
             .menu-buttons { flex-direction: column; }
-            .controls { flex-direction: column; }
+            
+            /* Responsive controls for mobile */
+            .controls {
+                bottom: 10px;
+                padding: 10px 20px;
+                gap: 10px;
+                flex-direction: column;
+                width: 90%;
+                max-width: 300px;
+            }
+            
+            .control-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
             .left-panel, .right-panel {
                 width: 100%;
                 padding: 15px;
@@ -584,12 +601,6 @@
                 </div>
             </div>
 
-            <!-- Controls -->
-            <div class="controls">
-                <button class="control-btn start-btn" id="startGameBtn" disabled>Start Battle</button>
-                <button class="control-btn reset-btn" id="resetGameBtn">Reset Game</button>
-            </div>
-
         </div>
 
         <!-- Right Panel - Game Canvas -->
@@ -597,6 +608,12 @@
             <!-- Game Canvas -->
             <div id="gameCanvas"></div>
         </div>
+    </div>
+
+    <!-- Controls - Positioned at bottom center -->
+    <div class="controls">
+        <button class="control-btn start-btn" id="startGameBtn" disabled>Start Battle</button>
+        <button class="control-btn reset-btn" id="resetGameBtn">Reset Game</button>
     </div>
 
     <!-- Battle Log - Fixed to bottom right -->

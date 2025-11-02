@@ -521,6 +521,12 @@
                     changeBtn.disabled = false;
                 }
                 
+                // Clear input field
+                const nicknameInput = document.getElementById('nicknameInput');
+                if (nicknameInput) {
+                    nicknameInput.value = '';
+                }
+                
                 // Show success message
                 alert('Nickname changed successfully!');
             });
@@ -641,7 +647,15 @@
 
         // Nickname change functionality
         function changeNickname() {
+            console.log('🔄 changeNickname called in battleship menu');
             const nicknameInput = document.getElementById('nicknameInput');
+            
+            if (!nicknameInput) {
+                console.error('❌ nicknameInput not found');
+                alert('Nickname input not found!');
+                return;
+            }
+            
             const newNickname = nicknameInput.value.trim();
             
             if (!newNickname) {
@@ -654,10 +668,31 @@
                 return;
             }
             
-            if (!window.socket || !window.battleshipRoomId) {
-                alert('Not connected to room!');
+            // CRITICAL FIX: Initialize socket if not already done
+            if (!window.socket) {
+                console.log('⚠️ Socket not initialized, initializing now...');
+                initBattleshipSocket();
+                
+                // Wait for socket to connect before changing nickname
+                if (window.socket) {
+                    window.socket.on('connect', () => {
+                        console.log('✅ Socket connected, retrying nickname change...');
+                        changeNickname();
+                    });
+                } else {
+                    alert('Socket not connected. Please wait a moment and try again.');
+                    return;
+                }
                 return;
             }
+            
+            if (!window.battleshipRoomId) {
+                console.error('❌ battleshipRoomId not set');
+                alert('Not in a room! Please create or join a room first.');
+                return;
+            }
+            
+            console.log('🔄 Changing nickname to:', newNickname, 'in room:', window.battleshipRoomId);
             
             // Emit nickname change to server
             window.socket.emit('changeNickname', {
@@ -667,8 +702,10 @@
             
             // Show loading state
             const changeBtn = document.getElementById('changeNicknameBtn');
-            changeBtn.textContent = 'Changing...';
-            changeBtn.disabled = true;
+            if (changeBtn) {
+                changeBtn.textContent = 'Changing...';
+                changeBtn.disabled = true;
+            }
         }
 
         function addBot() {
