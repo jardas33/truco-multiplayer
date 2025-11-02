@@ -449,9 +449,11 @@ class BattleshipGame {
                 
                 // CRITICAL FIX: Get attacker's name for the message
                 let attackerName = 'Opponent';
-                if (gameInstance.isMultiplayer && gameInstance.players) {
-                    const attacker = gameInstance.players.find(p => p.id === attackingPlayerId);
-                    attackerName = attacker ? (attacker.nickname || attacker.name || 'Opponent') : 'Opponent';
+                if (gameInstance.isMultiplayer && gameInstance.players && Array.isArray(gameInstance.players)) {
+                    const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
+                    if (attacker) {
+                        attackerName = attacker.nickname || attacker.name || 'Opponent';
+                    }
                 }
                 
                 // CRITICAL FIX: Show popup message for opponent's ship sunk (format: "Your [ship name] was sunk")
@@ -467,8 +469,16 @@ class BattleshipGame {
                 }
             } else {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
+                // Get attacker's name for the message
+                let attackerName = 'Opponent';
+                if (gameInstance.isMultiplayer && gameInstance.players && Array.isArray(gameInstance.players)) {
+                    const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
+                    if (attacker) {
+                        attackerName = attacker.nickname || attacker.name || 'Opponent';
+                    }
+                }
                 // Show popup message: "Your ship was hit!"
-                gameInstance.addToHistory(`💥 Opponent hit your ship!`, 'hit');
+                gameInstance.addToHistory(`💥 ${attackerName} hit your ship!`, 'hit');
                 gameInstance.showGameMessage(`💥 Your ship was hit!`, 2000);
             }
         } else {
@@ -1045,6 +1055,9 @@ class BattleshipGame {
         this.renderShipsList();
         this.addToHistory('🎲 All ships auto-placed!', 'success');
         
+        // CRITICAL FIX: Update UI to enable start button if all ships are placed
+        this.updateUI();
+        
         // Force visual update
         if (window.battleshipClient) {
             window.battleshipClient.staticRender();
@@ -1301,9 +1314,23 @@ class BattleshipGame {
                 }
                 
                 // CRITICAL FIX: Show who missed (Bot, Player 1, or Player 2)
-                const misserName = this.isMultiplayer ? 
-                    (player === 0 ? 'Player 1' : 'Player 2') : 
-                    (player === 0 ? 'You' : 'Bot');
+                // Get misser's name - use nickname if available in multiplayer
+                let misserName = 'Opponent';
+                if (this.isMultiplayer) {
+                    if (player === 0) {
+                        // Local player missed - get their name
+                        const localPlayer = this.players && Array.isArray(this.players) ? 
+                            this.players.find(p => p && p.id === this.playerId) : null;
+                        misserName = localPlayer ? (localPlayer.nickname || localPlayer.name || 'You') : 'You';
+                    } else {
+                        // Opponent missed - get their name
+                        const opponent = this.players && Array.isArray(this.players) ? 
+                            this.players.find(p => p && p.id !== this.playerId) : null;
+                        misserName = opponent ? (opponent.nickname || opponent.name || 'Opponent') : 'Opponent';
+                    }
+                } else {
+                    misserName = (player === 0 ? 'You' : 'Bot');
+                }
                 this.addToHistory(`💧 ${misserName} missed!`, 'miss');
                 this.showGameMessage(`💧 ${misserName} missed!`, 1500);
                 return { valid: true, hit: false };
