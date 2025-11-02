@@ -2124,11 +2124,15 @@ class BattleshipClient {
         const fleetGridCenter = fleetGridX + gridCenterOffset;
         const attackGridCenter = attackGridX + gridCenterOffset;
         
+        // CRITICAL FIX: Move titles further up to create more space from grid numbers
+        const titleBoxY = this.gridStartY - 75; // Move up from -55 to -75 (20px more space)
+        const titleTextY = this.gridStartY - 60; // Move up from -40 to -60 (20px more space)
+        
         // Draw background boxes for better readability
         noStroke();
         fill(0, 0, 0, 220); // Semi-transparent black background
-        rect(fleetGridCenter - 70, this.gridStartY - 55, 140, 30);
-        rect(attackGridCenter - 70, attackGridY - 55, 140, 30);
+        rect(fleetGridCenter - 70, titleBoxY, 140, 30);
+        rect(attackGridCenter - 70, titleBoxY, 140, 30);
         
         // Draw grid titles with better styling
         fill(255, 215, 0); // Gold color for better visibility
@@ -2136,8 +2140,8 @@ class BattleshipClient {
         textSize(20); // Good readable size
         textStyle(BOLD); // Bold for emphasis
         noStroke(); // No outline for cleaner look
-        text('Your Fleet', fleetGridCenter, this.gridStartY - 40);
-        text('Attack Grid', attackGridCenter, attackGridY - 40);
+        text('Your Fleet', fleetGridCenter, titleTextY);
+        text('Attack Grid', attackGridCenter, titleTextY);
         
         // Reset text style
         textStyle(NORMAL);
