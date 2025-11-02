@@ -379,12 +379,14 @@ class BattleshipGame {
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
                 gameInstance.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
             } else {
-                // CRITICAL FIX: Don't reveal which ship was hit
-                gameInstance.addToHistory(`💥 Opponent hit your ship!`, 'hit');
+                // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
+                const attackerName = gameInstance.isMultiplayer ? 'Player 2' : 'Bot';
+                gameInstance.addToHistory(`💥 ${attackerName} hit your ship!`, 'hit');
             }
         } else {
             // CRITICAL FIX: Show who missed
-            gameInstance.addToHistory(`💧 Opponent missed!`, 'miss');
+            const misserName = gameInstance.isMultiplayer ? 'Player 2' : 'Bot';
+            gameInstance.addToHistory(`💧 ${misserName} missed!`, 'miss');
         }
         
         // ✅ CRITICAL FIX: Send attack result back to server for the attacker
@@ -433,7 +435,7 @@ class BattleshipGame {
                 // Show ship name when sunk (it's okay to reveal when ship is destroyed)
                 gameInstance.addToHistory(`💥 You sunk opponent's ${shipName}!`, 'sunk');
             } else {
-                // CRITICAL FIX: Don't reveal which ship was hit
+                // CRITICAL FIX: Don't reveal which ship was hit, but show who hit (attacker is always "You" from attacker's perspective)
                 gameInstance.addToHistory(`💥 You hit!`, 'hit');
             }
         } else {
@@ -1068,7 +1070,7 @@ class BattleshipGame {
                         (player === 0 ? 'You' : 'Player 2') : 
                         (player === 0 ? 'You' : 'Bot');
                     this.addToHistory(`🎯 ${attackerName} hit!`, 'hit');
-                    this.showGameMessage(`🎯 HIT!`, 2000);
+                    this.showGameMessage(`🎯 ${attackerName} hit!`, 2000);
                     return { valid: true, hit: true, sunk: false, ship: ship.name };
                 }
             } else {
