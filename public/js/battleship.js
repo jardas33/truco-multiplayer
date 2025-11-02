@@ -275,6 +275,13 @@ class BattleshipGame {
         if (data.players && Array.isArray(data.players)) {
             this.players = data.players;
             console.log('🚢 Stored players array:', this.players.map(p => ({ id: p.id, name: p.name, nickname: p.nickname })));
+            console.log('🚢 Players array stored with length:', this.players.length);
+            // CRITICAL FIX: Log each player's details for debugging
+            this.players.forEach((p, index) => {
+                console.log(`🚢 Player ${index}: id=${p.id}, name=${p.name}, nickname=${p.nickname || 'none'}`);
+            });
+        } else {
+            console.log('🚢 WARNING: No players array received in game start data');
         }
         
         // Use server-assigned first player instead of random assignment
@@ -1463,14 +1470,18 @@ class BattleshipGame {
             if (winner === 0) {
                 // Local player won
                 // CRITICAL FIX: Ensure all 5 ships are counted for the winner
-                // Check if we have all ships sunk but totalPlayerShipsSunk is less than currentGamePlayerShipsSunk
-                const allOpponentShipsSunk = this.placedShips[1] ? this.placedShips[1].every(ship => ship.hits >= ship.size) : false;
-                if (allOpponentShipsSunk && this.currentGamePlayerShipsSunk === 5 && this.totalPlayerShipsSunk < this.currentGamePlayerShipsSunk + (this.totalPlayerShipsSunk - (this.currentGamePlayerShipsSunk - this.shipsSunk))) {
-                    // Make sure totalPlayerShipsSunk matches the number of ships sunk in this game
-                    const shipsSunkThisGame = this.currentGamePlayerShipsSunk;
-                    const previousTotal = this.totalPlayerShipsSunk - (shipsSunkThisGame - this.shipsSunk);
-                    this.totalPlayerShipsSunk = previousTotal + shipsSunkThisGame;
-                    console.log(`🚢 CRITICAL FIX: Adjusted totalPlayerShipsSunk to ${this.totalPlayerShipsSunk} (ships sunk this game: ${shipsSunkThisGame})`);
+                // Count how many opponent ships are actually sunk
+                if (this.placedShips[1]) {
+                    const actualShipsSunk = this.placedShips[1].filter(ship => ship.hits >= ship.size).length;
+                    console.log(`🚢 Game end - Winner: actual ships sunk=${actualShipsSunk}, currentGamePlayerShipsSunk=${this.currentGamePlayerShipsSunk}, totalPlayerShipsSunk=${this.totalPlayerShipsSunk}`);
+                    
+                    // If actual ships sunk is 5 but our count is less, fix it
+                    if (actualShipsSunk === 5 && this.currentGamePlayerShipsSunk < 5) {
+                        const missingCount = 5 - this.currentGamePlayerShipsSunk;
+                        this.currentGamePlayerShipsSunk = 5;
+                        this.totalPlayerShipsSunk += missingCount;
+                        console.log(`🚢 CRITICAL FIX: Added ${missingCount} missing ship(s) to totalPlayerShipsSunk. New total: ${this.totalPlayerShipsSunk}`);
+                    }
                 }
                 
                 this.playerGamesWon++;
