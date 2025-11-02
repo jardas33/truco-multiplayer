@@ -799,11 +799,22 @@ class BattleshipGame {
         console.log('🚀 roomCode:', this.roomCode);
         this.gamePhase = 'playing';
         this.currentPlayer = 0;
-        this.addToHistory('🚀 Battle started! Your turn to attack!', 'success');
+        
+        // CRITICAL FIX: Clear, prominent message when battle starts
+        this.addToHistory('🚀 Battle started!', 'success');
+        this.showGameMessage('🎯 YOUR TURN TO ATTACK FIRST! Click on the Attack Grid to fire!', 5000);
+        this.addToHistory('🎯 It\'s YOUR turn to attack first! Click on the Attack Grid (right side) to fire.', 'info');
+        this.addToHistory('💡 Tip: Click on the Attack Grid to target enemy ships. You\'ll get another turn if you hit!', 'info');
+        
         this.updateUI();
         console.log('🚀 Calling setupAIShips()...');
         this.setupAIShips();
         console.log('✅ Game started successfully!');
+        
+        // Force visual update to show the message
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
     }
     
     setupAIShips() {
@@ -852,7 +863,7 @@ class BattleshipGame {
             this.addToHistory('⚠️ AI had difficulty placing all ships. Game may be unbalanced.', 'warning');
             console.warn(`⚠️ Only ${this.placedShips[1].length} AI ships placed`);
         } else {
-            this.addToHistory('🤖 AI has placed all ships. Battle begins!', 'info');
+            this.addToHistory('🤖 AI has placed all ships.', 'info');
             console.log('✅ All AI ships placed successfully!');
         }
     }
@@ -2764,8 +2775,14 @@ class BattleshipClient {
                 return;
             }
             
-            // Check if this position has already been attacked
+            // CRITICAL FIX: Check if it's actually the player's turn
             const gameInstance = window.battleshipGame || this.game;
+            if (gameInstance.currentPlayer !== 0) {
+                gameInstance.addToHistory('❌ Not your turn! Wait for your opponent.', 'error');
+                return;
+            }
+            
+            // Check if this position has already been attacked
             const attackGrid = gameInstance.attackGrids[0]; // Always use player 0's attack grid
             if (attackGrid[gridY][gridX].hit || attackGrid[gridY][gridX].miss) {
                 gameInstance.addToHistory('❌ You already attacked this position!', 'error');
@@ -2783,6 +2800,7 @@ class BattleshipClient {
                 // Only end turn when you miss
                 if (!result.hit) {
                     // Miss - end turn (switch to AI)
+                    gameInstance.addToHistory('💧 Miss! AI\'s turn now.', 'info');
                     gameInstance.endTurn();
                 } else {
                     // Hit (whether sunk or not) - player gets another turn
@@ -2792,12 +2810,15 @@ class BattleshipClient {
                         gameInstance.addToHistory('🎯 Hit! You get another turn!', 'success');
                     }
                     // Don't end turn - player can click again to attack
+                    // But ensure currentPlayer stays 0
+                    gameInstance.currentPlayer = 0;
                 }
                 
                 // Static render after attack
                 this.staticRender();
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
+                gameInstance.addToHistory(`❌ ${result.message}`, 'error');
             }
         }
     }
