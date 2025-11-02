@@ -581,6 +581,10 @@ class BattleshipGame {
             // Hit - ensure player keeps their turn
             gameInstance.isPlayerTurn = true;
             gameInstance.currentPlayer = 0;
+            // CRITICAL FIX: Update previousPlayerTurn to prevent false turn change detection
+            // This ensures that if handleTurnChange is somehow called after a hit, 
+            // it won't think the turn changed to us (we were already on our turn)
+            gameInstance.previousPlayerTurn = true;
             
             // Update hit counter and score
             gameInstance.playerHits++;
