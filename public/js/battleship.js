@@ -696,20 +696,6 @@ class BattleshipGame {
             return;
         }
         
-        // CRITICAL FIX: Reset ready state immediately when game ends
-        // This ensures players must place ships and be ready again for the next game
-        this.playerReady = false;
-        this.opponentReady = false;
-        console.log('🚢 Ready states reset: playerReady=false, opponentReady=false');
-        
-        // CRITICAL FIX: Reset start button immediately when game ends
-        const startBtn = document.getElementById('startGameBtn');
-        if (startBtn) {
-            startBtn.disabled = true;
-            startBtn.textContent = 'Start Game';
-            console.log('🚢 Start button reset: disabled=true, text="Start Game"');
-        }
-        
         // CRITICAL FIX: Map winner from server's perspective to local perspective
         // Server sends winner as player index (0 or 1) in room.players array
         // We need to determine if that index corresponds to us (local player) or opponent

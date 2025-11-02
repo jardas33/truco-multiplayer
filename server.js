@@ -1049,19 +1049,6 @@ io.on('connection', (socket) => {
     
     socket.on('battleshipGameOver', (data) => {
         console.log(`🚢 Game over in room ${data.roomId}:`, data);
-        
-        const room = rooms.get(data.roomId);
-        if (room && room.gameType === 'battleship') {
-            // CRITICAL FIX: Reset all players' ready state when game ends
-            // This ensures both players must place ships and be ready again for the next game
-            room.players.forEach(player => {
-                const oldReady = player.ready;
-                player.ready = false;
-                console.log(`🚢 Reset ready state for player ${player.id}: ${oldReady} -> false`);
-            });
-            console.log(`🚢 All players' ready states reset in room ${data.roomId} for new game`);
-        }
-        
         // Broadcast game over to all players
         io.to(data.roomId).emit('battleshipGameOver', data);
     });
