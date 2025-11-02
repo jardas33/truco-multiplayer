@@ -1462,6 +1462,13 @@ class BattleshipGame {
         console.log('✅ Current ship set:', this.currentShip);
         console.log('✅ Current ship name:', this.currentShip.name);
         console.log('✅ Current ship orientation:', this.currentShip.orientation);
+        
+        // CRITICAL FIX: Hide the initial placement message immediately when ship is selected
+        const existingMessage = document.getElementById('game-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
         this.addToHistory(`📌 Click on the grid to place ${ship.name}`, 'info');
         
         // Also set currentShip on the client instance for preview
@@ -2109,13 +2116,31 @@ class BattleshipClient {
         
         // Draw grids without excessive logging
         
-        // Draw grid titles with better visibility
+        // CRITICAL FIX: Draw grid titles with proper styling and centering
+        const gridWidth = 10 * (this.gridSize + this.gridSpacing); // Total grid width
+        const gridCenterOffset = gridWidth / 2; // Center of the grid
+        
+        // Calculate proper center positions for both grids
+        const fleetGridCenter = fleetGridX + gridCenterOffset;
+        const attackGridCenter = attackGridX + gridCenterOffset;
+        
+        // Draw background boxes for better readability
         noStroke();
-        fill(255, 255, 0); // Yellow titles
+        fill(0, 0, 0, 220); // Semi-transparent black background
+        rect(fleetGridCenter - 70, this.gridStartY - 55, 140, 30);
+        rect(attackGridCenter - 70, attackGridY - 55, 140, 30);
+        
+        // Draw grid titles with better styling
+        fill(255, 215, 0); // Gold color for better visibility
         textAlign(CENTER, CENTER);
-        textSize(22); // Much larger titles
-        text('Your Fleet', fleetGridX + 150, this.gridStartY - 40);
-        text('Attack Grid', attackGridX + 200, attackGridY - 40);
+        textSize(20); // Good readable size
+        textStyle(BOLD); // Bold for emphasis
+        noStroke(); // No outline for cleaner look
+        text('Your Fleet', fleetGridCenter, this.gridStartY - 40);
+        text('Attack Grid', attackGridCenter, attackGridY - 40);
+        
+        // Reset text style
+        textStyle(NORMAL);
     }
     
     drawGrid(x, y, player, showShips, gameInstance) {
