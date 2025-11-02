@@ -266,6 +266,72 @@ class BattleshipGame {
         }
     }
     
+    // CRITICAL FIX: Centralized function to get player display name with nickname priority
+    getPlayerDisplayName(playerId, includeYou = false) {
+        if (!this.players || !Array.isArray(this.players)) {
+            return 'Unknown';
+        }
+        
+        const player = this.players.find(p => p && p.id === playerId);
+        if (!player) {
+            return 'Unknown';
+        }
+        
+        // Priority: nickname > name > fallback
+        const displayName = player.nickname || player.name || `Player ${playerId}`;
+        
+        // Optionally add "(you)" indicator
+        if (includeYou && playerId === this.playerId) {
+            return `${displayName} (you)`;
+        }
+        
+        return displayName;
+    }
+    
+    // CRITICAL FIX: Get player display name by index (0 or 1)
+    getPlayerDisplayNameByIndex(playerIndex, includeYou = false) {
+        if (!this.players || !Array.isArray(this.players) || !this.players[playerIndex]) {
+            return playerIndex === 0 ? 'Player 1' : 'Player 2';
+        }
+        
+        const player = this.players[playerIndex];
+        const displayName = player.nickname || player.name || `Player ${playerIndex + 1}`;
+        
+        if (includeYou && player.id === this.playerId) {
+            return `${displayName} (you)`;
+        }
+        
+        return displayName;
+    }
+    
+    // CRITICAL FIX: Get local player's display name
+    getLocalPlayerName() {
+        if (!this.playerId || !this.players || !Array.isArray(this.players)) {
+            return 'You';
+        }
+        
+        const localPlayer = this.players.find(p => p && p.id === this.playerId);
+        if (!localPlayer) {
+            return 'You';
+        }
+        
+        return localPlayer.nickname || localPlayer.name || 'You';
+    }
+    
+    // CRITICAL FIX: Get opponent's display name
+    getOpponentName() {
+        if (!this.playerId || !this.players || !Array.isArray(this.players)) {
+            return 'Opponent';
+        }
+        
+        const opponent = this.players.find(p => p && p.id !== this.playerId);
+        if (!opponent) {
+            return 'Opponent';
+        }
+        
+        return opponent.nickname || opponent.name || 'Opponent';
+    }
+
     handleGameStart(data) {
         console.log('🚢 Handling game start:', data);
         console.log('🚢 Game phase before setting:', this.gamePhase);
@@ -302,6 +368,9 @@ class BattleshipGame {
             this.players.forEach((p, index) => {
                 console.log(`🚢 Player ${index}: id=${p.id}, name=${p.name}, nickname=${p.nickname || 'none'}`);
             });
+            
+            // CRITICAL FIX: Update all UI elements with player names immediately
+            this.updatePlayerNamesInUI();
         } else {
             console.log('🚢 WARNING: No players array received in game start data');
         }
@@ -498,25 +567,9 @@ class BattleshipGame {
                 shipSunk = true;
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
                 
-                // CRITICAL FIX: Get attacker's name for the message
-                let attackerName = 'Opponent';
-                if (gameInstance.isMultiplayer) {
-                    console.log('🚢 Looking up attacker name for sunk ship, id:', attackingPlayerId);
-                    console.log('🚢 Players array available:', !!gameInstance.players);
-                    console.log('🚢 Players array:', gameInstance.players);
-                    if (gameInstance.players && Array.isArray(gameInstance.players)) {
-                        const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
-                        console.log('🚢 Found attacker:', attacker);
-                        if (attacker) {
-                            attackerName = attacker.nickname || attacker.name || 'Opponent';
-                            console.log('🚢 Using attacker name:', attackerName);
-                        } else {
-                            console.log('🚢 Attacker not found, using default');
-                        }
-                    } else {
-                        console.log('🚢 Players array not available or not an array');
-                    }
-                }
+                // CRITICAL FIX: Get attacker's name using helper function
+                const attackerName = gameInstance.getPlayerDisplayName(attackingPlayerId) || 'Opponent';
+                console.log(`🚢 Attacker name for sunk ship: ${attackerName} (id: ${attackingPlayerId})`);
                 
                 // CRITICAL FIX: Show popup message for opponent's ship sunk (format: "Your [ship name] was sunk")
                 gameInstance.addToHistory(`💥 ${attackerName} sunk your ${cell.ship.name}!`, 'sunk');
@@ -554,43 +607,19 @@ class BattleshipGame {
                 }
             } else {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
-                // Get attacker's name for the message
-                let attackerName = 'Opponent';
-                if (gameInstance.isMultiplayer) {
-                    console.log('🚢 Looking up attacker name for hit, id:', attackingPlayerId);
-                    console.log('🚢 Players array available:', !!gameInstance.players);
-                    if (gameInstance.players && Array.isArray(gameInstance.players)) {
-                        const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
-                        console.log('🚢 Found attacker:', attacker);
-                        if (attacker) {
-                            attackerName = attacker.nickname || attacker.name || 'Opponent';
-                            console.log('🚢 Using attacker name:', attackerName);
-                        } else {
-                            console.log('🚢 Attacker not found, using default');
-                        }
-                    } else {
-                        console.log('🚢 Players array not available or not an array');
-                    }
-                }
+                // Get attacker's name using helper function
+                const attackerName = gameInstance.getPlayerDisplayName(attackingPlayerId) || 'Opponent';
+                console.log(`🚢 Attacker name for hit: ${attackerName} (id: ${attackingPlayerId})`);
                 // Show popup message: "Your ship was hit!"
                 gameInstance.addToHistory(`💥 ${attackerName} hit your ship!`, 'hit');
                 gameInstance.showGameMessage(`💥 Your ship was hit!`, 2000);
             }
         } else {
-            // CRITICAL FIX: Show who missed - get attacker's actual name
-            let misserName = 'Opponent';
-            if (gameInstance.isMultiplayer && gameInstance.players && Array.isArray(gameInstance.players)) {
-                const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
-                if (attacker) {
-                    misserName = attacker.nickname || attacker.name || 'Opponent';
-                    console.log(`🚢 Found attacker for miss message: ${misserName} (id: ${attackingPlayerId})`);
-                } else {
-                    console.log(`🚢 Could not find attacker in players array for id: ${attackingPlayerId}`);
-                    console.log(`🚢 Available players:`, gameInstance.players.map(p => ({ id: p?.id, name: p?.name, nickname: p?.nickname })));
-                }
-            } else {
-                misserName = 'Bot';
-            }
+            // CRITICAL FIX: Show who missed - get attacker's actual name using helper function
+            const misserName = gameInstance.isMultiplayer ? 
+                (gameInstance.getPlayerDisplayName(attackingPlayerId) || 'Opponent') : 
+                'Bot';
+            console.log(`🚢 Misser name: ${misserName} (id: ${attackingPlayerId})`);
             
             gameInstance.addToHistory(`💧 ${misserName} missed!`, 'miss');
             // CRITICAL FIX: Show popup message with attacker's name in format "[Name] missed"
@@ -1032,7 +1061,12 @@ class BattleshipGame {
         
         if (currentTurn) {
             if (this.isMultiplayer) {
-                currentTurn.textContent = this.isPlayerTurn ? 'You' : 'Opponent';
+                // CRITICAL FIX: Use actual player names with nicknames
+                if (this.isPlayerTurn) {
+                    currentTurn.textContent = this.getLocalPlayerName();
+                } else {
+                    currentTurn.textContent = this.getOpponentName();
+                }
             } else {
                 currentTurn.textContent = this.currentPlayer === 0 ? 'You' : 'AI';
             }
@@ -1078,6 +1112,40 @@ class BattleshipGame {
                 resetShipsBtn.style.display = 'none';
             }
         }
+    }
+    
+    // CRITICAL FIX: Update all player names in UI elements
+    updatePlayerNamesInUI() {
+        if (!this.isMultiplayer || !this.players || !Array.isArray(this.players) || this.players.length < 2) {
+            return;
+        }
+        
+        const player1 = this.players[0];
+        const player2 = this.players[1];
+        const isPlayer1 = this.firstPlayerId && (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
+        
+        // Get display names with nicknames
+        const player1Name = player1.nickname || player1.name || 'Player 1';
+        const player2Name = player2.nickname || player2.name || 'Player 2';
+        
+        // Update scoreboard labels (not scores)
+        const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
+        const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
+        
+        if (playerScoreDiv) {
+            playerScoreDiv.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
+        }
+        if (aiScoreDiv) {
+            aiScoreDiv.textContent = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+        }
+        
+        // Update game info panel
+        const playerNameEl = document.getElementById('playerName');
+        if (playerNameEl) {
+            playerNameEl.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
+        }
+        
+        console.log('🚢 Updated player names in UI:', { player1Name, player2Name, isPlayer1 });
     }
     
     updateScoreboard() {
@@ -1560,10 +1628,14 @@ class BattleshipGame {
                         this.totalOpponentShipsSunk++; // Track opponent ships sunk
                     }
                     
-                    // CRITICAL FIX: Show who sunk which ship (okay to show ship name when sunk)
-                    const sinkerName = this.isMultiplayer ? 
-                        (player === 0 ? 'Player 1' : 'Player 2') : 
-                        (player === 0 ? 'You' : 'Bot');
+                    // CRITICAL FIX: Show who sunk which ship using helper function
+                    let sinkerName;
+                    if (this.isMultiplayer) {
+                        const playerId = this.players && this.players[player] ? this.players[player].id : null;
+                        sinkerName = playerId ? this.getPlayerDisplayName(playerId) : (player === 0 ? this.getLocalPlayerName() : this.getOpponentName());
+                    } else {
+                        sinkerName = (player === 0 ? 'You' : 'Bot');
+                    }
                     this.addToHistory(`💥 ${sinkerName} sunk the ${ship.name}!`, 'sunk');
                     this.showGameMessage(`💥 ${ship.name} SUNK!`, 3000);
                     
@@ -1582,16 +1654,13 @@ class BattleshipGame {
                     return { valid: true, hit: true, sunk: true, ship: ship.name };
                 } else {
                     // CRITICAL FIX: Don't reveal which ship was hit
-                    // Get attacker's name - use nickname if available in multiplayer
-                    let attackerName = 'Opponent';
+                    // Get attacker's name using helper function
+                    let attackerName;
                     if (this.isMultiplayer) {
                         if (player === 0) {
-                            attackerName = 'You';
+                            attackerName = this.getLocalPlayerName();
                         } else {
-                            // Get opponent's name from players array
-                            const opponent = this.players && Array.isArray(this.players) ? 
-                                this.players.find(p => p && p.id !== this.playerId) : null;
-                            attackerName = opponent ? (opponent.nickname || opponent.name || 'Opponent') : 'Opponent';
+                            attackerName = this.getOpponentName();
                         }
                     } else {
                         attackerName = (player === 0 ? 'You' : 'Bot');
@@ -1611,20 +1680,13 @@ class BattleshipGame {
                     this.aiMisses++;
                 }
                 
-                // CRITICAL FIX: Show who missed (Bot, Player 1, or Player 2)
-                // Get misser's name - use nickname if available in multiplayer
-                let misserName = 'Opponent';
+                // CRITICAL FIX: Show who missed using helper function
+                let misserName;
                 if (this.isMultiplayer) {
                     if (player === 0) {
-                        // Local player missed - get their name
-                        const localPlayer = this.players && Array.isArray(this.players) ? 
-                            this.players.find(p => p && p.id === this.playerId) : null;
-                        misserName = localPlayer ? (localPlayer.nickname || localPlayer.name || 'You') : 'You';
+                        misserName = this.getLocalPlayerName();
                     } else {
-                        // Opponent missed - get their name
-                        const opponent = this.players && Array.isArray(this.players) ? 
-                            this.players.find(p => p && p.id !== this.playerId) : null;
-                        misserName = opponent ? (opponent.nickname || opponent.name || 'Opponent') : 'Opponent';
+                        misserName = this.getOpponentName();
                     }
                 } else {
                     misserName = (player === 0 ? 'You' : 'Bot');
