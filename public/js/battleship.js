@@ -1517,6 +1517,24 @@ class BattleshipGame {
                     console.log(`🚢 CRITICAL FIX: Loser - Fixed opponent ships sunk count. Was: ${oldTotal}, Now: ${this.totalOpponentShipsSunk} (added ${missingCount} missing ships)`);
                 }
                 
+                // CRITICAL FIX: Ensure we didn't incorrectly increment our own stats
+                // When we lose, our playerGamesWon should NOT increase, and totalPlayerShipsSunk should be 0
+                // Reset if they were incorrectly incremented during the game
+                const oldPlayerGamesWon = this.playerGamesWon;
+                const oldTotalPlayerShipsSunk = this.totalPlayerShipsSunk;
+                if (this.playerGamesWon > 0 || this.totalPlayerShipsSunk > 0) {
+                    console.log(`🚢 CRITICAL FIX: Loser - Resetting incorrect stats. playerGamesWon was ${this.playerGamesWon}, totalPlayerShipsSunk was ${this.totalPlayerShipsSunk}`);
+                    // Don't reset wins - they might have won previous games
+                    // But reset ships sunk for this game if it's incorrect
+                    // Only reset if we lost and somehow got ships sunk (shouldn't happen)
+                    if (this.currentGamePlayerShipsSunk > 0) {
+                        console.log(`🚢 CRITICAL FIX: Loser - Resetting currentGamePlayerShipsSunk from ${this.currentGamePlayerShipsSunk} to 0`);
+                        this.totalPlayerShipsSunk -= this.currentGamePlayerShipsSunk;
+                        this.currentGamePlayerShipsSunk = 0;
+                        console.log(`🚢 CRITICAL FIX: Loser - totalPlayerShipsSunk now: ${this.totalPlayerShipsSunk}`);
+                    }
+                }
+                
                 this.opponentGamesWon++;
                 this.addToHistory('💥 Game Over! Your opponent defeated you!', 'error');
                 this.showGameMessage('💥 DEFEAT! Your opponent sunk all your ships!', 5000);
