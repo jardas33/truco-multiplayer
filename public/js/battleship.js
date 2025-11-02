@@ -341,25 +341,39 @@ class BattleshipGame {
                                (this.firstPlayerId && this.playerId && String(this.firstPlayerId) === String(this.playerId));
         const isOurTurn = (data.currentPlayer === 0 && wasFirstPlayer) || (data.currentPlayer === 1 && !wasFirstPlayer);
         
+        // CRITICAL FIX: Store the previous state BEFORE updating to detect actual changes
+        const previousIsPlayerTurn = this.isPlayerTurn;
+        const previousCurrentPlayer = this.currentPlayer;
+        
         this.isPlayerTurn = isOurTurn;
         this.currentPlayer = isOurTurn ? 0 : 1; // Always use 0 for local player, 1 for opponent
         
         console.log(`🚢 Turn change: server index=${data.currentPlayer}, wasFirstPlayer=${wasFirstPlayer}, isOurTurn=${isOurTurn}`);
-        console.log(`🚢 isPlayerTurn=${this.isPlayerTurn}, currentPlayer=${this.currentPlayer}`);
+        console.log(`🚢 isPlayerTurn: ${previousIsPlayerTurn} -> ${this.isPlayerTurn}, currentPlayer: ${previousCurrentPlayer} -> ${this.currentPlayer}`);
         
-        // CRITICAL FIX: Only show "Your turn" message when the turn ACTUALLY changes to us
-        // Don't show it if we're already on our turn (e.g., after a hit where we keep our turn)
-        const turnChangedToUs = this.isPlayerTurn && !this.previousPlayerTurn;
+        // CRITICAL FIX: Only show "Your turn" message when the turn ACTUALLY changes TO us
+        // Check if:
+        // 1. We're now on our turn (isPlayerTurn = true)
+        // 2. We were NOT on our turn before (previousIsPlayerTurn = false)
+        // 3. This is a genuine turn change from opponent to us (not a race condition or duplicate event)
+        const turnChangedToUs = this.isPlayerTurn && !previousIsPlayerTurn;
         
-        console.log(`🚢 Turn change check: isPlayerTurn=${this.isPlayerTurn}, previousPlayerTurn=${this.previousPlayerTurn}, turnChangedToUs=${turnChangedToUs}`);
+        console.log(`🚢 Turn change check: isPlayerTurn=${this.isPlayerTurn}, previousIsPlayerTurn=${previousIsPlayerTurn}, turnChangedToUs=${turnChangedToUs}`);
+        console.log(`🚢 previousPlayerTurn=${this.previousPlayerTurn}`);
         
         if (this.isPlayerTurn) {
             // Only show message if this is a genuine turn change TO our turn (not staying on our turn)
             if (turnChangedToUs) {
-                this.addToHistory('🎯 Your turn to attack!', 'info');
-                this.showGameMessage('🎯 Your turn to attack!', 2000);
+                // Additional safety check: make sure previousPlayerTurn was also false
+                // This prevents showing the message if we're already processing a turn change
+                if (!this.previousPlayerTurn) {
+                    this.addToHistory('🎯 Your turn to attack!', 'info');
+                    this.showGameMessage('🎯 Your turn to attack!', 2000);
+                } else {
+                    console.log('🚢 Skipping "Your turn" message - previousPlayerTurn indicates we were already on our turn');
+                }
             } else {
-                console.log('🚢 Skipping "Your turn" message - not a genuine turn change (already on our turn)');
+                console.log('🚢 Skipping "Your turn" message - not a genuine turn change (already on our turn or no change)');
             }
         } else {
             this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
@@ -482,15 +496,21 @@ class BattleshipGame {
         } else {
             // CRITICAL FIX: Show who missed - get attacker's actual name
             let misserName = 'Opponent';
-            if (gameInstance.isMultiplayer && gameInstance.players) {
-                const attacker = gameInstance.players.find(p => p.id === attackingPlayerId);
-                misserName = attacker ? (attacker.nickname || attacker.name || 'Opponent') : 'Opponent';
+            if (gameInstance.isMultiplayer && gameInstance.players && Array.isArray(gameInstance.players)) {
+                const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
+                if (attacker) {
+                    misserName = attacker.nickname || attacker.name || 'Opponent';
+                    console.log(`🚢 Found attacker for miss message: ${misserName} (id: ${attackingPlayerId})`);
+                } else {
+                    console.log(`🚢 Could not find attacker in players array for id: ${attackingPlayerId}`);
+                    console.log(`🚢 Available players:`, gameInstance.players.map(p => ({ id: p?.id, name: p?.name, nickname: p?.nickname })));
+                }
             } else {
                 misserName = 'Bot';
             }
             
             gameInstance.addToHistory(`💧 ${misserName} missed!`, 'miss');
-            // CRITICAL FIX: Show popup message with attacker's name
+            // CRITICAL FIX: Show popup message with attacker's name in format "[Name] missed"
             gameInstance.showGameMessage(`💧 ${misserName} missed!`, 1500);
         }
         
