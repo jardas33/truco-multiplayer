@@ -46,6 +46,7 @@ class BattleshipGame {
         this.aiHits = [];
         this.aiMode = 'hunt'; // hunt, target
         this.aiLastHit = null;
+        this.aiTurnScheduled = false; // Prevent double AI turns
         
         // Scoreboard tracking
         this.playerScore = 0;
@@ -970,8 +971,17 @@ class BattleshipGame {
                 return { valid: false, message: 'Already attacked this position!' };
             }
             
+            // CRITICAL FIX: grid is accessed as grid[row][col] where row=y, col=x
+            // Verify coordinates are valid
+            if (y < 0 || y >= this.gridSize || x < 0 || x >= this.gridSize) {
+                console.error(`❌ Invalid coordinates: x=${x}, y=${y}`);
+                return { valid: false, message: 'Invalid coordinates!' };
+            }
+            
             const cell = grid[y][x];
             const isHit = cell.ship !== null;
+            
+            console.log(`🎯 Attack check: (${x}, ${y}), cell.ship:`, cell.ship ? cell.ship.name : 'null', 'isHit:', isHit);
             
             if (isHit) {
                 attackGrid[y][x].hit = true;
@@ -1131,7 +1141,7 @@ class BattleshipGame {
     }
     
     endTurn() {
-        console.log('🚢 endTurn called - isMultiplayer:', this.isMultiplayer);
+        console.log('🚢 endTurn called - isMultiplayer:', this.isMultiplayer, 'currentPlayer:', this.currentPlayer);
         if (this.isMultiplayer) {
             // In multiplayer, emit turn change to server
             console.log('🚢 Emitting turn change');
@@ -1139,16 +1149,34 @@ class BattleshipGame {
         } else {
             // Single player mode
             this.currentPlayer = 1 - this.currentPlayer;
+            console.log('🚢 Turn switched to player:', this.currentPlayer);
             this.updateUI();
             
-            if (this.currentPlayer === 1 && this.gamePhase === 'playing') {
-                setTimeout(() => this.aiTurn(), 1000);
+            // CRITICAL FIX: Only trigger AI turn if it's not already scheduled
+            if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver && !this.aiTurnScheduled) {
+                console.log('🚢 Scheduling AI turn');
+                setTimeout(() => {
+                    if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver) {
+                        this.aiTurn();
+                    }
+                }, 1000);
             }
         }
     }
     
     aiTurn() {
-        if (this.gamePhase !== 'playing' || this.currentPlayer !== 1 || this.gameOver) return;
+        if (this.gamePhase !== 'playing' || this.currentPlayer !== 1 || this.gameOver) {
+            console.log(`🤖 AI turn blocked - gamePhase: ${this.gamePhase}, currentPlayer: ${this.currentPlayer}, gameOver: ${this.gameOver}`);
+            return;
+        }
+        
+        // Prevent multiple AI turns from being scheduled
+        if (this.aiTurnScheduled) {
+            console.log('🤖 AI turn already scheduled, skipping');
+            return;
+        }
+        
+        this.aiTurnScheduled = true;
         
         // Show AI thinking message
         this.addToHistory('🤖 AI is thinking...', 'info');
@@ -1205,23 +1233,54 @@ class BattleshipGame {
         
         const result = this.attack(1, x, y);
         
+        if (!result.valid) {
+            console.error(`🤖 AI attack failed: ${result.message}`);
+            this.aiTurnScheduled = false;
+            this.endTurn(); // End turn if attack is invalid
+            return;
+        }
+        
         if (result.hit) {
             this.aiMode = 'target';
             this.aiLastHit = { x, y };
             this.aiHits.push({ x, y });
             
+            // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
+            // Only end turn when you miss
+            // Reset flag so we can schedule another turn
+            this.aiTurnScheduled = false;
+            
             if (!result.sunk) {
-                // Continue targeting if not sunk - but only if it's still AI's turn
-                if (this.currentPlayer === 1 && this.gamePhase === 'playing') {
-                    setTimeout(() => this.aiTurn(), 2000);
+                // Hit but not sunk - give AI another turn
+                if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver) {
+                    setTimeout(() => {
+                        // Double-check it's still AI's turn before calling again
+                        if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver && !this.aiTurnScheduled) {
+                            this.aiTurn();
+                        }
+                    }, 2000);
+                } else {
+                    // If conditions changed, end the turn
+                    this.endTurn();
                 }
             } else {
-                // Ship sunk, go back to hunt mode
+                // Ship sunk, go back to hunt mode - but AI still gets another turn
                 this.aiMode = 'hunt';
                 this.aiLastHit = null;
-                this.endTurn();
+                // Give AI another turn (still its turn after sinking)
+                if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver) {
+                    setTimeout(() => {
+                        if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver && !this.aiTurnScheduled) {
+                            this.aiTurn();
+                        }
+                    }, 2000);
+                } else {
+                    this.endTurn();
+                }
             }
         } else {
+            // Miss - end turn (switch to player)
+            this.aiTurnScheduled = false;
             this.endTurn();
         }
     }
@@ -2619,6 +2678,7 @@ class BattleshipClient {
         
         console.log(`🎯 Calculated grid coordinates: gridX=${gridX}, gridY=${gridY}`);
         console.log(`🎯 Cell size: ${cellSize}, mouse relative to attack grid: (${mouseX - attackGridX}, ${mouseY - attackGridY})`);
+        console.log(`🎯 Attack grid position: (${attackGridX}, ${attackGridY}), Mouse: (${mouseX}, ${mouseY})`);
         
         // CRITICAL FIX: Ensure coordinates are within valid bounds
         if (gridX < 0 || gridX >= 10 || gridY < 0 || gridY >= 10) {
@@ -2671,18 +2731,24 @@ class BattleshipClient {
             const result = gameInstance.attack(0, gridX, gridY);
             if (result.valid) {
                 console.log(`🎯 Attacked (${gridX}, ${gridY}): ${result.hit ? 'HIT' : 'MISS'}`);
-                gameInstance.endTurn();
+                
+                // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
+                // Only end turn when you miss
+                if (!result.hit) {
+                    // Miss - end turn (switch to AI)
+                    gameInstance.endTurn();
+                } else {
+                    // Hit (whether sunk or not) - player gets another turn
+                    if (result.sunk) {
+                        gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
+                    } else {
+                        gameInstance.addToHistory('🎯 Hit! You get another turn!', 'success');
+                    }
+                    // Don't end turn - player can click again to attack
+                }
+                
                 // Static render after attack
                 this.staticRender();
-                
-                // In single player mode, start AI turn after a short delay
-                if (!this.isMultiplayer && this.gamePhase === 'playing' && this.currentPlayer === 1) {
-                    setTimeout(() => {
-                        gameInstance.aiTurn();
-                        // Static render after AI attack
-                        this.staticRender();
-                    }, 1000);
-                }
             } else {
                 console.log(`❌ Invalid attack: ${result.message}`);
             }
