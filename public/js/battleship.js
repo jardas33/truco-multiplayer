@@ -341,40 +341,18 @@ class BattleshipGame {
                                (this.firstPlayerId && this.playerId && String(this.firstPlayerId) === String(this.playerId));
         const isOurTurn = (data.currentPlayer === 0 && wasFirstPlayer) || (data.currentPlayer === 1 && !wasFirstPlayer);
         
-        // CRITICAL FIX: Store the previous state BEFORE updating to detect actual changes
-        const previousIsPlayerTurn = this.isPlayerTurn;
-        const previousCurrentPlayer = this.currentPlayer;
-        
         this.isPlayerTurn = isOurTurn;
         this.currentPlayer = isOurTurn ? 0 : 1; // Always use 0 for local player, 1 for opponent
         
         console.log(`🚢 Turn change: server index=${data.currentPlayer}, wasFirstPlayer=${wasFirstPlayer}, isOurTurn=${isOurTurn}`);
-        console.log(`🚢 isPlayerTurn: ${previousIsPlayerTurn} -> ${this.isPlayerTurn}, currentPlayer: ${previousCurrentPlayer} -> ${this.currentPlayer}`);
+        console.log(`🚢 isPlayerTurn=${this.isPlayerTurn}, currentPlayer=${this.currentPlayer}`);
         
-        // CRITICAL FIX: Only show "Your turn" message when the turn ACTUALLY changes TO us
-        // Check if:
-        // 1. We're now on our turn (isPlayerTurn = true)
-        // 2. We were NOT on our turn before (previousIsPlayerTurn = false)
-        // 3. This is a genuine turn change from opponent to us (not a race condition or duplicate event)
-        const turnChangedToUs = this.isPlayerTurn && !previousIsPlayerTurn;
-        
-        console.log(`🚢 Turn change check: isPlayerTurn=${this.isPlayerTurn}, previousIsPlayerTurn=${previousIsPlayerTurn}, turnChangedToUs=${turnChangedToUs}`);
-        console.log(`🚢 previousPlayerTurn=${this.previousPlayerTurn}`);
-        
+        // CRITICAL FIX: Don't show any popup messages in handleTurnChange
+        // Turn changes should only update the UI silently
+        // Popup messages are handled in other functions (handleAttackResult, handleOpponentAttack)
         if (this.isPlayerTurn) {
-            // Only show message if this is a genuine turn change TO our turn (not staying on our turn)
-            if (turnChangedToUs) {
-                // Additional safety check: make sure previousPlayerTurn was also false
-                // This prevents showing the message if we're already processing a turn change
-                if (!this.previousPlayerTurn) {
-                    this.addToHistory('🎯 Your turn to attack!', 'info');
-                    this.showGameMessage('🎯 Your turn to attack!', 2000);
-                } else {
-                    console.log('🚢 Skipping "Your turn" message - previousPlayerTurn indicates we were already on our turn');
-                }
-            } else {
-                console.log('🚢 Skipping "Your turn" message - not a genuine turn change (already on our turn or no change)');
-            }
+            this.addToHistory('🎯 Your turn to attack!', 'info');
+            // NO POPUP MESSAGE - only history entry
         } else {
             this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
             // Don't show popup for opponent's turn - they'll see their own messages
@@ -581,10 +559,6 @@ class BattleshipGame {
             // Hit - ensure player keeps their turn
             gameInstance.isPlayerTurn = true;
             gameInstance.currentPlayer = 0;
-            // CRITICAL FIX: Update previousPlayerTurn to prevent false turn change detection
-            // This ensures that if handleTurnChange is somehow called after a hit, 
-            // it won't think the turn changed to us (we were already on our turn)
-            gameInstance.previousPlayerTurn = true;
             
             // Update hit counter and score
             gameInstance.playerHits++;
