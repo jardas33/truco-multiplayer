@@ -903,6 +903,9 @@ io.on('connection', (socket) => {
                         console.log(`🚢 Assigning first turn to: ${firstPlayerId} (${roomCreator ? 'Room Creator' : 'First Player'})`);
                         console.log(`🚢 Initialized room.currentPlayer to: ${room.currentPlayer}`);
                         
+                        // CRITICAL FIX: Log player names before sending to ensure nicknames are included
+                        console.log(`🚢 Sending battleshipGameStart with players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
+                        
                         io.to(data.roomId).emit('battleshipGameStart', {
                             roomId: data.roomId,
                             players: room.players,

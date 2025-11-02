@@ -1166,20 +1166,39 @@ class BattleshipGame {
             const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
             const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
             
+            console.log('🚢 DOM elements found:', {
+                playerScoreDiv: !!playerScoreDiv,
+                aiScoreDiv: !!aiScoreDiv,
+                playerScoreDivText: playerScoreDiv ? playerScoreDiv.textContent : 'not found',
+                aiScoreDivText: aiScoreDiv ? aiScoreDiv.textContent : 'not found'
+            });
+            
             if (playerScoreDiv) {
-                playerScoreDiv.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
+                const newText1 = isPlayer1 ? `${player1Name} (you)` : player1Name;
+                playerScoreDiv.textContent = newText1;
+                console.log(`🚢 Updated playerScoreDiv to: "${newText1}"`);
+            } else {
+                console.error('🚢 ERROR: playerScoreDiv not found!');
             }
             if (aiScoreDiv) {
-                aiScoreDiv.textContent = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                const newText2 = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                aiScoreDiv.textContent = newText2;
+                console.log(`🚢 Updated aiScoreDiv to: "${newText2}"`);
+            } else {
+                console.error('🚢 ERROR: aiScoreDiv not found!');
             }
             
             // Update game info panel
             const playerNameEl = document.getElementById('playerName');
             if (playerNameEl) {
-                playerNameEl.textContent = isPlayer1 ? `${player1Name} (you)` : player1Name;
+                const newText3 = isPlayer1 ? `${player1Name} (you)` : player1Name;
+                playerNameEl.textContent = newText3;
+                console.log(`🚢 Updated playerNameEl to: "${newText3}"`);
+            } else {
+                console.error('🚢 ERROR: playerNameEl not found!');
             }
             
-            console.log('🚢 Updated player names in UI:', { player1Name, player2Name, isPlayer1 });
+            console.log('🚢 updatePlayerNamesInUI completed:', { player1Name, player2Name, isPlayer1 });
         } catch (error) {
             console.error('🚢 Error in updatePlayerNamesInUI:', error);
             // Don't throw - just log the error
