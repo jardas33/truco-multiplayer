@@ -776,15 +776,18 @@ io.on('connection', (socket) => {
                 // Remove the first disconnected player and add the new one
                 const disconnectedIndex = room.players.findIndex(p => p.id === disconnectedPlayers[0].id);
                 if (disconnectedIndex !== -1) {
+                    const disconnectedPlayer = room.players[disconnectedIndex];
+                    // CRITICAL FIX: Preserve player properties (isRoomCreator, name/nickname, team) when reconnecting
                     room.players[disconnectedIndex] = {
                         id: socket.id,
-                        name: `Player ${disconnectedIndex + 1}`,
-                        nickname: `Player ${disconnectedIndex + 1}`,
-                        team: null,
-                        isBot: false,
+                        name: disconnectedPlayer.name || `Player ${disconnectedIndex + 1}`, // Preserve existing name/nickname
+                        nickname: disconnectedPlayer.nickname || disconnectedPlayer.name || `Player ${disconnectedIndex + 1}`,
+                        team: disconnectedPlayer.team || null,
+                        isBot: disconnectedPlayer.isBot || false,
+                        isRoomCreator: disconnectedPlayer.isRoomCreator || false, // CRITICAL: Preserve isRoomCreator flag
                         ready: false // Reset ready state for reconnected player
                     };
-                    console.log(`🚢 Replaced disconnected player ${disconnectedPlayers[0].id} with new player ${socket.id}`);
+                    console.log(`🚢 Replaced disconnected player ${disconnectedPlayers[0].id} with new player ${socket.id}, preserved name: "${room.players[disconnectedIndex].name}", isRoomCreator: ${room.players[disconnectedIndex].isRoomCreator}`);
                 }
             } else {
                 console.log(`❌ Room ${roomCode} is full and no disconnected players found`);
@@ -869,16 +872,25 @@ io.on('connection', (socket) => {
                 console.log(`🚢 Player ${socket.id} marked as ready`);
                 
                 // Clean up disconnected players and get only connected players
+                // CRITICAL FIX: DO NOT filter/reorder players array - this breaks player ordering and isRoomCreator flags
+                // Instead, just check if players are connected when needed
+                // The players array order is important - index 0 should always be the room creator if they're still in the room
                 const connectedPlayers = room.players.filter(p => {
                     const socketExists = io.sockets.sockets.has(p.id);
                     if (!socketExists) {
-                        console.log(`🚢 Removing disconnected player ${p.id} from room`);
+                        console.log(`🚢 Player ${p.id} (${p.name || 'unnamed'}) is disconnected but keeping in array for now`);
                     }
                     return socketExists;
                 });
                 
-                // Update room.players to only include connected players
-                room.players = connectedPlayers;
+                // CRITICAL FIX: Only update if we're actually removing players, and preserve array order
+                // If the room creator is disconnected, we still want to keep them at index 0
+                if (connectedPlayers.length !== room.players.length) {
+                    // Only update if we actually removed someone
+                    // Preserve the original array structure - don't reorder
+                    room.players = room.players.filter(p => io.sockets.sockets.has(p.id));
+                    console.log(`🚢 Removed disconnected players, remaining: ${room.players.length}`);
+                }
                 
                 console.log(`🚢 Connected players:`, room.players.map(p => ({ id: p.id, ready: p.ready })));
                 console.log(`🚢 Room has ${room.players.length} connected players`);
@@ -904,12 +916,33 @@ io.on('connection', (socket) => {
                         console.log(`🚢 Initialized room.currentPlayer to: ${room.currentPlayer}`);
                         
                         // CRITICAL FIX: Log player names before sending to ensure nicknames are included
-                        console.log(`🚢 Sending battleshipGameStart with players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
+                        // Also ensure room creator is always at index 0 for consistency
+                        const roomCreatorIndex = room.players.findIndex(p => p.isRoomCreator);
+                        if (roomCreatorIndex > 0 && roomCreatorIndex !== -1) {
+                            // If room creator is not at index 0, move them there to ensure consistent ordering
+                            const roomCreator = room.players[roomCreatorIndex];
+                            room.players.splice(roomCreatorIndex, 1); // Remove from current position
+                            room.players.unshift(roomCreator); // Add to beginning
+                            console.log(`🚢 Reordered players array - moved room creator to index 0`);
+                        }
+                        
+                        console.log(`🚢 Sending battleshipGameStart with players:`, room.players.map((p, i) => ({ 
+                            index: i,
+                            id: p.id, 
+                            name: p.name, 
+                            nickname: p.nickname,
+                            isBot: p.isBot,
+                            isRoomCreator: p.isRoomCreator || false
+                        })));
+                        
+                        // CRITICAL FIX: Ensure firstPlayerId matches the room creator at index 0 after reordering
+                        const updatedRoomCreator = room.players.find(p => p.isRoomCreator);
+                        const finalFirstPlayerId = updatedRoomCreator ? updatedRoomCreator.id : room.players[0].id;
                         
                         io.to(data.roomId).emit('battleshipGameStart', {
                             roomId: data.roomId,
                             players: room.players,
-                            firstPlayerId: firstPlayerId
+                            firstPlayerId: finalFirstPlayerId
                         });
                         
                         // Reset ready state immediately after game starts for the next game
