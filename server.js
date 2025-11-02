@@ -1049,6 +1049,16 @@ io.on('connection', (socket) => {
     
     socket.on('battleshipGameOver', (data) => {
         console.log(`🚢 Game over in room ${data.roomId}:`, data);
+        
+        const room = rooms.get(data.roomId);
+        if (room && room.gameType === 'battleship') {
+            // Reset all players' ready state for the next game
+            room.players.forEach(player => {
+                player.ready = false;
+                console.log(`🚢 Reset ready state for player ${player.id}`);
+            });
+        }
+        
         // Broadcast game over to all players
         io.to(data.roomId).emit('battleshipGameOver', data);
     });
