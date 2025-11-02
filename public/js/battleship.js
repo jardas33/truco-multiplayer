@@ -449,10 +449,21 @@ class BattleshipGame {
                 
                 // CRITICAL FIX: Get attacker's name for the message
                 let attackerName = 'Opponent';
-                if (gameInstance.isMultiplayer && gameInstance.players && Array.isArray(gameInstance.players)) {
-                    const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
-                    if (attacker) {
-                        attackerName = attacker.nickname || attacker.name || 'Opponent';
+                if (gameInstance.isMultiplayer) {
+                    console.log('🚢 Looking up attacker name for sunk ship, id:', attackingPlayerId);
+                    console.log('🚢 Players array available:', !!gameInstance.players);
+                    console.log('🚢 Players array:', gameInstance.players);
+                    if (gameInstance.players && Array.isArray(gameInstance.players)) {
+                        const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
+                        console.log('🚢 Found attacker:', attacker);
+                        if (attacker) {
+                            attackerName = attacker.nickname || attacker.name || 'Opponent';
+                            console.log('🚢 Using attacker name:', attackerName);
+                        } else {
+                            console.log('🚢 Attacker not found, using default');
+                        }
+                    } else {
+                        console.log('🚢 Players array not available or not an array');
                     }
                 }
                 
@@ -460,8 +471,17 @@ class BattleshipGame {
                 gameInstance.addToHistory(`💥 ${attackerName} sunk your ${cell.ship.name}!`, 'sunk');
                 gameInstance.showGameMessage(`💥 Your ${cell.ship.name} was sunk!`, 3000);
                 
+                // CRITICAL FIX: Track the ship as sunk for opponent BEFORE checking game over
+                // This ensures the last ship is counted in the statistics
+                gameInstance.shipsSunk++;
+                gameInstance.currentGameAiShipsSunk++;
+                gameInstance.totalAiShipsSunk++;
+                gameInstance.totalOpponentShipsSunk++;
+                console.log(`🚢 Ship sunk tracking: shipsSunk=${gameInstance.shipsSunk}, totalOpponentShipsSunk=${gameInstance.totalOpponentShipsSunk}`);
+                
                 // CRITICAL FIX: Check if all ships are sunk (game over for defender)
                 if (gameInstance.checkGameOver(0)) { // Check if player 0 (defender) has lost all ships
+                    console.log('🚢 All ships sunk - game over!');
                     gameInstance.endGame(1); // Player 1 (opponent) won
                     // Emit game over to server
                     gameInstance.emitGameOver(1);
@@ -471,10 +491,20 @@ class BattleshipGame {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
                 // Get attacker's name for the message
                 let attackerName = 'Opponent';
-                if (gameInstance.isMultiplayer && gameInstance.players && Array.isArray(gameInstance.players)) {
-                    const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
-                    if (attacker) {
-                        attackerName = attacker.nickname || attacker.name || 'Opponent';
+                if (gameInstance.isMultiplayer) {
+                    console.log('🚢 Looking up attacker name for hit, id:', attackingPlayerId);
+                    console.log('🚢 Players array available:', !!gameInstance.players);
+                    if (gameInstance.players && Array.isArray(gameInstance.players)) {
+                        const attacker = gameInstance.players.find(p => p && p.id === attackingPlayerId);
+                        console.log('🚢 Found attacker:', attacker);
+                        if (attacker) {
+                            attackerName = attacker.nickname || attacker.name || 'Opponent';
+                            console.log('🚢 Using attacker name:', attackerName);
+                        } else {
+                            console.log('🚢 Attacker not found, using default');
+                        }
+                    } else {
+                        console.log('🚢 Players array not available or not an array');
                     }
                 }
                 // Show popup message: "Your ship was hit!"
@@ -628,6 +658,12 @@ class BattleshipGame {
         console.log('🚢 Game over data:', data);
         console.log('🚢 Current playerId:', this.playerId);
         console.log('🚢 Winner from server:', data.winner);
+        
+        // CRITICAL FIX: Prevent duplicate game over handling
+        if (this.gameOver) {
+            console.log('🚢 Game already over, ignoring duplicate game over event');
+            return;
+        }
         
         // CRITICAL FIX: Map winner from server's perspective to local perspective
         // Server sends winner as player index (0 or 1) in room.players array

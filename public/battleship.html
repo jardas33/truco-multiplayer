@@ -867,12 +867,11 @@
             });
             
             // Handle game over events
+            // CRITICAL FIX: Don't handle here - let the game instance's socket listener handle it
+            // to prevent duplicate handling
             window.battleshipSocket.on('battleshipGameOver', (data) => {
-                console.log('🚢 Received game over event:', data);
-                // Handle game over in the game instance
-                if (window.battleshipGame) {
-                    window.battleshipGame.handleGameOver(data);
-                }
+                console.log('🚢 Received game over event in battleship.html (ignoring - handled by game instance)');
+                // Game instance's socket listener will handle this
             });
             
             // Clean up socket on page unload
