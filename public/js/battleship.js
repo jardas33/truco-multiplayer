@@ -23,6 +23,7 @@ class BattleshipGame {
         this.playerId = null;
         this.opponentId = null;
         this.isPlayerTurn = false;
+        this.previousPlayerTurn = false; // Track previous turn state to detect actual turn changes
         
         // Grids: 0 = human, 1 = AI
         this.playerGrids = [
@@ -254,15 +255,20 @@ class BattleshipGame {
         console.log('🚢 Handling game start:', data);
         console.log('🚢 Game phase before setting:', this.gamePhase);
         
-        // CRITICAL FIX: Ensure playerId is set correctly before comparing
-        if (!this.playerId && this.socket) {
-            this.playerId = window.battleshipPlayerId || this.socket.id;
-            console.log('🚢 Refreshed playerId in handleGameStart:', this.playerId);
-        }
+        // CRITICAL FIX: Ensure playerId is set correctly - prioritize window.battleshipPlayerId, then socket.id
+        // Refresh playerId every time to ensure it's current
+        const socketId = this.socket ? this.socket.id : null;
+        this.playerId = window.battleshipPlayerId || socketId || this.playerId;
+        
+        console.log('🚢 Player ID sources:');
+        console.log('🚢 - window.battleshipPlayerId:', window.battleshipPlayerId);
+        console.log('🚢 - socket.id:', socketId);
+        console.log('🚢 - this.playerId (final):', this.playerId);
         
         // CRITICAL FIX: Store firstPlayerId for turn change mapping
         if (data.firstPlayerId) {
             this.firstPlayerId = data.firstPlayerId;
+            console.log('🚢 Stored firstPlayerId:', this.firstPlayerId);
         }
         
         // CRITICAL FIX: Store players array for looking up player names
@@ -273,10 +279,14 @@ class BattleshipGame {
         
         // Use server-assigned first player instead of random assignment
         if (data.firstPlayerId) {
-            this.isPlayerTurn = (data.firstPlayerId === this.playerId);
+            // CRITICAL FIX: Use strict comparison and ensure both are strings if needed
+            const firstPlayerMatches = (data.firstPlayerId === this.playerId) || 
+                                      (String(data.firstPlayerId) === String(this.playerId));
+            this.isPlayerTurn = firstPlayerMatches;
             this.currentPlayer = this.isPlayerTurn ? 0 : 1;
             console.log(`🚢 Server assigned first turn to: ${data.firstPlayerId}`);
             console.log(`🚢 Current playerId: ${this.playerId}`);
+            console.log(`🚢 Comparison: ${data.firstPlayerId} === ${this.playerId} = ${firstPlayerMatches}`);
             console.log(`🚢 isPlayerTurn: ${this.isPlayerTurn}, currentPlayer: ${this.currentPlayer}`);
             console.log(`🚢 Stored firstPlayerId: ${this.firstPlayerId}`);
         } else {
@@ -289,6 +299,9 @@ class BattleshipGame {
         
         this.gamePhase = 'playing';
         console.log('🚢 Game phase after setting:', this.gamePhase);
+        
+        // CRITICAL FIX: Initialize previousPlayerTurn to track turn changes
+        this.previousPlayerTurn = this.isPlayerTurn;
         
         this.addToHistory('🚀 Multiplayer battle started!', 'success');
         
@@ -310,6 +323,11 @@ class BattleshipGame {
     handleTurnChange(data) {
         console.log('🚢 Handling turn change:', data);
         console.log('🚢 Current playerId:', this.playerId);
+        console.log('🚢 Stored firstPlayerId:', this.firstPlayerId);
+        
+        // CRITICAL FIX: Refresh playerId before comparing
+        const socketId = this.socket ? this.socket.id : null;
+        this.playerId = window.battleshipPlayerId || socketId || this.playerId;
         
         // CRITICAL FIX: Map server's currentPlayer index to our local player index
         // Server sends 0 or 1 (index in room.players array)
@@ -318,24 +336,34 @@ class BattleshipGame {
         // Otherwise, index 1 is us
         
         // CRITICAL FIX: In multiplayer, determine if it's our turn based on playerId matching
-        // If currentPlayer is 0 and we were firstPlayer, it's our turn
-        // Or if currentPlayer is 1 and we weren't firstPlayer, it's our turn
-        
-        // Since we don't have the players array here, use the stored firstPlayerId
-        const wasFirstPlayer = (this.firstPlayerId === this.playerId);
+        // Use strict comparison with string conversion for safety
+        const wasFirstPlayer = (this.firstPlayerId === this.playerId) || 
+                               (this.firstPlayerId && this.playerId && String(this.firstPlayerId) === String(this.playerId));
         const isOurTurn = (data.currentPlayer === 0 && wasFirstPlayer) || (data.currentPlayer === 1 && !wasFirstPlayer);
         
         this.isPlayerTurn = isOurTurn;
         this.currentPlayer = isOurTurn ? 0 : 1; // Always use 0 for local player, 1 for opponent
         
         console.log(`🚢 Turn change: server index=${data.currentPlayer}, wasFirstPlayer=${wasFirstPlayer}, isOurTurn=${isOurTurn}`);
+        console.log(`🚢 isPlayerTurn=${this.isPlayerTurn}, currentPlayer=${this.currentPlayer}`);
+        
+        // CRITICAL FIX: Only show "Your turn" message when the turn ACTUALLY changes to us
+        // Don't show it if we're already on our turn (e.g., after a hit where we keep our turn)
+        const turnChangedToUs = this.isPlayerTurn && !this.previousPlayerTurn;
         
         if (this.isPlayerTurn) {
-            this.addToHistory('🎯 Your turn to attack!', 'info');
-            this.showGameMessage('🎯 Your turn to attack!', 2000);
+            // Only show message if this is a genuine turn change TO our turn (not staying on our turn)
+            if (turnChangedToUs) {
+                this.addToHistory('🎯 Your turn to attack!', 'info');
+                this.showGameMessage('🎯 Your turn to attack!', 2000);
+            }
         } else {
             this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
+            // Don't show popup for opponent's turn - they'll see their own messages
         }
+        
+        // Update previous turn state for next comparison
+        this.previousPlayerTurn = this.isPlayerTurn;
         
         this.updateUI();
         

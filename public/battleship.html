@@ -702,20 +702,50 @@
                     const player2Name = data.players[1].nickname || data.players[1].name || 'Player 2';
                     
                     // ✅ CRITICAL FIX: Add "(you)" to identify the current player
-                    const currentPlayerId = window.battleshipPlayerId;
-                    const isPlayer1 = data.players[0].id === currentPlayerId;
+                    // CRITICAL FIX: Get current player ID from multiple sources
+                    const currentPlayerId = window.battleshipPlayerId || 
+                                          (window.battleshipSocket ? window.battleshipSocket.id : null) ||
+                                          (window.battleshipGame ? window.battleshipGame.playerId : null);
+                    console.log('🚢 Determining current player:', {
+                        battleshipPlayerId: window.battleshipPlayerId,
+                        socketId: window.battleshipSocket ? window.battleshipSocket.id : null,
+                        gamePlayerId: window.battleshipGame ? window.battleshipGame.playerId : null,
+                        final: currentPlayerId,
+                        player1Id: data.players[0].id,
+                        player2Id: data.players[1].id
+                    });
+                    
+                    const isPlayer1 = data.players[0].id === currentPlayerId || 
+                                    (currentPlayerId && String(data.players[0].id) === String(currentPlayerId));
                     const displayPlayer1Name = isPlayer1 ? `${player1Name} (you)` : player1Name;
                     const displayPlayer2Name = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                    
+                    console.log('🚢 Player name display:', {
+                        isPlayer1: isPlayer1,
+                        player1Name: displayPlayer1Name,
+                        player2Name: displayPlayer2Name
+                    });
                     
                     // CRITICAL FIX: Update the scoreboard player NAMES (not scores)
                     const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
                     const aiScoreDiv = document.querySelector('.scoreboard-content .player-score:last-child .player-name');
                     
+                    console.log('🚢 Found scoreboard elements:', {
+                        playerScoreDiv: !!playerScoreDiv,
+                        aiScoreDiv: !!aiScoreDiv
+                    });
+                    
                     if (playerScoreDiv) {
                         playerScoreDiv.textContent = displayPlayer1Name;
+                        console.log('🚢 Updated player1 name to:', displayPlayer1Name);
+                    } else {
+                        console.error('❌ Could not find player1 name element');
                     }
                     if (aiScoreDiv) {
                         aiScoreDiv.textContent = displayPlayer2Name;
+                        console.log('🚢 Updated player2 name to:', displayPlayer2Name);
+                    } else {
+                        console.error('❌ Could not find player2 name element');
                     }
                     
                     // Update player name in game info
@@ -767,15 +797,29 @@
                     console.log('🚢 Updated players array in game instance');
                     
                     // Update player names in the scoreboard
-                    const currentPlayerId = window.battleshipPlayerId;
+                    // CRITICAL FIX: Get current player ID from multiple sources
+                    const currentPlayerId = window.battleshipPlayerId || 
+                                          (window.battleshipSocket ? window.battleshipSocket.id : null) ||
+                                          (window.battleshipGame ? window.battleshipGame.playerId : null);
+                    
                     const player1 = players[0];
                     const player2 = players[1];
-                    const isPlayer1 = player1.id === currentPlayerId;
+                    const isPlayer1 = player1.id === currentPlayerId || 
+                                    (currentPlayerId && String(player1.id) === String(currentPlayerId));
                     
                     const player1Name = player1.nickname || player1.name || 'Player 1';
                     const player2Name = player2.nickname || player2.name || 'Player 2';
                     const displayPlayer1Name = isPlayer1 ? `${player1Name} (you)` : player1Name;
                     const displayPlayer2Name = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                    
+                    console.log('🚢 playersUpdated - Display names:', {
+                        currentPlayerId: currentPlayerId,
+                        isPlayer1: isPlayer1,
+                        player1Name: displayPlayer1Name,
+                        player2Name: displayPlayer2Name,
+                        player1HasNickname: !!player1.nickname,
+                        player2HasNickname: !!player2.nickname
+                    });
                     
                     // CRITICAL FIX: Update the scoreboard player NAMES (not scores)
                     const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
@@ -783,9 +827,15 @@
                     
                     if (playerScoreDiv) {
                         playerScoreDiv.textContent = displayPlayer1Name;
+                        console.log('🚢 Updated player1 name element to:', displayPlayer1Name);
+                    } else {
+                        console.error('❌ Could not find player1 name element in playersUpdated');
                     }
                     if (aiScoreDiv) {
                         aiScoreDiv.textContent = displayPlayer2Name;
+                        console.log('🚢 Updated player2 name element to:', displayPlayer2Name);
+                    } else {
+                        console.error('❌ Could not find player2 name element in playersUpdated');
                     }
                     
                     // Update player name in game info
