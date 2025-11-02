@@ -260,6 +260,11 @@ class BattleshipGame {
             console.log('🚢 Refreshed playerId in handleGameStart:', this.playerId);
         }
         
+        // CRITICAL FIX: Store firstPlayerId for turn change mapping
+        if (data.firstPlayerId) {
+            this.firstPlayerId = data.firstPlayerId;
+        }
+        
         // Use server-assigned first player instead of random assignment
         if (data.firstPlayerId) {
             this.isPlayerTurn = (data.firstPlayerId === this.playerId);
@@ -267,6 +272,7 @@ class BattleshipGame {
             console.log(`🚢 Server assigned first turn to: ${data.firstPlayerId}`);
             console.log(`🚢 Current playerId: ${this.playerId}`);
             console.log(`🚢 isPlayerTurn: ${this.isPlayerTurn}, currentPlayer: ${this.currentPlayer}`);
+            console.log(`🚢 Stored firstPlayerId: ${this.firstPlayerId}`);
         } else {
             // Fallback to random assignment if server doesn't provide firstPlayerId
             const isPlayer1Turn = Math.random() < 0.5;
@@ -297,13 +303,30 @@ class BattleshipGame {
     
     handleTurnChange(data) {
         console.log('🚢 Handling turn change:', data);
+        console.log('🚢 Current playerId:', this.playerId);
         
-        // In multiplayer, player 0 is always the human player
-        this.isPlayerTurn = data.currentPlayer === 0;
-        this.currentPlayer = data.currentPlayer;
+        // CRITICAL FIX: Map server's currentPlayer index to our local player index
+        // Server sends 0 or 1 (index in room.players array)
+        // We need to determine if that index corresponds to our playerId
+        // If the firstPlayerId (from battleshipGameStart) matches our playerId, then index 0 is us
+        // Otherwise, index 1 is us
+        
+        // CRITICAL FIX: In multiplayer, determine if it's our turn based on playerId matching
+        // If currentPlayer is 0 and we were firstPlayer, it's our turn
+        // Or if currentPlayer is 1 and we weren't firstPlayer, it's our turn
+        
+        // Since we don't have the players array here, use the stored firstPlayerId
+        const wasFirstPlayer = (this.firstPlayerId === this.playerId);
+        const isOurTurn = (data.currentPlayer === 0 && wasFirstPlayer) || (data.currentPlayer === 1 && !wasFirstPlayer);
+        
+        this.isPlayerTurn = isOurTurn;
+        this.currentPlayer = isOurTurn ? 0 : 1; // Always use 0 for local player, 1 for opponent
+        
+        console.log(`🚢 Turn change: server index=${data.currentPlayer}, wasFirstPlayer=${wasFirstPlayer}, isOurTurn=${isOurTurn}`);
         
         if (this.isPlayerTurn) {
             this.addToHistory('🎯 Your turn to attack!', 'info');
+            this.showGameMessage('🎯 Your turn to attack!', 2000);
         } else {
             this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
         }

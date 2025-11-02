@@ -758,6 +758,42 @@
                 }
             });
             
+            // Handle players updated event (for nickname changes)
+            window.battleshipSocket.on('playersUpdated', (players) => {
+                console.log('🚢 Received players updated event:', players);
+                if (players && players.length >= 2 && window.battleshipGame) {
+                    // Update player names in the scoreboard
+                    const currentPlayerId = window.battleshipPlayerId;
+                    const player1 = players[0];
+                    const player2 = players[1];
+                    const isPlayer1 = player1.id === currentPlayerId;
+                    
+                    const player1Name = player1.nickname || player1.name || 'Player 1';
+                    const player2Name = player2.nickname || player2.name || 'Player 2';
+                    const displayPlayer1Name = isPlayer1 ? `${player1Name} (you)` : player1Name;
+                    const displayPlayer2Name = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                    
+                    // Update the scoreboard
+                    const playerScoreEl = document.getElementById('playerScore');
+                    const aiScoreEl = document.getElementById('aiScore');
+                    
+                    if (playerScoreEl) {
+                        playerScoreEl.textContent = displayPlayer1Name;
+                    }
+                    if (aiScoreEl) {
+                        aiScoreEl.textContent = displayPlayer2Name;
+                    }
+                    
+                    // Update player name in game info
+                    const playerNameEl = document.getElementById('playerName');
+                    if (playerNameEl) {
+                        playerNameEl.textContent = displayPlayer1Name;
+                    }
+                    
+                    console.log('🚢 Updated player names from playersUpdated:', player1Name, 'vs', player2Name);
+                }
+            });
+            
             // Handle ship placement events
             window.battleshipSocket.on('battleshipShipPlaced', (data) => {
                 console.log('🚢 Received ship placement from opponent:', data);

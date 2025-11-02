@@ -895,7 +895,13 @@ io.on('connection', (socket) => {
                         const roomCreator = room.players.find(p => p.isRoomCreator);
                         const firstPlayerId = roomCreator ? roomCreator.id : room.players[0].id;
                         
+                        // CRITICAL FIX: Initialize currentPlayer based on which player goes first
+                        // Map playerId to index: player at index 0 goes first if their ID matches firstPlayerId
+                        const firstPlayerIndex = room.players.findIndex(p => p.id === firstPlayerId);
+                        room.currentPlayer = firstPlayerIndex >= 0 ? firstPlayerIndex : 0;
+                        
                         console.log(`🚢 Assigning first turn to: ${firstPlayerId} (${roomCreator ? 'Room Creator' : 'First Player'})`);
+                        console.log(`🚢 Initialized room.currentPlayer to: ${room.currentPlayer}`);
                         
                         io.to(data.roomId).emit('battleshipGameStart', {
                             roomId: data.roomId,
@@ -1011,18 +1017,30 @@ io.on('connection', (socket) => {
         // Only change turns when you miss
         if (data.hit === false) {
             // Miss - change turn to opponent
-            const currentPlayerIndex = room.currentPlayer || 0;
+            // Find which player index made the attack
+            const attackingPlayerIndex = room.players.findIndex(p => p.id === data.attackingPlayerId);
+            if (attackingPlayerIndex >= 0) {
+                room.currentPlayer = attackingPlayerIndex;
+            }
+            const currentPlayerIndex = room.currentPlayer >= 0 ? room.currentPlayer : 0;
             const nextPlayerIndex = 1 - currentPlayerIndex;
             room.currentPlayer = nextPlayerIndex;
             
             console.log(`🚢 Miss detected - Turn change in room ${data.roomId}: ${nextPlayerIndex}`);
+            console.log(`🚢 Attacking player index: ${attackingPlayerIndex}, next player: ${nextPlayerIndex}`);
             io.to(data.roomId).emit('battleshipTurnChange', {
                 roomId: data.roomId,
                 currentPlayer: nextPlayerIndex
             });
         } else {
             // Hit or sunk - keep current turn (don't change)
-            console.log(`🚢 Hit detected - keeping turn for current player in room ${data.roomId}`);
+            // Ensure currentPlayer is set to the attacker
+            const attackingPlayerIndex = room.players.findIndex(p => p.id === data.attackingPlayerId);
+            if (attackingPlayerIndex >= 0) {
+                room.currentPlayer = attackingPlayerIndex;
+            }
+            
+            console.log(`🚢 Hit detected - keeping turn for current player in room ${data.roomId}, index: ${room.currentPlayer}`);
             // Don't emit turn change - current player keeps their turn
             // Optionally, emit a confirmation that the turn stays the same
             io.to(data.roomId).emit('battleshipTurnChange', {
