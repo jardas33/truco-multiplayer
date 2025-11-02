@@ -1155,11 +1155,26 @@ class BattleshipGame {
             // CRITICAL FIX: Only trigger AI turn if it's not already scheduled
             if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver && !this.aiTurnScheduled) {
                 console.log('🚢 Scheduling AI turn');
+                // Ensure loop is active for AI turns
+                if (window.battleshipClient) {
+                    loop(); // Keep loop active during AI turn
+                    window.battleshipClient.staticRender(); // Ensure initial render
+                }
                 setTimeout(() => {
                     if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver) {
                         this.aiTurn();
                     }
-                }, 1000);
+                }, 1500); // Longer delay for better visual transition
+            } else if (this.currentPlayer === 0) {
+                // Player's turn - stop the loop to save resources
+                if (window.battleshipClient) {
+                    window.battleshipClient.staticRender(); // Final render before stopping
+                    setTimeout(() => {
+                        if (this.currentPlayer === 0) {
+                            noLoop(); // Stop loop when it's player's turn
+                        }
+                    }, 500);
+                }
             }
         }
     }
@@ -1233,6 +1248,11 @@ class BattleshipGame {
         
         const result = this.attack(1, x, y);
         
+        // CRITICAL FIX: Force immediate visual update after AI attack
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
+        
         if (!result.valid) {
             console.error(`🤖 AI attack failed: ${result.message}`);
             this.aiTurnScheduled = false;
@@ -1256,9 +1276,13 @@ class BattleshipGame {
                     setTimeout(() => {
                         // Double-check it's still AI's turn before calling again
                         if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver && !this.aiTurnScheduled) {
+                            // Ensure visual update before next attack
+                            if (window.battleshipClient) {
+                                window.battleshipClient.staticRender();
+                            }
                             this.aiTurn();
                         }
-                    }, 2000);
+                    }, 2500); // Slightly longer delay for better visibility
                 } else {
                     // If conditions changed, end the turn
                     this.endTurn();
@@ -1271,9 +1295,13 @@ class BattleshipGame {
                 if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver) {
                     setTimeout(() => {
                         if (this.currentPlayer === 1 && this.gamePhase === 'playing' && !this.gameOver && !this.aiTurnScheduled) {
+                            // Ensure visual update before next attack
+                            if (window.battleshipClient) {
+                                window.battleshipClient.staticRender();
+                            }
                             this.aiTurn();
                         }
-                    }, 2000);
+                    }, 2500); // Slightly longer delay for better visibility
                 } else {
                     this.endTurn();
                 }
@@ -1281,7 +1309,14 @@ class BattleshipGame {
         } else {
             // Miss - end turn (switch to player)
             this.aiTurnScheduled = false;
-            this.endTurn();
+            // Ensure final visual update before ending turn
+            if (window.battleshipClient) {
+                window.battleshipClient.staticRender();
+            }
+            // Small delay before ending turn to show the miss
+            setTimeout(() => {
+                this.endTurn();
+            }, 500);
         }
     }
     
@@ -1847,20 +1882,32 @@ class BattleshipClient {
         this.drawTurnIndicator();
         this.drawMouseHover();
         
-        // Only stop the loop if we're not in placement phase with a current ship
+        // Keep loop active during AI turns for smooth visual feedback
+        // Only stop the loop if:
+        // 1. Not in placement phase with a current ship
+        // 2. Not during AI turn in playing phase
         if (this.gamePhase !== 'placement' || !this.currentShip) {
-            noLoop();
+            if (!(this.gamePhase === 'playing' && this.currentPlayer === 1)) {
+                noLoop();
+            }
         }
     }
     
     // Static rendering method - only call when explicitly needed
     staticRender() {
         if (this.initialized) {
-            // Force a single draw cycle
+            // Force a draw cycle and keep loop active longer to ensure rendering
             loop();
+            // Use redraw() to immediately trigger a draw cycle
+            redraw();
+            // Keep the loop active longer during playing phase, especially during AI turns
+            const delay = (this.gamePhase === 'playing' && this.currentPlayer === 1) ? 3000 : 200;
             setTimeout(() => {
-                noLoop();
-            }, 50);
+                // Only stop loop if not in active playing phase or if player's turn
+                if (this.gamePhase !== 'playing' || (this.gamePhase === 'playing' && this.currentPlayer === 0)) {
+                    noLoop();
+                }
+            }, delay);
         }
     }
     
