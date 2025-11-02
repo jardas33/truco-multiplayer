@@ -517,12 +517,32 @@ class BattleshipGame {
     handleAttackResult(data) {
         // Handle attack result confirmation for the attacker
         console.log('🚢 Handling attack result confirmation:', data);
-        const { x, y, hit, shipSunk, shipName } = data;
+        const { x, y, hit, shipSunk, shipName, attackingPlayerId } = data;
         
         const gameInstance = window.battleshipGame || this.game;
         if (!gameInstance) {
             console.log('🚢 ERROR: No game instance available for attack result handling');
             return;
+        }
+        
+        // CRITICAL FIX: Only process turn state updates if we're the attacker
+        // The defender receives this event but should not update their turn state
+        let isAttacker = false;
+        if (gameInstance.isMultiplayer && attackingPlayerId) {
+            const socketId = this.socket ? this.socket.id : null;
+            const currentPlayerId = this.playerId || window.battleshipPlayerId || socketId;
+            isAttacker = (attackingPlayerId === currentPlayerId);
+            console.log(`🚢 Attack result check: isAttacker=${isAttacker}, ourId=${currentPlayerId}, attackerId=${attackingPlayerId}`);
+            
+            if (!isAttacker) {
+                // We're the defender - don't process this event, it's not for us
+                // The defender should only handle handleOpponentAttack
+                console.log('🚢 Ignoring attack result - we are the defender, not the attacker');
+                return;
+            }
+        } else {
+            // Single player mode - always process
+            isAttacker = true;
         }
         
         // Update the attacker's attack grid with the confirmed result
@@ -536,7 +556,8 @@ class BattleshipGame {
         
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
         // Only lose your turn when you miss
-        if (hit) {
+        // Only update turn state if we're the attacker
+        if (hit && isAttacker) {
             // Hit - ensure player keeps their turn
             gameInstance.isPlayerTurn = true;
             gameInstance.currentPlayer = 0;
