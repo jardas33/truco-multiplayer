@@ -699,8 +699,11 @@ class BattleshipGame {
             // Map winner: if winner index matches our index, we won (0), otherwise opponent won (1)
             const localWinner = (data.winner === ourIndex) ? 0 : 1;
             console.log('🚢 Mapped local winner:', localWinner, '(0 = we won, 1 = opponent won)');
+            console.log('🚢 Before endGame - playerGamesWon:', this.playerGamesWon, 'totalPlayerShipsSunk:', this.totalPlayerShipsSunk, 'opponentGamesWon:', this.opponentGamesWon, 'totalOpponentShipsSunk:', this.totalOpponentShipsSunk);
             
             this.endGame(localWinner);
+            
+            console.log('🚢 After endGame - playerGamesWon:', this.playerGamesWon, 'totalPlayerShipsSunk:', this.totalPlayerShipsSunk, 'opponentGamesWon:', this.opponentGamesWon, 'totalOpponentShipsSunk:', this.totalOpponentShipsSunk);
         } else {
             // Single player mode - winner is already in correct format
             this.endGame(data.winner);
@@ -1518,21 +1521,18 @@ class BattleshipGame {
                 }
                 
                 // CRITICAL FIX: Ensure we didn't incorrectly increment our own stats
-                // When we lose, our playerGamesWon should NOT increase, and totalPlayerShipsSunk should be 0
-                // Reset if they were incorrectly incremented during the game
-                const oldPlayerGamesWon = this.playerGamesWon;
-                const oldTotalPlayerShipsSunk = this.totalPlayerShipsSunk;
-                if (this.playerGamesWon > 0 || this.totalPlayerShipsSunk > 0) {
-                    console.log(`🚢 CRITICAL FIX: Loser - Resetting incorrect stats. playerGamesWon was ${this.playerGamesWon}, totalPlayerShipsSunk was ${this.totalPlayerShipsSunk}`);
-                    // Don't reset wins - they might have won previous games
-                    // But reset ships sunk for this game if it's incorrect
-                    // Only reset if we lost and somehow got ships sunk (shouldn't happen)
-                    if (this.currentGamePlayerShipsSunk > 0) {
-                        console.log(`🚢 CRITICAL FIX: Loser - Resetting currentGamePlayerShipsSunk from ${this.currentGamePlayerShipsSunk} to 0`);
-                        this.totalPlayerShipsSunk -= this.currentGamePlayerShipsSunk;
-                        this.currentGamePlayerShipsSunk = 0;
-                        console.log(`🚢 CRITICAL FIX: Loser - totalPlayerShipsSunk now: ${this.totalPlayerShipsSunk}`);
-                    }
+                // When we lose, our playerGamesWon should NOT increase for this game
+                // And totalPlayerShipsSunk should only reflect ships WE destroyed (should be 0 if we lost)
+                // Reset currentGamePlayerShipsSunk if it was incorrectly incremented
+                console.log(`🚢 CRITICAL FIX: Loser - Checking stats before update. playerGamesWon: ${this.playerGamesWon}, totalPlayerShipsSunk: ${this.totalPlayerShipsSunk}, currentGamePlayerShipsSunk: ${this.currentGamePlayerShipsSunk}`);
+                
+                // If we lost, we shouldn't have sunk any ships in this game
+                // If currentGamePlayerShipsSunk > 0, it means we incorrectly incremented it
+                if (this.currentGamePlayerShipsSunk > 0) {
+                    console.log(`🚢 CRITICAL FIX: Loser - Resetting currentGamePlayerShipsSunk from ${this.currentGamePlayerShipsSunk} to 0 (we lost, so we didn't sink any ships)`);
+                    this.totalPlayerShipsSunk -= this.currentGamePlayerShipsSunk;
+                    this.currentGamePlayerShipsSunk = 0;
+                    console.log(`🚢 CRITICAL FIX: Loser - totalPlayerShipsSunk now: ${this.totalPlayerShipsSunk}`);
                 }
                 
                 this.opponentGamesWon++;
