@@ -436,19 +436,38 @@ class BattleshipGame {
             gameInstance.isPlayerTurn = true;
             gameInstance.currentPlayer = 0;
             
+            // Update hit counter and score
+            gameInstance.playerHits++;
+            gameInstance.playerScore += 10; // 10 points per hit
+            
             if (shipSunk) {
+                // CRITICAL FIX: Track ship sinking properly
+                gameInstance.shipsSunk++;
+                gameInstance.currentGamePlayerShipsSunk++;
+                gameInstance.totalPlayerShipsSunk++;
+                gameInstance.playerScore += 50; // Bonus points for sinking
+                
                 // Show ship name when sunk (it's okay to reveal when ship is destroyed)
-                gameInstance.addToHistory(`💥 You sunk opponent's ${shipName}!`, 'sunk');
+                gameInstance.addToHistory(`💥 You sunk the ${shipName}!`, 'sunk');
+                gameInstance.showGameMessage(`💥 ${shipName.toUpperCase()} SUNK!`, 3000);
                 gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
+                
+                // Check for game over
+                if (gameInstance.checkGameOver(1)) { // Check if opponent (player 1) has lost all ships
+                    gameInstance.endGame(0); // Player 0 (you) won
+                    return;
+                }
             } else {
-                // CRITICAL FIX: Don't reveal which ship was hit, but show who hit (attacker is always "You" from attacker's perspective)
-                gameInstance.addToHistory(`💥 You hit!`, 'hit');
+                // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
+                gameInstance.addToHistory(`🎯 You hit!`, 'hit');
+                gameInstance.showGameMessage(`🎯 HIT!`, 2000);
                 gameInstance.addToHistory('🎯 Hit! You get another turn!', 'success');
             }
         } else {
             // Miss - turn will be changed by server via handleTurnChange
-            // CRITICAL FIX: Show who missed (in multiplayer, the attacker is always "You" from attacker's perspective)
+            gameInstance.playerMisses++;
             gameInstance.addToHistory(`💧 You missed!`, 'miss');
+            gameInstance.showGameMessage(`💧 You missed!`, 1500);
         }
         
         // Update UI to reflect current turn state
@@ -998,8 +1017,8 @@ class BattleshipGame {
             // Send attack to server - the server will determine hit/miss
             this.emitAttack(x, y);
             
-            this.addToHistory(`💧 You attacked ${String.fromCharCode(65 + y)}${x + 1}!`, 'info');
-            this.showGameMessage(`🎯 Attack sent!`, 2000);
+            // Don't show "Attack sent!" - wait for server response to show proper message
+            // The result will be shown in handleAttackResult()
             return { valid: true, hit: null, sunk: false };
         } else {
             // Single player mode - original logic
