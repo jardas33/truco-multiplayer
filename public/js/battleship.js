@@ -216,8 +216,15 @@ class BattleshipGame {
         // Handle attack errors (when server rejects attack)
         this.socket.on('battleshipAttackError', (data) => {
             console.log('🚢 Attack error received:', data);
-            this.addToHistory(`❌ ${data.message || 'Attack rejected by server'}`, 'error');
-            this.showGameMessage(`❌ ${data.message || 'Attack rejected!'}`, 2000);
+            const gameInstance = window.battleshipGame || this.game;
+            if (gameInstance) {
+                // CRITICAL FIX: Don't change turn state when attack is rejected
+                // The turn state should remain unchanged - if it wasn't our turn before, it still isn't
+                // If it was our turn, it should still be our turn (unless there was a legitimate turn change)
+                console.log(`🚢 Attack error - current turn state: isPlayerTurn=${gameInstance.isPlayerTurn}, currentPlayer=${gameInstance.currentPlayer}`);
+                gameInstance.addToHistory(`❌ ${data.message || 'Attack rejected by server'}`, 'error');
+                gameInstance.showGameMessage(`❌ ${data.message || 'Attack rejected!'}`, 2000);
+            }
         });
         
         // Handle attack confirmation events (for the attacker)
@@ -340,6 +347,12 @@ class BattleshipGame {
         console.log('🚢 Current playerId:', this.playerId);
         console.log('🚢 Stored firstPlayerId:', this.firstPlayerId);
         
+        const gameInstance = window.battleshipGame || this.game;
+        if (!gameInstance) {
+            console.log('🚢 No game instance available for turn change');
+            return;
+        }
+        
         // CRITICAL FIX: Refresh playerId before comparing
         const socketId = this.socket ? this.socket.id : null;
         this.playerId = window.battleshipPlayerId || socketId || this.playerId;
@@ -356,27 +369,37 @@ class BattleshipGame {
                                (this.firstPlayerId && this.playerId && String(this.firstPlayerId) === String(this.playerId));
         const isOurTurn = (data.currentPlayer === 0 && wasFirstPlayer) || (data.currentPlayer === 1 && !wasFirstPlayer);
         
-        this.isPlayerTurn = isOurTurn;
-        this.currentPlayer = isOurTurn ? 0 : 1; // Always use 0 for local player, 1 for opponent
+        // CRITICAL FIX: Only update turn state if it actually changed to prevent overwriting
+        // state set by handleAttackResult or handleOpponentAttack
+        const previousIsPlayerTurn = gameInstance.isPlayerTurn;
+        const previousCurrentPlayer = gameInstance.currentPlayer;
         
-        console.log(`🚢 Turn change: server index=${data.currentPlayer}, wasFirstPlayer=${wasFirstPlayer}, isOurTurn=${isOurTurn}`);
-        console.log(`🚢 isPlayerTurn=${this.isPlayerTurn}, currentPlayer=${this.currentPlayer}`);
+        // Only update if the turn state actually needs to change
+        // This prevents handleTurnChange from overwriting correct state set by handleAttackResult/handleOpponentAttack
+        if (previousIsPlayerTurn !== isOurTurn || previousCurrentPlayer !== (isOurTurn ? 0 : 1)) {
+            gameInstance.isPlayerTurn = isOurTurn;
+            gameInstance.currentPlayer = isOurTurn ? 0 : 1; // Always use 0 for local player, 1 for opponent
+            console.log(`🚢 Turn change: server index=${data.currentPlayer}, wasFirstPlayer=${wasFirstPlayer}, isOurTurn=${isOurTurn}`);
+            console.log(`🚢 isPlayerTurn changed from ${previousIsPlayerTurn} to ${gameInstance.isPlayerTurn}, currentPlayer=${previousCurrentPlayer} to ${gameInstance.currentPlayer}`);
+        } else {
+            console.log(`🚢 Turn change event received but state unchanged: isPlayerTurn=${gameInstance.isPlayerTurn}, currentPlayer=${gameInstance.currentPlayer}`);
+        }
         
         // CRITICAL FIX: Don't show any popup messages in handleTurnChange
         // Turn changes should only update the UI silently
         // Popup messages are handled in other functions (handleAttackResult, handleOpponentAttack)
-        if (this.isPlayerTurn) {
-            this.addToHistory('🎯 Your turn to attack!', 'info');
+        if (gameInstance.isPlayerTurn) {
+            gameInstance.addToHistory('🎯 Your turn to attack!', 'info');
             // NO POPUP MESSAGE - only history entry
         } else {
-            this.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
+            gameInstance.addToHistory('⏳ Opponent\'s turn to attack...', 'info');
             // Don't show popup for opponent's turn - they'll see their own messages
         }
         
         // Update previous turn state for next comparison
-        this.previousPlayerTurn = this.isPlayerTurn;
+        gameInstance.previousPlayerTurn = gameInstance.isPlayerTurn;
         
-        this.updateUI();
+        gameInstance.updateUI();
         
         // Force a redraw to show the updated turn state
         if (window.battleshipClient) {
@@ -580,9 +603,11 @@ class BattleshipGame {
         
         // ✅ CRITICAL FIX: When opponent attacks (whether hit or miss), it's their turn
         // Set local turn state to prevent our player from attacking
+        const previousIsPlayerTurn = gameInstance.isPlayerTurn;
         gameInstance.isPlayerTurn = false;
         gameInstance.currentPlayer = 1; // Opponent is attacking
-        console.log(`🚢 Opponent attacked - set isPlayerTurn=false, currentPlayer=1`);
+        console.log(`🚢 Opponent attacked - set isPlayerTurn from ${previousIsPlayerTurn} to false, currentPlayer=1`);
+        console.log(`🚢 Turn state after opponent attack: isPlayerTurn=${gameInstance.isPlayerTurn}, currentPlayer=${gameInstance.currentPlayer}`);
         
         // Force redraw
         if (window.battleshipClient) {
@@ -635,9 +660,12 @@ class BattleshipGame {
         // Only update turn state if we're the attacker
         if (hit && isAttacker) {
             // Hit - ensure player keeps their turn
+            const previousIsPlayerTurn = gameInstance.isPlayerTurn;
+            const previousCurrentPlayer = gameInstance.currentPlayer;
             gameInstance.isPlayerTurn = true;
             gameInstance.currentPlayer = 0;
-            console.log(`🚢 Hit! Updated turn state: isPlayerTurn=${gameInstance.isPlayerTurn}, currentPlayer=${gameInstance.currentPlayer}`);
+            console.log(`🚢 Hit! Updated turn state: isPlayerTurn from ${previousIsPlayerTurn} to ${gameInstance.isPlayerTurn}, currentPlayer from ${previousCurrentPlayer} to ${gameInstance.currentPlayer}`);
+            console.log(`🚢 Turn state after hit (attacker): isPlayerTurn=${gameInstance.isPlayerTurn}, currentPlayer=${gameInstance.currentPlayer}`);
             
             // Update hit counter and score
             gameInstance.playerHits++;
