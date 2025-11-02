@@ -353,12 +353,6 @@ class BattleshipGame {
         console.log('🚢 - socket.id:', socketId);
         console.log('🚢 - this.playerId (final):', this.playerId);
         
-        // CRITICAL FIX: Store firstPlayerId for turn change mapping
-        if (data.firstPlayerId) {
-            this.firstPlayerId = data.firstPlayerId;
-            console.log('🚢 Stored firstPlayerId:', this.firstPlayerId);
-        }
-        
         // CRITICAL FIX: Store firstPlayerId BEFORE storing players array (needed for updatePlayerNamesInUI)
         if (data.firstPlayerId) {
             this.firstPlayerId = data.firstPlayerId;
