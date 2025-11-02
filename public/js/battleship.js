@@ -373,14 +373,18 @@ class BattleshipGame {
         // CRITICAL FIX: Store players array for looking up player names
         if (data.players && Array.isArray(data.players)) {
             this.players = data.players;
-            console.log('🚢 Stored players array:', this.players.map(p => ({ id: p.id, name: p.name, nickname: p.nickname })));
-            console.log('🚢 Players array stored with length:', this.players.length);
+            console.log('🚢🚢🚢 HANDLEGAMESTART - Stored players array:', JSON.stringify(this.players.map(p => ({ id: p.id, name: p.name, nickname: p.nickname })), null, 2));
+            console.log('🚢🚢🚢 HANDLEGAMESTART - Players array stored with length:', this.players.length);
             // CRITICAL FIX: Log each player's details for debugging
             this.players.forEach((p, index) => {
-                console.log(`🚢 Player ${index}: id=${p.id}, name=${p.name}, nickname=${p.nickname || 'none'}`);
+                console.log(`🚢🚢🚢 HANDLEGAMESTART - Player ${index}: id=${p.id}, name="${p.name}", nickname="${p.nickname || 'none'}"`);
+                // Verify the name property exists and has a value
+                if (!p.name || p.name === `Player ${index + 1}`) {
+                    console.warn(`⚠️⚠️⚠️ HANDLEGAMESTART - Player ${index} has default name! Expected nickname but got: "${p.name}"`);
+                }
             });
         } else {
-            console.log('🚢 WARNING: No players array received in game start data');
+            console.error('🚢🚢🚢 ERROR: No players array received in game start data:', data);
         }
         
         // Use server-assigned first player instead of random assignment
@@ -408,10 +412,13 @@ class BattleshipGame {
         
         // CRITICAL FIX: Update all UI elements with player names AFTER firstPlayerId is set
         // Wrap in try-catch to prevent errors from blocking game start
+        console.log('🚢🚢🚢 HANDLEGAMESTART - About to call updatePlayerNamesInUI()');
         try {
             this.updatePlayerNamesInUI();
+            console.log('🚢🚢🚢 HANDLEGAMESTART - updatePlayerNamesInUI() completed successfully');
         } catch (error) {
-            console.error('🚢 Error updating player names in UI:', error);
+            console.error('🚢🚢🚢 ERROR updating player names in UI:', error);
+            console.error('🚢🚢🚢 Error stack:', error.stack);
             // Don't block game start if name update fails
         }
         
