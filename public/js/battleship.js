@@ -429,19 +429,30 @@ class BattleshipGame {
             console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
         }
         
-        // Add to history
+        // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
+        // Only lose your turn when you miss
         if (hit) {
+            // Hit - ensure player keeps their turn
+            gameInstance.isPlayerTurn = true;
+            gameInstance.currentPlayer = 0;
+            
             if (shipSunk) {
                 // Show ship name when sunk (it's okay to reveal when ship is destroyed)
                 gameInstance.addToHistory(`💥 You sunk opponent's ${shipName}!`, 'sunk');
+                gameInstance.addToHistory('💥 Ship sunk! You get another turn!', 'success');
             } else {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit (attacker is always "You" from attacker's perspective)
                 gameInstance.addToHistory(`💥 You hit!`, 'hit');
+                gameInstance.addToHistory('🎯 Hit! You get another turn!', 'success');
             }
         } else {
+            // Miss - turn will be changed by server via handleTurnChange
             // CRITICAL FIX: Show who missed (in multiplayer, the attacker is always "You" from attacker's perspective)
             gameInstance.addToHistory(`💧 You missed!`, 'miss');
         }
+        
+        // Update UI to reflect current turn state
+        gameInstance.updateUI();
         
         // Force redraw
         if (window.battleshipClient) {

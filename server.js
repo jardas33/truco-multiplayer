@@ -1007,16 +1007,29 @@ io.on('connection', (socket) => {
         // Broadcast the attack result to the attacking player
         socket.to(data.roomId).emit('battleshipAttackResult', data);
         
-        // Also send turn change event
-        const currentPlayerIndex = room.currentPlayer || 0;
-        const nextPlayerIndex = 1 - currentPlayerIndex;
-        room.currentPlayer = nextPlayerIndex;
-        
-        console.log(`🚢 Turn change in room ${data.roomId}: ${nextPlayerIndex}`);
-        io.to(data.roomId).emit('battleshipTurnChange', {
-            roomId: data.roomId,
-            currentPlayer: nextPlayerIndex
-        });
+        // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
+        // Only change turns when you miss
+        if (data.hit === false) {
+            // Miss - change turn to opponent
+            const currentPlayerIndex = room.currentPlayer || 0;
+            const nextPlayerIndex = 1 - currentPlayerIndex;
+            room.currentPlayer = nextPlayerIndex;
+            
+            console.log(`🚢 Miss detected - Turn change in room ${data.roomId}: ${nextPlayerIndex}`);
+            io.to(data.roomId).emit('battleshipTurnChange', {
+                roomId: data.roomId,
+                currentPlayer: nextPlayerIndex
+            });
+        } else {
+            // Hit or sunk - keep current turn (don't change)
+            console.log(`🚢 Hit detected - keeping turn for current player in room ${data.roomId}`);
+            // Don't emit turn change - current player keeps their turn
+            // Optionally, emit a confirmation that the turn stays the same
+            io.to(data.roomId).emit('battleshipTurnChange', {
+                roomId: data.roomId,
+                currentPlayer: room.currentPlayer || 0
+            });
+        }
     });
     
     socket.on('battleshipGameOver', (data) => {
