@@ -637,6 +637,7 @@ class BattleshipGame {
             // Hit - ensure player keeps their turn
             gameInstance.isPlayerTurn = true;
             gameInstance.currentPlayer = 0;
+            console.log(`🚢 Hit! Updated turn state: isPlayerTurn=${gameInstance.isPlayerTurn}, currentPlayer=${gameInstance.currentPlayer}`);
             
             // Update hit counter and score
             gameInstance.playerHits++;
@@ -2548,6 +2549,15 @@ class BattleshipClient {
         const attackGridX = this.gridStartX + 500;
         const gridY = this.gridStartY + 350; // Below the grids
         
+        // CRITICAL FIX: Always read turn state directly from the game instance for accuracy
+        const gameInstance = window.battleshipGame || this.game;
+        if (!gameInstance) return;
+        
+        const gamePhase = gameInstance.gamePhase;
+        const isMultiplayer = gameInstance.isMultiplayer;
+        const isPlayerTurn = gameInstance.isPlayerTurn;
+        const currentPlayer = gameInstance.currentPlayer;
+        
         // Draw turn indicator background with better contrast
         fill(0, 0, 0, 240); // More opaque background
         stroke(255, 255, 0);
@@ -2562,9 +2572,9 @@ class BattleshipClient {
         stroke(0, 0, 0); // Black outline for better readability
         strokeWeight(2);
         
-        if (this.gamePhase === 'playing') {
-            if (this.isMultiplayer) {
-                if (this.isPlayerTurn) {
+        if (gamePhase === 'playing') {
+            if (isMultiplayer) {
+                if (isPlayerTurn) {
                     text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
                     text('👥 Opponent is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
@@ -2572,7 +2582,7 @@ class BattleshipClient {
                     text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
                 }
             } else {
-                if (this.currentPlayer === 0) {
+                if (currentPlayer === 0) {
                     text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
                     text('🤖 AI is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
@@ -2580,15 +2590,15 @@ class BattleshipClient {
                     text('⏳ Your turn is next', fleetGridX + 200, gridY + 20);
                 }
             }
-        } else if (this.gamePhase === 'placement') {
+        } else if (gamePhase === 'placement') {
             text('⚓ Place your ships!', attackGridX + 200, gridY + 20);
             text('📋 Your Fleet', fleetGridX + 200, gridY + 20);
-        } else if (this.gamePhase === 'finished') {
+        } else if (gamePhase === 'finished') {
             let winnerText;
-            if (this.isMultiplayer) {
-                winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 OPPONENT WON!';
+            if (isMultiplayer) {
+                winnerText = gameInstance.winner === 0 ? '🏆 YOU WON!' : '💥 OPPONENT WON!';
             } else {
-                winnerText = this.game.winner === 0 ? '🏆 YOU WON!' : '💥 AI WON!';
+                winnerText = gameInstance.winner === 0 ? '🏆 YOU WON!' : '💥 AI WON!';
             }
             text(winnerText, attackGridX + 200, gridY + 20);
             text(winnerText, fleetGridX + 200, gridY + 20);
@@ -3385,16 +3395,23 @@ class BattleshipClient {
             mouseY >= attackGridY && mouseY < maxGridY && 
             this.gamePhase === 'playing') {
             
+            // CRITICAL FIX: Always read turn state directly from game instance for accuracy
+            const gameInstance = window.battleshipGame || this.game;
+            if (!gameInstance) {
+                console.log('🎯 No game instance available');
+                return;
+            }
+            
             // In multiplayer, check if it's the player's turn
-            if (this.isMultiplayer && !this.isPlayerTurn) {
-                const gameInstance = window.battleshipGame || this.game;
+            if (gameInstance.isMultiplayer && !gameInstance.isPlayerTurn) {
+                console.log(`🎯 Attack blocked - not player's turn: isPlayerTurn=${gameInstance.isPlayerTurn}`);
                 gameInstance.addToHistory('❌ Not your turn!', 'error');
                 return;
             }
             
             // CRITICAL FIX: Check if it's actually the player's turn
-            const gameInstance = window.battleshipGame || this.game;
             if (gameInstance.currentPlayer !== 0) {
+                console.log(`🎯 Attack blocked - wrong currentPlayer: currentPlayer=${gameInstance.currentPlayer}`);
                 gameInstance.addToHistory('❌ Not your turn! Wait for your opponent.', 'error');
                 return;
             }
