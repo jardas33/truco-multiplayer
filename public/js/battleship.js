@@ -1100,8 +1100,21 @@ class BattleshipGame {
             return;
         }
         
+        // CRITICAL FIX: Prevent starting if already waiting for opponent
+        const startBtn = document.getElementById('startGameBtn');
+        if (startBtn && startBtn.disabled && startBtn.textContent === 'Waiting for Opponent...') {
+            console.log('🚀 Already waiting for opponent, ignoring duplicate start request');
+            return;
+        }
+        
         // Check if this is multiplayer mode
         if (this.isMultiplayer && this.roomCode) {
+            // CRITICAL FIX: Only proceed if not already ready
+            if (this.playerReady) {
+                console.log('🚀 Already ready, ignoring duplicate ready request');
+                return;
+            }
+            
             console.log('🚀 Player ready for multiplayer battleship game');
             console.log('🚀 isMultiplayer:', this.isMultiplayer);
             console.log('🚀 roomCode:', this.roomCode);
@@ -1113,7 +1126,6 @@ class BattleshipGame {
             this.emitPlayerReady();
             
             // Disable start button and show waiting message
-            const startBtn = document.getElementById('startGameBtn');
             if (startBtn) {
                 startBtn.disabled = true;
                 startBtn.textContent = 'Waiting for Opponent...';
@@ -1914,6 +1926,11 @@ class BattleshipGame {
         this.gameOver = false;
         this.winner = null;
         
+        // CRITICAL FIX: Reset multiplayer ready state when resetting game
+        // This ensures players need to place ships and click "Start Game" again
+        this.playerReady = false;
+        this.opponentReady = false;
+        
         this.playerGrids = [this.createEmptyGrid(), this.createEmptyGrid()];
         this.attackGrids = [this.createEmptyGrid(), this.createEmptyGrid()];
         this.placedShips = [[], []];
@@ -1936,7 +1953,17 @@ class BattleshipGame {
         // Reset images checked flag
         this.imagesChecked = false;
         
+        // CRITICAL FIX: Reset start button text and state for multiplayer
+        const startBtn = document.getElementById('startGameBtn');
+        if (startBtn) {
+            startBtn.disabled = true; // Will be enabled when all ships are placed
+            startBtn.textContent = 'Start Game';
+        }
+        
         this.initializeGame();
+        
+        // CRITICAL FIX: Update UI to ensure button state is correct after reset
+        this.updateUI();
     }
     
     // Add cleanup method for the client
