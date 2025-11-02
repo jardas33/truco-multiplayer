@@ -390,6 +390,12 @@ class BattleshipGame {
         
         console.log('🚢 Current playerId:', this.playerId);
         console.log('🚢 Attacking playerId:', attackingPlayerId);
+        console.log('🚢 Players array available in handleOpponentAttack:', !!this.players, 'Length:', this.players ? this.players.length : 0);
+        if (this.players && Array.isArray(this.players)) {
+            console.log('🚢 Players in handleOpponentAttack:', this.players.map(p => ({ id: p?.id, name: p?.name, nickname: p?.nickname })));
+        } else {
+            console.log('🚢 WARNING: Players array not available in handleOpponentAttack');
+        }
         
         // Only process attacks from the opponent, not our own attacks
         if (attackingPlayerId === this.playerId) {
