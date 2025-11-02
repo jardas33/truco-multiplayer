@@ -1295,9 +1295,20 @@ class BattleshipGame {
                     return { valid: true, hit: true, sunk: true, ship: ship.name };
                 } else {
                     // CRITICAL FIX: Don't reveal which ship was hit
-                    const attackerName = this.isMultiplayer ? 
-                        (player === 0 ? 'You' : 'Player 2') : 
-                        (player === 0 ? 'You' : 'Bot');
+                    // Get attacker's name - use nickname if available in multiplayer
+                    let attackerName = 'Opponent';
+                    if (this.isMultiplayer) {
+                        if (player === 0) {
+                            attackerName = 'You';
+                        } else {
+                            // Get opponent's name from players array
+                            const opponent = this.players && Array.isArray(this.players) ? 
+                                this.players.find(p => p && p.id !== this.playerId) : null;
+                            attackerName = opponent ? (opponent.nickname || opponent.name || 'Opponent') : 'Opponent';
+                        }
+                    } else {
+                        attackerName = (player === 0 ? 'You' : 'Bot');
+                    }
                     this.addToHistory(`🎯 ${attackerName} hit!`, 'hit');
                     this.showGameMessage(`🎯 ${attackerName} hit!`, 2000);
                     return { valid: true, hit: true, sunk: false, ship: ship.name };
