@@ -1064,6 +1064,20 @@ class BattleshipGame {
             const allShipsPlaced = this.placedShips[0].length === 5;
             startBtn.disabled = !allShipsPlaced || this.gamePhase !== 'placement';
         }
+        
+        // CRITICAL FIX: Show/hide reset ships button based on game phase
+        const resetShipsBtn = document.getElementById('resetShipsBtn');
+        if (resetShipsBtn) {
+            // Only show during placement phase
+            if (this.gamePhase === 'placement') {
+                resetShipsBtn.style.display = 'block';
+                // Enable/disable based on whether ships are placed
+                const hasPlacedShips = this.placedShips[0].length > 0;
+                resetShipsBtn.disabled = !hasPlacedShips;
+            } else {
+                resetShipsBtn.style.display = 'none';
+            }
+        }
     }
     
     updateScoreboard() {
@@ -1230,6 +1244,44 @@ class BattleshipGame {
         if (window.battleshipClient) {
             window.battleshipClient.staticRender();
         }
+    }
+    
+    resetShips() {
+        // Reset only placed ships during placement phase
+        console.log('🔄 Resetting placed ships...');
+        
+        // Only allow during placement phase
+        if (this.gamePhase !== 'placement') {
+            console.log('❌ Cannot reset ships - game is not in placement phase');
+            return;
+        }
+        
+        // Clear player's grid (player 0)
+        this.playerGrids[0] = this.createEmptyGrid();
+        
+        // Clear placed ships for player 0
+        this.placedShips[0] = [];
+        
+        // Reset ship placement status
+        this.ships.forEach(ship => ship.placed = false);
+        
+        // Clear current ship selection
+        this.currentShip = null;
+        this.draggedShip = null;
+        
+        // Update UI to reflect reset
+        this.renderShipsList();
+        this.updateUI();
+        
+        // Add to history
+        this.addToHistory('🔄 Ships reset. You can place them again.', 'info');
+        
+        // Force visual update
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
+        
+        console.log('✅ Ships reset successfully');
     }
     
     autoPlaceShips() {
@@ -2359,10 +2411,15 @@ class BattleshipClient {
             console.log('❌ Start button not found!');
         }
         
-        // Reset game button
-        const resetBtn = document.getElementById('resetGameBtn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => this.game.resetGame());
+        // Reset ships button (only during placement phase)
+        const resetShipsBtn = document.getElementById('resetShipsBtn');
+        if (resetShipsBtn) {
+            resetShipsBtn.addEventListener('click', () => {
+                const gameInstance = window.battleshipGame || this.game;
+                if (gameInstance && gameInstance.gamePhase === 'placement') {
+                    gameInstance.resetShips();
+                }
+            });
         }
         
         // Ship selection - use event delegation
