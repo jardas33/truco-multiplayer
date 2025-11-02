@@ -987,6 +987,70 @@ class BattleshipGame {
         }
     }
     
+    autoPlaceShips() {
+        // Auto-place ships for the player (player 0)
+        console.log('🎲 Auto-placing player ships...');
+        
+        // Only allow during placement phase
+        if (this.gamePhase !== 'placement') {
+            console.log('❌ Cannot auto-place ships - game is not in placement phase');
+            return;
+        }
+        
+        // Clear any previously placed ships
+        this.placedShips[0] = [];
+        this.playerGrids[0] = this.createEmptyGrid();
+        
+        // Reset all ships to not placed
+        this.ships.forEach(ship => {
+            ship.placed = false;
+        });
+        
+        // Copy ships array
+        const shipsToPlace = [...this.ships];
+        let attempts = 0;
+        const maxAttempts = 5000;
+        
+        console.log(`🎲 Attempting to place ${shipsToPlace.length} ships...`);
+        
+        for (let shipIndex = 0; shipIndex < shipsToPlace.length; shipIndex++) {
+            const ship = shipsToPlace[shipIndex];
+            let placed = false;
+            attempts = 0;
+            
+            // Try to place each ship with multiple attempts
+            while (!placed && attempts < maxAttempts) {
+                const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+                const maxX = this.gridSize - (orientation === 'horizontal' ? ship.size - 1 : 0);
+                const maxY = this.gridSize - (orientation === 'vertical' ? ship.size - 1 : 0);
+                const x = Math.floor(Math.random() * maxX);
+                const y = Math.floor(Math.random() * maxY);
+                
+                if (this.canPlaceShip(0, x, y, ship.size, orientation)) {
+                    this.placeShip(0, x, y, ship, orientation);
+                    ship.placed = true;
+                    console.log(`🎲 Placed ${ship.name} at (${x}, ${y}) with orientation ${orientation}`);
+                    placed = true;
+                }
+                attempts++;
+            }
+            
+            if (!placed) {
+                console.error(`❌ Failed to place ${ship.name} after ${attempts} attempts`);
+                this.addToHistory(`⚠️ Could not auto-place ${ship.name}.`, 'warning');
+            }
+        }
+        
+        // Update UI and render
+        this.renderShipsList();
+        this.addToHistory('🎲 All ships auto-placed!', 'success');
+        
+        // Force visual update
+        if (window.battleshipClient) {
+            window.battleshipClient.staticRender();
+        }
+    }
+    
     setupAIShips() {
         console.log('🤖 Setting up AI ships...');
         // Clear any previously placed AI ships
@@ -1268,16 +1332,34 @@ class BattleshipGame {
         this.winner = winner;
         this.gameOver = true;
         
-        // Track games won
-        if (winner === 0) {
-            this.playerGamesWon++;
-            this.addToHistory('🏆 Congratulations! You won the battle!', 'success');
-            this.showGameMessage('🏆 VICTORY! You sunk all enemy ships!', 5000);
-            this.triggerVictoryEffect();
+        // CRITICAL FIX: In multiplayer, winner is 0 (local player) or 1 (opponent)
+        // In single player, winner is 0 (player) or 1 (AI)
+        if (this.isMultiplayer) {
+            // Multiplayer mode
+            if (winner === 0) {
+                // Local player won
+                this.playerGamesWon++;
+                this.addToHistory('🏆 Congratulations! You won the battle!', 'success');
+                this.showGameMessage('🏆 VICTORY! You sunk all enemy ships!', 5000);
+                this.triggerVictoryEffect();
+            } else {
+                // Opponent won (winner === 1)
+                this.aiGamesWon++;
+                this.addToHistory('💥 Game Over! Your opponent defeated you!', 'error');
+                this.showGameMessage('💥 DEFEAT! Your opponent sunk all your ships!', 5000);
+            }
         } else {
-            this.aiGamesWon++;
-            this.addToHistory('💥 Game Over! The AI defeated you!', 'error');
-            this.showGameMessage('💥 DEFEAT! The AI sunk all your ships!', 5000);
+            // Single player mode
+            if (winner === 0) {
+                this.playerGamesWon++;
+                this.addToHistory('🏆 Congratulations! You won the battle!', 'success');
+                this.showGameMessage('🏆 VICTORY! You sunk all enemy ships!', 5000);
+                this.triggerVictoryEffect();
+            } else {
+                this.aiGamesWon++;
+                this.addToHistory('💥 Game Over! The AI defeated you!', 'error');
+                this.showGameMessage('💥 DEFEAT! The AI sunk all your ships!', 5000);
+            }
         }
         
         this.updateUI();

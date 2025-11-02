@@ -599,6 +599,9 @@
                 <div id="shipsList">
                     <!-- Ships will be populated by JavaScript -->
                 </div>
+                <button id="autoPlaceShipsBtn" style="width: 100%; margin-top: 15px; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold;">
+                    🎲 Auto-Place Ships
+                </button>
             </div>
 
         </div>
@@ -876,6 +879,18 @@
                 }
             });
         }
+        
+        // Auto-place ships button handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const autoPlaceBtn = document.getElementById('autoPlaceShipsBtn');
+            if (autoPlaceBtn) {
+                autoPlaceBtn.addEventListener('click', () => {
+                    if (window.battleshipGame) {
+                        window.battleshipGame.autoPlaceShips();
+                    }
+                });
+            }
+        });
     </script>
 
     <!-- Scripts -->
