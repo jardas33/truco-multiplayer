@@ -270,6 +270,13 @@ class BattleshipGame {
         console.log('🚢 Handling game start:', data);
         console.log('🚢 Game phase before setting:', this.gamePhase);
         
+        // CRITICAL FIX: Clear processedAttacks when new game starts
+        // This prevents attacks from previous games from being blocked
+        if (this.processedAttacks) {
+            this.processedAttacks.clear();
+            console.log('🚢 Cleared processedAttacks Set for new game');
+        }
+        
         // CRITICAL FIX: Ensure playerId is set correctly - prioritize window.battleshipPlayerId, then socket.id
         // Refresh playerId every time to ensure it's current
         const socketId = this.socket ? this.socket.id : null;
@@ -534,6 +541,9 @@ class BattleshipGame {
                     gameInstance.totalPlayerShipsSunk = oldTotalPlayerShipsSunk;
                 }
                 
+                // CRITICAL FIX: Update scoreboard immediately when ship is sunk
+                gameInstance.updateScoreboard();
+                
                 // CRITICAL FIX: Check if all ships are sunk (game over for defender)
                 if (gameInstance.checkGameOver(0)) { // Check if player 0 (defender) has lost all ships
                     console.log('🚢 All ships sunk - game over!');
@@ -646,13 +656,36 @@ class BattleshipGame {
             isAttacker = true;
         }
         
-        // Update the attacker's attack grid with the confirmed result
+        // CRITICAL FIX: Update the attacker's attack grid with the confirmed result
+        // Validate coordinates and grid structure
+        if (!gameInstance.attackGrids || !gameInstance.attackGrids[0]) {
+            console.error(`🚢 ERROR: Attack grids not initialized!`);
+            return;
+        }
+        
+        if (y < 0 || y >= gameInstance.gridSize || x < 0 || x >= gameInstance.gridSize) {
+            console.error(`🚢 ERROR: Invalid coordinates for attack grid update: x=${x}, y=${y}, gridSize=${gameInstance.gridSize}`);
+            return;
+        }
+        
         if (gameInstance.attackGrids[0][y] && gameInstance.attackGrids[0][y][x]) {
             gameInstance.attackGrids[0][y][x].hit = hit;
             gameInstance.attackGrids[0][y][x].miss = !hit;
             console.log(`🚢 Updated attacker's attack grid [${y}][${x}]: hit=${hit}, miss=${!hit}`);
+            
+            // CRITICAL FIX: Force immediate visual update
+            if (window.battleshipClient) {
+                window.battleshipClient.staticRender();
+            }
         } else {
-            console.log(`🚢 ERROR: Attack grid [${y}][${x}] not found!`);
+            console.error(`🚢 ERROR: Attack grid [${y}][${x}] not found! Grid structure:`, {
+                hasAttackGrids: !!gameInstance.attackGrids,
+                hasGrid0: !!gameInstance.attackGrids[0],
+                hasRowY: !!(gameInstance.attackGrids[0] && gameInstance.attackGrids[0][y]),
+                gridSize: gameInstance.gridSize,
+                x: x,
+                y: y
+            });
         }
         
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
@@ -1997,6 +2030,13 @@ class BattleshipGame {
         this.currentGamePlayerShipsSunk = 0;
         this.currentGameAiShipsSunk = 0;
         
+        // CRITICAL FIX: Clear processedAttacks when resetting game
+        // This ensures attacks from previous games don't interfere
+        if (window.battleshipClient && window.battleshipClient.processedAttacks) {
+            window.battleshipClient.processedAttacks.clear();
+            console.log('🚢 Cleared processedAttacks Set in resetGame');
+        }
+        
         // Reset images checked flag
         this.imagesChecked = false;
         
@@ -2010,7 +2050,9 @@ class BattleshipGame {
         this.initializeGame();
         
         // CRITICAL FIX: Update UI to ensure button state is correct after reset
+        // Also update scoreboard to ensure it shows correct values
         this.updateUI();
+        this.updateScoreboard();
     }
     
     // Add cleanup method for the client
