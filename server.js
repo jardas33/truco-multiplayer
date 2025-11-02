@@ -1010,17 +1010,8 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // CRITICAL FIX: Broadcast the attack result only to the attacking player (not to defender)
-        // Use socket.id to send to the specific attacker, not socket.to() which sends to everyone else
-        const attackingSocket = Array.from(io.sockets.sockets.values()).find(s => s.id === data.attackingPlayerId);
-        if (attackingSocket) {
-            attackingSocket.emit('battleshipAttackResult', data);
-            console.log(`🚢 Sent attack result to attacker: ${data.attackingPlayerId}`);
-        } else {
-            console.log(`❌ Could not find attacking socket for ID: ${data.attackingPlayerId}`);
-            // Fallback: broadcast to room (shouldn't happen normally)
-            socket.to(data.roomId).emit('battleshipAttackResult', data);
-        }
+        // Broadcast the attack result to the attacking player
+        socket.to(data.roomId).emit('battleshipAttackResult', data);
         
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
         // Only change turns when you miss

@@ -517,24 +517,12 @@ class BattleshipGame {
     handleAttackResult(data) {
         // Handle attack result confirmation for the attacker
         console.log('🚢 Handling attack result confirmation:', data);
-        const { x, y, hit, shipSunk, shipName, attackingPlayerId } = data;
+        const { x, y, hit, shipSunk, shipName } = data;
         
         const gameInstance = window.battleshipGame || this.game;
         if (!gameInstance) {
             console.log('🚢 ERROR: No game instance available for attack result handling');
             return;
-        }
-        
-        // CRITICAL FIX: Only process this if we're the attacker
-        // This prevents the defender from incorrectly processing attack results
-        if (gameInstance.isMultiplayer && attackingPlayerId) {
-            const socketId = this.socket ? this.socket.id : null;
-            const currentPlayerId = this.playerId || window.battleshipPlayerId || socketId;
-            if (attackingPlayerId !== currentPlayerId) {
-                console.log('🚢 Ignoring attack result - we are not the attacker');
-                console.log(`🚢 Our ID: ${currentPlayerId}, Attacker ID: ${attackingPlayerId}`);
-                return;
-            }
         }
         
         // Update the attacker's attack grid with the confirmed result
@@ -549,25 +537,9 @@ class BattleshipGame {
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
         // Only lose your turn when you miss
         if (hit) {
-            // Hit - ensure player keeps their turn (only update if we're the attacker in multiplayer)
-            // CRITICAL FIX: Only update turn state if we're actually the attacker
-            // Don't change turn state if this is being called from a different context
-            if (gameInstance.isMultiplayer) {
-                // In multiplayer, only update if we're the local player (player 0)
-                // This prevents the defender from having their turn state incorrectly updated
-                const wasOurTurn = gameInstance.isPlayerTurn;
-                if (wasOurTurn) {
-                    // We were already on our turn, so we keep it
-                    gameInstance.isPlayerTurn = true;
-                    gameInstance.currentPlayer = 0;
-                    // CRITICAL FIX: Update previousPlayerTurn to prevent false turn change detection
-                    gameInstance.previousPlayerTurn = true;
-                }
-            } else {
-                // Single player mode
-                gameInstance.isPlayerTurn = true;
-                gameInstance.currentPlayer = 0;
-            }
+            // Hit - ensure player keeps their turn
+            gameInstance.isPlayerTurn = true;
+            gameInstance.currentPlayer = 0;
             
             // Update hit counter and score
             gameInstance.playerHits++;
@@ -2227,11 +2199,7 @@ class BattleshipClient {
         
         if (this.gamePhase === 'playing') {
             if (this.isMultiplayer) {
-                // CRITICAL FIX: Get isPlayerTurn from game instance to ensure accuracy
-                const gameInstance = window.battleshipGame || this.game;
-                const isOurTurn = gameInstance ? gameInstance.isPlayerTurn : this.isPlayerTurn;
-                
-                if (isOurTurn) {
+                if (this.isPlayerTurn) {
                     text('🎯 YOUR TURN - Click to attack!', attackGridX + 200, gridY + 20);
                     text('👥 Opponent is waiting...', fleetGridX + 200, gridY + 20);
                 } else {
