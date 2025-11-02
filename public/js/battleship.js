@@ -118,11 +118,22 @@ class BattleshipGame {
             // This prevents race conditions between the game initialization and socket setup
         }
         
-        this.addToHistory('🎮 Game initialized. Place your ships to begin!', 'info');
+        // CRITICAL FIX: Show prominent message to start positioning ships
+        this.addToHistory('🎮 Game initialized!', 'success');
+        this.showGameMessage('⚓ START POSITIONING YOUR SHIPS! Click on a ship in the left panel, then click on the grid to place it.', 6000);
+        this.addToHistory('⚓ Click on a ship in the "Your Fleet" panel (left side) to select it, then click on your grid to place it.', 'info');
+        this.addToHistory('💡 Tip: Press "R" to rotate ships. Place all 5 ships to start the battle!', 'info');
         this.updateUI();
         console.log('🎨 About to render ships list...');
         this.renderShipsList();
         console.log('✅ Ships list rendered');
+        
+        // Force visual update to show the message
+        if (window.battleshipClient) {
+            setTimeout(() => {
+                window.battleshipClient.staticRender();
+            }, 100);
+        }
     }
     
     initializeMultiplayer(roomCode) {
