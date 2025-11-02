@@ -869,7 +869,10 @@
             // Handle game over events
             window.battleshipSocket.on('battleshipGameOver', (data) => {
                 console.log('🚢 Received game over event:', data);
-                // Handle game over if needed
+                // Handle game over in the game instance
+                if (window.battleshipGame) {
+                    window.battleshipGame.handleGameOver(data);
+                }
             });
             
             // Clean up socket on page unload

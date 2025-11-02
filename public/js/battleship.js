@@ -625,7 +625,32 @@ class BattleshipGame {
     
     handleGameOver(data) {
         console.log('🚢 Handling game over:', data);
-        this.endGame(data.winner);
+        console.log('🚢 Game over data:', data);
+        console.log('🚢 Current playerId:', this.playerId);
+        console.log('🚢 Winner from server:', data.winner);
+        
+        // CRITICAL FIX: Map winner from server's perspective to local perspective
+        // Server sends winner as player index (0 or 1) in room.players array
+        // We need to determine if that index corresponds to us (local player) or opponent
+        if (this.isMultiplayer && this.players && Array.isArray(this.players)) {
+            // Refresh playerId before comparing
+            const socketId = this.socket ? this.socket.id : null;
+            this.playerId = window.battleshipPlayerId || socketId || this.playerId;
+            
+            // Find which player index we are in the room's players array
+            const ourIndex = this.players.findIndex(p => p && p.id === this.playerId);
+            console.log('🚢 Our index in players array:', ourIndex);
+            console.log('🚢 Winner index from server:', data.winner);
+            
+            // Map winner: if winner index matches our index, we won (0), otherwise opponent won (1)
+            const localWinner = (data.winner === ourIndex) ? 0 : 1;
+            console.log('🚢 Mapped local winner:', localWinner, '(0 = we won, 1 = opponent won)');
+            
+            this.endGame(localWinner);
+        } else {
+            // Single player mode - winner is already in correct format
+            this.endGame(data.winner);
+        }
     }
     
     // Emit multiplayer events
@@ -703,9 +728,30 @@ class BattleshipGame {
     
     emitGameOver(winner) {
         if (this.isMultiplayer && this.socket && this.roomCode) {
+            // CRITICAL FIX: Send winner as player index in room.players array, not local perspective
+            // winner=0 means local player won, winner=1 means opponent won (from local perspective)
+            // We need to convert this to the actual player index in the room
+            let winnerIndex = 0; // Default to first player
+            if (this.players && Array.isArray(this.players)) {
+                const socketId = this.socket ? this.socket.id : null;
+                const currentPlayerId = this.playerId || window.battleshipPlayerId || socketId;
+                
+                if (winner === 0) {
+                    // Local player won - find our index
+                    const ourIndex = this.players.findIndex(p => p && p.id === currentPlayerId);
+                    winnerIndex = ourIndex >= 0 ? ourIndex : 0;
+                } else {
+                    // Opponent won - find opponent's index
+                    const opponentIndex = this.players.findIndex(p => p && p.id && p.id !== currentPlayerId);
+                    winnerIndex = opponentIndex >= 0 ? opponentIndex : 1;
+                }
+            }
+            
+            console.log('🚢 Emitting game over - local winner:', winner, 'server winner index:', winnerIndex);
+            
             this.socket.emit('battleshipGameOver', {
                 roomId: this.roomCode,
-                winner: winner
+                winner: winnerIndex
             });
         }
     }
