@@ -762,6 +762,10 @@
             window.battleshipSocket.on('playersUpdated', (players) => {
                 console.log('🚢 Received players updated event:', players);
                 if (players && players.length >= 2 && window.battleshipGame) {
+                    // CRITICAL FIX: Update the stored players array in the game instance
+                    window.battleshipGame.players = players;
+                    console.log('🚢 Updated players array in game instance');
+                    
                     // Update player names in the scoreboard
                     const currentPlayerId = window.battleshipPlayerId;
                     const player1 = players[0];

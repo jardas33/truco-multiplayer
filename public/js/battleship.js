@@ -265,6 +265,12 @@ class BattleshipGame {
             this.firstPlayerId = data.firstPlayerId;
         }
         
+        // CRITICAL FIX: Store players array for looking up player names
+        if (data.players && Array.isArray(data.players)) {
+            this.players = data.players;
+            console.log('🚢 Stored players array:', this.players.map(p => ({ id: p.id, name: p.name, nickname: p.nickname })));
+        }
+        
         // Use server-assigned first player instead of random assignment
         if (data.firstPlayerId) {
             this.isPlayerTurn = (data.firstPlayerId === this.playerId);
@@ -417,9 +423,16 @@ class BattleshipGame {
                 shipSunk = true;
                 console.log(`🚢 Ship ${cell.ship.name} sunk!`);
                 
-                // CRITICAL FIX: Show popup message for opponent's ship sunk
-                gameInstance.addToHistory(`💥 Opponent sunk your ${cell.ship.name}!`, 'sunk');
-                gameInstance.showGameMessage(`💥 Your ${cell.ship.name.toUpperCase()} SUNK!`, 3000);
+                // CRITICAL FIX: Get attacker's name for the message
+                let attackerName = 'Opponent';
+                if (gameInstance.isMultiplayer && gameInstance.players) {
+                    const attacker = gameInstance.players.find(p => p.id === attackingPlayerId);
+                    attackerName = attacker ? (attacker.nickname || attacker.name || 'Opponent') : 'Opponent';
+                }
+                
+                // CRITICAL FIX: Show popup message for opponent's ship sunk (format: "Your [ship name] was sunk")
+                gameInstance.addToHistory(`💥 ${attackerName} sunk your ${cell.ship.name}!`, 'sunk');
+                gameInstance.showGameMessage(`💥 Your ${cell.ship.name} was sunk!`, 3000);
                 
                 // CRITICAL FIX: Check if all ships are sunk (game over for defender)
                 if (gameInstance.checkGameOver(0)) { // Check if player 0 (defender) has lost all ships
@@ -430,16 +443,22 @@ class BattleshipGame {
                 }
             } else {
                 // CRITICAL FIX: Don't reveal which ship was hit, but show who hit
-                const attackerName = gameInstance.isMultiplayer ? 'Player 2' : 'Bot';
-                gameInstance.addToHistory(`💥 ${attackerName} hit your ship!`, 'hit');
-                // CRITICAL FIX: Show popup message for opponent's hit
+                // Show popup message: "Your ship was hit!"
+                gameInstance.addToHistory(`💥 Opponent hit your ship!`, 'hit');
                 gameInstance.showGameMessage(`💥 Your ship was hit!`, 2000);
             }
         } else {
-            // CRITICAL FIX: Show who missed
-            const misserName = gameInstance.isMultiplayer ? 'Player 2' : 'Bot';
+            // CRITICAL FIX: Show who missed - get attacker's actual name
+            let misserName = 'Opponent';
+            if (gameInstance.isMultiplayer && gameInstance.players) {
+                const attacker = gameInstance.players.find(p => p.id === attackingPlayerId);
+                misserName = attacker ? (attacker.nickname || attacker.name || 'Opponent') : 'Opponent';
+            } else {
+                misserName = 'Bot';
+            }
+            
             gameInstance.addToHistory(`💧 ${misserName} missed!`, 'miss');
-            // CRITICAL FIX: Show popup message for opponent's miss
+            // CRITICAL FIX: Show popup message with attacker's name
             gameInstance.showGameMessage(`💧 ${misserName} missed!`, 1500);
         }
         
