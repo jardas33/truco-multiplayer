@@ -424,6 +424,7 @@
                 console.log('✅ Created battleship room:', data);
                 window.battleshipRoomId = data.roomId;
                 window.isRoomCreator = true; // Mark as room creator
+                window.currentBattleshipPlayers = data.players || [];
                 updateBattleshipPlayerList(data.players || []);
                 
                 // Show room created UI (room creator sees room code)
@@ -453,6 +454,7 @@
             
             
             window.socket.on('playerJoined', (data) => {
+                window.currentBattleshipPlayers = data.players || [];
                 updateBattleshipPlayerList(data.players);
                 
                 // Enable start button when 2 players join (only for room creator)
@@ -470,10 +472,19 @@
                 console.log('🚢 Socket before redirect:', !!window.socket);
                 console.log('🚢 Socket ID before redirect:', window.socket?.id);
                 
+                // Determine game mode based on players
+                // Single-player: 1 human + 1 bot
+                // Multiplayer: 2 humans
+                const players = data.players || window.currentBattleshipPlayers || [];
+                const humanPlayers = players.filter(p => !p.isBot);
+                const gameMode = humanPlayers.length >= 2 ? 'multiplayer' : 'singleplayer';
+                
+                console.log('🚢 Game mode determined:', gameMode, 'Players:', players.map(p => ({ name: p.name, isBot: p.isBot })));
+                
                 // Store room settings for the game
                 localStorage.setItem('battleshipRoomCode', data.roomId);
-                localStorage.setItem('battleshipPlayerCount', data.players ? data.players.length.toString() : '2');
-                localStorage.setItem('battleshipGameMode', 'multiplayer');
+                localStorage.setItem('battleshipPlayerCount', players.length.toString());
+                localStorage.setItem('battleshipGameMode', gameMode);
                 
                 // Redirect to game
                 console.log('🚢 Redirecting to battleship game...');
@@ -482,6 +493,7 @@
             
             // Handle players updated event to keep both players in sync
             window.socket.on('playersUpdated', (players) => {
+                window.currentBattleshipPlayers = players || [];
                 updateBattleshipPlayerList(players);
                 
                 // Enable start button when 2 players are ready (only for room creator)
@@ -532,11 +544,19 @@
                 console.log('✅ Received roomJoined event:', data);
                 window.battleshipRoomId = data.roomId;
                 window.isRoomCreator = false; // Mark as room joiner
+                window.currentBattleshipPlayers = data.players || [];
+                
+                // Determine game mode based on players
+                // Single-player: 1 human + 1 bot
+                // Multiplayer: 2 humans (with or without bots, but battleship only allows 2 players total)
+                const players = data.players || [];
+                const humanPlayers = players.filter(p => !p.isBot);
+                const gameMode = humanPlayers.length >= 2 ? 'multiplayer' : 'singleplayer';
                 
                 // Store room settings
                 localStorage.setItem('battleshipRoomCode', data.roomId);
-                localStorage.setItem('battleshipPlayerCount', '2');
-                localStorage.setItem('battleshipGameMode', 'multiplayer');
+                localStorage.setItem('battleshipPlayerCount', players.length.toString());
+                localStorage.setItem('battleshipGameMode', gameMode);
                 
                 // Show room UI (joiner sees same elements but NO room code)
                 document.getElementById('roomCodeDisplay').style.display = 'none'; // Hide room code for joiner
@@ -554,7 +574,7 @@
                 document.getElementById('gameMenuBtn').style.display = 'inline-block';
                 
                 // Update Add Bot button state (even though hidden, for consistency)
-                updateAddBotButtonState(1); // Joiner starts with 1 player (themselves)
+                updateAddBotButtonState(players.length);
                 
                 console.log('🚢 Room settings stored, staying on menu...');
                 // Don't redirect automatically - wait for manual start
@@ -595,6 +615,19 @@
         
         
         function startBattleshipGame() {
+            // Check players to determine game mode
+            // Single-player: 1 human + 1 bot
+            // Multiplayer: 2 humans
+            const currentPlayers = window.currentBattleshipPlayers || [];
+            const humanPlayers = currentPlayers.filter(p => !p.isBot);
+            const gameMode = humanPlayers.length >= 2 ? 'multiplayer' : 'singleplayer';
+            
+            console.log('🚢 Starting battleship game - Mode:', gameMode);
+            console.log('🚢 Players:', currentPlayers.map(p => ({ name: p.name, isBot: p.isBot })));
+            
+            // Store game mode for the game to use
+            localStorage.setItem('battleshipGameMode', gameMode);
+            
             // Emit game start to server to notify all players
             if (window.socket) {
                 window.socket.emit('battleshipGameStart', {
@@ -639,18 +672,24 @@
         }
 
         function addBot() {
-            if (playerCount < maxPlayers) {
-                playerCount++;
-                updatePlayerList();
-                updateBotButtons();
-                console.log('🤖 Bot added. Players:', playerCount);
-                
-                // Update Add Bot button state
-                updateAddBotButtonState(playerCount);
-            } else {
-                console.log('❌ Cannot add bot - room is full (2 players maximum)');
-                alert('Cannot add more bots - room is full (2 players maximum)');
+            if (!window.socket) {
+                console.error('❌ Socket not initialized');
+                alert('Socket not connected. Please try again.');
+                return;
             }
+            
+            if (!window.battleshipRoomId) {
+                console.error('❌ No room ID available');
+                alert('No room available. Please create a room first.');
+                return;
+            }
+            
+            console.log('🤖 Adding bot to battleship room:', window.battleshipRoomId);
+            
+            // Emit socket event to add bot to server
+            window.socket.emit('addBot', {
+                roomId: window.battleshipRoomId
+            });
         }
 
         function removeBot() {

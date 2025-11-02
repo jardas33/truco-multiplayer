@@ -102,9 +102,15 @@ class BattleshipGame {
             console.log('🚢 Game initialization - gameMode:', gameMode, 'roomCode:', roomCode);
             if (gameMode === 'multiplayer') {
                 console.log('🚢 Multiplayer mode detected, room:', roomCode);
+                this.isMultiplayer = true;
                 this.initializeMultiplayer(roomCode);
+            } else if (gameMode === 'singleplayer') {
+                console.log('🚢 Single player mode detected (player vs bot)');
+                this.isMultiplayer = false;
+                this.roomCode = null; // No room code needed for single-player
             } else {
-                console.log('🚢 Single player mode detected');
+                console.log('🚢 No specific mode set, defaulting to single player');
+                this.isMultiplayer = false;
             }
             
             // Don't clear localStorage here - let the HTML script handle it
