@@ -21,20 +21,12 @@
             font-family: 'Arial', sans-serif;
             overflow: hidden;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
 
         .game-container {
             position: relative;
             width: 100%;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             background: #000;
         }
 
@@ -79,6 +71,7 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1;
         }
 
         .loading {
@@ -92,6 +85,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            border-radius: 10px;
         }
 
         .controls-info {
@@ -147,7 +142,7 @@
                 👑 Loading Prince of Persia...<br>
                 <small style="font-size: 16px; margin-top: 10px; display: block;">Initializing game...</small>
             </div>
-            <iframe id="game-iframe" src="https://princejs.com/" allow="gamepad; fullscreen" allowfullscreen></iframe>
+            <iframe id="game-iframe" src="https://princejs.com/" allow="gamepad; fullscreen" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
         </div>
 
         <!-- Controls Info -->
@@ -164,33 +159,25 @@
         const gameIframe = document.getElementById('game-iframe');
         const loadingMessage = document.getElementById('loading-message');
 
+        // Show game immediately - PrinceJS loads quickly
+        gameIframe.style.display = 'block';
+
         // Wait for iframe to load
         gameIframe.addEventListener('load', () => {
             console.log('👑 Prince of Persia game loaded');
             setTimeout(() => {
-                loadingMessage.style.display = 'none';
-                gameIframe.style.display = 'block';
-            }, 500);
-        });
-
-        // Hide loading message after iframe loads
-        gameIframe.addEventListener('load', () => {
-            setTimeout(() => {
-                if (loadingMessage && loadingMessage.style.display !== 'none') {
+                if (loadingMessage) {
                     loadingMessage.style.display = 'none';
                 }
-            }, 2000);
+            }, 1000);
         });
 
-        // Fallback: hide loading after 3 seconds
+        // Fallback: hide loading after 2 seconds
         setTimeout(() => {
             if (loadingMessage) {
                 loadingMessage.style.display = 'none';
             }
-            if (gameIframe) {
-                gameIframe.style.display = 'block';
-            }
-        }, 3000);
+        }, 2000);
     </script>
 </body>
 </html>
