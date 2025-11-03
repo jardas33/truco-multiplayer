@@ -388,36 +388,54 @@ function handleGoFishBotTurn(roomCode, room) {
                     }
                 }
                 
+                // CRITICAL FIX: Check if the drawn card matches the rank the bot asked for
+                const cardMatchesAskedRank = drawnCard.rank === targetRank;
+                console.log(`🐟 Bot ${currentPlayer.name} - Drawn card rank: ${drawnCard.rank}, Asked rank: ${targetRank}, Matches: ${cardMatchesAskedRank}`);
+                
                 // Add delay before go fish event
                 setTimeout(() => {
-                    io.to(roomCode).emit('goFish', {
-                        askingPlayer: currentPlayer.name,
-                        targetPlayer: targetPlayer.name,
-                        rank: targetRank,
-                        playerIndex: room.game.currentPlayer,
-                        targetPlayerIndex: targetIndex,
-                        drawnCard: drawnCard,
-                        players: room.players.map((p, index) => ({
-                            ...p,
-                            hand: room.game.hands[index] || [],
-                            pairs: p.pairs || 0
-                        })),
-                        pond: room.game.pond,
-                        currentPlayer: room.game.currentPlayer
-                    });
-                    
-                    // Add another delay before processing result
-                    setTimeout(() => {
-                        // If pairs were found (and it's a bot), bot gets another turn
-                        if (currentPlayer.isBot) {
-                            const newHand = room.game.hands[room.game.currentPlayer];
-                            const pairsFound = checkForPairs(newHand);
-                            if (pairsFound > 0) {
-                                setTimeout(() => {
-                                    handleGoFishBotTurn(roomCode, room);
-                                }, 4000); // 4 seconds delay for next turn
+                        io.to(roomCode).emit('goFish', {
+                            askingPlayer: currentPlayer.name,
+                            targetPlayer: targetPlayer.name,
+                            rank: targetRank,
+                            playerIndex: room.game.currentPlayer,
+                            targetPlayerIndex: targetIndex,
+                            drawnCard: drawnCard,
+                            players: room.players.map((p, index) => ({
+                                ...p,
+                                hand: room.game.hands[index] || [],
+                                pairs: p.pairs || 0
+                            })),
+                            pond: room.game.pond,
+                            currentPlayer: room.game.currentPlayer,
+                            cardMatchesAskedRank: cardMatchesAskedRank
+                        });
+                        
+                        // Add another delay before processing result
+                        setTimeout(() => {
+                            // CRITICAL FIX: Bot only gets another turn if the card matches the rank they asked for
+                            // Even if pairs were found, if the card doesn't match, turn ends
+                            if (currentPlayer.isBot) {
+                                if (cardMatchesAskedRank) {
+                                    console.log(`🎯 Bot ${currentPlayer.name} fished the card they asked for (${targetRank}) - gets another turn`);
+                                    setTimeout(() => {
+                                        handleGoFishBotTurn(roomCode, room);
+                                    }, 4000); // 4 seconds delay for next turn
+                                } else {
+                                    // Card doesn't match - turn ends even if pairs were found
+                                    console.log(`🎯 Bot ${currentPlayer.name} fished a different card (${drawnCard.rank} instead of ${targetRank}) - turn ends`);
+                                    room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
+                                    io.to(roomCode).emit('turnChanged', {
+                                        currentPlayer: room.game.currentPlayer,
+                                        players: room.players.map((p, index) => ({
+                                            ...p,
+                                            hand: room.game.hands[index] || [],
+                                            pairs: p.pairs || 0
+                                        }))
+                                    });
+                                }
                             } else {
-                                // No pairs found, end turn
+                                // Human player - end turn (they need to manually make pairs)
                                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
                                 io.to(roomCode).emit('turnChanged', {
                                     currentPlayer: room.game.currentPlayer,
@@ -428,20 +446,8 @@ function handleGoFishBotTurn(roomCode, room) {
                                     }))
                                 });
                             }
-                        } else {
-                            // Human player - end turn (they need to manually make pairs)
-                            room.game.currentPlayer = (room.game.currentPlayer + 1) % room.players.length;
-                            io.to(roomCode).emit('turnChanged', {
-                                currentPlayer: room.game.currentPlayer,
-                                players: room.players.map((p, index) => ({
-                                    ...p,
-                                    hand: room.game.hands[index] || [],
-                                    pairs: p.pairs || 0
-                                }))
-                            });
-                        }
-                    }, 4000); // 3 seconds delay before processing result
-                }, 2500); // 2.5 seconds delay before go fish event
+                        }, 4000); // 3 seconds delay before processing result
+                    }, 2500); // 2.5 seconds delay before go fish event
             } else {
                 // Pond is empty - check for game over
                 if (checkGoFishGameOver(room)) {
@@ -1586,6 +1592,10 @@ io.on('connection', (socket) => {
                         const drawnCard = room.game.pond.pop();
                         room.game.hands[data.playerIndex] = [...askingPlayerHand, drawnCard];
                         
+                        // CRITICAL FIX: Check if the drawn card matches the rank they asked for
+                        const cardMatchesAskedRank = drawnCard.rank === data.rank;
+                        console.log(`🐟 Drawn card rank: ${drawnCard.rank}, Asked rank: ${data.rank}, Matches: ${cardMatchesAskedRank}`);
+                        
                         // Check for pairs in the player's hand after fishing
                         const newHand = room.game.hands[data.playerIndex];
                         const pairsFound = checkForPairs(newHand);
@@ -1610,6 +1620,7 @@ io.on('connection', (socket) => {
                         console.log('🐟   room.game.currentPlayer:', room.game.currentPlayer);
                         console.log('🐟   room.players[room.game.currentPlayer]:', room.players[room.game.currentPlayer]?.name);
                         console.log('🐟   data.playerIndex:', data.playerIndex);
+                        console.log('🐟   cardMatchesAskedRank:', cardMatchesAskedRank);
                         
                         console.log('🐟 EMITTING goFish event to room:', roomCode);
                         console.log('🐟 goFish event data:', {
@@ -1620,7 +1631,8 @@ io.on('connection', (socket) => {
                             targetPlayerIndex: data.targetPlayerIndex,
                             drawnCard: drawnCard,
                             currentPlayer: room.game.currentPlayer,
-                            pairsFound: pairsFound
+                            pairsFound: pairsFound,
+                            cardMatchesAskedRank: cardMatchesAskedRank
                         });
                         
                         io.to(roomCode).emit('goFish', {
@@ -1637,7 +1649,8 @@ io.on('connection', (socket) => {
                             })),
                             pond: room.game.pond,
                             currentPlayer: room.game.currentPlayer,
-                            pairsFound: pairsFound
+                            pairsFound: pairsFound,
+                            cardMatchesAskedRank: cardMatchesAskedRank
                         });
                         
                         console.log('🐟 goFish event emitted successfully');
@@ -1645,10 +1658,14 @@ io.on('connection', (socket) => {
                         // Add another delay before processing result
                         setTimeout(() => {
                             console.log(`🐟 Processing Go Fish result for ${askingPlayer.name}`);
-                            // If pairs were found, player gets another turn
-                            if (pairsFound > 0) {
-                                console.log(`🎯 ${askingPlayer.name} found pairs after fishing - gets another turn`);
-                                return; // Don't advance turn
+                            // CRITICAL FIX: Player only gets another turn if the card they fished matches the rank they asked for
+                            // Even if pairs were found, if the card doesn't match, turn ends
+                            if (cardMatchesAskedRank) {
+                                console.log(`🎯 ${askingPlayer.name} fished the card they asked for (${data.rank}) - gets another turn`);
+                                return; // Don't advance turn - player gets another turn
+                            } else {
+                                console.log(`🎯 ${askingPlayer.name} fished a different card (${drawnCard.rank} instead of ${data.rank}) - turn ends`);
+                                // Turn ends even if pairs were found, because the card doesn't match
                             }
                             
                             // Check if game is over after this action

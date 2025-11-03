@@ -597,6 +597,7 @@ class GoFishClient {
         this.isActing = false; // Track if player is in middle of an action (fishing, asking, etc.)
         this.currentTargetIndex = 0; // Track selected target
         this.currentRankIndex = 0;   // Track selected rank
+        this.lastAskedRank = null; // CRITICAL FIX: Track the last rank asked for to compare with fished card
     }
 
     // Initialize the client
@@ -1072,8 +1073,14 @@ class GoFishClient {
         console.log('🎯 askForCards - this.game.players exists:', !!this.game?.players);
         console.log('🎯 askForCards - this.game.players.length:', this.game?.players?.length);
         
-        // Set acting state to prevent additional clicks
+        // CRITICAL FIX: Store the asked rank for later comparison
+        this.lastAskedRank = rank;
+        console.log('🎯 Stored lastAskedRank:', this.lastAskedRank);
+        
+        // Set acting state to prevent additional clicks and disable buttons immediately
         this.isActing = true;
+        this.canAct = false; // Disable actions immediately when asking
+        this.updateUI(); // Update UI to reflect button state
         
         // CRITICAL: Check if this is Player 2 and what's different
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this context:', this);
@@ -1171,6 +1178,9 @@ class GoFishClient {
     updateCardsGiven(data) {
         console.log('🎮 Cards given event received:', data);
         
+        // CRITICAL FIX: Clear lastAskedRank since cards were successfully given (not a go fish)
+        this.lastAskedRank = null;
+        
         // Update game state from server - update all players' hands and pairs
         if (data.players) {
             data.players.forEach((playerData, index) => {
@@ -1188,7 +1198,9 @@ class GoFishClient {
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
-        this.canAct = this.isMyTurn; // Allow action when it's my turn
+        // CRITICAL FIX: When cards are given successfully, player gets another turn
+        // Reset acting state and allow actions
+        this.canAct = this.isMyTurn; // Allow action when it's my turn (they get another turn)
         this.isActing = false; // Reset acting state when action completes
         
         // Show appropriate message
@@ -1215,6 +1227,17 @@ class GoFishClient {
         console.log('🎮 Go fish - targetPlayer:', data.targetPlayer);
         console.log('🎮 Go fish - playerIndex:', data.playerIndex);
         console.log('🎮 Go fish - targetPlayerIndex:', data.targetPlayerIndex);
+        console.log('🎮 Go fish - cardMatchesAskedRank:', data.cardMatchesAskedRank);
+        console.log('🎮 Go fish - lastAskedRank:', this.lastAskedRank);
+        
+        // CRITICAL FIX: If this is a result of asking (not a direct go fish), disable buttons immediately
+        if (data.askingPlayer && data.targetPlayer && data.playerIndex === this.localPlayerIndex) {
+            // This is a result of the local player asking - disable buttons immediately
+            this.canAct = false;
+            this.isActing = true;
+            console.log('🎮 Disabled buttons immediately - player went fishing after asking');
+            this.updateUI(); // Update UI to reflect disabled buttons
+        }
         
         // Update game state from server - update all players' hands and pairs
         if (data.players) {
@@ -1234,8 +1257,37 @@ class GoFishClient {
         this.game.currentPlayer = data.currentPlayer;
         
         this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
-        this.canAct = this.isMyTurn; // Allow action when it's my turn
-        this.isActing = false; // Reset acting state when action completes
+        
+        // CRITICAL FIX: Only allow action if it's my turn AND either:
+        // 1. This was a direct go fish (not a result of asking), OR
+        // 2. The card fished matches the rank they asked for (cardMatchesAskedRank === true)
+        if (this.isMyTurn) {
+            if (data.askingPlayer && data.targetPlayer) {
+                // This was a result of asking - only allow if card matches
+                if (data.cardMatchesAskedRank === true) {
+                    this.canAct = true; // Card matches - they get another turn
+                    this.isActing = false; // Reset acting state
+                    console.log('🎮 Card matches asked rank - player gets another turn, buttons enabled');
+                } else {
+                    // Card doesn't match - turn will end, buttons stay disabled
+                    this.canAct = false;
+                    this.isActing = false; // Reset acting state but keep canAct false
+                    console.log('🎮 Card does NOT match asked rank - turn ends, buttons disabled');
+                }
+            } else {
+                // Direct go fish (not from asking) - allow action normally
+                this.canAct = this.isMyTurn;
+                this.isActing = false;
+            }
+        } else {
+            this.canAct = false;
+            this.isActing = false;
+        }
+        
+        // Clear lastAskedRank after processing
+        if (data.askingPlayer && data.targetPlayer) {
+            this.lastAskedRank = null;
+        }
         
         console.log('🎮 Go fish - currentPlayer after update:', this.game.currentPlayer);
         console.log('🎮 Go fish - isMyTurn after update:', this.isMyTurn);
@@ -2006,21 +2058,28 @@ function drawMainPlayerHand() {
         const buttonY = handY + 20;
         // Removed repetitive button positions log to reduce console spam
         
+        // CRITICAL FIX: Check if player can act (buttons should be disabled if canAct is false or isActing is true)
+        const canAct = window.goFishClient && window.goFishClient.canAct && !window.goFishClient.isActing;
+        
         // Ask button (green style to match Go Fish button)
         const askX = buttonsStartX;
-        const isHoveringAsk = mouseX >= askX && mouseX <= askX + buttonWidth &&
+        const isHoveringAsk = canAct && mouseX >= askX && mouseX <= askX + buttonWidth &&
                              mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
         
-        // Green button with same style as Go Fish button
-        fill(isHoveringAsk ? 50 : 100, isHoveringAsk ? 200 : 255, isHoveringAsk ? 50 : 100); // Green color
+        // Green button with same style as Go Fish button - grayed out if disabled
+        if (canAct) {
+            fill(isHoveringAsk ? 50 : 100, isHoveringAsk ? 200 : 255, isHoveringAsk ? 50 : 100); // Green color
+        } else {
+            fill(100, 100, 100); // Gray color when disabled
+        }
         stroke(0);
         strokeWeight(2);
         
         rect(askX, buttonY, buttonWidth, buttonHeight, 5);
         
         
-        fill(255); // White text
+        fill(canAct ? 255 : 150); // White text when enabled, gray when disabled
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
@@ -2029,18 +2088,22 @@ function drawMainPlayerHand() {
         
         // Go Fish button
         const goFishX = buttonsStartX + buttonWidth + buttonSpacing;
-        const isHoveringGoFish = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
+        const isHoveringGoFish = canAct && mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                 mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
         
-        // Blue button
-        fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
+        // Blue button - grayed out if disabled
+        if (canAct) {
+            fill(isHoveringGoFish ? 50 : 100, isHoveringGoFish ? 150 : 200, isHoveringGoFish ? 255 : 255); // Blue color
+        } else {
+            fill(100, 100, 100); // Gray color when disabled
+        }
         stroke(0);
         strokeWeight(2);
         // Removed repetitive button drawing log to reduce console spam
         rect(goFishX, buttonY, buttonWidth, buttonHeight, 5);
         
-        fill(255); // White text
+        fill(canAct ? 255 : 150); // White text when enabled, gray when disabled
         textAlign(CENTER, CENTER);
         textSize(14);
         textStyle(BOLD);
@@ -2845,13 +2908,18 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('  Canvas element dimensions:', canvasWidth, 'x', canvasHeight);
         console.log('  Scale factors:', scaleX, 'x', scaleY);
         
-        if (isAskButtonClicked) {
+        // CRITICAL FIX: Check if player can act before processing button clicks
+        const canAct = window.goFishClient && window.goFishClient.canAct && !window.goFishClient.isActing;
+        
+        if (isAskButtonClicked && canAct) {
             console.log('🎯 Ask button clicked');
             // Set acting state to prevent additional clicks
             if (window.goFishClient) {
                 window.goFishClient.isActing = true;
             }
             showAskForCardsDialog();
+        } else if (isAskButtonClicked && !canAct) {
+            console.log('❌ Ask button clicked but actions are disabled');
         }
         
         // Check if Go Fish button was clicked
@@ -2859,13 +2927,15 @@ window.goFishMousePressed = function goFishMousePressed() {
         const isGoFishButtonClicked = mouseX >= goFishX && mouseX <= goFishX + buttonWidth &&
                                      mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
         
-        if (isGoFishButtonClicked) {
+        if (isGoFishButtonClicked && canAct) {
             console.log('🐟 Go Fish button clicked');
             // Set acting state to prevent additional clicks
             if (window.goFishClient) {
                 window.goFishClient.isActing = true;
                 window.goFishClient.goFish();
             }
+        } else if (isGoFishButtonClicked && !canAct) {
+            console.log('❌ Go Fish button clicked but actions are disabled');
         }
     }
     
