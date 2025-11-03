@@ -1753,9 +1753,21 @@ class BlackjackClient {
         const isBettingPhase = this.game.gamePhase === 'betting';
         const needsToBet = localPlayer && localPlayer.bet === 0 && !localPlayer.isBot;
         
+        console.log('🃏 updateGameControls - betting phase:', isBettingPhase, 'needsToBet:', needsToBet, 'localPlayer:', localPlayer ? { name: localPlayer.name, bet: localPlayer.bet, isBot: localPlayer.isBot } : null);
+        
         // Show betting area during betting phase if player hasn't bet
         if (bettingArea) {
-            bettingArea.style.display = (isBettingPhase && needsToBet) ? 'flex' : 'none';
+            const shouldShow = isBettingPhase && needsToBet;
+            bettingArea.style.display = shouldShow ? 'flex' : 'none';
+            console.log('🃏 Betting area display:', shouldShow ? 'flex (visible)' : 'none (hidden)');
+            
+            // Ensure place bet button is enabled if betting area is visible
+            if (shouldShow && placeBetBtn) {
+                placeBetBtn.disabled = this.isActing || false;
+                console.log('🃏 Place bet button enabled:', !this.isActing, 'disabled:', placeBetBtn.disabled);
+            }
+        } else {
+            console.warn('❌ Betting area element not found');
         }
         
         // Show game controls during playing phase
