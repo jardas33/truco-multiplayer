@@ -1342,23 +1342,25 @@ class BlackjackClient {
             console.log('🃏 Local player bet was:', localPlayer.bet);
             
             if (localPlayer.winnings !== undefined) {
-                if (localPlayer.winnings > (localPlayer.bet || 0)) {
-                    const profit = localPlayer.winnings - (localPlayer.bet || 0);
-                    console.log(`🃏 Player won! Profit: $${profit}`);
+                // Calculate profit (winnings already includes bet back for wins/pushes)
+                const profit = localPlayer.winnings - (localPlayer.bet || 0);
+                
+                if (profit > 0) {
+                    console.log(`🃏 Player won! Profit: $${profit} (Total received: $${localPlayer.winnings}, bet was: $${localPlayer.bet})`);
                     if (typeof UIUtils !== 'undefined') {
                         UIUtils.showGameMessage(`You won $${profit}! (Total: $${localPlayer.winnings})`, 'success');
                     } else {
-                        alert(`You won $${profit}!`);
+                        alert(`You won $${profit}! (Total: $${localPlayer.winnings})`);
                     }
-                } else if (localPlayer.winnings === (localPlayer.bet || 0)) {
+                } else if (profit === 0 && localPlayer.winnings > 0) {
                     console.log('🃏 Push - bet returned');
                     if (typeof UIUtils !== 'undefined') {
-                        UIUtils.showGameMessage('Push - your bet is returned', 'info');
+                        UIUtils.showGameMessage(`Push - your bet of $${localPlayer.bet} is returned`, 'info');
                     } else {
-                        alert('Push - your bet is returned');
+                        alert(`Push - your bet of $${localPlayer.bet} is returned`);
                     }
                 } else if (localPlayer.winnings === 0) {
-                    console.log('🃏 Player lost');
+                    console.log(`🃏 Player lost $${localPlayer.bet || 0}`);
                     if (typeof UIUtils !== 'undefined') {
                         UIUtils.showGameMessage(`You lost $${localPlayer.bet || 0}`, 'error');
                     } else {
