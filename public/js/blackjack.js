@@ -437,19 +437,63 @@ class BlackjackClient {
 
     // Setup UI event listeners
     setupUI() {
+        console.log('🃏 Setting up UI event listeners...');
+        
         // Room controls
         const createBtn = document.getElementById('createRoomBtn');
         const joinBtn = document.getElementById('joinRoomBtn');
         
+        console.log('  - createBtn found:', !!createBtn);
+        console.log('  - joinBtn found:', !!joinBtn);
+        
         if (createBtn) {
-            createBtn.onclick = () => this.createRoom();
-            console.log('✅ Create Room button handler attached');
+            // Remove any existing handlers
+            createBtn.onclick = null;
+            createBtn.removeEventListener('click', this.createRoom);
+            
+            // Attach new handler with explicit binding
+            const self = this;
+            createBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Create Room button CLICKED - onclick handler fired!');
+                console.log('  - this context:', self);
+                console.log('  - self.createRoom:', typeof self.createRoom);
+                if (self && self.createRoom) {
+                    self.createRoom();
+                } else {
+                    console.error('❌ Cannot call createRoom - self or method not available');
+                }
+            };
+            
+            // Also add event listener as backup
+            createBtn.addEventListener('click', function(e) {
+                console.log('🃏 Create Room button CLICKED - addEventListener fired!');
+                if (window.blackjackClient && window.blackjackClient.createRoom) {
+                    window.blackjackClient.createRoom();
+                }
+            });
+            
+            console.log('✅ Create Room button handler attached (both onclick and addEventListener)');
         } else {
-            console.error('❌ Create Room button not found');
+            console.error('❌ Create Room button not found in setupUI');
         }
         
         if (joinBtn) {
-            joinBtn.onclick = () => this.joinRoom();
+            // Remove any existing handlers
+            joinBtn.onclick = null;
+            
+            // Attach new handler
+            const self = this;
+            joinBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Join Room button clicked');
+                if (self && self.joinRoom) {
+                    self.joinRoom();
+                }
+            };
+            
             console.log('✅ Join Room button handler attached');
         } else {
             console.error('❌ Join Room button not found');
@@ -720,7 +764,9 @@ class BlackjackClient {
 
     // Create room
     createRoom() {
+        console.log('🃏 ===== CREATE ROOM FUNCTION CALLED =====');
         console.log('🃏 Create Room button clicked');
+        console.trace('Stack trace:');
         
         // Check if socket is ready
         const checkAndCreateRoom = () => {
