@@ -668,10 +668,196 @@ io.on('connection', (socket) => {
     // ✅ DEBUG: Log all incoming events to see if startGame is received
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
     
+    // CRITICAL: Register placeBet handler FIRST, before onAny
+    console.log(`🔍 Registering placeBet handler for socket ${socket.id}`);
+    socket.on('placeBet', (data, callback) => {
+        try {
+            console.log('🃏 placeBet event received:', data);
+            console.log('🃏 Socket ID:', socket.id);
+            
+            // Send acknowledgment back to client
+            if (callback && typeof callback === 'function') {
+                callback({ received: true, timestamp: Date.now() });
+            }
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room || room.gameType !== 'blackjack') {
+                console.error('❌ Room not found or not a blackjack game. Room:', roomCode, 'room exists:', !!room, 'gameType:', room?.gameType);
+                socket.emit('error', 'Room not found or not a blackjack game');
+                return;
+            }
+            
+            console.log('🃏 Room found. Game phase:', room.game?.gamePhase);
+            
+            if (room.game.gamePhase !== 'betting') {
+                console.warn('🃏 Not in betting phase. Current phase:', room.game.gamePhase);
+                socket.emit('error', 'Not in betting phase');
+                return;
+            }
+            
+            const playerIndex = data.playerIndex;
+            const player = room.game.players[playerIndex];
+            
+            console.log('🃏 Player lookup:', {
+                playerIndex: playerIndex,
+                socketId: socket.id,
+                playerFound: !!player,
+                playerId: player?.id,
+                playerName: player?.name,
+                idMatch: player?.id === socket.id
+            });
+            
+            if (!player) {
+                console.error('❌ Player not found at index:', playerIndex, 'Available players:', room.game.players.length);
+                socket.emit('error', 'Invalid player index');
+                return;
+            }
+            
+            if (player.id !== socket.id) {
+                console.error('❌ Player ID mismatch. Player ID:', player.id, 'Socket ID:', socket.id);
+                socket.emit('error', 'Invalid player - ID mismatch');
+                return;
+            }
+            
+            const amount = parseInt(data.amount);
+            
+            if (amount < room.game.minBet || amount > room.game.maxBet) {
+                socket.emit('error', `Bet must be between $${room.game.minBet} and $${room.game.maxBet}`);
+                return;
+            }
+            
+            if (amount > player.chips) {
+                socket.emit('error', 'Insufficient chips');
+                return;
+            }
+            
+            player.bet = amount;
+            player.chips -= amount;
+            
+            console.log(`🃏 Player ${player.name} placed bet of $${amount}`);
+            
+            io.to(roomCode).emit('betPlaced', {
+                playerIndex: playerIndex,
+                amount: amount,
+                player: player
+            });
+            
+            // Auto-bet for bots
+            room.game.players.forEach((botPlayer, botIndex) => {
+                if (botPlayer.isBot && botPlayer.bet === 0 && botPlayer.chips >= room.game.minBet) {
+                    const botBet = Math.min(room.game.minBet * 2, botPlayer.chips, room.game.maxBet);
+                    if (botBet >= room.game.minBet) {
+                        botPlayer.bet = botBet;
+                        botPlayer.chips -= botBet;
+                        console.log(`🃏 Bot ${botPlayer.name} auto-bet $${botBet}`);
+                        
+                        // Emit betPlaced event for bot
+                        io.to(roomCode).emit('betPlaced', {
+                            playerIndex: botIndex,
+                            amount: botBet,
+                            player: botPlayer
+                        });
+                    }
+                }
+            });
+            
+            // Check if all players have bet (both humans and bots must have bet > 0)
+            const allPlayersBetted = room.game.players.every(p => {
+                // Skip players with insufficient chips
+                if (p.chips < room.game.minBet) {
+                    return true; // Bot without chips is considered "done"
+                }
+                return p.bet > 0;
+            });
+            
+            if (allPlayersBetted && room.game.gamePhase === 'betting') {
+                // Deal initial cards
+                setTimeout(() => {
+                    // Deal 2 cards to each player who bet
+                    for (let i = 0; i < 2; i++) {
+                        room.game.players.forEach(player => {
+                            if (player.bet > 0) {
+                                const card = dealBlackjackCard(room);
+                                player.hand.push(card);
+                                player.value = calculateBlackjackValue(player.hand);
+                            }
+                        });
+                    }
+                    
+                    // Deal dealer cards (one face down, one face up)
+                    const dealerCard1 = dealBlackjackCard(room);
+                    const dealerCard2 = dealBlackjackCard(room);
+                    room.game.dealer.hand.push(dealerCard1);
+                    room.game.dealer.hand.push(dealerCard2);
+                    // Calculate visible card value (second card) - ace counts as 11 if visible
+                    const visibleCard = dealerCard2;
+                    room.game.dealer.value = visibleCard.rank === 'ace' ? 11 : 
+                                             ['jack', 'queen', 'king'].includes(visibleCard.rank) ? 10 : 
+                                             visibleCard.value;
+                    room.game.dealer.holeCardVisible = false;
+                    
+                    // Check for blackjacks
+                    room.game.players.forEach(player => {
+                        if (player.bet > 0 && checkBlackjack(player.hand)) {
+                            player.hasBlackjack = true;
+                        }
+                    });
+                    
+                    if (checkBlackjack(room.game.dealer.hand)) {
+                        room.game.dealer.hasBlackjack = true;
+                        room.game.dealer.holeCardVisible = true;
+                        room.game.dealer.value = 21;
+                    }
+                    
+                    // Determine game phase
+                    room.game.gamePhase = 'playing';
+                    room.game.currentPlayer = 0;
+                    
+                    // Skip players with blackjack or no bet
+                    while (room.game.currentPlayer < room.game.players.length && 
+                           (room.game.players[room.game.currentPlayer].hasBlackjack || 
+                            room.game.players[room.game.currentPlayer].bet === 0)) {
+                        room.game.currentPlayer++;
+                    }
+                    
+                    if (room.game.currentPlayer >= room.game.players.length) {
+                        // All players have blackjack, go to dealer turn
+                        room.game.gamePhase = 'dealer';
+                        room.game.dealer.holeCardVisible = true;
+                        room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
+                    }
+                    
+                    io.to(roomCode).emit('cardsDealt', {
+                        players: room.game.players,
+                        dealer: room.game.dealer,
+                        gamePhase: room.game.gamePhase,
+                        currentPlayer: room.game.currentPlayer
+                    });
+                    
+                    console.log(`🃏 Cards dealt. Phase: ${room.game.gamePhase}, Current player: ${room.game.currentPlayer}`);
+                    
+                    // Handle bot turn if current player is a bot
+                    if (room.game.gamePhase === 'playing' && room.game.currentPlayer < room.game.players.length) {
+                        const currentPlayer = room.game.players[room.game.currentPlayer];
+                        if (currentPlayer && currentPlayer.isBot) {
+                            setTimeout(() => {
+                                handleBlackjackBotTurn(roomCode, room);
+                            }, 1500);
+                        }
+                    }
+                }, 500);
+            }
+        } catch (error) {
+            console.error(`❌ Error in placeBet:`, error);
+            socket.emit('error', 'Failed to place bet');
+        }
+    });
+    
     // Debug: Log ALL incoming events to catch placeBet
     socket.onAny((eventName, ...args) => {
         console.log(`🔍🔍🔍 Socket ${socket.id} received event: "${eventName}" with ${args.length} argument(s)`);
-        if (args.length > 0) {
+        if (args.length > 0 && eventName !== 'placeBet') { // Don't double-log placeBet
             console.log(`🔍🔍🔍 Event data:`, JSON.stringify(args[0], null, 2));
         }
     });
