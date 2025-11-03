@@ -1319,8 +1319,14 @@ class BlackjackClient {
 
     // Update round finished
     updateRoundFinished(data) {
-        console.log('🃏 Round finished:', data);
-        this.game.players = data.players || this.game.players;
+        console.log('🃏 Round finished event received:', data);
+        
+        // IMPORTANT: Update players array with server data (includes updated chips)
+        if (data.players && Array.isArray(data.players)) {
+            console.log('🃏 Updating players array from server:', data.players.map(p => ({ name: p.name, chips: p.chips, winnings: p.winnings, bet: p.bet })));
+            this.game.players = data.players;
+        }
+        
         this.game.dealer = data.dealer || this.game.dealer;
         this.game.gamePhase = data.gamePhase || 'finished';
         
@@ -1329,23 +1335,39 @@ class BlackjackClient {
         
         // Show winnings message for local player
         const localPlayer = this.game.players[this.localPlayerIndex];
-        if (localPlayer && localPlayer.winnings !== undefined) {
-            if (localPlayer.winnings > localPlayer.bet) {
-                const profit = localPlayer.winnings - localPlayer.bet;
-                if (typeof UIUtils !== 'undefined') {
-                    UIUtils.showGameMessage(`You won $${profit}!`, 'success');
-                }
-            } else if (localPlayer.winnings === localPlayer.bet) {
-                if (typeof UIUtils !== 'undefined') {
-                    UIUtils.showGameMessage('Push - your bet is returned', 'info');
-                }
-            } else {
-                if (typeof UIUtils !== 'undefined') {
-                    UIUtils.showGameMessage(`You lost $${localPlayer.bet}`, 'error');
+        if (localPlayer) {
+            console.log('🃏 Local player chips after round:', localPlayer.chips);
+            console.log('🃏 Local player winnings:', localPlayer.winnings);
+            console.log('🃏 Local player bet was:', localPlayer.bet);
+            
+            if (localPlayer.winnings !== undefined) {
+                if (localPlayer.winnings > (localPlayer.bet || 0)) {
+                    const profit = localPlayer.winnings - (localPlayer.bet || 0);
+                    console.log(`🃏 Player won! Profit: $${profit}`);
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(`You won $${profit}! (Total: $${localPlayer.winnings})`, 'success');
+                    } else {
+                        alert(`You won $${profit}!`);
+                    }
+                } else if (localPlayer.winnings === (localPlayer.bet || 0)) {
+                    console.log('🃏 Push - bet returned');
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage('Push - your bet is returned', 'info');
+                    } else {
+                        alert('Push - your bet is returned');
+                    }
+                } else if (localPlayer.winnings === 0) {
+                    console.log('🃏 Player lost');
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(`You lost $${localPlayer.bet || 0}`, 'error');
+                    } else {
+                        alert(`You lost $${localPlayer.bet || 0}`);
+                    }
                 }
             }
         }
         
+        console.log('🃏 Updating UI after round finished');
         this.updateUI();
         this.updateGameControls();
     }
