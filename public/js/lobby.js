@@ -2141,12 +2141,20 @@ function hideGameButtons() {
 
 // ✅ Show Game Buttons function
 function showGameButtons() {
+    const gameNavigationButtons = document.getElementById('gameNavigationButtons');
     const gameBackToMenuBtn = document.getElementById('gameBackToMenuBtn');
+    const gameBackToMainMenuBtn = document.getElementById('gameBackToMainMenuBtn');
     const gameCardValuesBtn = document.getElementById('gameCardValuesBtn');
     const roundHistoryBtn = document.getElementById('roundHistoryBtn');
     
+    if (gameNavigationButtons) {
+        gameNavigationButtons.style.display = 'flex';
+    }
     if (gameBackToMenuBtn) {
         gameBackToMenuBtn.style.display = 'block';
+    }
+    if (gameBackToMainMenuBtn) {
+        gameBackToMainMenuBtn.style.display = 'block';
     }
     if (gameCardValuesBtn) {
         gameCardValuesBtn.style.display = 'block';
@@ -2155,7 +2163,7 @@ function showGameButtons() {
         roundHistoryBtn.style.display = 'block';
     }
     
-    // Game buttons shown
+    console.log('✅ Game buttons shown');
 }
 
 function setupButtonListeners() {
