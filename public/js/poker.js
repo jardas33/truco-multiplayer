@@ -1623,16 +1623,19 @@ function drawChips() {
         // Move chips outward and to the side based on player position
         const chipRadiusX = width * 0.45; // Further out from center
         const chipRadiusY = height * 0.38; // Further out from center
-        const chipX = centerX + cos(angle) * chipRadiusX;
-        const chipY = centerY + sin(angle) * chipRadiusY;
+        let chipX = centerX + cos(angle) * chipRadiusX;
+        let chipY = centerY + sin(angle) * chipRadiusY;
         
-        // Additional offset for top/bottom players to avoid overlap
-        if (angle > -PI/3 && angle < PI/3) {
-            // Top player - move chips to the side
-            chipY = chipY - 60; // Move up more
-        } else if (angle > 2*PI/3 || angle < -2*PI/3) {
-            // Bottom player - move chips to the side (but betting controls are on left, so keep right)
-            chipY = chipY + 60; // Move down more
+        // Additional offset for top/bottom players to avoid overlap with player boxes
+        // Check if player is in top half (negative Y) or bottom half (positive Y)
+        if (sin(angle) < -0.3) {
+            // Top player - move chips further up and to the side to avoid overlap
+            chipY = chipY - 80; // Move up significantly
+            chipX = chipX + (cos(angle) > 0 ? 40 : -40); // Move to the side
+        } else if (sin(angle) > 0.3) {
+            // Bottom player - move chips further down and to the right (betting controls are on left)
+            chipY = chipY + 80; // Move down significantly
+            chipX = chipX + 40; // Move to the right side
         }
         
         // Draw chip stack based on player's chips
