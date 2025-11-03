@@ -582,11 +582,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Root endpoint for health checks
-app.get('/', (req, res) => {
-    res.status(200).send('Server is running');
-});
-
 // Test endpoint for debugging
 app.get('/test', (req, res) => {
     res.status(200).json({
@@ -597,7 +592,7 @@ app.get('/test', (req, res) => {
     });
 });
 
-// Basic route - redirect to main menu
+// Root route - serve main menu
 app.get('/', (req, res) => {
     console.log('🏠 ROOT ROUTE: Serving main-menu.html');
     res.sendFile(__dirname + '/public/main-menu.html');
