@@ -1403,14 +1403,15 @@ io.on('connection', (socket) => {
     });
     
     // CRITICAL: Register playerAction handler EARLY so it's definitely registered
+    // This handler will be replaced by the full handler later, but ensures events are caught
     console.log(`🃏🃏🃏 EARLY REGISTRATION: About to register playerAction handler for socket ${socket.id}`);
     socket.on('playerAction', (data) => {
         console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ========== EARLY playerAction handler EXECUTING for socket ${socket.id} ==========`);
         console.log(`🃏🃏🃏 EARLY HANDLER - Data:`, JSON.stringify(data, null, 2));
-        
-        // Call the main handler logic (defined later in the file)
-        // For now, just log that we received it
         console.log(`🃏🃏🃏 EARLY HANDLER - RoomId: ${data?.roomId}, PlayerIndex: ${data?.playerIndex}, Action: ${data?.action}`);
+        
+        // This handler will be replaced by the full handler later, so we just log here
+        // The late handler registration below will remove this and add the full handler
     });
     console.log(`🃏🃏🃏 EARLY REGISTRATION: playerAction handler registered for socket ${socket.id}`);
     
