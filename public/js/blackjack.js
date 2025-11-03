@@ -1144,16 +1144,40 @@ class BlackjackClient {
                 
                 const isLocalPlayer = index === this.localPlayerIndex;
                 
+                // Try to use card images if available
+                const cardHTML = player.hand && player.hand.length > 0 ? 
+                    player.hand.map(card => {
+                        // Try to find card image
+                        const cardImageName = card.name ? card.name.toLowerCase().replace(/\s+/g, '_') : null;
+                        const cardImage = window.cardImages && cardImageName ? window.cardImages[cardImageName] : null;
+                        
+                        if (cardImage && cardImage.width > 0) {
+                            // Use actual card image
+                            return `<div class="card"><img src="${cardImage.canvas ? cardImage.canvas.toDataURL() : ''}" alt="${card.name}" onerror="this.parentElement.innerHTML='${card.name}'"></div>`;
+                        } else {
+                            // Fallback to text card
+                            const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                                const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
+                                return map[match.toLowerCase()] || match;
+                            }) : '';
+                            return `<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5);">
+                                <div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
+                                    ${shortName}
+                                </div>
+                            </div>`;
+                        }
+                    }).join('') : '';
+                
                 playerDiv.innerHTML = `
-                    <div class="player-name" style="font-weight: bold; margin-bottom: 5px;">${isLocalPlayer ? 'You' : player.name}${player.isBot ? ' (Bot)' : ''}</div>
-                    <div style="font-size: 12px; margin-bottom: 3px;">Chips: $${player.chips}</div>
-                    <div style="font-size: 12px; margin-bottom: 3px;">Bet: $${player.bet}</div>
+                    <div class="player-name" style="font-weight: bold; margin-bottom: 8px; font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${isLocalPlayer ? 'You' : player.name}${player.isBot ? ' (Bot)' : ''}</div>
+                    <div style="font-size: 13px; margin-bottom: 4px; color: #FFD700; font-weight: bold;">💰 Chips: $${player.chips}</div>
+                    <div style="font-size: 13px; margin-bottom: 4px; color: #4CAF50; font-weight: bold;">🎲 Bet: $${player.bet}</div>
                     ${player.hand && player.hand.length > 0 ? `
-                        <div class="hand-cards" style="margin: 8px 0;">
-                            ${player.hand.map(card => `<div class="card">${card.name}</div>`).join('')}
+                        <div class="hand-cards" style="margin: 10px 0;">
+                            ${cardHTML}
                         </div>
                     ` : ''}
-                    <div class="hand-value" style="font-size: 14px; font-weight: bold; margin-top: 5px;">Value: ${player.value || 0}</div>
+                    <div class="hand-value" style="font-size: 15px; font-weight: bold; margin-top: 8px; color: #FFD700; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Value: ${player.value || 0}</div>
                     ${statusText}
                 `;
                 
@@ -1184,9 +1208,39 @@ class BlackjackClient {
                 // Hide first card if it's the hole card and not visible
                 if (index === 0 && !this.game.dealer.holeCardVisible) {
                     cardDiv.classList.add('hidden');
-                    cardDiv.textContent = '?';
+                    cardDiv.innerHTML = ''; // Clear any content, CSS will show the ?
                 } else {
-                    cardDiv.textContent = card.name;
+                    // Try to use card image if available
+                    const cardImageName = card.name ? card.name.toLowerCase().replace(/\s+/g, '_') : null;
+                    const cardImage = window.cardImages && cardImageName ? window.cardImages[cardImageName] : null;
+                    
+                    if (cardImage && cardImage.width > 0) {
+                        // Use actual card image
+                        const img = document.createElement('img');
+                        img.src = cardImage.canvas ? cardImage.canvas.toDataURL() : '';
+                        img.alt = card.name;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '3px';
+                        img.onerror = function() {
+                            // Fallback to text if image fails
+                            cardDiv.innerHTML = card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                                const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
+                                return map[match.toLowerCase()] || match;
+                            });
+                        };
+                        cardDiv.appendChild(img);
+                    } else {
+                        // Fallback to styled text card
+                        const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                            const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
+                            return map[match.toLowerCase()] || match;
+                        }) : '';
+                        cardDiv.innerHTML = `<div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
+                            ${shortName}
+                        </div>`;
+                    }
                 }
                 
                 dealerCards.appendChild(cardDiv);
