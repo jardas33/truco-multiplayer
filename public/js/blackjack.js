@@ -1869,12 +1869,58 @@ class BlackjackClient {
 
     // Update game info
     updateGameInfo() {
-        const gameInfo = document.getElementById('gameInfo');
-        if (gameInfo) {
-            gameInfo.innerHTML = `
-                <div>Round: ${this.game.roundNumber}</div>
-                <div>Phase: ${this.game.gamePhase}</div>
-            `;
+        // Update round number
+        const roundNumberEl = document.getElementById('roundNumber');
+        if (roundNumberEl) {
+            roundNumberEl.textContent = this.game.roundNumber || 1;
+        }
+        
+        // Update game phase
+        const gamePhaseEl = document.getElementById('gamePhase');
+        if (gamePhaseEl) {
+            const phase = this.game.gamePhase || 'waiting';
+            const phaseDisplay = phase.charAt(0).toUpperCase() + phase.slice(1);
+            gamePhaseEl.textContent = phaseDisplay;
+        }
+        
+        // Update total players
+        const totalPlayersEl = document.getElementById('totalPlayers');
+        if (totalPlayersEl && this.game.players) {
+            totalPlayersEl.textContent = this.game.players.length;
+        }
+        
+        // Update player chips
+        const playerChipsEl = document.getElementById('playerChips');
+        const localPlayer = this.game.players && this.game.players[this.localPlayerIndex];
+        if (playerChipsEl && localPlayer) {
+            playerChipsEl.textContent = `$${localPlayer.chips || 0}`;
+        }
+        
+        // Update current bet
+        const currentBetEl = document.getElementById('currentBet');
+        if (currentBetEl && localPlayer) {
+            currentBetEl.textContent = `$${localPlayer.bet || 0}`;
+        }
+        
+        // Update player hand value
+        const playerHandValueEl = document.getElementById('playerHandValue');
+        if (playerHandValueEl && localPlayer) {
+            if (localPlayer.hand && localPlayer.hand.length > 0) {
+                const value = localPlayer.value || 0;
+                if (localPlayer.isBusted) {
+                    playerHandValueEl.textContent = `${value} (BUST!)`;
+                    playerHandValueEl.style.color = '#f44336';
+                } else if (localPlayer.hasBlackjack) {
+                    playerHandValueEl.textContent = `${value} (BLACKJACK!)`;
+                    playerHandValueEl.style.color = '#4CAF50';
+                } else {
+                    playerHandValueEl.textContent = value;
+                    playerHandValueEl.style.color = '#FFD700';
+                }
+            } else {
+                playerHandValueEl.textContent = '-';
+                playerHandValueEl.style.color = '#FFD700';
+            }
         }
     }
 

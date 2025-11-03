@@ -636,8 +636,8 @@
     </div>
 
     <div id="Game">
-        <!-- Navigation Buttons (visible during game) -->
-        <div style="position: fixed; top: 20px; left: 20px; z-index: 2000; display: flex; gap: 10px;">
+        <!-- Navigation Buttons (visible during game) - Top Center -->
+        <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; gap: 10px;">
             <button id="backToMainMenuGameBtn" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
                 ← Back to Main Menu
             </button>
@@ -648,10 +648,31 @@
         
         <div class="blackjack-table">
             <div class="game-info">
-                <h3>Game Info</h3>
-                <div>Round: <span id="roundNumber">1</span></div>
-                <div>Dealer: <span id="dealerName">Dealer</span></div>
-                <div>Your Chips: $<span id="playerChips">1000</span></div>
+                <h3>🎯 Game Info</h3>
+                <div class="info-row">
+                    <span class="info-label">Round:</span>
+                    <span class="info-value" id="roundNumber">1</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phase:</span>
+                    <span class="info-value" id="gamePhase">Betting</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Players:</span>
+                    <span class="info-value" id="totalPlayers">2</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Your Chips:</span>
+                    <span class="info-value" id="playerChips">$1000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current Bet:</span>
+                    <span class="info-value" id="currentBet">$0</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Your Hand:</span>
+                    <span class="info-value" id="playerHandValue">-</span>
+                </div>
             </div>
             
             <div class="rules">
