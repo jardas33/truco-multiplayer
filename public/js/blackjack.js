@@ -1474,7 +1474,6 @@ class BlackjackClient {
                                 ${shortName}
                             </div>
                         </div>`;
-                    }
                     }).join('') : '';
                 
                 playerDiv.innerHTML = `
