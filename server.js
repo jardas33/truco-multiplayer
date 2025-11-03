@@ -649,6 +649,7 @@ app.use(express.static('public'));
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log(`👤 User connected: ${socket.id}`);
+    console.log(`🃏🃏🃏 NEW CONNECTION - Socket ${socket.id} - About to register handlers`);
     
     // Add error handling for socket
     socket.on('error', (error) => {
