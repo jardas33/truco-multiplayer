@@ -552,23 +552,55 @@ class BlackjackClient {
         if (doubleBtn) doubleBtn.onclick = () => this.playerAction('double');
         if (splitBtn) splitBtn.onclick = () => this.playerAction('split');
         if (placeBetBtn) {
-            placeBetBtn.onclick = () => {
+            console.log('✅ Place bet button found, attaching handler');
+            placeBetBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('🃏 Place Bet button clicked!');
+                
                 // Prevent duplicate betting
                 if (this.isActing) {
                     console.log('🃏 Bet already in progress');
                     return;
                 }
                 
-                const amount = parseInt(betAmountInput?.value || 10);
-                const localPlayer = this.game.players[this.localPlayerIndex];
+                // Get bet amount from input
+                const inputValue = betAmountInput?.value || '10';
+                const amount = parseInt(inputValue, 10);
                 
-                if (!localPlayer) {
-                    console.error('🃏 Local player not found');
+                console.log('🃏 Bet amount input value:', inputValue, 'parsed amount:', amount);
+                
+                // Validate amount is a number
+                if (isNaN(amount) || amount <= 0) {
+                    console.error('🃏 Invalid bet amount:', amount);
+                    const errorMsg = 'Please enter a valid bet amount';
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
                     return;
                 }
                 
+                const localPlayer = this.game.players[this.localPlayerIndex];
+                
+                if (!localPlayer) {
+                    console.error('🃏 Local player not found. localPlayerIndex:', this.localPlayerIndex, 'players:', this.game.players);
+                    const errorMsg = 'Local player not found';
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
+                    return;
+                }
+                
+                console.log('🃏 Local player found:', localPlayer.name, 'chips:', localPlayer.chips, 'current bet:', localPlayer.bet);
+                
                 // Check if already bet
                 if (localPlayer.bet > 0) {
+                    console.log('🃏 Player already placed a bet:', localPlayer.bet);
                     if (typeof UIUtils !== 'undefined') {
                         UIUtils.showGameMessage('You have already placed a bet', 'info');
                     } else {
@@ -577,43 +609,71 @@ class BlackjackClient {
                     return;
                 }
                 
+                // Check game phase
+                if (this.game.gamePhase !== 'betting') {
+                    console.warn('🃏 Not in betting phase. Current phase:', this.game.gamePhase);
+                    const errorMsg = `Cannot bet in ${this.game.gamePhase} phase`;
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
+                    return;
+                }
+                
                 const minBet = this.game.minBet || 5;
                 const maxBet = this.game.maxBet || 1000;
                 
+                console.log('🃏 Bet limits - min:', minBet, 'max:', maxBet, 'player chips:', localPlayer.chips);
+                
                 if (amount < minBet) {
+                    console.warn('🃏 Bet too low:', amount, '<', minBet);
+                    const errorMsg = `Minimum bet is $${minBet}`;
                     if (typeof UIUtils !== 'undefined') {
-                        UIUtils.showGameMessage(`Minimum bet is $${minBet}`, 'error');
+                        UIUtils.showGameMessage(errorMsg, 'error');
                     } else {
-                        alert(`Minimum bet is $${minBet}`);
+                        alert(errorMsg);
                     }
                     return;
                 }
                 
                 if (amount > maxBet) {
+                    console.warn('🃏 Bet too high:', amount, '>', maxBet);
+                    const errorMsg = `Maximum bet is $${maxBet}`;
                     if (typeof UIUtils !== 'undefined') {
-                        UIUtils.showGameMessage(`Maximum bet is $${maxBet}`, 'error');
+                        UIUtils.showGameMessage(errorMsg, 'error');
                     } else {
-                        alert(`Maximum bet is $${maxBet}`);
+                        alert(errorMsg);
                     }
                     return;
                 }
                 
                 if (amount > localPlayer.chips) {
+                    console.warn('🃏 Insufficient chips. Bet:', amount, 'chips:', localPlayer.chips);
+                    const errorMsg = 'Insufficient chips';
                     if (typeof UIUtils !== 'undefined') {
-                        UIUtils.showGameMessage('Insufficient chips', 'error');
+                        UIUtils.showGameMessage(errorMsg, 'error');
                     } else {
-                        alert('Insufficient chips');
+                        alert(errorMsg);
                     }
                     return;
                 }
                 
-                if (amount > 0) {
-                    // Set acting flag
-                    this.isActing = true;
-                    placeBetBtn.disabled = true;
-                    this.placeBet(amount);
-                }
+                // All validations passed - place the bet
+                console.log('✅ All validations passed, placing bet of $' + amount);
+                this.isActing = true;
+                placeBetBtn.disabled = true;
+                this.placeBet(amount);
             };
+            
+            // Also add event listener as backup
+            placeBetBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Place Bet button clicked (addEventListener)');
+            });
+        } else {
+            console.error('❌ Place bet button not found in DOM!');
         }
         
         // Copy room code
@@ -1336,18 +1396,49 @@ class BlackjackClient {
 
     // Place bet
     placeBet(amount) {
+        console.log('🃏 placeBet() called with amount:', amount);
+        
         const roomId = this.getRoomId();
         if (!roomId) {
-            console.error('No room ID available');
+            console.error('❌ No room ID available');
+            this.isActing = false;
+            const placeBetBtn = document.getElementById('placeBetBtn');
+            if (placeBetBtn) placeBetBtn.disabled = false;
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('No room ID available', 'error');
+            } else {
+                alert('No room ID available');
+            }
             return;
         }
         
-        const socket = window.gameFramework.socket;
+        const socket = window.gameFramework?.socket;
+        if (!socket) {
+            console.error('❌ No socket available');
+            this.isActing = false;
+            const placeBetBtn = document.getElementById('placeBetBtn');
+            if (placeBetBtn) placeBetBtn.disabled = false;
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('Not connected to server', 'error');
+            } else {
+                alert('Not connected to server');
+            }
+            return;
+        }
+        
+        console.log('🃏 Emitting placeBet event to server:', {
+            roomId: roomId,
+            playerIndex: this.localPlayerIndex,
+            amount: amount
+        });
+        
         socket.emit('placeBet', {
             roomId: roomId,
             playerIndex: this.localPlayerIndex,
             amount: amount
         });
+        
+        console.log('✅ placeBet event emitted successfully');
     }
 
     // Copy room code
