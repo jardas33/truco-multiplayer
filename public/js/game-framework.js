@@ -159,10 +159,14 @@ class SocketManager {
         });
         
         socket.on('roomCreated', (data) => {
-            console.log('Room created:', data);
+            console.log('🎮 GameFramework: Room created event:', data);
             window.gameFramework.roomId = data.roomId || data; // Handle both old and new formats
             window.gameFramework.playerId = data.playerId || socket.id;
             window.gameFramework.isHost = data.isHost || false;
+            
+            // Add room-created class to hide create/join buttons
+            document.body.classList.add('room-created');
+            console.log('✅ room-created class added to body');
         });
         
         socket.on('roomJoined', (data) => {
