@@ -511,13 +511,12 @@ class NavigationManager {
             'truco': 'index.html',
             'poker': 'poker.html',
             'blackjack': 'blackjack.html',
-            'hearts': 'hearts.html',
             'spades': 'spades.html',
             'euchre': 'euchre.html',
             'gin-rummy': 'gin-rummy.html',
             'go-fish': 'go-fish.html',
             'war': 'war.html',
-            'crazy-eights': 'crazy-eights.html'
+            'prince-of-persia': 'prince-of-persia.html'
         };
         
         const url = gameUrls[gameType];
@@ -716,30 +715,6 @@ function showInstructions() {
 • Insurance: Bet half your wager if dealer shows Ace`;
             break;
             
-        case '/hearts':
-            instructions = `HEARTS GAME RULES:
-
-🎯 OBJECTIVE: Have the lowest score when someone reaches 100 points
-
-🃏 CARD VALUES:
-• Hearts = 1 point each
-• Queen of Spades = 13 points
-• All other cards = 0 points
-
-⚔️ GAMEPLAY:
-• 4 players, 13 cards each
-• Pass 3 cards to left before each hand
-• Player with 2 of Clubs starts
-• Must follow suit if possible
-• Highest card of led suit wins trick
-• Winner leads next trick
-
-🚫 SPECIAL RULES:
-• Can't lead Hearts until Hearts are "broken"
-• Can't play Queen of Spades or Hearts on first trick
-• "Shooting the Moon" = Take all Hearts + Queen of Spades = 0 points for you, +26 for others`;
-            break;
-            
         case '/go-fish':
             instructions = `GO FISH RULES:
 
@@ -786,30 +761,27 @@ function showInstructions() {
 • Player who gets all 52 cards wins`;
             break;
             
-        case '/crazy-eights':
-            instructions = `CRAZY EIGHTS RULES:
+        case '/prince-of-persia':
+            instructions = `PRINCE OF PERSIA - CLASSIC PLATFORMER:
 
-🎯 OBJECTIVE: Be the first player to get rid of all your cards
+👑 THE ORIGINAL CLASSIC (1989)
 
-🃏 CARD VALUES:
-• 8s are wild (can be played on any card)
-• All other cards must match suit or rank
+⚔️ CONTROLS:
+• Arrow Keys: Move left/right
+• Up Arrow: Jump
+• Spacebar: Draw sword / Attack
+• Run, jump, and fight through the palace
 
-⚔️ GAMEPLAY:
-• 2-7 players, 7 cards each (5 if 5+ players)
-• One card face up as discard pile
-• Play a card that matches suit or rank of top card
-• 8s can be played anytime (choose new suit)
-• If you can't play, draw from deck until you can
+🎯 OBJECTIVE:
+• Navigate through dangerous levels
+• Defeat guards and avoid traps
+• Save the princess within the time limit!
 
-🎯 SPECIAL CARDS:
-• 8 = Wild (choose new suit)
-• 2 = Next player draws 2 cards
-• Jack = Skip next player's turn
-• Ace = Reverse play direction
-
-🏆 WINNING:
-• First player to empty their hand wins`;
+🏰 CLASSIC GAMEPLAY:
+• Precision platforming
+• Sword fighting mechanics
+• Time pressure
+• The original Prince of Persia experience`;
             break;
             
         default:

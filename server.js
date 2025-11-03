@@ -612,10 +612,6 @@ app.get('/blackjack', (req, res) => {
     res.sendFile(__dirname + '/public/blackjack.html');
 });
 
-app.get('/hearts', (req, res) => {
-    res.sendFile(__dirname + '/public/hearts.html');
-});
-
 app.get('/go-fish', (req, res) => {
     res.sendFile(__dirname + '/public/go-fish.html');
 });
@@ -624,8 +620,9 @@ app.get('/war', (req, res) => {
     res.sendFile(__dirname + '/public/war.html');
 });
 
-app.get('/crazy-eights', (req, res) => {
-    res.sendFile(__dirname + '/public/crazy-eights.html');
+app.get('/prince-of-persia', (req, res) => {
+    console.log('👑 PRINCE OF PERSIA ROUTE: Serving prince-of-persia.html');
+    res.sendFile(__dirname + '/public/prince-of-persia.html');
 });
 
 app.get('/battleship-menu', (req, res) => {
