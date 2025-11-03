@@ -4669,10 +4669,14 @@ function determineRoundWinner(playedCards, room) {
     }
     
     // Player action handler (Hit, Stand, Double, Split)
-    console.log(`🃏🃏🃏 Registering playerAction handler for socket ${socket.id}`);
-    socket.on('playerAction', (data, callback) => {
+    console.log(`🃏🃏🃏 Registering playerAction handler for socket ${socket.id} at line 4673`);
+    socket.on('playerAction', (data) => {
         console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 playerAction handler EXECUTING for socket ${socket.id}`);
         console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data received:`, data);
+        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data type:`, typeof data);
+        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.roomId:`, data?.roomId);
+        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.playerIndex:`, data?.playerIndex);
+        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.action:`, data?.action);
         try {
             console.log(`🃏🃏🃏 playerAction handler called with data:`, JSON.stringify(data, null, 2));
             console.log(`🃏🃏🃏 Socket ID: ${socket.id}`);
