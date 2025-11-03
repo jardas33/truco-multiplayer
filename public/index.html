@@ -138,10 +138,15 @@
       <div id="Instructions"></div>
       <div id="Values"></div>
       <div id="Game">
-        <!-- ✅ Back to Main Menu Button (Top Center) -->
-        <button id="gameBackToMenuBtn" style="display: none; position: absolute; top: 200px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
-          🏠 Back to Menu
-        </button>
+        <!-- ✅ Navigation Buttons (Top Center) -->
+        <div style="display: none; position: absolute; top: 200px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 10px;" id="gameNavigationButtons">
+          <button id="gameBackToMainMenuBtn" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+            ← Back to Main Menu
+          </button>
+          <button id="gameBackToMenuBtn" style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+            🏠 Back to Menu
+          </button>
+        </div>
 
         <!-- ✅ Poker Betting Controls -->
         <div id="bettingControls" style="display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: linear-gradient(135deg, #2c3e50, #34495e); padding: 20px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: 2px solid #3498db;">

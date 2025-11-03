@@ -2226,10 +2226,21 @@ function setupButtonListeners() {
     }
     
     // ✅ Back to Main Menu button (in game)
+    const gameBackToMainMenuBtn = document.getElementById('gameBackToMainMenuBtn');
+    if (gameBackToMainMenuBtn) {
+        gameBackToMainMenuBtn.onclick = () => {
+            if (confirm('Are you sure you want to leave the game and return to the main menu? You will lose your current game progress.')) {
+                console.log('🏠 Back to Main Menu button clicked');
+                window.location.href = '/';
+            }
+        };
+    }
+    
+    // ✅ Back to Truco Menu button (in game)
     const gameBackToMenuBtn = document.getElementById('gameBackToMenuBtn');
     if (gameBackToMenuBtn) {
         gameBackToMenuBtn.onclick = () => {
-            console.log('🏠 Back to Main Menu button clicked');
+            console.log('🏠 Back to Menu button clicked');
             backToMainMenuFromGame();
         };
     }
