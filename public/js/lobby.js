@@ -2114,12 +2114,20 @@ function showCardValuesFromGame() {
 
 // ✅ Hide Game Buttons function
 function hideGameButtons() {
+    const gameNavigationButtons = document.getElementById('gameNavigationButtons');
     const gameBackToMenuBtn = document.getElementById('gameBackToMenuBtn');
+    const gameBackToMainMenuBtn = document.getElementById('gameBackToMainMenuBtn');
     const gameCardValuesBtn = document.getElementById('gameCardValuesBtn');
     const roundHistoryBtn = document.getElementById('roundHistoryBtn');
     
+    if (gameNavigationButtons) {
+        gameNavigationButtons.style.display = 'none';
+    }
     if (gameBackToMenuBtn) {
         gameBackToMenuBtn.style.display = 'none';
+    }
+    if (gameBackToMainMenuBtn) {
+        gameBackToMainMenuBtn.style.display = 'none';
     }
     if (gameCardValuesBtn) {
         gameCardValuesBtn.style.display = 'none';
