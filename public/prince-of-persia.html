@@ -19,19 +19,25 @@
             padding: 0;
             background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
             font-family: 'Arial', sans-serif;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .game-container {
             position: relative;
             width: 100%;
-            height: 100vh;
+            min-height: 100vh;
             background: #000;
+            display: flex;
+            flex-direction: column;
+            padding: 80px 20px 120px 20px;
         }
 
         .game-header {
-            position: absolute;
+            position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -63,15 +69,24 @@
             background: linear-gradient(135deg, #2196F3, #1976D2);
         }
 
+        #game-wrapper {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            background: #000;
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
         #game-iframe {
             width: 100%;
-            height: 100%;
+            height: 600px;
             border: none;
             background: #000;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+            display: block;
         }
 
         .loading {
@@ -90,7 +105,7 @@
         }
 
         .controls-info {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -104,6 +119,7 @@
             z-index: 1000;
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 90%;
         }
 
         .controls-info h3 {
@@ -117,16 +133,43 @@
             color: #fff;
         }
 
-        #game-wrapper {
-            width: 100%;
-            height: 100%;
-            position: relative;
+        /* Responsive layout for larger screens - use sidebars */
+        @media (min-width: 1400px) {
+            .game-container {
+                flex-direction: row;
+                padding: 80px 0 20px 0;
+            }
+
+            .game-header {
+                left: 50%;
+            }
+
+            #game-wrapper {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .controls-info {
+                position: fixed;
+                bottom: auto;
+                top: 50%;
+                left: 20px;
+                transform: translateY(-50%);
+                right: auto;
+                max-width: 300px;
+            }
+        }
+
+        @media (min-width: 1800px) {
+            .controls-info {
+                left: 50px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <!-- Navigation Buttons -->
+        <!-- Navigation Buttons - Fixed at top, outside game -->
         <div class="game-header">
             <button class="nav-button" id="backToMainMenuBtn" onclick="if(confirm('Are you sure you want to leave the game and return to the main menu?')) { window.location.href = '/'; }">
                 ← Back to Main Menu
@@ -136,7 +179,7 @@
             </button>
         </div>
 
-        <!-- Game Wrapper -->
+        <!-- Game Wrapper - Centered with max width -->
         <div id="game-wrapper">
             <div class="loading" id="loading-message">
                 👑 Loading Prince of Persia...<br>
@@ -145,7 +188,7 @@
             <iframe id="game-iframe" src="https://princejs.com/" allow="gamepad; fullscreen" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
         </div>
 
-        <!-- Controls Info -->
+        <!-- Controls Info - Fixed at bottom, outside game -->
         <div class="controls-info">
             <h3>⚔️ Controls</h3>
             <p><strong>Arrow Keys:</strong> Move Left/Right | <strong>Up Arrow:</strong> Jump</p>
