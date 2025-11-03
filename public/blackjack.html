@@ -445,26 +445,52 @@
 
         .game-info {
             position: absolute;
-            top: 20px;
+            top: 80px;
             left: 20px;
-            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(20,20,20,0.9));
-            color: white;
-            padding: 20px;
+            background: linear-gradient(135deg, rgba(0,0,0,0.85), rgba(20,20,20,0.85));
+            border: 3px solid #FFD700;
             border-radius: 12px;
-            border: 2px solid rgba(255,215,0,0.3);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5),
-                        inset 0 1px 0 rgba(255,255,255,0.1);
+            padding: 20px;
+            color: white;
+            min-width: 220px;
             backdrop-filter: blur(10px);
-            min-width: 200px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 15px rgba(255,215,0,0.2);
         }
 
         .game-info h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
             color: #FFD700;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-align: center;
+            border-bottom: 2px solid rgba(255,215,0,0.3);
+            padding-bottom: 10px;
         }
-
-        .game-info div {
-            margin: 5px 0;
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #ccc;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #FFD700;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
         .rules {
