@@ -468,6 +468,12 @@
         .room-created #joinRoomBtn {
             display: none !important;
         }
+        
+        /* Ensure buttons are visible by default */
+        #createRoomBtn,
+        #joinRoomBtn {
+            display: inline-block !important;
+        }
 
         /* AGGRESSIVE button color overrides - Maximum specificity */
         #addBotBtn {
@@ -535,8 +541,11 @@
             ← Back to Main Menu
           </button>
           
-          <button id="createRoomBtn">Create Room</button>
-          <button id="joinRoomBtn">Join Room</button>
+          <!-- Room Controls -->
+          <div style="margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <button id="joinRoomBtn">Join Room</button>
+            <button id="createRoomBtn">Create Room</button>
+          </div>
           
           <!-- Room Code Display with Copy Button Next to Yellow Box -->
                 <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">

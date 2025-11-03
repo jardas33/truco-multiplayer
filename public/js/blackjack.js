@@ -438,8 +438,22 @@ class BlackjackClient {
     // Setup UI event listeners
     setupUI() {
         // Room controls
-        document.getElementById('createRoomBtn').onclick = () => this.createRoom();
-        document.getElementById('joinRoomBtn').onclick = () => this.joinRoom();
+        const createBtn = document.getElementById('createRoomBtn');
+        const joinBtn = document.getElementById('joinRoomBtn');
+        
+        if (createBtn) {
+            createBtn.onclick = () => this.createRoom();
+            console.log('✅ Create Room button handler attached');
+        } else {
+            console.error('❌ Create Room button not found');
+        }
+        
+        if (joinBtn) {
+            joinBtn.onclick = () => this.joinRoom();
+            console.log('✅ Join Room button handler attached');
+        } else {
+            console.error('❌ Join Room button not found');
+        }
         document.getElementById('addBotBtn').onclick = () => this.addBot();
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
         // Game menu button - return to menu
