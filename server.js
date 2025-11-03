@@ -673,6 +673,7 @@ io.on('connection', (socket) => {
     
     // ✅ DEBUG: Log all incoming events to see if startGame is received
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
+    console.log(`🃏🃏🃏 NEW CONNECTION - Socket ${socket.id} - About to define helper functions`);
     
     // Define Blackjack helper functions INSIDE connection block so they have access to socket/io
     function calculateBlackjackValue(hand) {
@@ -4670,9 +4671,13 @@ function determineRoundWinner(playedCards, room) {
     }
     
     // Player action handler (Hit, Stand, Double, Split)
+    console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ABOUT TO REGISTER playerAction handler for socket ${socket.id}`);
+    console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Socket object exists: ${!!socket}`);
+    console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 socket.on function exists: ${typeof socket.on}`);
     console.log(`🃏🃏🃏 Registering playerAction handler for socket ${socket.id} at line 4673`);
+    
     socket.on('playerAction', (data) => {
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 playerAction handler EXECUTING for socket ${socket.id}`);
+        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ========== playerAction handler EXECUTING for socket ${socket.id} ==========`);
         console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data received:`, data);
         console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data type:`, typeof data);
         console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.roomId:`, data?.roomId);
