@@ -669,7 +669,11 @@ io.on('connection', (socket) => {
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
     
     // CRITICAL: Register placeBet handler FIRST, before onAny
-    console.log(`🔍 Registering placeBet handler for socket ${socket.id}`);
+    console.log(`🔍🔍🔍 Registering placeBet handler for socket ${socket.id} at connection time`);
+    
+    // Verify helper functions exist
+    console.log(`🔍🔍🔍 Checking helper functions: dealBlackjackCard=${typeof dealBlackjackCard}, calculateBlackjackValue=${typeof calculateBlackjackValue}, checkBlackjack=${typeof checkBlackjack}`);
+    
     socket.on('placeBet', (data, callback) => {
         try {
             console.log('🃏 placeBet event received:', data);
