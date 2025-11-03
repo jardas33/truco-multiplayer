@@ -579,6 +579,13 @@ class BlackjackClient {
 
     // Setup socket event listeners
     setupSocketListeners() {
+        if (!window.gameFramework || !window.gameFramework.socket) {
+            console.error('❌ Socket not available for setupSocketListeners');
+            // Try to wait for socket
+            setTimeout(() => this.setupSocketListeners(), 500);
+            return;
+        }
+        
         const socket = window.gameFramework.socket;
         
         socket.on('roomCreated', (data) => {
@@ -709,41 +716,65 @@ class BlackjackClient {
     createRoom() {
         console.log('🃏 Create Room button clicked');
         
-        // Try to create room immediately first
-        if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-            console.log('✅ GameFramework available, creating room immediately');
+        // Check if socket is ready
+        const checkAndCreateRoom = () => {
+            if (typeof GameFramework === 'undefined' || !GameFramework.createRoom) {
+                console.error('❌ GameFramework not available');
+                return false;
+            }
+            
+            // Check if socket is initialized and connected
+            if (!window.gameFramework || !window.gameFramework.socket) {
+                console.log('⏳ Socket not initialized yet');
+                return false;
+            }
+            
+            if (!window.gameFramework.socket.connected) {
+                console.log('⏳ Socket not connected yet');
+                return false;
+            }
+            
+            console.log('✅ Everything ready, creating room');
             GameFramework.createRoom('blackjack');
+            return true;
+        };
+        
+        // Try immediately
+        if (checkAndCreateRoom()) {
             return;
         }
         
-        // If not available, wait and retry
-        console.log('⏳ GameFramework not ready, waiting...');
+        // If not ready, wait and retry
+        console.log('⏳ Waiting for socket to be ready...');
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 20; // Increased attempts
         
         const tryCreateRoom = () => {
             attempts++;
             console.log(`🔄 Attempt ${attempts}/${maxAttempts} to create room`);
+            console.log('  - GameFramework:', typeof GameFramework);
+            console.log('  - GameFramework.createRoom:', typeof GameFramework?.createRoom);
+            console.log('  - window.gameFramework:', !!window.gameFramework);
+            console.log('  - window.gameFramework.socket:', !!window.gameFramework?.socket);
+            console.log('  - socket.connected:', window.gameFramework?.socket?.connected);
             
-            if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
-                console.log('✅ GameFramework now available, creating room');
-                GameFramework.createRoom('blackjack');
+            if (checkAndCreateRoom()) {
                 return;
             }
             
             if (attempts < maxAttempts) {
-                setTimeout(tryCreateRoom, 200); // Wait 200ms between attempts
+                setTimeout(tryCreateRoom, 300); // Wait 300ms between attempts
             } else {
-                console.error('❌ GameFramework still not available after maximum attempts');
+                console.error('❌ Could not create room after maximum attempts');
                 if (typeof UIUtils !== 'undefined' && UIUtils.showGameMessage) {
-                    UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+                    UIUtils.showGameMessage('Unable to create room. Please refresh the page.', 'error');
                 } else {
-                    alert('Game framework not ready. Please refresh the page.');
+                    alert('Unable to create room. Please refresh the page.');
                 }
             }
         };
         
-        setTimeout(tryCreateRoom, 100);
+        setTimeout(tryCreateRoom, 200);
     }
 
     // Join room

@@ -568,13 +568,32 @@ class GameFramework {
     }
     
     static createRoom(gameType) {
+        if (!window.gameFramework) {
+            console.error('❌ window.gameFramework not initialized');
+            return;
+        }
+        
         const socket = window.gameFramework.socket;
         if (!socket) {
             console.error('❌ Socket not available for createRoom');
+            console.error('DEBUG: window.gameFramework:', window.gameFramework);
             return;
         }
+        
+        if (!socket.connected) {
+            console.error('❌ Socket not connected');
+            socket.once('connect', () => {
+                console.log('✅ Socket connected, retrying createRoom');
+                this.createRoom(gameType);
+            });
+            return;
+        }
+        
         console.log('🎮 Creating room for game type:', gameType);
+        console.log('🎮 Socket connected:', socket.connected);
+        console.log('🎮 Socket ID:', socket.id);
         socket.emit('createRoom', { gameType: gameType });
+        console.log('🎮 createRoom event emitted');
     }
     
     static joinRoom(roomCode) {
