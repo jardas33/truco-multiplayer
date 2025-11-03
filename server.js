@@ -4639,28 +4639,43 @@ function determineRoundWinner(playedCards, room) {
             // If all players have bet, trigger card dealing (similar to placeBet handler)
             if (allPlayersBetted && room.game.gamePhase === 'betting') {
                 setTimeout(() => {
-                    // Deal 2 cards to each player who bet
-                    for (let i = 0; i < 2; i++) {
-                        room.game.players.forEach(player => {
-                            if (player.bet > 0) {
-                                const card = dealBlackjackCard(room);
-                                player.hand.push(card);
-                                player.value = calculateBlackjackValue(player.hand);
-                            }
-                        });
+            // Deal 2 cards to each player who bet
+            for (let i = 0; i < 2; i++) {
+                let cardDealFailed = false;
+                room.game.players.forEach(player => {
+                    if (player.bet > 0) {
+                        const card = dealBlackjackCard(room);
+                        if (!card) {
+                            console.error('❌ Failed to deal card to player during round start');
+                            cardDealFailed = true;
+                            return;
+                        }
+                        player.hand.push(card);
+                        player.value = calculateBlackjackValue(player.hand);
                     }
-                    
-                    // Deal dealer cards (one face down, one face up)
-                    const dealerCard1 = dealBlackjackCard(room);
-                    const dealerCard2 = dealBlackjackCard(room);
-                    room.game.dealer.hand.push(dealerCard1);
-                    room.game.dealer.hand.push(dealerCard2);
-                    // Calculate visible card value
-                    const visibleCard = dealerCard2;
-                    room.game.dealer.value = visibleCard.rank === 'ace' ? 11 : 
-                                             ['jack', 'queen', 'king'].includes(visibleCard.rank) ? 10 : 
-                                             visibleCard.value;
-                    room.game.dealer.holeCardVisible = false;
+                });
+                
+                if (cardDealFailed) {
+                    console.error('❌ Card deal failed in new round, aborting');
+                    return;
+                }
+            }
+            
+            // Deal dealer cards (one face down, one face up)
+            const dealerCard1 = dealBlackjackCard(room);
+            const dealerCard2 = dealBlackjackCard(room);
+            if (!dealerCard1 || !dealerCard2) {
+                console.error('❌ Failed to deal dealer cards in new round');
+                return;
+            }
+            room.game.dealer.hand.push(dealerCard1);
+            room.game.dealer.hand.push(dealerCard2);
+            // Calculate visible card value
+            const visibleCard = dealerCard2;
+            room.game.dealer.value = visibleCard.rank === 'ace' ? 11 : 
+                                     ['jack', 'queen', 'king'].includes(visibleCard.rank) ? 10 : 
+                                     visibleCard.value;
+            room.game.dealer.holeCardVisible = false;
                     
                     // Check for blackjacks
                     room.game.players.forEach(player => {
