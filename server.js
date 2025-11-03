@@ -4265,19 +4265,26 @@ function determineRoundWinner(playedCards, room) {
                             console.log(`🃏 Player ${player.name} busted with ${player.value}`);
                         }
                         
+                        // Emit the action update - player stays as currentPlayer if not busted
                         io.to(roomCode).emit('playerAction', {
                             playerIndex: playerIndex,
                             action: action,
                             player: player,
                             gamePhase: room.game.gamePhase,
-                            currentPlayer: room.game.currentPlayer
+                            currentPlayer: room.game.currentPlayer // Stay as current player unless busted
                         });
+                        
+                        console.log(`🃏 Hit result: Player ${player.name} value = ${player.value}, busted = ${player.isBusted}`);
+                        console.log(`🃏 Current player remains: ${room.game.currentPlayer}`);
                         
                         // Auto-advance if busted
                         if (player.isBusted) {
+                            console.log(`🃏 Player ${player.name} busted, advancing turn`);
                             setTimeout(() => {
                                 advanceBlackjackTurn(roomCode, room);
                             }, 1000);
+                        } else {
+                            console.log(`🃏 Player ${player.name} can continue playing - turn remains`);
                         }
                         break;
                         

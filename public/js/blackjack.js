@@ -547,10 +547,53 @@ class BlackjackClient {
         const placeBetBtn = document.getElementById('placeBetBtn');
         const betAmountInput = document.getElementById('betAmount');
         
-        if (hitBtn) hitBtn.onclick = () => this.playerAction('hit');
-        if (standBtn) standBtn.onclick = () => this.playerAction('stand');
-        if (doubleBtn) doubleBtn.onclick = () => this.playerAction('double');
-        if (splitBtn) splitBtn.onclick = () => this.playerAction('split');
+        if (hitBtn) {
+            hitBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Hit button clicked!');
+                this.playerAction('hit');
+            };
+            console.log('✅ Hit button handler attached');
+        } else {
+            console.warn('⚠️ Hit button not found in DOM');
+        }
+        
+        if (standBtn) {
+            standBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Stand button clicked!');
+                this.playerAction('stand');
+            };
+            console.log('✅ Stand button handler attached');
+        } else {
+            console.warn('⚠️ Stand button not found in DOM');
+        }
+        
+        if (doubleBtn) {
+            doubleBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Double button clicked!');
+                this.playerAction('double');
+            };
+            console.log('✅ Double button handler attached');
+        } else {
+            console.warn('⚠️ Double button not found in DOM');
+        }
+        
+        if (splitBtn) {
+            splitBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🃏 Split button clicked!');
+                this.playerAction('split');
+            };
+            console.log('✅ Split button handler attached');
+        } else {
+            console.warn('⚠️ Split button not found in DOM');
+        }
         if (placeBetBtn) {
             console.log('✅ Place bet button found, attaching handler');
             placeBetBtn.onclick = (e) => {
@@ -1216,11 +1259,23 @@ class BlackjackClient {
 
     // Update player action
     updatePlayerAction(data) {
-        console.log('🃏 Player action update:', data);
+        console.log('🃏 Player action update received:', data);
+        console.log('🃏   - playerIndex:', data.playerIndex);
+        console.log('🃏   - action:', data.action);
+        console.log('🃏   - player:', data.player);
+        console.log('🃏   - gamePhase:', data.gamePhase);
+        console.log('🃏   - currentPlayer:', data.currentPlayer);
         
-        // Update player state
+        // Update player state - IMPORTANT: preserve hand array properly
         if (data.playerIndex !== undefined && this.game.players[data.playerIndex]) {
-            this.game.players[data.playerIndex] = { ...this.game.players[data.playerIndex], ...data.player };
+            const updatedPlayer = { ...this.game.players[data.playerIndex], ...data.player };
+            // CRITICAL: Ensure hand array is properly updated (data.player.hand might replace the array)
+            if (data.player && data.player.hand && Array.isArray(data.player.hand)) {
+                updatedPlayer.hand = data.player.hand;
+            }
+            this.game.players[data.playerIndex] = updatedPlayer;
+            console.log(`🃏 Updated player ${data.playerIndex} hand:`, updatedPlayer.hand);
+            console.log(`🃏 Updated player ${data.playerIndex} value:`, updatedPlayer.value);
         }
         
         this.game.gamePhase = data.gamePhase || this.game.gamePhase;
@@ -1228,6 +1283,7 @@ class BlackjackClient {
         
         // Reset acting flag if this was the local player's action
         if (data.playerIndex === this.localPlayerIndex) {
+            console.log('🃏 Resetting isActing flag for local player');
             this.isActing = false;
         }
         
@@ -1239,10 +1295,12 @@ class BlackjackClient {
                          !localPlayer.isStanding && 
                          !localPlayer.hasBlackjack &&
                          !this.isActing; // Don't allow action if already acting
+            console.log(`🃏 Turn state - isMyTurn: ${this.isMyTurn}, canAct: ${this.canAct}, isBusted: ${localPlayer.isBusted}, isStanding: ${localPlayer.isStanding}`);
         } else {
             this.canAct = false;
         }
         
+        console.log('🃏 Calling updateUI() after player action');
         this.updateUI();
         this.updateGameControls();
     }
@@ -1400,11 +1458,23 @@ class BlackjackClient {
         }
         
         console.log(`🃏 Emitting playerAction: ${action}`);
+        console.log(`🃏   - roomId: ${roomId}`);
+        console.log(`🃏   - playerIndex: ${this.localPlayerIndex}`);
+        console.log(`🃏   - socket.id: ${socket.id}`);
+        console.log(`🃏   - socket.connected: ${socket.connected}`);
+        
         socket.emit('playerAction', {
             roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: action
+        }, (response) => {
+            // Optional acknowledgment callback
+            if (response) {
+                console.log('🃏 playerAction acknowledgment:', response);
+            }
         });
+        
+        console.log('✅ playerAction event emitted');
     }
 
     // Place bet
