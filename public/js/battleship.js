@@ -1299,9 +1299,9 @@ class BattleshipGame {
                     aiScoreDiv.textContent = newText2;
                     console.log(`🚢 Updated aiScoreDiv to: "${newText2}"`);
                 } else {
-                    // Single-player: always show "Bot" with (bot) indicator
-                    aiScoreDiv.textContent = `${player2Name} (bot)`;
-                    console.log(`🚢 Updated aiScoreDiv to: "${player2Name} (bot)"`);
+                    // Single-player: show "Player 2 (bot)" to be consistent with multiplayer format
+                    aiScoreDiv.textContent = 'Player 2 (bot)';
+                    console.log(`🚢 Updated aiScoreDiv to: "Player 2 (bot)"`);
                 }
             } else {
                 console.error('🚢 ERROR: aiScoreDiv not found!');
