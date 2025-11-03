@@ -739,12 +739,29 @@
             // Handle players updated event (for nickname changes)
             window.battleshipSocket.on('playersUpdated', (players) => {
                 console.log('🚢 Received players updated event:', players);
-                if (players && players.length >= 2 && window.battleshipGame) {
+                if (players && Array.isArray(players) && players.length >= 2 && window.battleshipGame) {
                     // CRITICAL FIX: Update the stored players array in the game instance
                     window.battleshipGame.players = players;
+                    
+                    // CRITICAL FIX: Ensure playerId is set if not already set
+                    if (!window.battleshipGame.playerId && window.battleshipPlayerId) {
+                        window.battleshipGame.playerId = window.battleshipPlayerId;
+                        console.log('🚢 Set playerId from stored value:', window.battleshipGame.playerId);
+                    }
+                    
+                    // CRITICAL FIX: If firstPlayerId isn't set yet, try to infer it from isRoomCreator
+                    if (!window.battleshipGame.firstPlayerId) {
+                        const roomCreator = players.find(p => p && p.isRoomCreator);
+                        if (roomCreator) {
+                            window.battleshipGame.firstPlayerId = roomCreator.id;
+                            console.log('🚢 Inferred firstPlayerId from isRoomCreator:', window.battleshipGame.firstPlayerId);
+                        }
+                    }
+                    
                     console.log('🚢 Updated players array in game instance');
                     
                     // CRITICAL FIX: Use centralized function to update all UI elements with nicknames
+                    // This will work even before firstPlayerId is set (uses isRoomCreator as fallback)
                     window.battleshipGame.updatePlayerNamesInUI();
                     
                     // Also update turn indicator in case it's being displayed

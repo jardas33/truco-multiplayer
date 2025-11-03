@@ -1154,7 +1154,21 @@ class BattleshipGame {
                 return;
             }
             
-            const isPlayer1 = this.firstPlayerId && (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
+            // CRITICAL FIX: Determine if local player is Player 1 using multiple methods
+            // Priority: firstPlayerId > isRoomCreator > playerId comparison
+            let isPlayer1 = false;
+            if (this.firstPlayerId) {
+                // Use firstPlayerId if available (set during game start)
+                isPlayer1 = (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
+            } else if (player1.isRoomCreator !== undefined) {
+                // Use isRoomCreator flag if available (before game start)
+                // If local player is the room creator, they're Player 1
+                const localPlayer = this.players.find(p => p && p.id === this.playerId);
+                isPlayer1 = localPlayer && (localPlayer.isRoomCreator || localPlayer === player1);
+            } else if (this.playerId) {
+                // Fallback: compare playerId with player1.id
+                isPlayer1 = (this.playerId === player1.id || String(this.playerId) === String(player1.id));
+            }
             
             // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
             // Get display names with nicknames (nickname is stored in name property)
@@ -1162,11 +1176,13 @@ class BattleshipGame {
             const player2Name = player2.name || 'Player 2';
             
             console.log('🚢 updatePlayerNamesInUI - Player data:', {
-                player1: { id: player1.id, name: player1.name, nickname: player1.nickname },
-                player2: { id: player2.id, name: player2.name, nickname: player2.nickname },
+                player1: { id: player1.id, name: player1.name, nickname: player1.nickname, isRoomCreator: player1.isRoomCreator },
+                player2: { id: player2.id, name: player2.name, nickname: player2.nickname, isRoomCreator: player2.isRoomCreator },
                 player1Name: player1Name,
                 player2Name: player2Name,
-                isPlayer1: isPlayer1
+                isPlayer1: isPlayer1,
+                firstPlayerId: this.firstPlayerId,
+                localPlayerId: this.playerId
             });
             
             // Update scoreboard labels (not scores)
