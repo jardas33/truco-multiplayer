@@ -4725,9 +4725,15 @@ function determineRoundWinner(playedCards, room) {
                 
                 console.log(`🃏 Player ${player.name} performs action: ${action}`);
                 
+                console.log(`🃏🃏🃏 About to process action: ${action}`);
+                console.log(`🃏🃏🃏 dealBlackjackCard function exists: ${typeof dealBlackjackCard}`);
+                console.log(`🃏🃏🃏 calculateBlackjackValue function exists: ${typeof calculateBlackjackValue}`);
+                
                 switch (action) {
                     case 'hit':
+                        console.log(`🃏🃏🃏 Processing HIT action`);
                         const hitCard = dealBlackjackCard(room);
+                        console.log(`🃏🃏🃏 Card dealt:`, hitCard);
                         if (!hitCard) {
                             socket.emit('error', 'Failed to deal card - deck empty');
                             console.error('❌ Failed to deal hit card');
