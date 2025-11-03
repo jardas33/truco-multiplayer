@@ -795,18 +795,33 @@ io.on('connection', (socket) => {
                 return;
             }
             
-            // Start dealer's turn
-            setTimeout(() => {
-                // Dealer hits until 17 or bust
-                while (room.game.dealer.value < 17 && room.game.dealer.hand.length < 7) {
+            // Start dealer's turn - use async function for visual updates
+            setTimeout(async () => {
+                // Emit initial dealer turn update (hole card revealed)
+                io.to(roomCode).emit('dealerTurn', {
+                    dealer: room.game.dealer,
+                    gamePhase: room.game.gamePhase
+                });
+                
+                // Dealer hits until 17 or bust (with visual delays)
+                while (room.game.dealer.value < 17 && !room.game.dealer.isBusted && room.game.dealer.hand.length < 7) {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay between cards
+                    
                     const dealerCard = dealBlackjackCard(room);
                     if (!dealerCard) {
                         console.error('❌ Failed to deal card to dealer');
+                        room.game.dealer.isBusted = true;
                         break;
                     }
                     room.game.dealer.hand.push(dealerCard);
                     room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
                     console.log(`🃏 Dealer hit. New value: ${room.game.dealer.value}`);
+                    
+                    // Emit update after each card for visual effect
+                    io.to(roomCode).emit('dealerTurn', {
+                        dealer: room.game.dealer,
+                        gamePhase: room.game.gamePhase
+                    });
                     
                     if (room.game.dealer.value > 21) {
                         room.game.dealer.isBusted = true;
@@ -815,7 +830,7 @@ io.on('connection', (socket) => {
                     }
                 }
                 
-                // Emit dealer turn update
+                // Final dealer turn update
                 io.to(roomCode).emit('dealerTurn', {
                     dealer: room.game.dealer,
                     gamePhase: room.game.gamePhase

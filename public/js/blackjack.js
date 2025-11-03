@@ -1329,6 +1329,7 @@ class BlackjackClient {
         
         this.game.dealer = data.dealer || this.game.dealer;
         this.game.gamePhase = data.gamePhase || 'finished';
+        this.game.roundNumber = data.roundNumber || this.game.roundNumber;
         
         this.isMyTurn = false;
         this.canAct = false;
