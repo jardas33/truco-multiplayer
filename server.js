@@ -4671,17 +4671,26 @@ function determineRoundWinner(playedCards, room) {
     // Player action handler (Hit, Stand, Double, Split)
     socket.on('playerAction', (data) => {
         try {
+            console.log(`🃏🃏🃏 playerAction handler called with data:`, JSON.stringify(data, null, 2));
+            console.log(`🃏🃏🃏 Socket ID: ${socket.id}`);
+            
             const roomCode = data.roomId;
             const room = rooms.get(roomCode);
             
+            console.log(`🃏🃏🃏 Room lookup - roomCode: ${roomCode}, room found: ${!!room}`);
+            
             if (!room) {
+                console.error(`❌ Room ${roomCode} not found`);
                 socket.emit('error', 'Room not found');
                 return;
             }
             
+            console.log(`🃏🃏🃏 Room found - gameType: ${room.gameType}, gamePhase: ${room.game?.gamePhase}`);
+            
             // Handle blackjack-specific actions
             if (room.gameType === 'blackjack') {
                 if (room.game.gamePhase !== 'playing') {
+                    console.error(`❌ Not in playing phase. Current phase: ${room.game.gamePhase}`);
                     socket.emit('error', 'Not in playing phase');
                     return;
                 }
@@ -4690,17 +4699,26 @@ function determineRoundWinner(playedCards, room) {
                 const player = room.game.players[playerIndex];
                 const action = data.action;
                 
+                console.log(`🃏🃏🃏 Player lookup - playerIndex: ${playerIndex}, player found: ${!!player}, player.id: ${player?.id}, socket.id: ${socket.id}, match: ${player?.id === socket.id}`);
+                
                 if (!player || player.id !== socket.id) {
+                    console.error(`❌ Invalid player - player exists: ${!!player}, player.id: ${player?.id}, socket.id: ${socket.id}`);
                     socket.emit('error', 'Invalid player');
                     return;
                 }
                 
+                console.log(`🃏🃏🃏 Turn check - playerIndex: ${playerIndex}, currentPlayer: ${room.game.currentPlayer}, match: ${playerIndex === room.game.currentPlayer}`);
+                
                 if (playerIndex !== room.game.currentPlayer) {
+                    console.error(`❌ Not player's turn - playerIndex: ${playerIndex}, currentPlayer: ${room.game.currentPlayer}`);
                     socket.emit('error', 'Not your turn');
                     return;
                 }
                 
+                console.log(`🃏🃏🃏 Player state check - isBusted: ${player.isBusted}, isStanding: ${player.isStanding}, hasBlackjack: ${player.hasBlackjack}`);
+                
                 if (player.isBusted || player.isStanding || player.hasBlackjack) {
+                    console.error(`❌ Cannot perform action - player is done`);
                     socket.emit('error', 'Cannot perform action');
                     return;
                 }
