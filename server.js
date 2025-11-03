@@ -881,6 +881,307 @@ io.on('connection', (socket) => {
         }
     }
     
+    // Helper function to determine blackjack winners - MUST be defined before use
+    function determineBlackjackWinners(roomCode, room) {
+        room.game.gamePhase = 'finished';
+        
+        console.log('🃏 Determining blackjack winners...');
+        console.log('🃏 Dealer value:', room.game.dealer.value, 'Dealer blackjack:', room.game.dealer.hasBlackjack, 'Dealer busted:', room.game.dealer.isBusted);
+        
+        room.game.players.forEach((player, index) => {
+            if (player.bet === 0) {
+                console.log(`🃏 Player ${index} (${player.name}) - no bet, skipping`);
+                return;
+            }
+            
+            const originalChips = player.chips;
+            let winnings = 0;
+            
+            if (player.isBusted) {
+                winnings = 0;
+                console.log(`🃏 Player ${index} (${player.name}) - BUSTED - winnings: $0`);
+            } else if (room.game.dealer.isBusted) {
+                if (player.hasBlackjack) {
+                    winnings = Math.floor(player.bet * 2.5); // 3:2 payout
+                } else {
+                    winnings = player.bet * 2; // 1:1 payout (includes bet back)
+                }
+                console.log(`🃏 Player ${index} (${player.name}) - DEALER BUSTED - winnings: $${winnings} (bet was $${player.bet})`);
+            } else if (player.hasBlackjack && !room.game.dealer.hasBlackjack) {
+                winnings = Math.floor(player.bet * 2.5); // 3:2 payout
+                console.log(`🃏 Player ${index} (${player.name}) - BLACKJACK BEATS DEALER - winnings: $${winnings} (bet was $${player.bet})`);
+            } else if (room.game.dealer.hasBlackjack && !player.hasBlackjack) {
+                winnings = 0;
+                console.log(`🃏 Player ${index} (${player.name}) - DEALER BLACKJACK BEATS PLAYER - winnings: $0`);
+            } else if (player.value > room.game.dealer.value) {
+                if (player.hasBlackjack) {
+                    winnings = Math.floor(player.bet * 2.5);
+                } else {
+                    winnings = player.bet * 2; // 1:1 payout (includes bet back)
+                }
+                console.log(`🃏 Player ${index} (${player.name}) - WINS (${player.value} vs ${room.game.dealer.value}) - winnings: $${winnings} (bet was $${player.bet})`);
+            } else if (player.value === room.game.dealer.value) {
+                winnings = player.bet; // Push - return bet only (no profit)
+                console.log(`🃏 Player ${index} (${player.name}) - PUSH (${player.value} = ${room.game.dealer.value}) - winnings: $${winnings} (bet returned)`);
+            } else {
+                winnings = 0;
+                console.log(`🃏 Player ${index} (${player.name}) - LOSES (${player.value} vs ${room.game.dealer.value}) - winnings: $0`);
+            }
+            
+            // Add winnings to chips (winnings already includes bet back for wins)
+            player.chips += winnings;
+            player.winnings = winnings;
+            
+            console.log(`🃏 Player ${index} (${player.name}) - Chips: $${originalChips} -> $${player.chips} (added $${winnings})`);
+        });
+        
+        console.log('🃏 Determining blackjack winners and finishing round');
+        console.log('🃏 Players:', room.game.players.map(p => ({ name: p.name, bet: p.bet, value: p.value, hasBlackjack: p.hasBlackjack, winnings: p.winnings })));
+        console.log('🃏 Dealer:', { value: room.game.dealer.value, hasBlackjack: room.game.dealer.hasBlackjack });
+        
+        io.to(roomCode).emit('roundFinished', {
+            players: room.game.players,
+            dealer: room.game.dealer,
+            gamePhase: room.game.gamePhase,
+            roundNumber: room.game.roundNumber
+        });
+        
+        console.log('🃏 Round finished event emitted, starting new round in 5 seconds...');
+        
+        // Start next round after delay
+        setTimeout(() => {
+            console.log('🃏 Starting new blackjack round...');
+            startNewBlackjackRound(roomCode, room);
+        }, 5000);
+    }
+    
+    // Helper function to start new blackjack round - MUST be defined before use
+    function startNewBlackjackRound(roomCode, room) {
+        if (!room || !room.game) {
+            console.error('❌ Invalid room or game state in startNewBlackjackRound');
+            return;
+        }
+        
+        room.game.roundNumber = (room.game.roundNumber || 0) + 1;
+        room.game.gamePhase = 'betting';
+        room.game.currentPlayer = -1; // Reset current player
+        
+        console.log(`🃏 Starting new round ${room.game.roundNumber}`);
+        
+        // Reset players
+        room.game.players.forEach((player, index) => {
+            player.hand = [];
+            player.value = 0;
+            player.bet = 0;
+            player.isBusted = false;
+            player.hasBlackjack = false;
+            player.isStanding = false;
+            player.canDouble = false;
+            player.canSplit = false;
+            player.winnings = 0;
+            console.log(`🃏 Reset player ${index} (${player.name}) for new round`);
+        });
+        
+        // Reset dealer
+        room.game.dealer = {
+            hand: [],
+            value: 0,
+            isBusted: false,
+            hasBlackjack: false,
+            holeCardVisible: false
+        };
+        
+        console.log('🃏 Reset dealer for new round');
+        
+        // Reshuffle deck if less than 20 cards
+        if (room.game.deck.length < 20) {
+            const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+            room.game.deck = [];
+            
+            for (let suit of suits) {
+                for (let rank of ranks) {
+                    let value;
+                    if (rank === 'ace') {
+                        value = 1;
+                    } else if (['jack', 'queen', 'king'].includes(rank)) {
+                        value = 10;
+                    } else {
+                        value = parseInt(rank);
+                    }
+                    
+                    room.game.deck.push({
+                        name: `${rank} of ${suit}`,
+                        suit: suit,
+                        rank: rank,
+                        value: value
+                    });
+                }
+            }
+            
+            // Shuffle
+            for (let i = room.game.deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [room.game.deck[i], room.game.deck[j]] = [room.game.deck[j], room.game.deck[i]];
+            }
+            
+            console.log('🃏 Deck reshuffled');
+        }
+        
+        console.log('🃏 Emitting roundStarted event:', {
+            roundNumber: room.game.roundNumber,
+            gamePhase: room.game.gamePhase,
+            playersCount: room.game.players.length,
+            minBet: room.game.minBet,
+            maxBet: room.game.maxBet
+        });
+        
+        io.to(roomCode).emit('roundStarted', {
+            roundNumber: room.game.roundNumber,
+            gamePhase: room.game.gamePhase,
+            players: room.game.players,
+            minBet: room.game.minBet,
+            maxBet: room.game.maxBet
+        });
+        
+        // Auto-bet for bots when new round starts
+        setTimeout(() => {
+            room.game.players.forEach((botPlayer, botIndex) => {
+                if (botPlayer.isBot && botPlayer.bet === 0 && botPlayer.chips >= room.game.minBet) {
+                    const botBet = Math.min(room.game.minBet * 2, botPlayer.chips, room.game.maxBet);
+                    if (botBet >= room.game.minBet) {
+                        botPlayer.bet = botBet;
+                        botPlayer.chips -= botBet;
+                        console.log(`🃏 Bot ${botPlayer.name} auto-bet $${botBet} for new round`);
+                        
+                        io.to(roomCode).emit('betPlaced', {
+                            playerIndex: botIndex,
+                            amount: botBet,
+                            player: botPlayer
+                        });
+                    }
+                }
+            });
+            
+            // Check if all players (including humans) have bet now
+            const allPlayersBetted = room.game.players.every(p => {
+                if (p.chips < room.game.minBet && p.bet === 0) {
+                    return false;
+                }
+                return p.bet > 0 || (p.isBot && p.chips < room.game.minBet);
+            });
+            
+            // If all players have bet, trigger card dealing (similar to placeBet handler)
+            if (allPlayersBetted && room.game.gamePhase === 'betting') {
+                setTimeout(() => {
+                    // Deal 2 cards to each player who bet
+                    let cardDealFailed = false;
+                    for (let i = 0; i < 2; i++) {
+                        room.game.players.forEach(player => {
+                            if (player.bet > 0) {
+                                const card = dealBlackjackCard(room);
+                                if (!card) {
+                                    console.error('❌ Failed to deal card to player during round start');
+                                    cardDealFailed = true;
+                                    return;
+                                }
+                                player.hand.push(card);
+                                player.value = calculateBlackjackValue(player.hand);
+                            }
+                        });
+                        
+                        if (cardDealFailed) {
+                            console.error('❌ Card deal failed in new round, aborting');
+                            return;
+                        }
+                    }
+                    
+                    // Deal dealer cards (one face down, one face up)
+                    const dealerCard1 = dealBlackjackCard(room);
+                    const dealerCard2 = dealBlackjackCard(room);
+                    if (!dealerCard1 || !dealerCard2) {
+                        console.error('❌ Failed to deal dealer cards in new round');
+                        return;
+                    }
+                    room.game.dealer.hand.push(dealerCard1);
+                    room.game.dealer.hand.push(dealerCard2);
+                    // Calculate visible card value (second card) - ace counts as 11 if visible
+                    const visibleCard = dealerCard2;
+                    room.game.dealer.value = visibleCard.rank === 'ace' ? 11 : 
+                                             ['jack', 'queen', 'king'].includes(visibleCard.rank) ? 10 : 
+                                             visibleCard.value;
+                    room.game.dealer.holeCardVisible = false;
+                    
+                    // Check for blackjacks
+                    room.game.players.forEach(player => {
+                        if (player.bet > 0 && checkBlackjack(player.hand)) {
+                            player.hasBlackjack = true;
+                        }
+                    });
+                    
+                    if (checkBlackjack(room.game.dealer.hand)) {
+                        room.game.dealer.hasBlackjack = true;
+                        room.game.dealer.holeCardVisible = true;
+                        room.game.dealer.value = 21;
+                    }
+                    
+                    // Determine game phase
+                    room.game.gamePhase = 'playing';
+                    room.game.currentPlayer = 0;
+                    
+                    // Skip players with blackjack or no bet
+                    while (room.game.currentPlayer < room.game.players.length && 
+                           (room.game.players[room.game.currentPlayer].hasBlackjack || 
+                            room.game.players[room.game.currentPlayer].bet === 0)) {
+                        room.game.currentPlayer++;
+                    }
+                    
+                    if (room.game.currentPlayer >= room.game.players.length) {
+                        // All players have blackjack OR can't act, check dealer
+                        room.game.gamePhase = 'dealer';
+                        room.game.dealer.holeCardVisible = true;
+                        room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
+                        
+                        console.log('🃏 All players skipped (blackjack or no bet) - checking dealer');
+                        
+                        // If dealer also has blackjack OR all players have blackjack, determine winners immediately
+                        if (room.game.dealer.hasBlackjack || room.game.players.every(p => p.hasBlackjack || p.bet === 0)) {
+                            console.log('🃏 All players and/or dealer have blackjack - determining winners immediately');
+                            setTimeout(() => {
+                                determineBlackjackWinners(roomCode, room);
+                            }, 1000);
+                        } else {
+                            // All players have blackjack, dealer doesn't - determine winners immediately
+                            console.log('🃏 All active players have blackjack, dealer does not - determining winners immediately');
+                            setTimeout(() => {
+                                determineBlackjackWinners(roomCode, room);
+                            }, 1000);
+                        }
+                    }
+                    
+                    io.to(roomCode).emit('cardsDealt', {
+                        players: room.game.players,
+                        dealer: room.game.dealer,
+                        gamePhase: room.game.gamePhase,
+                        currentPlayer: room.game.currentPlayer
+                    });
+                    
+                    console.log(`🃏 Cards dealt. Phase: ${room.game.gamePhase}, Current player: ${room.game.currentPlayer}`);
+                    
+                    // Handle bot turn if current player is a bot
+                    if (room.game.gamePhase === 'playing' && room.game.currentPlayer < room.game.players.length) {
+                        const currentPlayer = room.game.players[room.game.currentPlayer];
+                        if (currentPlayer && currentPlayer.isBot) {
+                            setTimeout(() => {
+                                handleBlackjackBotTurn(roomCode, room);
+                            }, 1500);
+                        }
+                    }
+                }, 500);
+            }
+        }, 1000);
+    }
+    
     // CRITICAL: Register placeBet handler AFTER helper functions are defined
     console.log(`🔍🔍🔍 Registering placeBet handler for socket ${socket.id} at connection time`);
     
@@ -1036,10 +1337,28 @@ io.on('connection', (socket) => {
                     }
                     
                     if (room.game.currentPlayer >= room.game.players.length) {
-                        // All players have blackjack, go to dealer turn
+                        // All players have blackjack OR can't act - check dealer immediately
                         room.game.gamePhase = 'dealer';
                         room.game.dealer.holeCardVisible = true;
                         room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
+                        
+                        console.log('🃏 All players skipped (blackjack or no bet) - checking dealer immediately');
+                        console.log('🃏 Dealer blackjack:', room.game.dealer.hasBlackjack);
+                        console.log('🃏 Players with blackjack:', room.game.players.filter(p => p.hasBlackjack).map(p => p.name));
+                        
+                        // If dealer also has blackjack OR all players have blackjack, determine winners immediately
+                        if (room.game.dealer.hasBlackjack || room.game.players.every(p => p.hasBlackjack || p.bet === 0)) {
+                            console.log('🃏 All players and/or dealer have blackjack - determining winners immediately');
+                            setTimeout(() => {
+                                determineBlackjackWinners(roomCode, room);
+                            }, 1000);
+                        } else {
+                            // All players have blackjack, dealer doesn't - determine winners immediately
+                            console.log('🃏 All active players have blackjack, dealer does not - determining winners immediately');
+                            setTimeout(() => {
+                                determineBlackjackWinners(roomCode, room);
+                            }, 1000);
+                        }
                     }
                     
                     io.to(roomCode).emit('cardsDealt', {
@@ -4777,72 +5096,7 @@ function determineRoundWinner(playedCards, room) {
         }
     }
     
-    // NOTE: determineBlackjackWinners is now defined earlier in the connection block
-    // This is a duplicate definition that should be removed - keeping for now to avoid breaking changes
-    function determineBlackjackWinners_OLD(roomCode, room) {
-        room.game.gamePhase = 'finished';
-        
-        console.log('🃏 Determining blackjack winners...');
-        console.log('🃏 Dealer value:', room.game.dealer.value, 'Dealer blackjack:', room.game.dealer.hasBlackjack, 'Dealer busted:', room.game.dealer.isBusted);
-        
-        room.game.players.forEach((player, index) => {
-            if (player.bet === 0) {
-                console.log(`🃏 Player ${index} (${player.name}) - no bet, skipping`);
-                return;
-            }
-            
-            const originalChips = player.chips;
-            let winnings = 0;
-            
-            if (player.isBusted) {
-                winnings = 0;
-                console.log(`🃏 Player ${index} (${player.name}) - BUSTED - winnings: $0`);
-            } else if (room.game.dealer.isBusted) {
-                if (player.hasBlackjack) {
-                    winnings = Math.floor(player.bet * 2.5); // 3:2 payout
-                } else {
-                    winnings = player.bet * 2; // 1:1 payout (includes bet back)
-                }
-                console.log(`🃏 Player ${index} (${player.name}) - DEALER BUSTED - winnings: $${winnings} (bet was $${player.bet})`);
-            } else if (player.hasBlackjack && !room.game.dealer.hasBlackjack) {
-                winnings = Math.floor(player.bet * 2.5); // 3:2 payout
-                console.log(`🃏 Player ${index} (${player.name}) - BLACKJACK BEATS DEALER - winnings: $${winnings} (bet was $${player.bet})`);
-            } else if (room.game.dealer.hasBlackjack && !player.hasBlackjack) {
-                winnings = 0;
-                console.log(`🃏 Player ${index} (${player.name}) - DEALER BLACKJACK BEATS PLAYER - winnings: $0`);
-            } else if (player.value > room.game.dealer.value) {
-                if (player.hasBlackjack) {
-                    winnings = Math.floor(player.bet * 2.5);
-                } else {
-                    winnings = player.bet * 2; // 1:1 payout (includes bet back)
-                }
-                console.log(`🃏 Player ${index} (${player.name}) - WINS (${player.value} vs ${room.game.dealer.value}) - winnings: $${winnings} (bet was $${player.bet})`);
-            } else if (player.value === room.game.dealer.value) {
-                winnings = player.bet; // Push - return bet only (no profit)
-                console.log(`🃏 Player ${index} (${player.name}) - PUSH (${player.value} = ${room.game.dealer.value}) - winnings: $${winnings} (bet returned)`);
-            } else {
-                winnings = 0;
-                console.log(`🃏 Player ${index} (${player.name}) - LOSES (${player.value} vs ${room.game.dealer.value}) - winnings: $0`);
-            }
-            
-            // Add winnings to chips (winnings already includes bet back for wins)
-            player.chips += winnings;
-            player.winnings = winnings;
-            
-            console.log(`🃏 Player ${index} (${player.name}) - Chips: $${originalChips} -> $${player.chips} (added $${winnings})`);
-        });
-        
-        io.to(roomCode).emit('roundFinished', {
-            players: room.game.players,
-            dealer: room.game.dealer,
-            gamePhase: room.game.gamePhase
-        });
-        
-        // Start next round after delay
-        setTimeout(() => {
-            startNewBlackjackRound(roomCode, room);
-        }, 5000);
-    }
+    // NOTE: Duplicate function removed - determineBlackjackWinners is now defined at the top of the connection block
     
     // Helper function to start new blackjack round
     function startNewBlackjackRound(roomCode, room) {
