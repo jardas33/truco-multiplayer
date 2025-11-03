@@ -444,13 +444,60 @@ class BlackjackClient {
         document.getElementById('startGameBtn').onclick = () => this.startGame();
         
         // Game controls
-        document.getElementById('hitBtn').onclick = () => this.playerAction('hit');
-        document.getElementById('standBtn').onclick = () => this.playerAction('stand');
-        document.getElementById('doubleBtn').onclick = () => this.playerAction('double');
-        document.getElementById('splitBtn').onclick = () => this.playerAction('split');
+        const hitBtn = document.getElementById('hitBtn');
+        const standBtn = document.getElementById('standBtn');
+        const doubleBtn = document.getElementById('doubleBtn');
+        const splitBtn = document.getElementById('splitBtn');
+        const placeBetBtn = document.getElementById('placeBetBtn');
+        const betAmountInput = document.getElementById('betAmount');
+        
+        if (hitBtn) hitBtn.onclick = () => this.playerAction('hit');
+        if (standBtn) standBtn.onclick = () => this.playerAction('stand');
+        if (doubleBtn) doubleBtn.onclick = () => this.playerAction('double');
+        if (splitBtn) splitBtn.onclick = () => this.playerAction('split');
+        if (placeBetBtn) {
+            placeBetBtn.onclick = () => {
+                const amount = parseInt(betAmountInput?.value || 10);
+                const localPlayer = this.game.players[this.localPlayerIndex];
+                const minBet = this.game.minBet || 5;
+                const maxBet = this.game.maxBet || 1000;
+                
+                if (amount < minBet) {
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(`Minimum bet is $${minBet}`, 'error');
+                    } else {
+                        alert(`Minimum bet is $${minBet}`);
+                    }
+                    return;
+                }
+                
+                if (amount > maxBet) {
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage(`Maximum bet is $${maxBet}`, 'error');
+                    } else {
+                        alert(`Maximum bet is $${maxBet}`);
+                    }
+                    return;
+                }
+                
+                if (localPlayer && amount > localPlayer.chips) {
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage('Insufficient chips', 'error');
+                    } else {
+                        alert('Insufficient chips');
+                    }
+                    return;
+                }
+                
+                if (amount > 0) {
+                    this.placeBet(amount);
+                }
+            };
+        }
         
         // Copy room code
-        document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
+        const copyBtn = document.getElementById('copyRoomCodeBtn');
+        if (copyBtn) copyBtn.onclick = () => this.copyRoomCode();
     }
 
     // Setup socket event listeners
@@ -466,10 +513,30 @@ class BlackjackClient {
         });
         
         socket.on('roomJoined', (data) => {
-            console.log('Room joined:', data);
-            this.localPlayerIndex = data.playerIndex;
+            console.log('🃏 Room joined:', data);
+            if (data.playerIndex !== undefined) {
+                this.localPlayerIndex = data.playerIndex;
+            }
+            // Update roomId from gameFramework if available
+            if (window.gameFramework && window.gameFramework.roomId) {
+                const roomCode = typeof window.gameFramework.roomId === 'object' ? 
+                    window.gameFramework.roomId.roomId : 
+                    window.gameFramework.roomId;
+                this.showRoomCode(roomCode);
+            }
             this.showPlayerCustomization();
             this.showGameControls();
+        });
+        
+        socket.on('playersUpdated', (data) => {
+            console.log('🃏 Players updated:', data);
+            // Update local player index if we can determine it
+            if (Array.isArray(data) && window.gameFramework && window.gameFramework.playerId) {
+                const playerIndex = data.findIndex(p => p.id === window.gameFramework.playerId);
+                if (playerIndex !== -1) {
+                    this.localPlayerIndex = playerIndex;
+                }
+            }
         });
         
         socket.on('gameStarted', (data) => {
@@ -501,10 +568,62 @@ class BlackjackClient {
             this.updateRoundFinished(data);
         });
         
+        socket.on('roundStarted', (data) => {
+            console.log('🃏 Round started:', data);
+            this.game.roundNumber = data.roundNumber || this.game.roundNumber;
+            this.game.gamePhase = data.gamePhase || 'betting';
+            this.game.players = data.players || this.game.players;
+            
+            // Update betting limits if provided
+            if (data.minBet !== undefined) {
+                this.game.minBet = data.minBet;
+            }
+            if (data.maxBet !== undefined) {
+                this.game.maxBet = data.maxBet;
+            }
+            
+            // Update bet input constraints
+            const betAmountInput = document.getElementById('betAmount');
+            if (betAmountInput) {
+                betAmountInput.min = this.game.minBet || 5;
+                betAmountInput.max = this.game.maxBet || 1000;
+                betAmountInput.value = Math.max(this.game.minBet || 5, parseInt(betAmountInput.value) || this.game.minBet || 5);
+            }
+            
+            // Reset local player state for new round
+            if (this.game.players[this.localPlayerIndex]) {
+                this.canAct = false;
+                this.isMyTurn = false;
+            }
+            
+            this.updateUI();
+            this.updateGameControls();
+        });
+        
+        socket.on('turnChanged', (data) => {
+            console.log('🃏 Turn changed:', data);
+            this.game.currentPlayer = data.currentPlayer;
+            this.game.gamePhase = data.gamePhase || this.game.gamePhase;
+            
+            this.isMyTurn = (data.gamePhase === 'playing' && data.currentPlayer === this.localPlayerIndex);
+            if (this.game.players[this.localPlayerIndex]) {
+                this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
+                             !this.game.players[this.localPlayerIndex].isStanding && 
+                             !this.game.players[this.localPlayerIndex].hasBlackjack;
+            }
+            
+            this.updateUI();
+            this.updateGameControls();
+        });
+        
         // Error handling
         socket.on('error', (error) => {
             console.error('Socket error:', error);
-            UIUtils.showGameMessage('Error: ' + error, 'error');
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('Error: ' + error, 'error');
+            } else {
+                alert('Error: ' + error);
+            }
         });
     }
 
@@ -564,31 +683,88 @@ class BlackjackClient {
 
     // Add bot
     addBot() {
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('No room ID available');
+            return;
+        }
+        
         const socket = window.gameFramework.socket;
-        socket.emit('addBot', { roomId: window.gameFramework.roomId });
+        socket.emit('addBot', { roomId: roomId });
     }
 
     // Remove bot
     removeBot() {
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('No room ID available');
+            return;
+        }
+        
         const socket = window.gameFramework.socket;
-        socket.emit('removeBot', { roomId: window.gameFramework.roomId });
+        socket.emit('removeBot', { roomId: roomId });
     }
 
     // Start game
     startGame(data = null) {
-        console.log('Starting game with data:', data);
+        console.log('🃏 Starting Blackjack game with data:', data);
         
-        if (data && data.players) {
-            this.game.initialize(data.players);
+        if (data) {
+            // Sync with server state
+            if (data.localPlayerIndex !== undefined) {
+                this.localPlayerIndex = data.localPlayerIndex;
+            }
+            
+            // Update game state from server
+            this.game.players = data.players || this.game.players;
+            this.game.dealer = data.dealer || this.game.dealer;
+            this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : this.game.currentPlayer;
+            this.game.gamePhase = data.gamePhase || this.game.gamePhase || 'betting';
+            this.game.roundNumber = data.roundNumber || this.game.roundNumber || 1;
+            
+            // Update betting limits
+            if (data.minBet !== undefined) {
+                this.game.minBet = data.minBet;
+            }
+            if (data.maxBet !== undefined) {
+                this.game.maxBet = data.maxBet;
+            }
+            
+            console.log('🃏 Game state synced:', {
+                phase: this.game.gamePhase,
+                currentPlayer: this.game.currentPlayer,
+                localPlayerIndex: this.localPlayerIndex,
+                players: this.game.players.length,
+                minBet: this.game.minBet,
+                maxBet: this.game.maxBet
+            });
+            
+            // Update bet input constraints
+            const betAmountInput = document.getElementById('betAmount');
+            if (betAmountInput) {
+                betAmountInput.min = this.game.minBet || 5;
+                betAmountInput.max = this.game.maxBet || 1000;
+                const currentValue = parseInt(betAmountInput.value) || this.game.minBet || 5;
+                betAmountInput.value = Math.max(this.game.minBet || 5, Math.min(currentValue, this.game.maxBet || 1000));
+            }
         } else {
+            // Fallback initialization
             const roomPlayers = window.gameFramework.players || [];
             if (roomPlayers && roomPlayers.length > 0) {
                 const gamePlayers = roomPlayers.map(player => ({
-                    name: player.name,
-                    startingChips: 1000,
-                    isBot: player.isBot || false
+                    ...player,
+                    hand: [],
+                    value: 0,
+                    bet: 0,
+                    chips: player.startingChips || 1000,
+                    isBusted: false,
+                    hasBlackjack: false,
+                    isStanding: false,
+                    canDouble: false,
+                    canSplit: false
                 }));
-                this.game.initialize(gamePlayers);
+                this.game.players = gamePlayers;
+                this.game.gamePhase = 'betting';
             } else {
                 console.error('ERROR: No players available to start game');
                 UIUtils.showGameMessage('No players available to start game. Please add players first.', 'error');
@@ -596,20 +772,16 @@ class BlackjackClient {
             }
         }
         
-        // Start the game
-        this.game.startNewRound();
-        
-        // Update game state
-        if (typeof gameStateEnum !== 'undefined') {
-            gameState = gameStateEnum.Playing;
-            window.gameState = gameStateEnum.Playing;
-        }
-        
         // Set global game instance
         window.game = this.game;
         
-        // Update UI
+        // Show game UI and hide menu
+        document.getElementById('Menu').style.display = 'none';
+        document.getElementById('Game').style.display = 'block';
+        
+        // Update UI based on phase
         this.updateUI();
+        this.updateGameControls();
     }
 
     // Update game state
@@ -625,20 +797,30 @@ class BlackjackClient {
 
     // Update bet placed
     updateBetPlaced(data) {
-        this.game.players[data.playerIndex] = data.player;
+        console.log('🃏 Bet placed:', data);
+        if (data.playerIndex !== undefined && this.game.players[data.playerIndex]) {
+            this.game.players[data.playerIndex] = { ...this.game.players[data.playerIndex], ...data.player };
+        }
+        
+        // Update UI to reflect new bets
         this.updateUI();
+        this.updateGameControls();
     }
 
     // Update cards dealt
     updateCardsDealt(data) {
-        this.game.players = data.players;
-        this.game.dealer = data.dealer;
-        this.game.gamePhase = data.gamePhase;
+        console.log('🃏 Cards dealt:', data);
+        this.game.players = data.players || this.game.players;
+        this.game.dealer = data.dealer || this.game.dealer;
+        this.game.gamePhase = data.gamePhase || this.game.gamePhase;
+        this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : this.game.currentPlayer;
         
-        this.isMyTurn = (data.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
-        this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
-                     !this.game.players[this.localPlayerIndex].isStanding && 
-                     !this.game.players[this.localPlayerIndex].hasBlackjack;
+        this.isMyTurn = (this.game.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
+        if (this.game.players[this.localPlayerIndex]) {
+            this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
+                         !this.game.players[this.localPlayerIndex].isStanding && 
+                         !this.game.players[this.localPlayerIndex].hasBlackjack;
+        }
         
         this.updateUI();
         this.updateGameControls();
@@ -646,13 +828,19 @@ class BlackjackClient {
 
     // Update player action
     updatePlayerAction(data) {
-        this.game.players[data.playerIndex] = data.player;
-        this.game.gamePhase = data.gamePhase;
+        console.log('🃏 Player action:', data);
+        if (data.playerIndex !== undefined && this.game.players[data.playerIndex]) {
+            this.game.players[data.playerIndex] = { ...this.game.players[data.playerIndex], ...data.player };
+        }
+        this.game.gamePhase = data.gamePhase || this.game.gamePhase;
+        this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : this.game.currentPlayer;
         
-        this.isMyTurn = (data.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
-        this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
-                     !this.game.players[this.localPlayerIndex].isStanding && 
-                     !this.game.players[this.localPlayerIndex].hasBlackjack;
+        this.isMyTurn = (this.game.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
+        if (this.game.players[this.localPlayerIndex]) {
+            this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
+                         !this.game.players[this.localPlayerIndex].isStanding && 
+                         !this.game.players[this.localPlayerIndex].hasBlackjack;
+        }
         
         this.updateUI();
         this.updateGameControls();
@@ -672,27 +860,66 @@ class BlackjackClient {
 
     // Update round finished
     updateRoundFinished(data) {
-        this.game.players = data.players;
-        this.game.dealer = data.dealer;
-        this.game.gamePhase = data.gamePhase;
+        console.log('🃏 Round finished:', data);
+        this.game.players = data.players || this.game.players;
+        this.game.dealer = data.dealer || this.game.dealer;
+        this.game.gamePhase = data.gamePhase || 'finished';
         
         this.isMyTurn = false;
         this.canAct = false;
+        
+        // Show winnings message for local player
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (localPlayer && localPlayer.winnings !== undefined) {
+            if (localPlayer.winnings > localPlayer.bet) {
+                const profit = localPlayer.winnings - localPlayer.bet;
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage(`You won $${profit}!`, 'success');
+                }
+            } else if (localPlayer.winnings === localPlayer.bet) {
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Push - your bet is returned', 'info');
+                }
+            } else {
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage(`You lost $${localPlayer.bet}`, 'error');
+                }
+            }
+        }
         
         this.updateUI();
         this.updateGameControls();
     }
 
+    // Get room ID (handles both object and string formats)
+    getRoomId() {
+        if (typeof window.gameFramework === 'undefined' || !window.gameFramework.roomId) {
+            return null;
+        }
+        const roomId = window.gameFramework.roomId;
+        return typeof roomId === 'object' && roomId.roomId ? roomId.roomId : roomId;
+    }
+
     // Player action
     playerAction(action) {
         if (!this.canAct) {
-            UIUtils.showGameMessage('It\'s not your turn', 'error');
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('It\'s not your turn', 'error');
+            } else {
+                alert('It\'s not your turn');
+            }
+            return;
+        }
+        
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('No room ID available');
             return;
         }
         
         const socket = window.gameFramework.socket;
         socket.emit('playerAction', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: action
         });
@@ -700,9 +927,15 @@ class BlackjackClient {
 
     // Place bet
     placeBet(amount) {
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('No room ID available');
+            return;
+        }
+        
         const socket = window.gameFramework.socket;
         socket.emit('placeBet', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             amount: amount
         });
@@ -730,25 +963,74 @@ class BlackjackClient {
 
     // Update player areas
     updatePlayerAreas() {
+        // Update both menu player list and game player areas
         const playerList = document.getElementById('playerList');
-        if (playerList) {
+        const playerAreasContainer = document.getElementById('playerAreasContainer');
+        
+        if (playerList && this.game.players) {
             playerList.innerHTML = '';
-            
             this.game.players.forEach((player, index) => {
                 const playerDiv = document.createElement('div');
                 playerDiv.className = 'player-item';
-                if (index === this.game.currentPlayer) {
+                
+                if (index === this.game.currentPlayer && this.game.gamePhase === 'playing') {
                     playerDiv.classList.add('active');
                 }
                 
                 playerDiv.innerHTML = `
-                    <div class="player-name">${player.name}</div>
-                    <div class="player-chips">$${player.chips}</div>
+                    <div class="player-name">${player.name}${player.isBot ? ' (Bot)' : ''}</div>
+                    <div class="player-chips">Chips: $${player.chips}</div>
                     <div class="player-bet">Bet: $${player.bet}</div>
-                    <div class="player-value">Value: ${player.value}</div>
+                    <div class="player-value">Value: ${player.value || 0}</div>
                 `;
                 
                 playerList.appendChild(playerDiv);
+            });
+        }
+        
+        // Update game view player areas
+        if (playerAreasContainer && this.game.players) {
+            playerAreasContainer.innerHTML = '';
+            
+            this.game.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-area';
+                
+                if (index === this.game.currentPlayer && this.game.gamePhase === 'playing') {
+                    playerDiv.classList.add('active');
+                }
+                
+                if (player.isBusted) {
+                    playerDiv.classList.add('busted');
+                } else if (player.hasBlackjack) {
+                    playerDiv.classList.add('blackjack');
+                }
+                
+                let statusText = '';
+                if (player.isBusted) {
+                    statusText = '<div style="color: #f44336; font-weight: bold; margin-top: 5px;">BUSTED!</div>';
+                } else if (player.hasBlackjack) {
+                    statusText = '<div style="color: #4CAF50; font-weight: bold; margin-top: 5px;">BLACKJACK!</div>';
+                } else if (player.isStanding) {
+                    statusText = '<div style="color: #FFD700; margin-top: 5px;">Standing</div>';
+                }
+                
+                const isLocalPlayer = index === this.localPlayerIndex;
+                
+                playerDiv.innerHTML = `
+                    <div class="player-name" style="font-weight: bold; margin-bottom: 5px;">${isLocalPlayer ? 'You' : player.name}${player.isBot ? ' (Bot)' : ''}</div>
+                    <div style="font-size: 12px; margin-bottom: 3px;">Chips: $${player.chips}</div>
+                    <div style="font-size: 12px; margin-bottom: 3px;">Bet: $${player.bet}</div>
+                    ${player.hand && player.hand.length > 0 ? `
+                        <div class="hand-cards" style="margin: 8px 0;">
+                            ${player.hand.map(card => `<div class="card">${card.name}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="hand-value" style="font-size: 14px; font-weight: bold; margin-top: 5px;">Value: ${player.value || 0}</div>
+                    ${statusText}
+                `;
+                
+                playerAreasContainer.appendChild(playerDiv);
             });
         }
     }
@@ -756,11 +1038,52 @@ class BlackjackClient {
     // Update dealer area
     updateDealerArea() {
         const dealerArea = document.getElementById('dealerArea');
-        if (dealerArea) {
-            dealerArea.innerHTML = `
-                <div class="dealer-name">Dealer</div>
-                <div class="dealer-value">Value: ${this.game.dealer.value}</div>
-            `;
+        const dealerCards = document.getElementById('dealerCards');
+        const dealerValue = document.getElementById('dealerValue');
+        
+        if (dealerArea && this.game.dealer) {
+            const dealerNameEl = dealerArea.querySelector('.dealer-name');
+            if (dealerNameEl) {
+                dealerNameEl.textContent = 'Dealer';
+            }
+        }
+        
+        if (dealerCards && this.game.dealer && this.game.dealer.hand) {
+            dealerCards.innerHTML = '';
+            this.game.dealer.hand.forEach((card, index) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                
+                // Hide first card if it's the hole card and not visible
+                if (index === 0 && !this.game.dealer.holeCardVisible) {
+                    cardDiv.classList.add('hidden');
+                    cardDiv.textContent = '?';
+                } else {
+                    cardDiv.textContent = card.name;
+                }
+                
+                dealerCards.appendChild(cardDiv);
+            });
+        }
+        
+        if (dealerValue && this.game.dealer) {
+            // Show value only if hole card is visible
+            if (this.game.dealer.holeCardVisible || this.game.dealer.hand.length <= 1) {
+                dealerValue.textContent = `Value: ${this.game.dealer.value}`;
+            } else {
+                // Only show value of visible card (second card) - use server value if available
+                if (this.game.dealer.value !== undefined && this.game.dealer.hand.length > 1) {
+                    dealerValue.textContent = `Value: ${this.game.dealer.value}?`;
+                } else {
+                    // Fallback calculation
+                    const visibleCard = this.game.dealer.hand[1];
+                    const visibleCardValue = visibleCard ? 
+                        (visibleCard.rank === 'ace' ? 11 : 
+                         ['jack', 'queen', 'king'].includes(visibleCard.rank) ? 10 : 
+                         visibleCard.value) : 0;
+                    dealerValue.textContent = `Value: ${visibleCardValue}?`;
+                }
+            }
         }
     }
 
@@ -777,15 +1100,50 @@ class BlackjackClient {
 
     // Update game controls
     updateGameControls() {
+        const bettingArea = document.getElementById('bettingArea');
+        const bettingControls = document.getElementById('bettingControls');
         const hitBtn = document.getElementById('hitBtn');
         const standBtn = document.getElementById('standBtn');
         const doubleBtn = document.getElementById('doubleBtn');
         const splitBtn = document.getElementById('splitBtn');
+        const placeBetBtn = document.getElementById('placeBetBtn');
+        
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        const isBettingPhase = this.game.gamePhase === 'betting';
+        const needsToBet = localPlayer && localPlayer.bet === 0 && !localPlayer.isBot;
+        
+        // Show betting area during betting phase if player hasn't bet
+        if (bettingArea) {
+            bettingArea.style.display = (isBettingPhase && needsToBet) ? 'flex' : 'none';
+        }
+        
+        // Show game controls during playing phase
+        if (bettingControls) {
+            bettingControls.style.display = (this.game.gamePhase === 'playing') ? 'flex' : 'none';
+        }
         
         if (hitBtn) hitBtn.style.display = this.canAct ? 'inline-block' : 'none';
         if (standBtn) standBtn.style.display = this.canAct ? 'inline-block' : 'none';
-        if (doubleBtn) doubleBtn.style.display = (this.canAct && this.game.players[this.localPlayerIndex]?.canDouble) ? 'inline-block' : 'none';
-        if (splitBtn) splitBtn.style.display = (this.canAct && this.game.players[this.localPlayerIndex]?.canSplit) ? 'inline-block' : 'none';
+        // Double down only available on first 2 cards and if player can afford it
+        const canDoubleNow = localPlayer && localPlayer.canDouble && localPlayer.hand && localPlayer.hand.length === 2;
+        if (doubleBtn) doubleBtn.style.display = (this.canAct && canDoubleNow) ? 'inline-block' : 'none';
+        // Split only available on first 2 cards of same rank
+        const canSplitNow = localPlayer && localPlayer.canSplit && localPlayer.hand && localPlayer.hand.length === 2 && 
+                            localPlayer.hand[0] && localPlayer.hand[1] && 
+                            localPlayer.hand[0].rank === localPlayer.hand[1].rank;
+        if (splitBtn) splitBtn.style.display = (this.canAct && canSplitNow) ? 'inline-block' : 'none';
+        
+        // Update player chips display
+        const playerChipsEl = document.getElementById('playerChips');
+        if (playerChipsEl && localPlayer) {
+            playerChipsEl.textContent = localPlayer.chips;
+        }
+        
+        // Update round number
+        const roundNumberEl = document.getElementById('roundNumber');
+        if (roundNumberEl) {
+            roundNumberEl.textContent = this.game.roundNumber;
+        }
     }
 
     // Show room code

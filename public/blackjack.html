@@ -181,6 +181,18 @@
             border-color: #4CAF50;
             background: rgba(76, 175, 80, 0.2);
         }
+        
+        #playerAreasContainer {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        
+        #playerAreasContainer .player-area {
+            position: relative;
+            min-width: 180px;
+            max-width: 200px;
+            margin: 5px;
+        }
 
         .hand-cards {
             display: flex;
@@ -477,9 +489,14 @@
                 <div class="hand-value" id="dealerValue">0</div>
             </div>
             
+            <!-- Player Areas Container -->
+            <div id="playerAreasContainer" style="position: absolute; bottom: 120px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; padding: 10px;">
+                <!-- Player areas will be dynamically added here -->
+            </div>
+            
             <div class="betting-area" id="bettingArea" style="display: none;">
                 <label style="color: white;">Bet Amount:</label>
-                <input type="number" id="betAmount" value="10" min="1" max="1000">
+                <input type="number" id="betAmount" value="10" min="5" max="1000">
                 <button id="placeBetBtn">Place Bet</button>
             </div>
             
