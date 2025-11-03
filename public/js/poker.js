@@ -954,7 +954,30 @@ class PokerClient {
                     <div class="player-bet">Bet: $${player.currentBet}</div>
                 `;
                 
-                playerList.appendChild(playerDiv);
+            playerList.appendChild(playerDiv);
+        });
+    }
+
+        // Update on-table player seats
+        const seatsContainer = document.getElementById('playerSeats');
+        if (seatsContainer) {
+            const seats = seatsContainer.querySelectorAll('.player-seat');
+            seats.forEach(seat => seat.style.display = 'none');
+
+            this.game.players.forEach((player, index) => {
+                const seat = seatsContainer.querySelector('.seat-' + index);
+                if (seat) {
+                    seat.innerHTML = `
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-chips">$${player.chips}</div>
+                    `;
+                    seat.style.display = 'block';
+                    if (index === this.game.currentPlayer) {
+                        seat.classList.add('active');
+                    } else {
+                        seat.classList.remove('active');
+                    }
+                }
             });
         }
     }
