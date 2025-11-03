@@ -1193,6 +1193,9 @@ class BlackjackClient {
         // Update document title
         document.title = 'Blackjack Game';
         
+        // Setup navigation buttons for game view
+        this.setupGameNavigationButtons();
+        
         // Scroll to top
         window.scrollTo(0, 0);
         
