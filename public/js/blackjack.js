@@ -1436,44 +1436,54 @@ class BlackjackClient {
                             cardImageName = name1;
                         }
                         
-                        const cardImage = window.cardImages && cardImageName ? window.cardImages[cardImageName] : null;
+                        // Get card image URL - use direct path
+                        const baseUrl = window.location.origin;
+                        let imageUrl = null;
                         
-                        if (cardImage && cardImage.width && cardImage.width > 0) {
-                            // Use actual card image if available
-                            let imageSrc = '';
-                            if (cardImage.canvas) {
-                                imageSrc = cardImage.canvas.toDataURL();
-                            } else if (cardImage.elt && cardImage.elt.src) {
-                                imageSrc = cardImage.elt.src;
-                            } else if (typeof cardImage === 'string') {
-                                imageSrc = cardImage;
-                            }
-                            
-                            if (imageSrc) {
-                                // Build fallback text safely
-                                const shortName = (card.name || '').replace(' of ', ' ').replace(/jack|queen|king|ace/gi, m => {
-                                    const map = {jack:'J', queen:'Q', king:'K', ace:'A'};
-                                    return map[m.toLowerCase()] || m;
-                                });
-                                const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
-                                const fallbackHtml = '<div style="font-size:11px;font-weight:bold;color:' + cardColor + '">' + shortName + '</div>';
-                                const escapedFallback = fallbackHtml.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                                
-                                return '<div class="card"><img src="' + imageSrc + '" alt="' + card.name + '" onerror="this.parentElement.innerHTML=\'' + escapedFallback + '\'"></div>';
+                        // Try to get image URL from p5.js image object first
+                        let cardImage = null;
+                        if (window.cardImages && cardImageName) {
+                            cardImage = window.cardImages[cardImageName];
+                        }
+                        
+                        // Try alternative name format if first attempt failed
+                        if (!cardImage && card.name) {
+                            const altName = card.name.toLowerCase().replace(/\s+/g, '_');
+                            if (window.cardImages && window.cardImages[altName]) {
+                                cardImage = window.cardImages[altName];
+                                if (!cardImageName || !window.cardImages[cardImageName]) {
+                                    cardImageName = altName;
+                                }
                             }
                         }
                         
-                        // Fallback to styled text card
-                        const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
-                            const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
-                            return map[match.toLowerCase()] || match;
-                        }) : '';
+                        // Get image URL from p5.js image object or construct direct path
+                        if (cardImage && cardImage.elt && cardImage.elt.src) {
+                            imageUrl = cardImage.elt.src;
+                        } else if (cardImage && cardImage.canvas) {
+                            // Convert canvas to data URL
+                            imageUrl = cardImage.canvas.toDataURL('image/png');
+                        } else if (cardImageName) {
+                            // Use direct URL path
+                            imageUrl = `${baseUrl}/Images/${cardImageName}.png`;
+                        }
                         
-                        return `<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5);">
-                            <div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
-                                ${shortName}
-                            </div>
-                        </div>`;
+                        const shortName = (card.name || '').replace(' of ', ' ').replace(/jack|queen|king|ace/gi, m => {
+                            const map = {jack:'J', queen:'Q', king:'K', ace:'A'};
+                            return map[m.toLowerCase()] || m;
+                        });
+                        const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
+                        const fallbackHtml = '<div style="padding: 8px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"><div style="font-size: 14px; font-weight: bold; color: ' + cardColor + '; text-align: center;">' + shortName + '</div></div>';
+                        const escapedFallback = fallbackHtml.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        
+                        if (imageUrl) {
+                            // Use card image
+                            return '<div class="card"><img src="' + imageUrl + '" alt="' + (card.name || shortName) + '" onerror="this.parentElement.innerHTML=\'' + escapedFallback + '\'" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"></div>';
+                        } else {
+                            // Fallback to styled text card
+                            return '<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5); padding: 8px;"><div style="font-size: 14px; font-weight: bold; color: ' + cardColor + '; text-align: center;">' + shortName + '</div></div>';
+                        }
+                        
                     }).join('') : '';
                 
                 playerDiv.innerHTML = `
@@ -1525,46 +1535,78 @@ class BlackjackClient {
                         cardImageName = name1;
                     }
                     
-                    const cardImage = window.cardImages && cardImageName ? window.cardImages[cardImageName] : null;
+                    // Get card image - try multiple formats
+                    let cardImage = null;
+                    if (window.cardImages && cardImageName) {
+                        cardImage = window.cardImages[cardImageName];
+                    }
+                    
+                    // Try alternative name format (with/of instead of _)
+                    if (!cardImage && card.name) {
+                        const altName = card.name.toLowerCase().replace(/\s+/g, '_');
+                        if (window.cardImages && window.cardImages[altName]) {
+                            cardImage = window.cardImages[altName];
+                        }
+                    }
+                    
+                    const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                        const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
+                        return map[match.toLowerCase()] || match;
+                    }) : '';
                     
                     if (cardImage && cardImage.width && cardImage.width > 0) {
-                        // Use actual card image
-                        const img = document.createElement('img');
-                        let imageSrc = '';
-                        if (cardImage.canvas) {
-                            imageSrc = cardImage.canvas.toDataURL();
-                        } else if (cardImage.elt && cardImage.elt.src) {
-                            imageSrc = cardImage.elt.src;
-                        } else if (typeof cardImage === 'string') {
-                            imageSrc = cardImage;
-                        }
-                        
-                        if (imageSrc) {
-                            img.src = imageSrc;
-                            img.alt = card.name;
+                        // p5.js image object - convert to data URL
+                        try {
+                            const img = document.createElement('img');
+                            // p5.js images have .canvas property for p5.js Canvas
+                            // or we can use the image directly if it's an HTMLImageElement
+                            if (cardImage.canvas) {
+                                // p5.js Canvas - convert to data URL
+                                img.src = cardImage.canvas.toDataURL('image/png');
+                            } else if (cardImage.elt) {
+                                // p5.js Image wrapper - access underlying element
+                                if (cardImage.elt.src) {
+                                    img.src = cardImage.elt.src;
+                                } else if (cardImage.elt.canvas) {
+                                    img.src = cardImage.elt.canvas.toDataURL('image/png');
+                                } else {
+                                    throw new Error('Cannot get image source from p5.js image');
+                                }
+                            } else if (cardImage instanceof HTMLImageElement || cardImage.src) {
+                                // Direct HTMLImageElement
+                                img.src = cardImage.src || cardImage;
+                            } else if (typeof cardImage === 'string') {
+                                // String URL
+                                img.src = cardImage;
+                            } else {
+                                throw new Error('Unknown image type');
+                            }
+                            
+                            img.alt = card.name || shortName;
                             img.style.width = '100%';
                             img.style.height = '100%';
                             img.style.objectFit = 'cover';
-                            img.style.borderRadius = '3px';
+                            img.style.borderRadius = '5px';
+                            img.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
                             img.onerror = function() {
-                                // Fallback to text if image fails
-                                const shortName = card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
-                                    const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
-                                    return map[match.toLowerCase()] || match;
-                                });
-                                cardDiv.innerHTML = `<div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
-                                    ${shortName}
+                                console.warn('Card image failed to load, using fallback:', card.name);
+                                // Fallback to styled text card
+                                const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
+                                cardDiv.innerHTML = `<div style="padding: 5px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                    <div style="font-size: 14px; font-weight: bold; color: ${cardColor}; text-align: center;">
+                                        ${shortName}
+                                    </div>
                                 </div>`;
                             };
                             cardDiv.appendChild(img);
-                        } else {
-                            // No image source, use fallback
-                            const shortName = card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
-                                const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
-                                return map[match.toLowerCase()] || match;
-                            });
-                            cardDiv.innerHTML = `<div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
-                                ${shortName}
+                        } catch (error) {
+                            console.warn('Error loading card image:', error, 'Card:', card.name);
+                            // Fallback to styled text card
+                            const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
+                            cardDiv.innerHTML = `<div style="padding: 5px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                <div style="font-size: 14px; font-weight: bold; color: ${cardColor}; text-align: center;">
+                                    ${shortName}
+                                </div>
                             </div>`;
                         }
                     } else {
