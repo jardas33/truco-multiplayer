@@ -1360,6 +1360,10 @@ class BlackjackClient {
 
     // Update UI
     updateUI() {
+        console.log('🃏 updateUI called - phase:', this.game.gamePhase);
+        console.log('  - Dealer hand length:', this.game.dealer?.hand?.length);
+        console.log('  - Players with cards:', this.game.players?.filter(p => p.hand && p.hand.length > 0).map(p => ({ name: p.name, cards: p.hand.length })));
+        
         // Update player areas
         this.updatePlayerAreas();
         
@@ -1368,6 +1372,8 @@ class BlackjackClient {
         
         // Update game info
         this.updateGameInfo();
+        
+        console.log('🃏 UI update complete');
     }
 
     // Update player areas
@@ -1428,7 +1434,8 @@ class BlackjackClient {
                 
                 // Try to use card images if available
                 const cardHTML = player.hand && player.hand.length > 0 ? 
-                    player.hand.map(card => {
+                    player.hand.map((card, cardIndex) => {
+                        console.log(`🃏 Rendering player ${player.name} card ${cardIndex}:`, card.name || card);
                         // Try to find card image - handle both formats
                         let cardImageName = null;
                         if (card.name) {
@@ -1478,8 +1485,10 @@ class BlackjackClient {
                         
                         if (imageUrl) {
                             // Use card image
-                            return '<div class="card"><img src="' + imageUrl + '" alt="' + (card.name || shortName) + '" onerror="this.parentElement.innerHTML=\'' + escapedFallback + '\'" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"></div>';
+                            console.log(`🃏 Using card image URL for player: ${imageUrl.substring(0, 50)}...`);
+                            return '<div class="card"><img src="' + imageUrl + '" alt="' + (card.name || shortName) + '" onload="console.log(\'✅ Card image loaded: ' + (card.name || shortName) + '\');" onerror="console.warn(\'❌ Card image failed: ' + (card.name || shortName) + '\'); this.parentElement.innerHTML=\'' + escapedFallback + '\';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"></div>';
                         } else {
+                            console.warn('❌ No image URL found for player card:', card.name, 'cardImageName:', cardImageName);
                             // Fallback to styled text card
                             return '<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5); padding: 8px;"><div style="font-size: 14px; font-weight: bold; color: ' + cardColor + '; text-align: center;">' + shortName + '</div></div>';
                         }
