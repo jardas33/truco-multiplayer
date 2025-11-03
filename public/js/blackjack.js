@@ -441,7 +441,44 @@ class BlackjackClient {
         document.getElementById('joinRoomBtn').onclick = () => this.joinRoom();
         document.getElementById('addBotBtn').onclick = () => this.addBot();
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
-        document.getElementById('startGameBtn').onclick = () => this.startGame();
+        // Game menu button - return to menu
+        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        if (gameMenuBtn) {
+            gameMenuBtn.onclick = () => {
+                if (window.blackjackClient) {
+                    window.blackjackClient.showMenu();
+                } else {
+                    window.location.reload();
+                }
+            };
+        }
+        
+        document.getElementById('startGameBtn').onclick = () => {
+            const roomId = this.getRoomId();
+            if (!roomId) {
+                console.error('🃏 No room ID available to start game');
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Please create or join a room first', 'error');
+                } else {
+                    alert('Please create or join a room first');
+                }
+                return;
+            }
+            
+            // Emit startGame event to server
+            const socket = window.gameFramework.socket;
+            if (socket) {
+                console.log('🃏 Emitting startGame to server with roomId:', roomId);
+                socket.emit('startGame', roomId);
+            } else {
+                console.error('🃏 No socket available');
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Not connected to server', 'error');
+                } else {
+                    alert('Not connected to server');
+                }
+            }
+        };
         
         // Game controls
         const hitBtn = document.getElementById('hitBtn');
@@ -540,7 +577,8 @@ class BlackjackClient {
         });
         
         socket.on('gameStarted', (data) => {
-            console.log('Game started:', data);
+            console.log('🃏 gameStarted event received:', data);
+            // Transition to game view
             this.startGame(data);
         });
         
@@ -705,9 +743,60 @@ class BlackjackClient {
         socket.emit('removeBot', { roomId: roomId });
     }
 
+    // Reset game state for fresh start
+    resetGameState() {
+        console.log('🃏 Resetting game state for fresh start');
+        
+        // Reset UI state
+        this.isMyTurn = false;
+        this.canAct = false;
+        
+        // Clear any previous game data
+        if (this.game) {
+            this.game.players = [];
+            this.game.dealer = { hand: [], value: 0, isBusted: false, hasBlackjack: false, holeCardVisible: false };
+            this.game.gamePhase = 'betting';
+            this.game.currentPlayer = 0;
+            this.game.roundNumber = 1;
+        }
+        
+        // Clear player areas container
+        const playerAreasContainer = document.getElementById('playerAreasContainer');
+        if (playerAreasContainer) {
+            playerAreasContainer.innerHTML = '';
+        }
+        
+        // Clear dealer cards
+        const dealerCards = document.getElementById('dealerCards');
+        if (dealerCards) {
+            dealerCards.innerHTML = '';
+        }
+        
+        // Reset dealer value display
+        const dealerValue = document.getElementById('dealerValue');
+        if (dealerValue) {
+            dealerValue.textContent = '0';
+        }
+        
+        // Reset player chips display
+        const playerChips = document.getElementById('playerChips');
+        if (playerChips) {
+            playerChips.textContent = '1000';
+        }
+        
+        // Reset round number
+        const roundNumber = document.getElementById('roundNumber');
+        if (roundNumber) {
+            roundNumber.textContent = '1';
+        }
+    }
+
     // Start game
     startGame(data = null) {
         console.log('🃏 Starting Blackjack game with data:', data);
+        
+        // Reset state for fresh start
+        this.resetGameState();
         
         if (data) {
             // Sync with server state
@@ -775,13 +864,51 @@ class BlackjackClient {
         // Set global game instance
         window.game = this.game;
         
-        // Show game UI and hide menu
-        document.getElementById('Menu').style.display = 'none';
-        document.getElementById('Game').style.display = 'block';
+        // TRANSITION: Hide menu completely and show game
+        const menuDiv = document.getElementById('Menu');
+        const gameDiv = document.getElementById('Game');
         
-        // Update UI based on phase
-        this.updateUI();
-        this.updateGameControls();
+        if (menuDiv) {
+            menuDiv.style.display = 'none';
+            menuDiv.style.visibility = 'hidden';
+            menuDiv.style.zIndex = '0';
+        }
+        
+        if (gameDiv) {
+            // Show game container
+            gameDiv.style.display = 'block';
+            gameDiv.style.visibility = 'visible';
+            gameDiv.style.position = 'fixed';
+            gameDiv.style.top = '0';
+            gameDiv.style.left = '0';
+            gameDiv.style.width = '100%';
+            gameDiv.style.height = '100%';
+            gameDiv.style.zIndex = '1000';
+            gameDiv.style.overflowY = 'auto';
+            
+            // Ensure blackjack-table fills container
+            const blackjackTable = gameDiv.querySelector('.blackjack-table');
+            if (blackjackTable) {
+                blackjackTable.style.width = '100%';
+                blackjackTable.style.height = '100%';
+                blackjackTable.style.minHeight = '100vh';
+            }
+        }
+        
+        // Update document title
+        document.title = 'Blackjack Game';
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+        
+        // Small delay to ensure DOM is ready, then update UI
+        setTimeout(() => {
+            // Update UI based on phase
+            this.updateUI();
+            this.updateGameControls();
+            
+            console.log('🃏 Game view displayed, menu hidden, UI updated');
+        }, 100);
     }
 
     // Update game state
