@@ -4960,8 +4960,9 @@ function determineRoundWinner(playedCards, room) {
         }
     }
     
-    // Helper function to handle bot turns in blackjack
-    function handleBlackjackBotTurn(roomCode, room) {
+    // NOTE: Duplicate function removed - handleBlackjackBotTurn is now defined at the top of the connection block
+    // This is a placeholder to prevent errors
+    function handleBlackjackBotTurn_DUPLICATE(roomCode, room) {
         const botPlayer = room.game.players[room.game.currentPlayer];
         
         if (!botPlayer || !botPlayer.isBot || botPlayer.isBusted || botPlayer.isStanding || botPlayer.hasBlackjack) {
