@@ -1456,10 +1456,10 @@ class BlackjackClient {
                                     return map[m.toLowerCase()] || m;
                                 });
                                 const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
-                                const fallbackHtml = `<div style="font-size:11px;font-weight:bold;color:${cardColor}">${shortName}</div>`;
+                                const fallbackHtml = '<div style="font-size:11px;font-weight:bold;color:' + cardColor + '">' + shortName + '</div>';
                                 const escapedFallback = fallbackHtml.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                                 
-                                return `<div class="card"><img src="${imageSrc}" alt="${card.name}" onerror="this.parentElement.innerHTML='${escapedFallback}'"></div>`;
+                                return '<div class="card"><img src="' + imageSrc + '" alt="' + card.name + '" onerror="this.parentElement.innerHTML=\'' + escapedFallback + '\'"></div>';
                             }
                         }
                         
