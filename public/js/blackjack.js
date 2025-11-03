@@ -709,7 +709,7 @@ class BlackjackClient {
         socket.on('roomJoined', (data) => {
             console.log('🃏 Room joined:', data);
             if (data.playerIndex !== undefined) {
-                this.localPlayerIndex = data.playerIndex;
+            this.localPlayerIndex = data.playerIndex;
             }
             // Update roomId from gameFramework if available
             if (window.gameFramework && window.gameFramework.roomId) {
@@ -813,9 +813,22 @@ class BlackjackClient {
         
         // Error handling
         socket.on('error', (error) => {
-            console.error('Socket error:', error);
+            console.error('❌ Socket error received:', error);
+            
+            // Reset acting flag if we're in betting flow
+            if (this.isActing) {
+                console.log('🃏 Resetting isActing flag due to error');
+                this.isActing = false;
+                const placeBetBtn = document.getElementById('placeBetBtn');
+                if (placeBetBtn) {
+                    placeBetBtn.disabled = false;
+                    console.log('🃏 Re-enabled place bet button after error');
+                }
+            }
+            
+            // Show error message
             if (typeof UIUtils !== 'undefined') {
-                UIUtils.showGameMessage('Error: ' + error, 'error');
+            UIUtils.showGameMessage('Error: ' + error, 'error');
             } else {
                 alert('Error: ' + error);
             }
@@ -905,7 +918,7 @@ class BlackjackClient {
                 roomCode = prompt('Enter room code:');
             }
             
-            if (roomCode) {
+        if (roomCode) {
                 console.log('✅ GameFramework available, joining room:', roomCode);
                 GameFramework.joinRoom(roomCode);
                 return;
@@ -1139,7 +1152,7 @@ class BlackjackClient {
         // Small delay to ensure DOM is ready, then update UI
         setTimeout(() => {
             // Update UI based on phase
-            this.updateUI();
+        this.updateUI();
             this.updateGameControls();
             
             console.log('🃏 Game view displayed, menu hidden, UI updated');
@@ -1298,7 +1311,7 @@ class BlackjackClient {
         
         if (!this.canAct) {
             if (typeof UIUtils !== 'undefined') {
-                UIUtils.showGameMessage('It\'s not your turn', 'error');
+            UIUtils.showGameMessage('It\'s not your turn', 'error');
             } else {
                 alert('It\'s not your turn');
             }
@@ -1472,7 +1485,7 @@ class BlackjackClient {
         // Update both menu player list and game player areas
         const playerList = document.getElementById('playerList');
         const playerAreasContainer = document.getElementById('playerAreasContainer');
-        
+            
         if (playerList && this.game.players) {
             playerList.innerHTML = '';
             this.game.players.forEach((player, index) => {
