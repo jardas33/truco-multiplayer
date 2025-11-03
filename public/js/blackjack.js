@@ -1613,7 +1613,5 @@ function drawGameInfo() {
 }
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    window.blackjackClient = new BlackjackClient();
-    window.blackjackClient.initialize();
-});
+// Client initialization is handled in blackjack.html
+// This prevents duplicate initialization
