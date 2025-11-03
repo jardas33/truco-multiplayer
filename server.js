@@ -752,6 +752,97 @@ io.on('connection', (socket) => {
         return card;
     }
     
+    // Helper function to advance turn in blackjack - MUST be defined before EARLY handler
+    function advanceBlackjackTurn(roomCode, room) {
+        const startIndex = room.game.currentPlayer;
+        let found = false;
+        let attempts = 0;
+        
+        // Find next player who can act (max one full cycle)
+        while (attempts < room.game.players.length) {
+            attempts++;
+            room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+            
+            const player = room.game.players[room.game.currentPlayer];
+            
+            // Check if this player can still act
+            if (player && player.bet > 0 && !player.isBusted && !player.isStanding && !player.hasBlackjack) {
+                found = true;
+                console.log(`🃏 Advanced to player ${player.name} (index ${room.game.currentPlayer})`);
+                break;
+            }
+        }
+        
+        if (!found) {
+            // No more players can act, move to dealer phase
+            console.log(`🃏 All players done, moving to dealer phase`);
+            room.game.gamePhase = 'dealer';
+            
+            // Reveal dealer's hole card
+            if (room.game.dealer.hand.length >= 2) {
+                room.game.dealer.holeCardVisible = true;
+                room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
+                console.log(`🃏 Dealer's hole card revealed. Value: ${room.game.dealer.value}`);
+            }
+            
+            // Check if dealer has blackjack
+            if (checkBlackjack(room.game.dealer.hand)) {
+                room.game.dealer.hasBlackjack = true;
+                console.log(`🃏 Dealer has blackjack!`);
+                setTimeout(() => {
+                    determineBlackjackWinners(roomCode, room);
+                }, 1500);
+                return;
+            }
+            
+            // Start dealer's turn
+            setTimeout(() => {
+                // Dealer hits until 17 or bust
+                while (room.game.dealer.value < 17 && room.game.dealer.hand.length < 7) {
+                    const dealerCard = dealBlackjackCard(room);
+                    if (!dealerCard) {
+                        console.error('❌ Failed to deal card to dealer');
+                        break;
+                    }
+                    room.game.dealer.hand.push(dealerCard);
+                    room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
+                    console.log(`🃏 Dealer hit. New value: ${room.game.dealer.value}`);
+                    
+                    if (room.game.dealer.value > 21) {
+                        room.game.dealer.isBusted = true;
+                        console.log(`🃏 Dealer busted with ${room.game.dealer.value}`);
+                        break;
+                    }
+                }
+                
+                // Emit dealer turn update
+                io.to(roomCode).emit('dealerTurn', {
+                    dealer: room.game.dealer,
+                    gamePhase: room.game.gamePhase
+                });
+                
+                // Determine winners after a short delay
+                setTimeout(() => {
+                    determineBlackjackWinners(roomCode, room);
+                }, 1500);
+            }, 1000);
+        } else {
+            // Emit turn change
+            io.to(roomCode).emit('turnChanged', {
+                currentPlayer: room.game.currentPlayer,
+                gamePhase: room.game.gamePhase
+            });
+            
+            // If it's a bot's turn, handle it
+            const currentPlayer = room.game.players[room.game.currentPlayer];
+            if (currentPlayer && currentPlayer.isBot) {
+                setTimeout(() => {
+                    handleBlackjackBotTurn(roomCode, room);
+                }, 1500);
+            }
+        }
+    }
+    
     // Helper function to handle bot turns in blackjack - MUST be defined before use
     function handleBlackjackBotTurn(roomCode, room) {
         const botPlayer = room.game.players[room.game.currentPlayer];
@@ -5092,8 +5183,10 @@ function determineRoundWinner(playedCards, room) {
         }
     });
     
-    // Helper function to advance turn in blackjack
-    function advanceBlackjackTurn(roomCode, room) {
+    // NOTE: advanceBlackjackTurn function has been moved earlier in the file (before EARLY handler)
+    // This duplicate definition should not be needed, but keeping for safety
+    // Helper function to advance turn in blackjack (DUPLICATE - moved earlier)
+    function advanceBlackjackTurn_LATE(roomCode, room) {
         const startIndex = room.game.currentPlayer;
         let found = false;
         let attempts = 0;
