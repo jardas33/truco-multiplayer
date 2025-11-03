@@ -1535,88 +1535,70 @@ class BlackjackClient {
                         cardImageName = name1;
                     }
                     
-                    // Get card image - try multiple formats
+                    // Get card image URL - use direct path (same logic as player cards)
+                    const baseUrl = window.location.origin;
+                    let imageUrl = null;
+                    
+                    // Try to get image URL from p5.js image object first
                     let cardImage = null;
                     if (window.cardImages && cardImageName) {
                         cardImage = window.cardImages[cardImageName];
                     }
                     
-                    // Try alternative name format (with/of instead of _)
+                    // Try alternative name format if first attempt failed
                     if (!cardImage && card.name) {
                         const altName = card.name.toLowerCase().replace(/\s+/g, '_');
                         if (window.cardImages && window.cardImages[altName]) {
                             cardImage = window.cardImages[altName];
+                            if (!cardImageName || !window.cardImages[cardImageName]) {
+                                cardImageName = altName;
+                            }
                         }
+                    }
+                    
+                    // Get image URL from p5.js image object or construct direct path
+                    if (cardImage && cardImage.elt && cardImage.elt.src) {
+                        imageUrl = cardImage.elt.src;
+                    } else if (cardImage && cardImage.canvas) {
+                        // Convert canvas to data URL
+                        imageUrl = cardImage.canvas.toDataURL('image/png');
+                    } else if (cardImageName) {
+                        // Use direct URL path
+                        imageUrl = `${baseUrl}/Images/${cardImageName}.png`;
                     }
                     
                     const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
                         const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
                         return map[match.toLowerCase()] || match;
                     }) : '';
+                    const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
                     
-                    if (cardImage && cardImage.width && cardImage.width > 0) {
-                        // p5.js image object - convert to data URL
-                        try {
-                            const img = document.createElement('img');
-                            // p5.js images have .canvas property for p5.js Canvas
-                            // or we can use the image directly if it's an HTMLImageElement
-                            if (cardImage.canvas) {
-                                // p5.js Canvas - convert to data URL
-                                img.src = cardImage.canvas.toDataURL('image/png');
-                            } else if (cardImage.elt) {
-                                // p5.js Image wrapper - access underlying element
-                                if (cardImage.elt.src) {
-                                    img.src = cardImage.elt.src;
-                                } else if (cardImage.elt.canvas) {
-                                    img.src = cardImage.elt.canvas.toDataURL('image/png');
-                                } else {
-                                    throw new Error('Cannot get image source from p5.js image');
-                                }
-                            } else if (cardImage instanceof HTMLImageElement || cardImage.src) {
-                                // Direct HTMLImageElement
-                                img.src = cardImage.src || cardImage;
-                            } else if (typeof cardImage === 'string') {
-                                // String URL
-                                img.src = cardImage;
-                            } else {
-                                throw new Error('Unknown image type');
-                            }
-                            
-                            img.alt = card.name || shortName;
-                            img.style.width = '100%';
-                            img.style.height = '100%';
-                            img.style.objectFit = 'cover';
-                            img.style.borderRadius = '5px';
-                            img.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                            img.onerror = function() {
-                                console.warn('Card image failed to load, using fallback:', card.name);
-                                // Fallback to styled text card
-                                const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
-                                cardDiv.innerHTML = `<div style="padding: 5px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                                    <div style="font-size: 14px; font-weight: bold; color: ${cardColor}; text-align: center;">
-                                        ${shortName}
-                                    </div>
-                                </div>`;
-                            };
-                            cardDiv.appendChild(img);
-                        } catch (error) {
-                            console.warn('Error loading card image:', error, 'Card:', card.name);
+                    if (imageUrl) {
+                        // Use card image
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        img.alt = card.name || shortName;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '5px';
+                        img.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                        img.onerror = function() {
+                            console.warn('Card image failed to load, using fallback:', card.name);
                             // Fallback to styled text card
-                            const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
-                            cardDiv.innerHTML = `<div style="padding: 5px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            cardDiv.innerHTML = `<div style="padding: 8px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                                 <div style="font-size: 14px; font-weight: bold; color: ${cardColor}; text-align: center;">
                                     ${shortName}
                                 </div>
                             </div>`;
-                        }
+                        };
+                        cardDiv.appendChild(img);
                     } else {
                         // Fallback to styled text card
-                        const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
-                            const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
-                            return map[match.toLowerCase()] || match;
-                        }) : '';
-                        cardDiv.innerHTML = `<div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
-                            ${shortName}
+                        cardDiv.innerHTML = `<div style="padding: 8px; background: linear-gradient(135deg, #fff, #f5f5f5); border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            <div style="font-size: 14px; font-weight: bold; color: ${cardColor}; text-align: center;">
+                                ${shortName}
+                            </div>
                         </div>`;
                     }
                 }
