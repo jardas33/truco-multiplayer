@@ -2756,9 +2756,10 @@ function startMultiplayerGame(data) {
                 console.log(`🎯 Local player identified: ${player.name} at index ${index}`);
             }
             
+            // ✅ CRITICAL FIX: Server stores nickname in player.name, not player.nickname
             // Convert server player data to client Player objects
             const clientPlayer = new Player(
-                player.nickname || player.name, 
+                player.name || `Player ${index + 1}`, 
                 player.team || (index < 2 ? 'team1' : 'team2'), // Auto-assign teams if not set
                 player.isBot || false,
                 index
