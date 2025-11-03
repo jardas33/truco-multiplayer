@@ -748,10 +748,66 @@ class BlackjackClient {
 
     // Join room
     joinRoom() {
-        const roomCode = prompt('Enter room code:');
-        if (roomCode) {
-            window.gameFramework.socket.emit('joinRoom', { roomCode: roomCode });
+        console.log('🃏 Join Room button clicked');
+        
+        // Try to join room immediately first
+        if (typeof GameFramework !== 'undefined' && GameFramework.joinRoom) {
+            // Get room code from input if available, otherwise use prompt
+            const roomCodeInput = document.getElementById('roomCodeInput');
+            let roomCode = null;
+            
+            if (roomCodeInput && roomCodeInput.value) {
+                roomCode = roomCodeInput.value.trim();
+            } else {
+                roomCode = prompt('Enter room code:');
+            }
+            
+            if (roomCode) {
+                console.log('✅ GameFramework available, joining room:', roomCode);
+                GameFramework.joinRoom(roomCode);
+                return;
+            }
         }
+        
+        // If not available, wait and retry
+        console.log('⏳ GameFramework not ready, waiting...');
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const tryJoinRoom = () => {
+            attempts++;
+            console.log(`🔄 Attempt ${attempts}/${maxAttempts} to join room`);
+            
+            if (typeof GameFramework !== 'undefined' && GameFramework.joinRoom) {
+                const roomCodeInput = document.getElementById('roomCodeInput');
+                let roomCode = null;
+                
+                if (roomCodeInput && roomCodeInput.value) {
+                    roomCode = roomCodeInput.value.trim();
+                } else {
+                    roomCode = prompt('Enter room code:');
+                }
+                
+                if (roomCode) {
+                    console.log('✅ GameFramework now available, joining room:', roomCode);
+                    GameFramework.joinRoom(roomCode);
+                    return;
+                }
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(tryJoinRoom, 200); // Wait 200ms between attempts
+            } else {
+                console.error('❌ GameFramework still not available after maximum attempts');
+                if (typeof UIUtils !== 'undefined' && UIUtils.showGameMessage) {
+                    UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+                } else {
+                    alert('Game framework not ready. Please refresh the page.');
+                }
+            }
+        };
+        
+        setTimeout(tryJoinRoom, 100);
     }
 
     // Add bot
