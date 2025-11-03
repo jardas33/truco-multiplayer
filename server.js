@@ -1425,10 +1425,22 @@ io.on('connection', (socket) => {
                                              visibleCard.value;
                     room.game.dealer.holeCardVisible = false;
                     
-                    // Check for blackjacks
+                    // Check for blackjacks and set player flags
                     room.game.players.forEach(player => {
-                        if (player.bet > 0 && checkBlackjack(player.hand)) {
-                            player.hasBlackjack = true;
+                        if (player.bet > 0) {
+                            if (checkBlackjack(player.hand)) {
+                                player.hasBlackjack = true;
+                            }
+                            // Set canDouble and canSplit flags after initial deal
+                            if (player.hand.length === 2) {
+                                player.canDouble = true; // Can double on first 2 cards
+                                // Check if can split (same rank)
+                                if (player.hand[0] && player.hand[1] && 
+                                    player.hand[0].rank === player.hand[1].rank &&
+                                    player.chips >= player.bet) {
+                                    player.canSplit = true;
+                                }
+                            }
                         }
                     });
                     
@@ -1480,6 +1492,22 @@ io.on('connection', (socket) => {
                         gamePhase: room.game.gamePhase,
                         currentPlayer: room.game.currentPlayer
                     });
+                    
+                    // Emit turn changed to update client UI
+                    io.to(roomCode).emit('turnChanged', {
+                        currentPlayer: room.game.currentPlayer,
+                        gamePhase: room.game.gamePhase
+                    });
+                    
+                    // If first player is a bot, start their turn
+                    if (room.game.currentPlayer < room.game.players.length) {
+                        const firstPlayer = room.game.players[room.game.currentPlayer];
+                        if (firstPlayer && firstPlayer.isBot) {
+                            setTimeout(() => {
+                                handleBlackjackBotTurn(roomCode, room);
+                            }, 1500);
+                        }
+                    }
                     
                     console.log(`🃏 Cards dealt. Phase: ${room.game.gamePhase}, Current player: ${room.game.currentPlayer}`);
                     
