@@ -3939,15 +3939,20 @@ function determineRoundWinner(playedCards, room) {
     // Place bet handler
     socket.on('placeBet', (data) => {
         try {
+            console.log('🃏 placeBet event received:', data);
             const roomCode = data.roomId;
             const room = rooms.get(roomCode);
             
             if (!room || room.gameType !== 'blackjack') {
+                console.error('❌ Room not found or not a blackjack game. Room:', roomCode, 'room exists:', !!room, 'gameType:', room?.gameType);
                 socket.emit('error', 'Room not found or not a blackjack game');
                 return;
             }
             
+            console.log('🃏 Room found. Game phase:', room.game?.gamePhase);
+            
             if (room.game.gamePhase !== 'betting') {
+                console.warn('🃏 Not in betting phase. Current phase:', room.game.gamePhase);
                 socket.emit('error', 'Not in betting phase');
                 return;
             }
@@ -3955,8 +3960,24 @@ function determineRoundWinner(playedCards, room) {
             const playerIndex = data.playerIndex;
             const player = room.game.players[playerIndex];
             
-            if (!player || player.id !== socket.id) {
-                socket.emit('error', 'Invalid player');
+            console.log('🃏 Player lookup:', {
+                playerIndex: playerIndex,
+                socketId: socket.id,
+                playerFound: !!player,
+                playerId: player?.id,
+                playerName: player?.name,
+                idMatch: player?.id === socket.id
+            });
+            
+            if (!player) {
+                console.error('❌ Player not found at index:', playerIndex, 'Available players:', room.game.players.length);
+                socket.emit('error', 'Invalid player index');
+                return;
+            }
+            
+            if (player.id !== socket.id) {
+                console.error('❌ Player ID mismatch. Player ID:', player.id, 'Socket ID:', socket.id);
+                socket.emit('error', 'Invalid player - ID mismatch');
                 return;
             }
             
