@@ -1450,7 +1450,16 @@ class BlackjackClient {
                             }
                             
                             if (imageSrc) {
-                                return `<div class="card"><img src="${imageSrc}" alt="${card.name}" onerror="this.parentElement.innerHTML='<div style=\\'font-size:11px;font-weight:bold;color:${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'}\\'>${(card.name || '').replace(' of ', ' ').replace(/jack|queen|king|ace/gi, m => ({jack:'J',queen:'Q',king:'K',ace:'A'}[m.toLowerCase()]||m))}</div>'"></div>`;
+                                // Build fallback text safely
+                                const shortName = (card.name || '').replace(' of ', ' ').replace(/jack|queen|king|ace/gi, m => {
+                                    const map = {jack:'J', queen:'Q', king:'K', ace:'A'};
+                                    return map[m.toLowerCase()] || m;
+                                });
+                                const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? '#d32f2f' : '#333';
+                                const fallbackHtml = `<div style="font-size:11px;font-weight:bold;color:${cardColor}">${shortName}</div>`;
+                                const escapedFallback = fallbackHtml.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                                
+                                return `<div class="card"><img src="${imageSrc}" alt="${card.name}" onerror="this.parentElement.innerHTML='${escapedFallback}'"></div>`;
                             }
                         }
                         
