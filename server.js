@@ -571,7 +571,7 @@ function checkGoFishGameOver(room) {
     }
 }
 
-// Health check endpoint for Render
+// Health check endpoint for Render - must respond quickly
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'healthy',
@@ -580,6 +580,11 @@ app.get('/health', (req, res) => {
         rooms: rooms.size,
         environment: process.env.NODE_ENV || 'development'
     });
+});
+
+// Root endpoint for health checks
+app.get('/', (req, res) => {
+    res.status(200).send('Server is running');
 });
 
 // Test endpoint for debugging
@@ -5197,15 +5202,24 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
-try {
-    http.listen(PORT, HOST, () => {
-        console.log(`🚀 Truco game server running on port ${PORT}`);
-        console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`📱 Ready for multiplayer action!`);
-        console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
-        console.log(`✅ Server startup complete`);
-    });
-} catch (error) {
+// Ensure server starts successfully
+http.listen(PORT, HOST, () => {
+    console.log(`🚀 Truco game server running on port ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📱 Ready for multiplayer action!`);
+    console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
+    console.log(`✅ Server startup complete`);
+    
+    // Emit a signal that server is ready (useful for deployment monitoring)
+    if (process.send) {
+        process.send('ready');
+    }
+}).on('error', (error) => {
     console.error('❌ Failed to start server:', error);
+    if (error.code === 'EADDRINUSE') {
+        console.error('❌ Port is already in use');
+    } else if (error.code === 'EACCES') {
+        console.error('❌ Permission denied to bind to port');
+    }
     process.exit(1);
-} 
+}); 
