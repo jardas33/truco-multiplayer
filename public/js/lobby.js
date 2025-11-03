@@ -516,14 +516,49 @@ function setupSocketListeners() {
     socket.on('nicknameChanged', (data) => {
         console.log('✅ Nickname changed successfully:', data);
         
-        // ✅ Reset button state and show success feedback
+        // ✅ CRITICAL FIX: Store nickname in localStorage for persistence
+        if (data.nickname && data.nickname.trim()) {
+            localStorage.setItem('trucoPlayerNickname', data.nickname.trim());
+            console.log('🎯 Stored nickname in localStorage:', data.nickname.trim());
+        }
+        
+        // ✅ Reset button state
         const changeBtn = document.getElementById('changeNicknameBtn');
         if (changeBtn) {
             changeBtn.textContent = 'Change';
             changeBtn.disabled = false;
         }
         
-        // The playerJoined event will update the player list
+        // ✅ Clear input field
+        const nicknameInput = document.getElementById('nicknameInput');
+        if (nicknameInput) {
+            nicknameInput.value = '';
+        }
+        
+        // ✅ Update game state if game has started
+        if (window.game && window.game.players) {
+            const player = window.game.players.find(p => p.id === data.playerId || p.id === socket.id);
+            if (player) {
+                player.name = data.nickname;
+                console.log('✅ Updated player name in game state:', player.name);
+            }
+        }
+        
+        // The playersUpdated event will update the player list
+    });
+    
+    // ✅ Handle nickname change error
+    socket.on('nicknameError', (errorMessage) => {
+        console.error('❌ Nickname change error:', errorMessage);
+        
+        // ✅ Reset button state
+        const changeBtn = document.getElementById('changeNicknameBtn');
+        if (changeBtn) {
+            changeBtn.textContent = 'Change';
+            changeBtn.disabled = false;
+        }
+        
+        alert(`Nickname change failed: ${errorMessage}`);
     });
 
     // ✅ Handle team selection success
@@ -2436,7 +2471,8 @@ function updatePlayerList(players) {
         let playerListHTML = '<h3 style="margin: 8px 0 6px 0; font-size: 16px;">Players in Room:</h3>';
         players.forEach((player, index) => {
             const playerType = player.isBot ? '🤖 Bot' : '👤 Player';
-            const nickname = player.nickname || player.name;
+            // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+            const displayName = player.name || `Player ${index + 1}`;
             
             // Set team color for player name
             let teamColor = '#FFFFFF'; // Default white
@@ -2450,7 +2486,7 @@ function updatePlayerList(players) {
             }
             
             playerListHTML += `<div style="margin: 3px 0; padding: 6px; border: 1px solid #4CAF50; border-radius: 3px; background-color: rgba(0, 100, 0, 0.8); color: white; font-size: 13px;">
-                <strong style="color: #FFD700;">${playerType}:</strong> <span style="color: ${teamColor};">${nickname}</span><br>
+                <strong style="color: #FFD700;">${playerType}:</strong> <span style="color: ${teamColor};">${displayName}</span><br>
                 <small style="color: #E0E0E0;">${teamDisplay}</small>
             </div>`;
         });
