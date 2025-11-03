@@ -71,23 +71,14 @@
             background: linear-gradient(135deg, #2196F3, #1976D2);
         }
 
-        #emulator-container {
+        #game-iframe {
             width: 100%;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border: none;
             background: #000;
-            position: relative;
-        }
-
-        #emulator-canvas {
-            max-width: 100%;
-            max-height: calc(100vh - 200px);
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            border: 3px solid #FFD700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         .loading {
@@ -96,14 +87,11 @@
             text-align: center;
             padding: 40px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            max-width: 600px;
-        }
-
-        .loading a {
-            color: #FFD700;
-            text-decoration: underline;
-            margin-top: 15px;
-            display: inline-block;
+            position: absolute;
+            z-index: 100;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .controls-info {
@@ -134,25 +122,10 @@
             color: #fff;
         }
 
-        .info-box {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px;
-            max-width: 800px;
-        }
-
-        .info-box h2 {
-            color: #FFD700;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .info-box p {
-            color: #fff;
-            line-height: 1.6;
-            margin: 10px 0;
+        #game-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
     </style>
 </head>
@@ -168,34 +141,13 @@
             </button>
         </div>
 
-        <!-- Emulator Container -->
-        <div id="emulator-container">
+        <!-- Game Wrapper -->
+        <div id="game-wrapper">
             <div class="loading" id="loading-message">
-                <div class="info-box">
-                    <h2>👑 Prince of Persia</h2>
-                    <p><strong>The Original Classic (1989)</strong></p>
-                    <p style="margin-top: 15px;">
-                        This is the original Prince of Persia game developed by Jordan Mechner for the Apple II between 1985-1989.
-                        The source code is available on GitHub, but to run it in a browser, you'll need an Apple II emulator with the game disk image.
-                    </p>
-                    <p style="margin-top: 15px;">
-                        <strong>Options to play:</strong>
-                    </p>
-                    <ul style="text-align: left; color: #fff; margin: 15px 0; padding-left: 30px;">
-                        <li>Use a desktop Apple II emulator (like <a href="https://github.com/AppleWin/AppleWin" target="_blank" style="color: #FFD700;">AppleWin</a> for Windows)</li>
-                        <li>Find an online emulator that supports disk image loading</li>
-                        <li>Check out the <a href="https://github.com/jmechner/Prince-of-Persia-Apple-II" target="_blank" style="color: #FFD700;">source code repository</a></li>
-                    </ul>
-                    <p style="margin-top: 15px; font-size: 14px; color: #ccc;">
-                        <strong>Note:</strong> The original game requires a disk image file (.dsk) to run in an emulator. 
-                        The source code repository contains the assembly code, not a ready-to-play disk image.
-                    </p>
-                    <a href="https://github.com/jmechner/Prince-of-Persia-Apple-II" target="_blank" style="color: #FFD700; text-decoration: underline; margin-top: 20px; display: inline-block;">
-                        View Source Code on GitHub →
-                    </a>
-                </div>
+                👑 Loading Prince of Persia...<br>
+                <small style="font-size: 16px; margin-top: 10px; display: block;">Initializing game...</small>
             </div>
-            <canvas id="emulator-canvas" style="display: none;"></canvas>
+            <iframe id="game-iframe" src="https://princejs.com/" allow="gamepad; fullscreen" allowfullscreen></iframe>
         </div>
 
         <!-- Controls Info -->
@@ -208,11 +160,37 @@
     </div>
 
     <script>
-        // Placeholder for future emulator integration
-        // When a working JavaScript Apple II emulator is available, it can be initialized here
-        console.log('👑 Prince of Persia page loaded');
-        console.log('📝 Note: To run the game, you need an Apple II emulator with the Prince of Persia disk image');
-        console.log('🔗 Source code: https://github.com/jmechner/Prince-of-Persia-Apple-II');
+        // Initialize the game
+        const gameIframe = document.getElementById('game-iframe');
+        const loadingMessage = document.getElementById('loading-message');
+
+        // Wait for iframe to load
+        gameIframe.addEventListener('load', () => {
+            console.log('👑 Prince of Persia game loaded');
+            setTimeout(() => {
+                loadingMessage.style.display = 'none';
+                gameIframe.style.display = 'block';
+            }, 500);
+        });
+
+        // Hide loading message after iframe loads
+        gameIframe.addEventListener('load', () => {
+            setTimeout(() => {
+                if (loadingMessage && loadingMessage.style.display !== 'none') {
+                    loadingMessage.style.display = 'none';
+                }
+            }, 2000);
+        });
+
+        // Fallback: hide loading after 3 seconds
+        setTimeout(() => {
+            if (loadingMessage) {
+                loadingMessage.style.display = 'none';
+            }
+            if (gameIframe) {
+                gameIframe.style.display = 'block';
+            }
+        }, 3000);
     </script>
 </body>
 </html>
