@@ -1403,16 +1403,209 @@ io.on('connection', (socket) => {
     });
     
     // CRITICAL: Register playerAction handler EARLY so it's definitely registered
-    // This handler will be replaced by the full handler later, but ensures events are caught
+    // This is a TEMPORARY handler that will be replaced by the full handler later
+    // But for now, it processes Blackjack actions to make the game work
     console.log(`🃏🃏🃏 EARLY REGISTRATION: About to register playerAction handler for socket ${socket.id}`);
-    socket.on('playerAction', (data) => {
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ========== EARLY playerAction handler EXECUTING for socket ${socket.id} ==========`);
-        console.log(`🃏🃏🃏 EARLY HANDLER - Data:`, JSON.stringify(data, null, 2));
-        console.log(`🃏🃏🃏 EARLY HANDLER - RoomId: ${data?.roomId}, PlayerIndex: ${data?.playerIndex}, Action: ${data?.action}`);
+    
+    // Define a shared handler function that can be used by both early and late handlers
+    const handlePlayerAction = (data) => {
+        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ========== playerAction handler EXECUTING for socket ${socket.id} ==========`);
+        console.log(`🃏🃏🃏 Handler - Data:`, JSON.stringify(data, null, 2));
+        console.log(`🃏🃏🃏 Handler - RoomId: ${data?.roomId}, PlayerIndex: ${data?.playerIndex}, Action: ${data?.action}`);
         
-        // This handler will be replaced by the full handler later, so we just log here
-        // The late handler registration below will remove this and add the full handler
-    });
+        try {
+            const roomCode = data.roomId;
+            const room = rooms.get(roomCode);
+            
+            if (!room) {
+                console.error(`❌ Room ${roomCode} not found`);
+                socket.emit('error', 'Room not found');
+                return;
+            }
+            
+            console.log(`🃏🃏🃏 Room found - gameType: ${room.gameType}, gamePhase: ${room.game?.gamePhase}`);
+            
+            // Handle blackjack-specific actions
+            if (room.gameType === 'blackjack') {
+                if (room.game.gamePhase !== 'playing') {
+                    console.error(`❌ Not in playing phase. Current phase: ${room.game.gamePhase}`);
+                    socket.emit('error', 'Not in playing phase');
+                    return;
+                }
+                
+                const playerIndex = data.playerIndex;
+                const player = room.game.players[playerIndex];
+                const action = data.action;
+                
+                console.log(`🃏🃏🃏 Player lookup - playerIndex: ${playerIndex}, player found: ${!!player}, player.id: ${player?.id}, socket.id: ${socket.id}`);
+                
+                if (!player || player.id !== socket.id) {
+                    console.error(`❌ Invalid player - player exists: ${!!player}, player.id: ${player?.id}, socket.id: ${socket.id}`);
+                    socket.emit('error', 'Invalid player');
+                    return;
+                }
+                
+                console.log(`🃏🃏🃏 Turn check - playerIndex: ${playerIndex}, currentPlayer: ${room.game.currentPlayer}`);
+                
+                if (playerIndex !== room.game.currentPlayer) {
+                    console.error(`❌ Not player's turn - playerIndex: ${playerIndex}, currentPlayer: ${room.game.currentPlayer}`);
+                    socket.emit('error', 'Not your turn');
+                    return;
+                }
+                
+                console.log(`🃏🃏🃏 Player state check - isBusted: ${player.isBusted}, isStanding: ${player.isStanding}, hasBlackjack: ${player.hasBlackjack}`);
+                
+                if (player.isBusted || player.isStanding || player.hasBlackjack) {
+                    console.error(`❌ Cannot perform action - player is done`);
+                    socket.emit('error', 'Cannot perform action');
+                    return;
+                }
+                
+                console.log(`🃏 Player ${player.name} performs action: ${action}`);
+                console.log(`🃏🃏🃏 About to process action: ${action}`);
+                console.log(`🃏🃏🃏 dealBlackjackCard function exists: ${typeof dealBlackjackCard}`);
+                console.log(`🃏🃏🃏 calculateBlackjackValue function exists: ${typeof calculateBlackjackValue}`);
+                
+                switch (action) {
+                    case 'hit':
+                        console.log(`🃏🃏🃏 Processing HIT action`);
+                        const hitCard = dealBlackjackCard(room);
+                        console.log(`🃏🃏🃏 Card dealt:`, hitCard);
+                        if (!hitCard) {
+                            socket.emit('error', 'Failed to deal card - deck empty');
+                            console.error('❌ Failed to deal hit card');
+                            return;
+                        }
+                        player.hand.push(hitCard);
+                        player.value = calculateBlackjackValue(player.hand);
+                        player.canDouble = false;
+                        player.canSplit = false;
+                        
+                        if (player.value > 21) {
+                            player.isBusted = true;
+                            console.log(`🃏 Player ${player.name} busted with ${player.value}`);
+                        }
+                        
+                        // Emit the action update
+                        io.to(roomCode).emit('playerAction', {
+                            playerIndex: playerIndex,
+                            action: action,
+                            player: player,
+                            gamePhase: room.game.gamePhase,
+                            currentPlayer: room.game.currentPlayer
+                        });
+                        
+                        console.log(`🃏 Hit result: Player ${player.name} value = ${player.value}, busted = ${player.isBusted}`);
+                        
+                        // Auto-advance if busted
+                        if (player.isBusted) {
+                            console.log(`🃏 Player ${player.name} busted, advancing turn`);
+                            setTimeout(() => {
+                                advanceBlackjackTurn(roomCode, room);
+                            }, 1000);
+                        } else {
+                            console.log(`🃏 Player ${player.name} can continue playing - turn remains`);
+                        }
+                        break;
+                        
+                    case 'stand':
+                        player.isStanding = true;
+                        io.to(roomCode).emit('playerAction', {
+                            playerIndex: playerIndex,
+                            action: action,
+                            player: player,
+                            gamePhase: room.game.gamePhase,
+                            currentPlayer: room.game.currentPlayer
+                        });
+                        
+                        setTimeout(() => {
+                            advanceBlackjackTurn(roomCode, room);
+                        }, 500);
+                        break;
+                        
+                    case 'double':
+                        if (player.hand.length !== 2) {
+                            socket.emit('error', 'Can only double down on first two cards');
+                            return;
+                        }
+                        
+                        if (!player.canDouble || player.chips < player.bet) {
+                            socket.emit('error', 'Cannot double down');
+                            return;
+                        }
+                        
+                        player.chips -= player.bet;
+                        player.bet *= 2;
+                        const doubleCard = dealBlackjackCard(room);
+                        if (!doubleCard) {
+                            socket.emit('error', 'Failed to deal card - deck empty');
+                            player.chips += player.bet;
+                            player.bet /= 2;
+                            return;
+                        }
+                        player.hand.push(doubleCard);
+                        player.value = calculateBlackjackValue(player.hand);
+                        player.isStanding = true;
+                        player.canDouble = false;
+                        player.canSplit = false;
+                        
+                        if (player.value > 21) {
+                            player.isBusted = true;
+                        }
+                        
+                        io.to(roomCode).emit('playerAction', {
+                            playerIndex: playerIndex,
+                            action: action,
+                            player: player,
+                            gamePhase: room.game.gamePhase,
+                            currentPlayer: room.game.currentPlayer
+                        });
+                        
+                        setTimeout(() => {
+                            advanceBlackjackTurn(roomCode, room);
+                        }, 500);
+                        break;
+                        
+                    case 'split':
+                        if (!player.canSplit || player.chips < player.bet) {
+                            socket.emit('error', 'Cannot split');
+                            return;
+                        }
+                        
+                        player.isStanding = true;
+                        player.canSplit = false;
+                        
+                        io.to(roomCode).emit('playerAction', {
+                            playerIndex: playerIndex,
+                            action: action,
+                            player: player,
+                            gamePhase: room.game.gamePhase,
+                            currentPlayer: room.game.currentPlayer
+                        });
+                        
+                        setTimeout(() => {
+                            advanceBlackjackTurn(roomCode, room);
+                        }, 500);
+                        break;
+                }
+                
+                return; // Exit early for blackjack
+            }
+            
+            // Generic handler for other games
+            console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
+            if (room) {
+                io.to(data.roomId || data.roomCode).emit('playerAction', data);
+            }
+        } catch (error) {
+            console.error(`❌❌❌ ERROR in playerAction handler:`, error);
+            console.error(`❌❌❌ Error stack:`, error.stack);
+            socket.emit('error', 'Failed to process action: ' + error.message);
+        }
+    };
+    
+    // Register the handler
+    socket.on('playerAction', handlePlayerAction);
     console.log(`🃏🃏🃏 EARLY REGISTRATION: playerAction handler registered for socket ${socket.id}`);
     
     // Test event to verify socket communication
@@ -4889,7 +5082,7 @@ function determineRoundWinner(playedCards, room) {
             
             // Generic handler for other games (if not blackjack)
             console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
-            if (room) {
+        if (room) {
                 io.to(data.roomId || data.roomCode).emit('playerAction', data);
             }
         } catch (error) {
@@ -5254,12 +5447,12 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Ensure server starts successfully
-http.listen(PORT, HOST, () => {
-    console.log(`🚀 Truco game server running on port ${PORT}`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📱 Ready for multiplayer action!`);
-    console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
-    console.log(`✅ Server startup complete`);
+    http.listen(PORT, HOST, () => {
+        console.log(`🚀 Truco game server running on port ${PORT}`);
+        console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📱 Ready for multiplayer action!`);
+        console.log(`🏠 Server bound to: ${HOST}:${PORT}`);
+        console.log(`✅ Server startup complete`);
     
     // Emit a signal that server is ready (useful for deployment monitoring)
     if (process.send) {
@@ -5271,6 +5464,6 @@ http.listen(PORT, HOST, () => {
         console.error('❌ Port is already in use');
     } else if (error.code === 'EACCES') {
         console.error('❌ Permission denied to bind to port');
-    }
+} 
     process.exit(1);
 }); 
