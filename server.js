@@ -3936,7 +3936,8 @@ function determineRoundWinner(playedCards, room) {
         return card;
     }
     
-    // Place bet handler
+    // Place bet handler - register immediately after connection
+    console.log(`🔍 Registering placeBet handler for socket ${socket.id}`);
     socket.on('placeBet', (data, callback) => {
         try {
             console.log('🃏 placeBet event received:', data);
