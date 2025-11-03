@@ -1073,15 +1073,6 @@ class GoFishClient {
         console.log('🎯 askForCards - this.game.players exists:', !!this.game?.players);
         console.log('🎯 askForCards - this.game.players.length:', this.game?.players?.length);
         
-        // CRITICAL FIX: Store the asked rank for later comparison
-        this.lastAskedRank = rank;
-        console.log('🎯 Stored lastAskedRank:', this.lastAskedRank);
-        
-        // Set acting state to prevent additional clicks and disable buttons immediately
-        this.isActing = true;
-        this.canAct = false; // Disable actions immediately when asking
-        this.updateUI(); // Update UI to reflect button state
-        
         // CRITICAL: Check if this is Player 2 and what's different
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this context:', this);
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this.game.currentPlayer:', this.game?.currentPlayer);
@@ -1089,6 +1080,7 @@ class GoFishClient {
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - targetPlayerIndex:', targetPlayerIndex);
         console.log('🎯 PLAYER 2 ASKFORCARDS DEBUG - this.game.players[targetPlayerIndex]:', this.game?.players?.[targetPlayerIndex]);
         
+        // CRITICAL FIX: Validate BEFORE disabling buttons
         if (!this.canAct || !this.isMyTurn) {
             console.log('❌ Cannot ask for cards - not my turn or cannot act');
             console.log('❌ canAct:', this.canAct, 'isMyTurn:', this.isMyTurn);
@@ -1111,6 +1103,16 @@ class GoFishClient {
             this.addGameMessage('You can only ask for ranks you have in your hand!', 'error');
             return;
         }
+        
+        // CRITICAL FIX: Only disable buttons AFTER all validation passes
+        // Store the asked rank for later comparison
+        this.lastAskedRank = rank;
+        console.log('🎯 Stored lastAskedRank:', this.lastAskedRank);
+        
+        // Set acting state to prevent additional clicks and disable buttons immediately
+        this.isActing = true;
+        this.canAct = false; // Disable actions immediately when asking
+        this.updateUI(); // Update UI to reflect button state
         
         console.log(`🎯 Asking ${this.game.players[targetPlayerIndex]?.name} for ${rank}s`);
         
@@ -1230,15 +1232,6 @@ class GoFishClient {
         console.log('🎮 Go fish - cardMatchesAskedRank:', data.cardMatchesAskedRank);
         console.log('🎮 Go fish - lastAskedRank:', this.lastAskedRank);
         
-        // CRITICAL FIX: If this is a result of asking (not a direct go fish), disable buttons immediately
-        if (data.askingPlayer && data.targetPlayer && data.playerIndex === this.localPlayerIndex) {
-            // This is a result of the local player asking - disable buttons immediately
-            this.canAct = false;
-            this.isActing = true;
-            console.log('🎮 Disabled buttons immediately - player went fishing after asking');
-            this.updateUI(); // Update UI to reflect disabled buttons
-        }
-        
         // Update game state from server - update all players' hands and pairs
         if (data.players) {
             data.players.forEach((playerData, index) => {
@@ -1262,8 +1255,9 @@ class GoFishClient {
         // 1. This was a direct go fish (not a result of asking), OR
         // 2. The card fished matches the rank they asked for (cardMatchesAskedRank === true)
         if (this.isMyTurn) {
-            if (data.askingPlayer && data.targetPlayer) {
-                // This was a result of asking - only allow if card matches
+            if (data.askingPlayer && data.targetPlayer && data.playerIndex === this.localPlayerIndex) {
+                // This was a result of the local player asking - check if card matches
+                // Buttons are already disabled from askForCards, we just need to decide if to re-enable
                 if (data.cardMatchesAskedRank === true) {
                     this.canAct = true; // Card matches - they get another turn
                     this.isActing = false; // Reset acting state
@@ -1280,6 +1274,7 @@ class GoFishClient {
                 this.isActing = false;
             }
         } else {
+            // Not my turn - buttons disabled
             this.canAct = false;
             this.isActing = false;
         }
