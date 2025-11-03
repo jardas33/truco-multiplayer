@@ -1586,17 +1586,21 @@ function drawGameInfo() {
     
     pop();
     
-    // Draw hand rankings button
+    // Draw hand rankings button with better readability
     push();
-    fill(0, 150, 0);
-    stroke(255, 255, 0);
+    // Dark background with white text for better contrast
+    fill(30, 30, 50, 240); // Dark blue-gray background
+    stroke(255, 215, 0); // Gold border
     strokeWeight(2);
     rect(width - 200, 20, 180, 40, 8);
     
-    fill(255, 255, 0);
+    // White text with black outline for maximum readability
+    fill(255, 255, 255);
     textAlign(CENTER, CENTER);
-    textSize(14);
+    textSize(15);
     textStyle(BOLD);
+    stroke(0, 0, 0);
+    strokeWeight(2);
     text('Hand Rankings', width - 110, 40);
     pop();
 }
@@ -1606,20 +1610,30 @@ function drawChips() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radiusX = width * 0.32; // Match player positioning
-    const radiusY = height * 0.25; // Match player positioning
+    const radiusX = width * 0.35; // Match player positioning
+    const radiusY = height * 0.28; // Match player positioning
     
-    // Draw chips for each player - positioned in dedicated areas
+    // Draw chips for each player - positioned in dedicated areas, well away from player boxes
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
-        const x = centerX + cos(angle) * radiusX;
-        const y = centerY + sin(angle) * radiusY;
+        const playerX = centerX + cos(angle) * radiusX;
+        const playerY = centerY + sin(angle) * radiusY;
         
-        // Position chips in dedicated areas around each player
-        const chipOffsetX = cos(angle) * 120; // Move chips further out
-        const chipOffsetY = sin(angle) * 120; // Move chips further out
-        const chipX = x + chipOffsetX;
-        const chipY = y + chipOffsetY + 80; // Position below player area
+        // Position chips in a dedicated area - much further from player box to avoid overlap
+        // Move chips outward and to the side based on player position
+        const chipRadiusX = width * 0.45; // Further out from center
+        const chipRadiusY = height * 0.38; // Further out from center
+        const chipX = centerX + cos(angle) * chipRadiusX;
+        const chipY = centerY + sin(angle) * chipRadiusY;
+        
+        // Additional offset for top/bottom players to avoid overlap
+        if (angle > -PI/3 && angle < PI/3) {
+            // Top player - move chips to the side
+            chipY = chipY - 60; // Move up more
+        } else if (angle > 2*PI/3 || angle < -2*PI/3) {
+            // Bottom player - move chips to the side (but betting controls are on left, so keep right)
+            chipY = chipY + 60; // Move down more
+        }
         
         // Draw chip stack based on player's chips
         drawChipStack(chipX, chipY, player.chips, player.currentBet);

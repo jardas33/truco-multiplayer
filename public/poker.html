@@ -180,11 +180,18 @@
         .betting-controls {
             position: absolute;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
             display: flex;
+            flex-direction: column;
             gap: 10px;
             z-index: 1000;
+            align-items: flex-start;
+        }
+        
+        .betting-controls-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .betting-controls button {
@@ -403,11 +410,15 @@
             </div>
             
             <div class="betting-controls" id="bettingControls" style="display: none;">
-                <button id="foldBtn" class="fold-button">Fold</button>
-                <button id="callBtn" class="call-button">Call $<span id="callAmount">0</span></button>
-                <button id="raiseBtn" class="raise-button">Raise</button>
-                <input type="number" id="betAmount" placeholder="Bet amount" style="padding: 10px; border: none; border-radius: 5px; width: 100px;">
-                <button id="betBtn" class="bet-button">Bet</button>
+                <div class="betting-controls-row">
+                    <button id="foldBtn" class="fold-button">Fold</button>
+                    <button id="callBtn" class="call-button">Call $<span id="callAmount">0</span></button>
+                    <button id="raiseBtn" class="raise-button">Raise</button>
+                </div>
+                <div class="betting-controls-row">
+                    <input type="number" id="betAmount" placeholder="Bet amount" style="padding: 10px; border: none; border-radius: 5px; width: 120px; background: white; color: #333;">
+                    <button id="betBtn" class="bet-button">Bet</button>
+                </div>
             </div>
         </div>
     </div>
