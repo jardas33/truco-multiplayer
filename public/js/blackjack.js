@@ -845,9 +845,13 @@ class BlackjackClient {
             
             this.isMyTurn = (data.gamePhase === 'playing' && data.currentPlayer === this.localPlayerIndex);
             if (this.game.players[this.localPlayerIndex]) {
-                this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
-                             !this.game.players[this.localPlayerIndex].isStanding && 
-                             !this.game.players[this.localPlayerIndex].hasBlackjack;
+                const localPlayer = this.game.players[this.localPlayerIndex];
+                this.canAct = this.isMyTurn && !localPlayer.isBusted && 
+                             !localPlayer.isStanding && 
+                             !localPlayer.hasBlackjack &&
+                             !this.isActing; // Prevent action if already acting
+            } else {
+                this.canAct = false;
             }
             
             this.updateUI();
