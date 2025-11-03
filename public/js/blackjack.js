@@ -589,11 +589,17 @@ class BlackjackClient {
         const socket = window.gameFramework.socket;
         
         socket.on('roomCreated', (data) => {
-            console.log('Room created:', data);
+            console.log('🃏 Room created event received:', data);
             const roomCode = data.roomId || data;
+            
+            // Add room-created class to hide create/join buttons
+            document.body.classList.add('room-created');
+            
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();
+            
+            console.log('✅ Room UI updated');
         });
         
         socket.on('roomJoined', (data) => {
