@@ -1510,16 +1510,6 @@ io.on('connection', (socket) => {
                     }
                     
                     console.log(`🃏 Cards dealt. Phase: ${room.game.gamePhase}, Current player: ${room.game.currentPlayer}`);
-                    
-                    // Handle bot turn if current player is a bot
-                    if (room.game.gamePhase === 'playing' && room.game.currentPlayer < room.game.players.length) {
-                        const currentPlayer = room.game.players[room.game.currentPlayer];
-                        if (currentPlayer && currentPlayer.isBot) {
-                            setTimeout(() => {
-                                handleBlackjackBotTurn(roomCode, room);
-                            }, 1500);
-                        }
-                    }
                 }, 500);
             }
         } catch (error) {
