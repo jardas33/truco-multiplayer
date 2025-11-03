@@ -4559,13 +4559,23 @@ function determineRoundWinner(playedCards, room) {
                     action: action,
                     player: botPlayer,
                     gamePhase: room.game.gamePhase,
-                    currentPlayer: room.game.currentPlayer
+                    currentPlayer: room.game.currentPlayer // Stay as current player if not busted
                 });
                 
+                console.log(`🤖 Bot ${botPlayer.name} hit - value: ${botPlayer.value}, busted: ${botPlayer.isBusted}`);
+                
                 if (botPlayer.isBusted) {
+                    // Bot busted, advance turn
+                    console.log(`🤖 Bot ${botPlayer.name} busted, advancing turn`);
                     setTimeout(() => {
                         advanceBlackjackTurn(roomCode, room);
                     }, 1000);
+                } else {
+                    // Bot not busted - continue playing automatically
+                    console.log(`🤖 Bot ${botPlayer.name} can continue - scheduling next action`);
+                    setTimeout(() => {
+                        handleBlackjackBotTurn(roomCode, room);
+                    }, 1500);
                 }
                 break;
                 
@@ -4635,37 +4645,54 @@ function determineRoundWinner(playedCards, room) {
     function determineBlackjackWinners(roomCode, room) {
         room.game.gamePhase = 'finished';
         
-        room.game.players.forEach(player => {
-            if (player.bet === 0) return;
+        console.log('🃏 Determining blackjack winners...');
+        console.log('🃏 Dealer value:', room.game.dealer.value, 'Dealer blackjack:', room.game.dealer.hasBlackjack, 'Dealer busted:', room.game.dealer.isBusted);
+        
+        room.game.players.forEach((player, index) => {
+            if (player.bet === 0) {
+                console.log(`🃏 Player ${index} (${player.name}) - no bet, skipping`);
+                return;
+            }
             
+            const originalChips = player.chips;
             let winnings = 0;
             
             if (player.isBusted) {
                 winnings = 0;
+                console.log(`🃏 Player ${index} (${player.name}) - BUSTED - winnings: $0`);
             } else if (room.game.dealer.isBusted) {
                 if (player.hasBlackjack) {
-                    winnings = player.bet * 2.5; // 3:2 payout
+                    winnings = Math.floor(player.bet * 2.5); // 3:2 payout
                 } else {
-                    winnings = player.bet * 2; // 1:1 payout
+                    winnings = player.bet * 2; // 1:1 payout (includes bet back)
                 }
+                console.log(`🃏 Player ${index} (${player.name}) - DEALER BUSTED - winnings: $${winnings} (bet was $${player.bet})`);
             } else if (player.hasBlackjack && !room.game.dealer.hasBlackjack) {
-                winnings = player.bet * 2.5; // 3:2 payout
+                winnings = Math.floor(player.bet * 2.5); // 3:2 payout
+                console.log(`🃏 Player ${index} (${player.name}) - BLACKJACK BEATS DEALER - winnings: $${winnings} (bet was $${player.bet})`);
             } else if (room.game.dealer.hasBlackjack && !player.hasBlackjack) {
                 winnings = 0;
+                console.log(`🃏 Player ${index} (${player.name}) - DEALER BLACKJACK BEATS PLAYER - winnings: $0`);
             } else if (player.value > room.game.dealer.value) {
                 if (player.hasBlackjack) {
-                    winnings = player.bet * 2.5;
+                    winnings = Math.floor(player.bet * 2.5);
                 } else {
-                    winnings = player.bet * 2;
+                    winnings = player.bet * 2; // 1:1 payout (includes bet back)
                 }
+                console.log(`🃏 Player ${index} (${player.name}) - WINS (${player.value} vs ${room.game.dealer.value}) - winnings: $${winnings} (bet was $${player.bet})`);
             } else if (player.value === room.game.dealer.value) {
-                winnings = player.bet; // Push - return bet
+                winnings = player.bet; // Push - return bet only (no profit)
+                console.log(`🃏 Player ${index} (${player.name}) - PUSH (${player.value} = ${room.game.dealer.value}) - winnings: $${winnings} (bet returned)`);
             } else {
                 winnings = 0;
+                console.log(`🃏 Player ${index} (${player.name}) - LOSES (${player.value} vs ${room.game.dealer.value}) - winnings: $0`);
             }
             
+            // Add winnings to chips (winnings already includes bet back for wins)
             player.chips += winnings;
             player.winnings = winnings;
+            
+            console.log(`🃏 Player ${index} (${player.name}) - Chips: $${originalChips} -> $${player.chips} (added $${winnings})`);
         });
         
         io.to(roomCode).emit('roundFinished', {
