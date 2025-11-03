@@ -668,11 +668,85 @@ io.on('connection', (socket) => {
     // ✅ DEBUG: Log all incoming events to see if startGame is received
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
     
-    // CRITICAL: Register placeBet handler FIRST, before onAny
-    console.log(`🔍🔍🔍 Registering placeBet handler for socket ${socket.id} at connection time`);
+    // Define Blackjack helper functions INSIDE connection block so they have access to socket/io
+    function calculateBlackjackValue(hand) {
+        let value = 0;
+        let aces = 0;
+        
+        for (const card of hand) {
+            if (card.rank === 'ace') {
+                aces++;
+                value += 11;
+            } else if (['jack', 'queen', 'king'].includes(card.rank)) {
+                value += 10;
+            } else {
+                value += parseInt(card.value) || parseInt(card.rank);
+            }
+        }
+        
+        // Adjust for aces
+        while (value > 21 && aces > 0) {
+            value -= 10;
+            aces--;
+        }
+        
+        return value;
+    }
     
-    // Verify helper functions exist
-    console.log(`🔍🔍🔍 Checking helper functions: dealBlackjackCard=${typeof dealBlackjackCard}, calculateBlackjackValue=${typeof calculateBlackjackValue}, checkBlackjack=${typeof checkBlackjack}`);
+    function checkBlackjack(hand) {
+        return hand.length === 2 && calculateBlackjackValue(hand) === 21;
+    }
+    
+    function dealBlackjackCard(room) {
+        if (!room || !room.game || !room.game.deck) {
+            console.error('❌ Invalid room or game state in dealBlackjackCard');
+            return null;
+        }
+        
+        if (room.game.deck.length === 0) {
+            console.log('🃏 Deck empty, reshuffling...');
+            const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+            room.game.deck = [];
+            
+            for (let suit of suits) {
+                for (let rank of ranks) {
+                    let value;
+                    if (rank === 'ace') {
+                        value = 1;
+                    } else if (['jack', 'queen', 'king'].includes(rank)) {
+                        value = 10;
+                    } else {
+                        value = parseInt(rank);
+                    }
+                    
+                    room.game.deck.push({
+                        name: `${rank} of ${suit}`,
+                        suit: suit,
+                        rank: rank,
+                        value: value
+                    });
+                }
+            }
+            
+            // Shuffle
+            for (let i = room.game.deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [room.game.deck[i], room.game.deck[j]] = [room.game.deck[j], room.game.deck[i]];
+            }
+        }
+        
+        const card = room.game.deck.pop();
+        if (!card) {
+            console.error('❌ Failed to deal card from deck');
+            return null;
+        }
+        
+        return card;
+    }
+    
+    // CRITICAL: Register placeBet handler AFTER helper functions are defined
+    console.log(`🔍🔍🔍 Registering placeBet handler for socket ${socket.id} at connection time`);
     
     socket.on('placeBet', (data, callback) => {
         try {
