@@ -111,10 +111,57 @@ class BattleshipGame {
                 console.log('🚢 Single player mode detected (player vs bot)');
                 this.isMultiplayer = false;
                 this.roomCode = null; // No room code needed for single-player
+                
+                // CRITICAL FIX: For single-player, initialize players array with human and bot
+                // Try to get player nickname from localStorage (set in menu)
+                let playerNickname = localStorage.getItem('battleshipPlayerNickname');
+                if (!playerNickname || playerNickname.trim() === '') {
+                    playerNickname = 'Player 1';
+                }
+                
+                this.players = [
+                    {
+                        id: 'player',
+                        name: playerNickname,
+                        isBot: false
+                    },
+                    {
+                        id: 'bot',
+                        name: 'Bot',
+                        isBot: true
+                    }
+                ];
+                
+                console.log('🚢 Single-player players initialized:', this.players);
             } else {
                 console.log('🚢 No specific mode set, defaulting to single player');
                 this.isMultiplayer = false;
+                
+                // Also initialize players array for default single-player mode
+                let playerNickname = localStorage.getItem('battleshipPlayerNickname');
+                if (!playerNickname || playerNickname.trim() === '') {
+                    playerNickname = 'Player 1';
+                }
+                
+                this.players = [
+                    {
+                        id: 'player',
+                        name: playerNickname,
+                        isBot: false
+                    },
+                    {
+                        id: 'bot',
+                        name: 'Bot',
+                        isBot: true
+                    }
+                ];
             }
+            
+            // CRITICAL FIX: Update player names in UI for both multiplayer and single-player
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+                this.updatePlayerNamesInUI();
+            }, 200);
             
             // Don't clear localStorage here - let the HTML script handle it
             // This prevents race conditions between the game initialization and socket setup
@@ -1141,49 +1188,92 @@ class BattleshipGame {
     // CRITICAL FIX: Update all player names in UI elements
     updatePlayerNamesInUI() {
         try {
-            if (!this.isMultiplayer || !this.players || !Array.isArray(this.players) || this.players.length < 2) {
-                console.log('🚢 updatePlayerNamesInUI: Skipping - not multiplayer or insufficient players');
-                return;
-            }
-            
-            const player1 = this.players[0];
-            const player2 = this.players[1];
-            
-            if (!player1 || !player2) {
-                console.log('🚢 updatePlayerNamesInUI: Skipping - player1 or player2 is missing');
-                return;
-            }
-            
-            // CRITICAL FIX: Determine if local player is Player 1 using multiple methods
-            // Priority: firstPlayerId > isRoomCreator > playerId comparison
+            // CRITICAL FIX: Support both multiplayer and single-player modes
+            let player1Name, player2Name;
             let isPlayer1 = false;
-            if (this.firstPlayerId) {
-                // Use firstPlayerId if available (set during game start)
-                isPlayer1 = (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
-            } else if (player1.isRoomCreator !== undefined) {
-                // Use isRoomCreator flag if available (before game start)
-                // If local player is the room creator, they're Player 1
-                const localPlayer = this.players.find(p => p && p.id === this.playerId);
-                isPlayer1 = localPlayer && (localPlayer.isRoomCreator || localPlayer === player1);
-            } else if (this.playerId) {
-                // Fallback: compare playerId with player1.id
-                isPlayer1 = (this.playerId === player1.id || String(this.playerId) === String(player1.id));
+            
+            if (this.isMultiplayer) {
+                // Multiplayer mode: use players array from server
+                if (!this.players || !Array.isArray(this.players) || this.players.length < 2) {
+                    console.log('🚢 updatePlayerNamesInUI: Skipping - multiplayer but insufficient players');
+                    return;
+                }
+                
+                const player1 = this.players[0];
+                const player2 = this.players[1];
+                
+                if (!player1 || !player2) {
+                    console.log('🚢 updatePlayerNamesInUI: Skipping - player1 or player2 is missing');
+                    return;
+                }
+                
+                // CRITICAL FIX: Determine if local player is Player 1 using multiple methods
+                // Priority: firstPlayerId > isRoomCreator > playerId comparison
+                if (this.firstPlayerId) {
+                    // Use firstPlayerId if available (set during game start)
+                    isPlayer1 = (this.firstPlayerId === this.playerId || String(this.firstPlayerId) === String(this.playerId));
+                } else if (player1.isRoomCreator !== undefined) {
+                    // Use isRoomCreator flag if available (before game start)
+                    // If local player is the room creator, they're Player 1
+                    const localPlayer = this.players.find(p => p && p.id === this.playerId);
+                    isPlayer1 = localPlayer && (localPlayer.isRoomCreator || localPlayer === player1);
+                } else if (this.playerId) {
+                    // Fallback: compare playerId with player1.id
+                    isPlayer1 = (this.playerId === player1.id || String(this.playerId) === String(player1.id));
+                }
+                
+                // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
+                // Get display names with nicknames (nickname is stored in name property)
+                player1Name = player1.name || 'Player 1';
+                player2Name = player2.name || 'Player 2';
+                
+                console.log('🚢 updatePlayerNamesInUI - Multiplayer player data:', {
+                    player1: { id: player1.id, name: player1.name, nickname: player1.nickname, isRoomCreator: player1.isRoomCreator },
+                    player2: { id: player2.id, name: player2.name, nickname: player2.nickname, isRoomCreator: player2.isRoomCreator },
+                    player1Name: player1Name,
+                    player2Name: player2Name,
+                    isPlayer1: isPlayer1,
+                    firstPlayerId: this.firstPlayerId,
+                    localPlayerId: this.playerId
+                });
+            } else {
+                // Single-player mode: Player 1 is always the human, Player 2 is always the bot
+                isPlayer1 = true; // Human is always Player 1 in single-player
+                
+                // CRITICAL FIX: Get player nickname from localStorage (set in battleship menu)
+                // Check for nickname in multiple possible locations
+                let playerNickname = null;
+                try {
+                    // Try to get from players array if set (might be set via menu)
+                    if (this.players && this.players.length > 0) {
+                        const humanPlayer = this.players.find(p => !p.isBot);
+                        if (humanPlayer && humanPlayer.name && humanPlayer.name !== 'Player 1') {
+                            playerNickname = humanPlayer.name;
+                        }
+                    }
+                    
+                    // Fallback: check localStorage (though single-player doesn't typically use server nickname system)
+                    // The nickname would be set in the menu before starting single-player game
+                    if (!playerNickname) {
+                        // Check if there's a stored nickname from menu
+                        const storedNickname = localStorage.getItem('battleshipPlayerNickname');
+                        if (storedNickname && storedNickname.trim() && storedNickname !== 'Player 1') {
+                            playerNickname = storedNickname.trim();
+                        }
+                    }
+                } catch (e) {
+                    console.log('🚢 Could not retrieve nickname from localStorage:', e);
+                }
+                
+                player1Name = playerNickname || 'Player 1';
+                player2Name = 'Bot'; // Bot is always just "Bot"
+                
+                console.log('🚢 updatePlayerNamesInUI - Single-player mode:', {
+                    player1Name: player1Name,
+                    player2Name: player2Name,
+                    isPlayer1: isPlayer1
+                });
             }
-            
-            // CRITICAL FIX: Server stores nickname in player.name, not player.nickname
-            // Get display names with nicknames (nickname is stored in name property)
-            const player1Name = player1.name || 'Player 1';
-            const player2Name = player2.name || 'Player 2';
-            
-            console.log('🚢 updatePlayerNamesInUI - Player data:', {
-                player1: { id: player1.id, name: player1.name, nickname: player1.nickname, isRoomCreator: player1.isRoomCreator },
-                player2: { id: player2.id, name: player2.name, nickname: player2.nickname, isRoomCreator: player2.isRoomCreator },
-                player1Name: player1Name,
-                player2Name: player2Name,
-                isPlayer1: isPlayer1,
-                firstPlayerId: this.firstPlayerId,
-                localPlayerId: this.playerId
-            });
             
             // Update scoreboard labels (not scores)
             const playerScoreDiv = document.querySelector('.scoreboard-content .player-score:first-child .player-name');
@@ -1204,9 +1294,15 @@ class BattleshipGame {
                 console.error('🚢 ERROR: playerScoreDiv not found!');
             }
             if (aiScoreDiv) {
-                const newText2 = !isPlayer1 ? `${player2Name} (you)` : player2Name;
-                aiScoreDiv.textContent = newText2;
-                console.log(`🚢 Updated aiScoreDiv to: "${newText2}"`);
+                if (this.isMultiplayer) {
+                    const newText2 = !isPlayer1 ? `${player2Name} (you)` : player2Name;
+                    aiScoreDiv.textContent = newText2;
+                    console.log(`🚢 Updated aiScoreDiv to: "${newText2}"`);
+                } else {
+                    // Single-player: always show "Bot" with (bot) indicator
+                    aiScoreDiv.textContent = `${player2Name} (bot)`;
+                    console.log(`🚢 Updated aiScoreDiv to: "${player2Name} (bot)"`);
+                }
             } else {
                 console.error('🚢 ERROR: aiScoreDiv not found!');
             }
@@ -1221,7 +1317,7 @@ class BattleshipGame {
                 console.error('🚢 ERROR: playerNameEl not found!');
             }
             
-            console.log('🚢 updatePlayerNamesInUI completed:', { player1Name, player2Name, isPlayer1 });
+            console.log('🚢 updatePlayerNamesInUI completed:', { player1Name, player2Name, isPlayer1, isMultiplayer: this.isMultiplayer });
         } catch (error) {
             console.error('🚢 Error in updatePlayerNamesInUI:', error);
             // Don't throw - just log the error

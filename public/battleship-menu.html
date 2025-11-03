@@ -514,6 +514,12 @@
             window.socket.on('nicknameChanged', (data) => {
                 console.log('✅ Nickname changed successfully:', data);
                 
+                // CRITICAL FIX: Store nickname in localStorage for single-player mode
+                if (data.nickname && data.nickname.trim()) {
+                    localStorage.setItem('battleshipPlayerNickname', data.nickname.trim());
+                    console.log('🚢 Stored nickname in localStorage:', data.nickname.trim());
+                }
+                
                 // Reset button state
                 const changeBtn = document.getElementById('changeNicknameBtn');
                 if (changeBtn) {
