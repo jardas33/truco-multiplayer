@@ -668,6 +668,14 @@ io.on('connection', (socket) => {
     // ✅ DEBUG: Log all incoming events to see if startGame is received
     console.log(`🔍 Socket ${socket.id} connected - waiting for events`);
     
+    // Debug: Log ALL incoming events to catch placeBet
+    socket.onAny((eventName, ...args) => {
+        console.log(`🔍🔍🔍 Socket ${socket.id} received event: "${eventName}" with ${args.length} argument(s)`);
+        if (args.length > 0) {
+            console.log(`🔍🔍🔍 Event data:`, JSON.stringify(args[0], null, 2));
+        }
+    });
+    
     // Test event to verify socket communication
     socket.on('test', (data) => {
         console.log(`🧪 Test event received from ${socket.id}:`, data);
