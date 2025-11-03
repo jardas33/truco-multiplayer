@@ -4429,44 +4429,66 @@ function determineRoundWinner(playedCards, room) {
                 gamePhase: room.game.gamePhase
             });
             
-            // Dealer hits until 17 or bust (with small delay between hits for visual effect)
-            const dealerPlayCards = async () => {
-                while (room.game.dealer.value < 17 && !room.game.dealer.isBusted) {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between cards
-                    const dealerCard = dealBlackjackCard(room);
-                    if (!dealerCard) {
-                        console.error('❌ Failed to deal dealer card - stopping dealer turn');
-                        // Mark dealer as done
-                        room.game.dealer.isBusted = true;
-                        break;
-                    }
-                    room.game.dealer.hand.push(dealerCard);
-                    room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
-                    
-                    // Update clients after each card
-                    io.to(roomCode).emit('dealerTurn', {
-                        dealer: room.game.dealer,
-                        gamePhase: room.game.gamePhase
-                    });
-                }
-                
-                if (room.game.dealer.value > 21) {
-                    room.game.dealer.isBusted = true;
-                }
-                
-                // Final dealer update
+            // Check if dealer already has blackjack - if so, determine winners immediately
+            if (room.game.dealer.hasBlackjack) {
+                console.log('🃏 Dealer has blackjack - determining winners immediately');
                 io.to(roomCode).emit('dealerTurn', {
                     dealer: room.game.dealer,
                     gamePhase: room.game.gamePhase
                 });
-                
-                // Small delay before determining winners
                 setTimeout(() => {
                     determineBlackjackWinners(roomCode, room);
                 }, 1000);
-            };
-            
-            dealerPlayCards();
+            } else {
+                // Dealer hits until 17 or bust (with small delay between hits for visual effect)
+                const dealerPlayCards = async () => {
+                    while (room.game.dealer.value < 17 && !room.game.dealer.isBusted && !room.game.dealer.hasBlackjack) {
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between cards
+                        const dealerCard = dealBlackjackCard(room);
+                        if (!dealerCard) {
+                            console.error('❌ Failed to deal dealer card - stopping dealer turn');
+                            // Mark dealer as done
+                            room.game.dealer.isBusted = true;
+                            break;
+                        }
+                        room.game.dealer.hand.push(dealerCard);
+                        room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
+                        
+                        // Check for blackjack after hitting (unlikely but possible with ace)
+                        if (room.game.dealer.hand.length === 2 && room.game.dealer.value === 21) {
+                            room.game.dealer.hasBlackjack = true;
+                        }
+                        
+                        // Update clients after each card
+                        io.to(roomCode).emit('dealerTurn', {
+                            dealer: room.game.dealer,
+                            gamePhase: room.game.gamePhase
+                        });
+                        
+                        // If dealer got blackjack, stop
+                        if (room.game.dealer.hasBlackjack) {
+                            break;
+                        }
+                    }
+                    
+                    if (room.game.dealer.value > 21) {
+                        room.game.dealer.isBusted = true;
+                    }
+                    
+                    // Final dealer update
+                    io.to(roomCode).emit('dealerTurn', {
+                        dealer: room.game.dealer,
+                        gamePhase: room.game.gamePhase
+                    });
+                    
+                    // Small delay before determining winners
+                    setTimeout(() => {
+                        determineBlackjackWinners(roomCode, room);
+                    }, 1000);
+                };
+                
+                dealerPlayCards();
+            }
         } else {
             io.to(roomCode).emit('turnChanged', {
                 currentPlayer: room.game.currentPlayer,
@@ -4718,10 +4740,20 @@ function determineRoundWinner(playedCards, room) {
             }
         }
         
+        console.log('🃏 Emitting roundStarted event:', {
+            roundNumber: room.game.roundNumber,
+            gamePhase: room.game.gamePhase,
+            playersCount: room.game.players.length,
+            minBet: room.game.minBet,
+            maxBet: room.game.maxBet
+        });
+        
         io.to(roomCode).emit('roundStarted', {
             roundNumber: room.game.roundNumber,
             gamePhase: room.game.gamePhase,
-            players: room.game.players
+            players: room.game.players,
+            minBet: room.game.minBet,
+            maxBet: room.game.maxBet
         });
         
         // Auto-bet for bots when new round starts
