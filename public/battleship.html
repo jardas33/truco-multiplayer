@@ -544,8 +544,8 @@
 
         <!-- Menu Buttons -->
         <div class="menu-buttons">
-            <a href="/" class="menu-btn back-btn">← Back to Main Menu</a>
-            <a href="/battleship-menu" class="menu-btn battleship-menu-btn">Battleship Menu</a>
+            <button class="menu-btn back-btn" id="backToMainMenuGameBtn" onclick="if(confirm('Are you sure you want to leave the game and return to the main menu? You will lose your current game progress.')) { window.location.href = '/'; }">← Back to Main Menu</button>
+            <button class="menu-btn battleship-menu-btn" id="battleshipMenuGameBtn" onclick="if(confirm('Are you sure you want to return to the Battleship menu? You will leave the current game.')) { window.location.href = '/battleship-menu'; }">🚢 Battleship Menu</button>
         </div>
 
         <!-- Game Title -->

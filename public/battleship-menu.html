@@ -211,7 +211,7 @@
         <h1 class="game-title" style="color: #FFD700 !important; font-size: 2.5em !important; font-weight: bold !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.7) !important; margin-bottom: 20px !important; text-align: center !important; z-index: 1000 !important; position: relative !important; display: block !important;">🚢 Battleship</h1>
         <div id="roomControls" class="room-controls">
           <!-- Back to Main Menu Button -->
-          <button id="backToMainMenu" onclick="console.log('🔙 Back to Main Menu clicked'); window.location.replace('/');" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer; font-size: 14px;">
+          <button id="backToMainMenu" onclick="if(confirm('Are you sure you want to leave the Battleship menu and return to the main menu?')) { console.log('🔙 Back to Main Menu clicked'); window.location.replace('/'); }" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer; font-size: 14px;">
             ← Back to Main Menu
           </button>
           
@@ -250,7 +250,7 @@
           <button id="addBotBtn" style="display: none;">Add Bot</button>
           <button id="removeBotBtn" style="display: none;">Remove Bot</button>
           <button id="startGameBtn" style="display: none;" disabled>Start Game</button>
-          <button id="gameMenuBtn" onclick="window.location.reload();" style="display: none; background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 10px;">Battleship Game Menu</button>
+          <button id="gameMenuBtn" onclick="if(confirm('Are you sure you want to return to the Battleship menu? You will leave the current game.')) { window.location.reload(); }" style="display: none; background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 10px;">Battleship Game Menu</button>
 
           <button id="backToMainMenuBtn" style="display: none;">← Back to Battleship Menu</button>
           <div id="playerList" style="display: none;"></div>
