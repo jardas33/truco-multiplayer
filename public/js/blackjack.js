@@ -1439,16 +1439,40 @@ class BlackjackClient {
             return;
         }
         
-        console.log('🃏 Emitting placeBet event to server:', {
-            roomId: roomId,
-            playerIndex: this.localPlayerIndex,
-            amount: amount
+        // Verify socket connection
+        console.log('🃏 Socket connection status:', {
+            connected: socket.connected,
+            id: socket.id,
+            disconnected: socket.disconnected,
+            roomId: roomId
         });
         
-        socket.emit('placeBet', {
+        if (!socket.connected) {
+            console.error('❌ Socket is not connected!');
+            this.isActing = false;
+            const placeBetBtn = document.getElementById('placeBetBtn');
+            if (placeBetBtn) placeBetBtn.disabled = false;
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('Socket not connected. Please refresh the page.', 'error');
+            } else {
+                alert('Socket not connected. Please refresh the page.');
+            }
+            return;
+        }
+        
+        const eventData = {
             roomId: roomId,
             playerIndex: this.localPlayerIndex,
             amount: amount
+        };
+        
+        console.log('🃏 Emitting placeBet event to server:', eventData);
+        console.log('🃏 Socket ID:', socket.id);
+        console.log('🃏 Socket connected:', socket.connected);
+        
+        // Emit with callback to verify it was sent
+        socket.emit('placeBet', eventData, (response) => {
+            console.log('🃏 placeBet event acknowledgment received:', response);
         });
         
         console.log('✅ placeBet event emitted successfully');

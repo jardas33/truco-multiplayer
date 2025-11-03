@@ -3937,9 +3937,15 @@ function determineRoundWinner(playedCards, room) {
     }
     
     // Place bet handler
-    socket.on('placeBet', (data) => {
+    socket.on('placeBet', (data, callback) => {
         try {
             console.log('🃏 placeBet event received:', data);
+            console.log('🃏 Socket ID:', socket.id);
+            
+            // Send acknowledgment back to client
+            if (callback && typeof callback === 'function') {
+                callback({ received: true, timestamp: Date.now() });
+            }
             const roomCode = data.roomId;
             const room = rooms.get(roomCode);
             
