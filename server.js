@@ -3883,7 +3883,13 @@ function determineRoundWinner(playedCards, room) {
     
     // Helper function to deal a card from deck
     function dealBlackjackCard(room) {
+        if (!room || !room.game || !room.game.deck) {
+            console.error('❌ Invalid room or game state in dealBlackjackCard');
+            return null;
+        }
+        
         if (room.game.deck.length === 0) {
+            console.log('🃏 Deck empty, reshuffling...');
             // Reshuffle - create new deck
             const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
             const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
@@ -3916,7 +3922,18 @@ function determineRoundWinner(playedCards, room) {
             }
         }
         
-        return room.game.deck.pop();
+        if (room.game.deck.length === 0) {
+            console.error('❌ Deck still empty after reshuffle!');
+            return null;
+        }
+        
+        const card = room.game.deck.pop();
+        if (!card) {
+            console.error('❌ Failed to deal card from deck');
+            return null;
+        }
+        
+        return card;
     }
     
     // Place bet handler
@@ -4125,6 +4142,11 @@ function determineRoundWinner(playedCards, room) {
                 switch (action) {
                     case 'hit':
                         const hitCard = dealBlackjackCard(room);
+                        if (!hitCard) {
+                            socket.emit('error', 'Failed to deal card - deck empty');
+                            console.error('❌ Failed to deal hit card');
+                            return;
+                        }
                         player.hand.push(hitCard);
                         player.value = calculateBlackjackValue(player.hand);
                         player.canDouble = false;
@@ -4181,6 +4203,14 @@ function determineRoundWinner(playedCards, room) {
                         player.chips -= player.bet;
                         player.bet *= 2;
                         const doubleCard = dealBlackjackCard(room);
+                        if (!doubleCard) {
+                            socket.emit('error', 'Failed to deal card - deck empty');
+                            console.error('❌ Failed to deal double card');
+                            // Refund the bet
+                            player.chips += player.bet;
+                            player.bet /= 2;
+                            return;
+                        }
                         player.hand.push(doubleCard);
                         player.value = calculateBlackjackValue(player.hand);
                         player.isStanding = true;
@@ -4286,9 +4316,15 @@ function determineRoundWinner(playedCards, room) {
             
             // Dealer hits until 17 or bust (with small delay between hits for visual effect)
             const dealerPlayCards = async () => {
-                while (room.game.dealer.value < 17) {
+                while (room.game.dealer.value < 17 && !room.game.dealer.isBusted) {
                     await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between cards
                     const dealerCard = dealBlackjackCard(room);
+                    if (!dealerCard) {
+                        console.error('❌ Failed to deal dealer card - stopping dealer turn');
+                        // Mark dealer as done
+                        room.game.dealer.isBusted = true;
+                        break;
+                    }
                     room.game.dealer.hand.push(dealerCard);
                     room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
                     
@@ -4365,6 +4401,12 @@ function determineRoundWinner(playedCards, room) {
         switch (action) {
             case 'hit':
                 const hitCard = dealBlackjackCard(room);
+                if (!hitCard) {
+                    console.error('❌ Failed to deal hit card to bot');
+                    // Bot stands if can't get card
+                    botPlayer.isStanding = true;
+                    break;
+                }
                 botPlayer.hand.push(hitCard);
                 botPlayer.value = calculateBlackjackValue(botPlayer.hand);
                 botPlayer.canDouble = false;
@@ -4415,6 +4457,14 @@ function determineRoundWinner(playedCards, room) {
                     botPlayer.chips -= botPlayer.bet;
                     botPlayer.bet *= 2;
                     const doubleCard = dealBlackjackCard(room);
+                    if (!doubleCard) {
+                        console.error('❌ Failed to deal double card to bot');
+                        // Refund and stand
+                        botPlayer.chips += botPlayer.bet;
+                        botPlayer.bet /= 2;
+                        botPlayer.isStanding = true;
+                        break;
+                    }
                     botPlayer.hand.push(doubleCard);
                     botPlayer.value = calculateBlackjackValue(botPlayer.hand);
                     botPlayer.isStanding = true;

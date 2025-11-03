@@ -407,6 +407,7 @@ class BlackjackClient {
         this.localPlayerIndex = 0;
         this.isMyTurn = false;
         this.canAct = false;
+        this.isActing = false; // Prevent duplicate actions
     }
 
     // Initialize the client
@@ -494,8 +495,30 @@ class BlackjackClient {
         if (splitBtn) splitBtn.onclick = () => this.playerAction('split');
         if (placeBetBtn) {
             placeBetBtn.onclick = () => {
+                // Prevent duplicate betting
+                if (this.isActing) {
+                    console.log('🃏 Bet already in progress');
+                    return;
+                }
+                
                 const amount = parseInt(betAmountInput?.value || 10);
                 const localPlayer = this.game.players[this.localPlayerIndex];
+                
+                if (!localPlayer) {
+                    console.error('🃏 Local player not found');
+                    return;
+                }
+                
+                // Check if already bet
+                if (localPlayer.bet > 0) {
+                    if (typeof UIUtils !== 'undefined') {
+                        UIUtils.showGameMessage('You have already placed a bet', 'info');
+                    } else {
+                        alert('You have already placed a bet');
+                    }
+                    return;
+                }
+                
                 const minBet = this.game.minBet || 5;
                 const maxBet = this.game.maxBet || 1000;
                 
@@ -517,7 +540,7 @@ class BlackjackClient {
                     return;
                 }
                 
-                if (localPlayer && amount > localPlayer.chips) {
+                if (amount > localPlayer.chips) {
                     if (typeof UIUtils !== 'undefined') {
                         UIUtils.showGameMessage('Insufficient chips', 'error');
                     } else {
@@ -527,6 +550,9 @@ class BlackjackClient {
                 }
                 
                 if (amount > 0) {
+                    // Set acting flag
+                    this.isActing = true;
+                    placeBetBtn.disabled = true;
                     this.placeBet(amount);
                 }
             };
@@ -750,6 +776,7 @@ class BlackjackClient {
         // Reset UI state
         this.isMyTurn = false;
         this.canAct = false;
+        this.isActing = false;
         
         // Clear any previous game data
         if (this.game) {
@@ -929,6 +956,11 @@ class BlackjackClient {
             this.game.players[data.playerIndex] = { ...this.game.players[data.playerIndex], ...data.player };
         }
         
+        // Reset acting flag if this was the local player
+        if (data.playerIndex === this.localPlayerIndex) {
+            this.isActing = false;
+        }
+        
         // Update UI to reflect new bets
         this.updateUI();
         this.updateGameControls();
@@ -942,11 +974,19 @@ class BlackjackClient {
         this.game.gamePhase = data.gamePhase || this.game.gamePhase;
         this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : this.game.currentPlayer;
         
+        // Reset acting flag when cards are dealt
+        this.isActing = false;
+        
+        // Update turn state
         this.isMyTurn = (this.game.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
         if (this.game.players[this.localPlayerIndex]) {
-            this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
-                         !this.game.players[this.localPlayerIndex].isStanding && 
-                         !this.game.players[this.localPlayerIndex].hasBlackjack;
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            this.canAct = this.isMyTurn && !localPlayer.isBusted && 
+                         !localPlayer.isStanding && 
+                         !localPlayer.hasBlackjack &&
+                         !this.isActing;
+        } else {
+            this.canAct = false;
         }
         
         this.updateUI();
@@ -955,18 +995,31 @@ class BlackjackClient {
 
     // Update player action
     updatePlayerAction(data) {
-        console.log('🃏 Player action:', data);
+        console.log('🃏 Player action update:', data);
+        
+        // Update player state
         if (data.playerIndex !== undefined && this.game.players[data.playerIndex]) {
             this.game.players[data.playerIndex] = { ...this.game.players[data.playerIndex], ...data.player };
         }
+        
         this.game.gamePhase = data.gamePhase || this.game.gamePhase;
         this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : this.game.currentPlayer;
         
+        // Reset acting flag if this was the local player's action
+        if (data.playerIndex === this.localPlayerIndex) {
+            this.isActing = false;
+        }
+        
+        // Update turn state
         this.isMyTurn = (this.game.gamePhase === 'playing' && this.game.currentPlayer === this.localPlayerIndex);
         if (this.game.players[this.localPlayerIndex]) {
-            this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex].isBusted && 
-                         !this.game.players[this.localPlayerIndex].isStanding && 
-                         !this.game.players[this.localPlayerIndex].hasBlackjack;
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            this.canAct = this.isMyTurn && !localPlayer.isBusted && 
+                         !localPlayer.isStanding && 
+                         !localPlayer.hasBlackjack &&
+                         !this.isActing; // Don't allow action if already acting
+        } else {
+            this.canAct = false;
         }
         
         this.updateUI();
@@ -1029,6 +1082,12 @@ class BlackjackClient {
 
     // Player action
     playerAction(action) {
+        // Prevent duplicate actions
+        if (this.isActing) {
+            console.log('🃏 Action already in progress, ignoring duplicate request');
+            return;
+        }
+        
         if (!this.canAct) {
             if (typeof UIUtils !== 'undefined') {
                 UIUtils.showGameMessage('It\'s not your turn', 'error');
@@ -1038,13 +1097,88 @@ class BlackjackClient {
             return;
         }
         
+        // Validate action is allowed
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (!localPlayer) {
+            console.error('🃏 Local player not found');
+            return;
+        }
+        
+        if (localPlayer.isBusted || localPlayer.isStanding || localPlayer.hasBlackjack) {
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('Cannot perform action in current state', 'error');
+            } else {
+                alert('Cannot perform action in current state');
+            }
+            return;
+        }
+        
+        // Special validation for double and split
+        if (action === 'double') {
+            if (localPlayer.hand.length !== 2) {
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Can only double down on first two cards', 'error');
+                } else {
+                    alert('Can only double down on first two cards');
+                }
+                return;
+            }
+            if (!localPlayer.canDouble || localPlayer.chips < localPlayer.bet) {
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Cannot double down', 'error');
+                } else {
+                    alert('Cannot double down');
+                }
+                return;
+            }
+        }
+        
+        if (action === 'split') {
+            if (localPlayer.hand.length !== 2 || localPlayer.hand[0].rank !== localPlayer.hand[1].rank) {
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Can only split pairs', 'error');
+                } else {
+                    alert('Can only split pairs');
+                }
+                return;
+            }
+            if (!localPlayer.canSplit || localPlayer.chips < localPlayer.bet) {
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Cannot split', 'error');
+                } else {
+                    alert('Cannot split');
+                }
+                return;
+            }
+        }
+        
+        // Set acting flag to prevent duplicates
+        this.isActing = true;
+        this.canAct = false;
+        this.updateGameControls(); // Update UI immediately
+        
         const roomId = this.getRoomId();
         if (!roomId) {
-            console.error('No room ID available');
+            console.error('🃏 No room ID available');
+            this.isActing = false;
+            this.updateGameControls();
             return;
         }
         
         const socket = window.gameFramework.socket;
+        if (!socket || !socket.connected) {
+            console.error('🃏 Socket not connected');
+            this.isActing = false;
+            this.updateGameControls();
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('Not connected to server', 'error');
+            } else {
+                alert('Not connected to server');
+            }
+            return;
+        }
+        
+        console.log(`🃏 Emitting playerAction: ${action}`);
         socket.emit('playerAction', {
             roomId: roomId,
             playerIndex: this.localPlayerIndex,
@@ -1147,19 +1281,36 @@ class BlackjackClient {
                 // Try to use card images if available
                 const cardHTML = player.hand && player.hand.length > 0 ? 
                     player.hand.map(card => {
-                        // Try to find card image
-                        const cardImageName = card.name ? card.name.toLowerCase().replace(/\s+/g, '_') : null;
+                        // Try to find card image - handle both formats
+                        let cardImageName = null;
+                        if (card.name) {
+                            const name1 = card.name.toLowerCase().replace(/\s+/g, '_');
+                            cardImageName = name1;
+                        }
+                        
                         const cardImage = window.cardImages && cardImageName ? window.cardImages[cardImageName] : null;
                         
-                        if (cardImage && cardImage.width > 0) {
-                            // Use actual card image
-                            return `<div class="card"><img src="${cardImage.canvas ? cardImage.canvas.toDataURL() : ''}" alt="${card.name}" onerror="this.parentElement.innerHTML='${card.name}'"></div>`;
-                        } else {
-                            // Fallback to text card
-                            const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
-                                const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
-                                return map[match.toLowerCase()] || match;
-                            }) : '';
+                        if (cardImage && cardImage.width && cardImage.width > 0) {
+                            // Use actual card image if available
+                            let imageSrc = '';
+                            if (cardImage.canvas) {
+                                imageSrc = cardImage.canvas.toDataURL();
+                            } else if (cardImage.elt && cardImage.elt.src) {
+                                imageSrc = cardImage.elt.src;
+                            } else if (typeof cardImage === 'string') {
+                                imageSrc = cardImage;
+                            }
+                            
+                            if (imageSrc) {
+                                return `<div class="card"><img src="${imageSrc}" alt="${card.name}" onerror="this.parentElement.innerHTML='<div style=\\'font-size:11px;font-weight:bold;color:${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'}\\'>${(card.name || '').replace(' of ', ' ').replace(/jack|queen|king|ace/gi, m => ({jack:'J',queen:'Q',king:'K',ace:'A'}[m.toLowerCase()]||m))}</div>'"></div>`;
+                            }
+                        }
+                        
+                        // Fallback to styled text card
+                        const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                            const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
+                            return map[match.toLowerCase()] || match;
+                        }) : '';
                             return `<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5);">
                                 <div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
                                     ${shortName}
@@ -1210,27 +1361,55 @@ class BlackjackClient {
                     cardDiv.classList.add('hidden');
                     cardDiv.innerHTML = ''; // Clear any content, CSS will show the ?
                 } else {
-                    // Try to use card image if available
-                    const cardImageName = card.name ? card.name.toLowerCase().replace(/\s+/g, '_') : null;
+                    // Try to use card image if available - handle both formats
+                    let cardImageName = null;
+                    if (card.name) {
+                        const name1 = card.name.toLowerCase().replace(/\s+/g, '_');
+                        cardImageName = name1;
+                    }
+                    
                     const cardImage = window.cardImages && cardImageName ? window.cardImages[cardImageName] : null;
                     
-                    if (cardImage && cardImage.width > 0) {
+                    if (cardImage && cardImage.width && cardImage.width > 0) {
                         // Use actual card image
                         const img = document.createElement('img');
-                        img.src = cardImage.canvas ? cardImage.canvas.toDataURL() : '';
-                        img.alt = card.name;
-                        img.style.width = '100%';
-                        img.style.height = '100%';
-                        img.style.objectFit = 'cover';
-                        img.style.borderRadius = '3px';
-                        img.onerror = function() {
-                            // Fallback to text if image fails
-                            cardDiv.innerHTML = card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                        let imageSrc = '';
+                        if (cardImage.canvas) {
+                            imageSrc = cardImage.canvas.toDataURL();
+                        } else if (cardImage.elt && cardImage.elt.src) {
+                            imageSrc = cardImage.elt.src;
+                        } else if (typeof cardImage === 'string') {
+                            imageSrc = cardImage;
+                        }
+                        
+                        if (imageSrc) {
+                            img.src = imageSrc;
+                            img.alt = card.name;
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '3px';
+                            img.onerror = function() {
+                                // Fallback to text if image fails
+                                const shortName = card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
+                                    const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
+                                    return map[match.toLowerCase()] || match;
+                                });
+                                cardDiv.innerHTML = `<div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
+                                    ${shortName}
+                                </div>`;
+                            };
+                            cardDiv.appendChild(img);
+                        } else {
+                            // No image source, use fallback
+                            const shortName = card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
                                 const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
                                 return map[match.toLowerCase()] || match;
                             });
-                        };
-                        cardDiv.appendChild(img);
+                            cardDiv.innerHTML = `<div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
+                                ${shortName}
+                            </div>`;
+                        }
                     } else {
                         // Fallback to styled text card
                         const shortName = card.name ? card.name.replace(' of ', ' ').replace(/jack|queen|king|ace/gi, (match) => {
@@ -1303,16 +1482,34 @@ class BlackjackClient {
             bettingControls.style.display = (this.game.gamePhase === 'playing') ? 'flex' : 'none';
         }
         
-        if (hitBtn) hitBtn.style.display = this.canAct ? 'inline-block' : 'none';
-        if (standBtn) standBtn.style.display = this.canAct ? 'inline-block' : 'none';
+        // Don't show buttons if acting
+        const canShowButtons = this.canAct && !this.isActing;
+        
+        if (hitBtn) {
+            hitBtn.style.display = canShowButtons ? 'inline-block' : 'none';
+            hitBtn.disabled = this.isActing || !this.canAct;
+        }
+        if (standBtn) {
+            standBtn.style.display = canShowButtons ? 'inline-block' : 'none';
+            standBtn.disabled = this.isActing || !this.canAct;
+        }
+        
         // Double down only available on first 2 cards and if player can afford it
-        const canDoubleNow = localPlayer && localPlayer.canDouble && localPlayer.hand && localPlayer.hand.length === 2;
-        if (doubleBtn) doubleBtn.style.display = (this.canAct && canDoubleNow) ? 'inline-block' : 'none';
+        const canDoubleNow = localPlayer && localPlayer.canDouble && localPlayer.hand && localPlayer.hand.length === 2 && localPlayer.chips >= localPlayer.bet;
+        if (doubleBtn) {
+            doubleBtn.style.display = (canShowButtons && canDoubleNow) ? 'inline-block' : 'none';
+            doubleBtn.disabled = this.isActing || !this.canAct || !canDoubleNow;
+        }
+        
         // Split only available on first 2 cards of same rank
         const canSplitNow = localPlayer && localPlayer.canSplit && localPlayer.hand && localPlayer.hand.length === 2 && 
                             localPlayer.hand[0] && localPlayer.hand[1] && 
-                            localPlayer.hand[0].rank === localPlayer.hand[1].rank;
-        if (splitBtn) splitBtn.style.display = (this.canAct && canSplitNow) ? 'inline-block' : 'none';
+                            localPlayer.hand[0].rank === localPlayer.hand[1].rank &&
+                            localPlayer.chips >= localPlayer.bet;
+        if (splitBtn) {
+            splitBtn.style.display = (canShowButtons && canSplitNow) ? 'inline-block' : 'none';
+            splitBtn.disabled = this.isActing || !this.canAct || !canSplitNow;
+        }
         
         // Update player chips display
         const playerChipsEl = document.getElementById('playerChips');
