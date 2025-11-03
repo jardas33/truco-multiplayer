@@ -1459,12 +1459,13 @@ class BlackjackClient {
                             const map = {jack: 'J', queen: 'Q', king: 'K', ace: 'A'};
                             return map[match.toLowerCase()] || match;
                         }) : '';
-                            return `<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5);">
-                                <div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
-                                    ${shortName}
-                                </div>
-                            </div>`;
-                        }
+                        
+                        return `<div class="card" style="background: linear-gradient(135deg, #fff, #f5f5f5);">
+                            <div style="font-size: 11px; font-weight: bold; color: ${card.suit === 'hearts' || card.suit === 'diamonds' ? '#d32f2f' : '#333'};">
+                                ${shortName}
+                            </div>
+                        </div>`;
+                    }
                     }).join('') : '';
                 
                 playerDiv.innerHTML = `
