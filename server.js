@@ -4869,14 +4869,15 @@ function determineRoundWinner(playedCards, room) {
                 return; // Exit early for blackjack
             }
             
-            // Generic handler for other games
-        console.log(`🎮 Player action in room: ${data.roomId}`);
-        if (room) {
-            io.to(data.roomId).emit('playerAction', data);
+            // Generic handler for other games (if not blackjack)
+            console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
+            if (room) {
+                io.to(data.roomId || data.roomCode).emit('playerAction', data);
             }
         } catch (error) {
-            console.error(`❌ Error in playerAction:`, error);
-            socket.emit('error', 'Failed to process action');
+            console.error(`❌❌❌ ERROR in playerAction handler:`, error);
+            console.error(`❌❌❌ Error stack:`, error.stack);
+            socket.emit('error', 'Failed to process action: ' + error.message);
         }
     });
     
