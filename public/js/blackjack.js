@@ -2009,6 +2009,57 @@ class BlackjackClient {
         }
     }
 
+    // Setup navigation buttons for game view
+    setupGameNavigationButtons() {
+        console.log('🃏 Setting up game navigation buttons...');
+        
+        // Back to Main Menu button
+        const backToMainMenuBtn = document.getElementById('backToMainMenuGameBtn');
+        if (backToMainMenuBtn) {
+            backToMainMenuBtn.onclick = () => {
+                if (confirm('Are you sure you want to leave the game and return to the main menu? You will lose your current game progress.')) {
+                    console.log('🏠 Navigating to main menu...');
+                    window.location.href = '/';
+                }
+            };
+            console.log('✅ Back to Main Menu button handler attached');
+        } else {
+            console.warn('⚠️ Back to Main Menu button not found');
+        }
+        
+        // Blackjack Menu button
+        const blackjackMenuBtn = document.getElementById('blackjackMenuGameBtn');
+        if (blackjackMenuBtn) {
+            blackjackMenuBtn.onclick = () => {
+                if (confirm('Are you sure you want to return to the Blackjack menu? You will leave the current game.')) {
+                    console.log('🃏 Returning to Blackjack menu...');
+                    window.location.reload();
+                }
+            };
+            console.log('✅ Blackjack Menu button handler attached');
+        } else {
+            console.warn('⚠️ Blackjack Menu button not found');
+        }
+    }
+    
+    // Show menu (called from game menu button)
+    showMenu() {
+        console.log('🃏 Showing Blackjack menu...');
+        const menuDiv = document.getElementById('Menu');
+        const gameDiv = document.getElementById('Game');
+        
+        if (menuDiv) {
+            menuDiv.style.display = 'flex';
+        }
+        
+        if (gameDiv) {
+            gameDiv.style.display = 'none';
+        }
+        
+        // Reset game state
+        this.reset();
+    }
+    
     // Reset client state
     reset() {
         console.log('Resetting Blackjack client state...');

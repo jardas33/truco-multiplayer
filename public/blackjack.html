@@ -562,6 +562,22 @@
             background-color: #1976D2 !important;
             background: #1976D2 !important;
         }
+        
+        /* Navigation buttons during game */
+        #backToMainMenuGameBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4) !important;
+        }
+        
+        #blackjackMenuGameBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4) !important;
+        }
+        
+        #backToMainMenuGameBtn:active,
+        #blackjackMenuGameBtn:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -620,6 +636,16 @@
     </div>
 
     <div id="Game">
+        <!-- Navigation Buttons (visible during game) -->
+        <div style="position: fixed; top: 20px; left: 20px; z-index: 2000; display: flex; gap: 10px;">
+            <button id="backToMainMenuGameBtn" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                ← Back to Main Menu
+            </button>
+            <button id="blackjackMenuGameBtn" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                🃏 Blackjack Menu
+            </button>
+        </div>
+        
         <div class="blackjack-table">
             <div class="game-info">
                 <h3>Game Info</h3>
