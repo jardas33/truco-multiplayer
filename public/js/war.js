@@ -1291,18 +1291,16 @@ class WarClient {
             }
         }
         
+        // ✅ CRITICAL FIX: Reset isStartingBattle flag when battle actually starts
+        this.isStartingBattle = false;
+        
         this.updateUI();
         this.showWarMessage('⚔️ BATTLE! ⚔️', 'battle');
         this.hideActionControls();
         this.createBattleParticles();
         
-        // ✅ CRITICAL FIX: Add significant delay before resolving battle so players can see cards
-        // Cards will appear with 800ms delays, so wait for all cards + extra time
-        const maxCardDelay = (this.game.battleCards.length - 1) * 800 + 1200; // Last card delay + animation time
-        this.safeSetTimeout(() => {
-            // Cards are now visible, wait a bit more before resolving
-            console.log('⏳ Cards displayed, waiting before resolution...');
-        }, maxCardDelay + 5000); // ✅ CRITICAL FIX: Wait 5 seconds after cards appear before resolving
+        // ✅ CRITICAL FIX: Server will handle the delay, but log here for debugging
+        console.log('⏳ Cards will appear with delays, server will resolve after 10 seconds');
         
         // ✅ CRITICAL FIX: Clear any pending battle auto-starts
         this.clearPendingActions();
@@ -2218,7 +2216,7 @@ class WarClient {
                     'battle-card',
                     {
                         animate: true,
-                        delay: index * 800, // ✅ CRITICAL FIX: Increased delay to 800ms for much better visibility
+                        delay: index * 1200, // ✅ CRITICAL FIX: Increased delay to 1200ms (1.2 seconds) for much better visibility
                         isWar: false,
                         faceUp: true
                     }
@@ -2272,7 +2270,7 @@ class WarClient {
                             'battle-card war-card',
                             {
                                 animate: true,
-                                delay: (groupIndex * 1000) + (cardIndex * 400), // ✅ CRITICAL FIX: Increased delays for war cards (1000ms between groups, 400ms between cards)
+                                delay: (groupIndex * 1500) + (cardIndex * 600), // ✅ CRITICAL FIX: Increased delays for war cards (1500ms between groups, 600ms between cards)
                                 isWar: true,
                                 faceUp: warCard.faceUp !== false // Default to face up if not specified
                             }
@@ -2658,6 +2656,13 @@ class WarClient {
         if (actionControls) {
             actionControls.style.display = 'flex';
             actionControls.style.opacity = '1';
+            actionControls.style.zIndex = '3000';
+            actionControls.style.pointerEvents = 'auto';
+            actionControls.style.position = 'absolute';
+            actionControls.style.bottom = '20px';
+            actionControls.style.left = '50%';
+            actionControls.style.transform = 'translateX(-50%)';
+            console.log('✅ Action controls shown at bottom center');
             
             // ✅ CRITICAL FIX: Reset button state when showing controls
             const battleBtn = document.getElementById('battleBtn');
@@ -2666,7 +2671,14 @@ class WarClient {
                 battleBtn.textContent = battleBtn.dataset.originalText || '⚔️ BATTLE!';
                 battleBtn.style.opacity = battleBtn.disabled ? '0.5' : '1';
                 battleBtn.style.cursor = battleBtn.disabled ? 'not-allowed' : 'pointer';
+                battleBtn.style.pointerEvents = 'auto';
+                battleBtn.style.zIndex = '3001';
+                console.log('✅ Battle button reset and made clickable');
+            } else {
+                console.warn('⚠️ Battle button not found');
             }
+        } else {
+            console.error('❌ Action controls container not found');
         }
     }
 

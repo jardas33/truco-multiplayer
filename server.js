@@ -3272,7 +3272,7 @@ io.on('connection', (socket) => {
             // Resolve battle after delay
             setTimeout(() => {
                 resolveWarBattle(room, roomCode);
-            }, 1500);
+            }, 10000); // ✅ CRITICAL FIX: Increased delay to 10 seconds to allow cards to appear and be visible (800ms * 4 players + 5000ms wait + buffer)
             
         } catch (error) {
             console.error(`❌ Error in startBattle handler:`, error);
