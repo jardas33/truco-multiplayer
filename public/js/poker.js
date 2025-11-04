@@ -1820,7 +1820,6 @@ function drawGameInfo() {
 function drawBlindIndicators() {
     // ALWAYS draw blind indicators if game exists and has players
     if (!window.game || !window.game.players || window.game.players.length < 2) {
-        // Even if game hasn't started, show indicators if we have player data
         return;
     }
     
@@ -1828,6 +1827,12 @@ function drawBlindIndicators() {
     const centerY = height/2;
     const radiusX = width * 0.35;
     const radiusY = height * 0.28;
+    
+    // Table dimensions for boundary checking
+    const tableWidth = width * 0.75;
+    const tableHeight = height * 0.55;
+    const tableRadiusX = tableWidth / 2 - 50; // Inner table radius (accounting for rim)
+    const tableRadiusY = tableHeight / 2 - 40;
     
     // Get dealer position - default to 0 if not set
     const dealerPosition = window.game.dealerPosition !== undefined ? window.game.dealerPosition : 0;
@@ -1842,8 +1847,31 @@ function drawBlindIndicators() {
         if (!player || player.isFolded) return; // Skip folded players
         
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
-        const x = centerX + cos(angle) * radiusX;
-        const y = centerY + sin(angle) * radiusY;
+        const playerX = centerX + cos(angle) * radiusX;
+        const playerY = centerY + sin(angle) * radiusY;
+        
+        // Calculate indicator position - closer to player and inside table
+        // Position indicator slightly toward center from player position
+        const indicatorOffsetX = -cos(angle) * 25; // Move toward center
+        const indicatorOffsetY = -sin(angle) * 25; // Move toward center
+        const indicatorX = playerX + indicatorOffsetX;
+        const indicatorY = playerY + indicatorOffsetY - 35; // Slightly above player
+        
+        // Check if indicator is inside table ellipse
+        const dx = (indicatorX - centerX) / tableRadiusX;
+        const dy = (indicatorY - centerY) / tableRadiusY;
+        const isInsideTable = (dx * dx + dy * dy) <= 1;
+        
+        // If outside, adjust position to be just inside the table
+        let finalIndicatorX = indicatorX;
+        let finalIndicatorY = indicatorY;
+        
+        if (!isInsideTable) {
+            // Move indicator toward center to keep it inside
+            const angleToCenter = atan2(indicatorY - centerY, indicatorX - centerX);
+            finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 20);
+            finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 20);
+        }
         
         push();
         
@@ -1852,14 +1880,14 @@ function drawBlindIndicators() {
             fill(255, 215, 0); // Gold
             stroke(255, 255, 255);
             strokeWeight(2);
-            ellipse(x, y - 80, 30, 30);
+            ellipse(finalIndicatorX, finalIndicatorY, 30, 30);
             
             fill(0, 0, 0);
             textAlign(CENTER, CENTER);
             textSize(12);
             textStyle(BOLD);
             noStroke();
-            text('D', x, y - 80);
+            text('D', finalIndicatorX, finalIndicatorY);
         }
         
         // Draw small blind indicator - always show if game is active
@@ -1867,19 +1895,19 @@ function drawBlindIndicators() {
             fill(100, 200, 255); // Light blue
             stroke(255, 255, 255);
             strokeWeight(2);
-            ellipse(x, y - 80, 28, 28);
+            ellipse(finalIndicatorX, finalIndicatorY, 28, 28);
             
             fill(0, 0, 0);
             textAlign(CENTER, CENTER);
             textSize(10);
             textStyle(BOLD);
             noStroke();
-            text('SB', x, y - 80);
+            text('SB', finalIndicatorX, finalIndicatorY);
             
             // Show blind amount below indicator
             textSize(9);
             fill(255, 255, 255);
-            text('$' + smallBlindAmount, x, y - 60);
+            text('$' + smallBlindAmount, finalIndicatorX, finalIndicatorY + 18);
         }
         
         // Draw big blind indicator - always show if game is active
@@ -1887,19 +1915,19 @@ function drawBlindIndicators() {
             fill(255, 100, 100); // Light red
             stroke(255, 255, 255);
             strokeWeight(2);
-            ellipse(x, y - 80, 28, 28);
+            ellipse(finalIndicatorX, finalIndicatorY, 28, 28);
             
             fill(0, 0, 0);
             textAlign(CENTER, CENTER);
             textSize(10);
             textStyle(BOLD);
             noStroke();
-            text('BB', x, y - 80);
+            text('BB', finalIndicatorX, finalIndicatorY);
             
             // Show blind amount below indicator
             textSize(9);
             fill(255, 255, 255);
-            text('$' + bigBlindAmount, x, y - 60);
+            text('$' + bigBlindAmount, finalIndicatorX, finalIndicatorY + 18);
         }
         
         pop();
