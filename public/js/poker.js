@@ -2736,48 +2736,70 @@ function drawBetIndicators() {
         const blindPos = blindIndicatorPositions.get(index);
         const betPos = betIndicatorPositions.get(index);
         
-        // Zone-based positioning: assign chip indicators to specific zones that don't overlap with blind/bet zones
-        // Use MUCH larger minimum distances
-        const minDistanceFromBlind = isSidePlayer ? 120 : 90;
-        const minDistanceFromBet = isSidePlayer ? 130 : 100;
+        // Check if player also has a current bet (both CHIPS and BET should show)
+        const hasCurrentBet = player.currentBet > 0;
         
         let chipIndicatorX, chipIndicatorY;
         
-        if (isTopPlayer) {
-            // Top player: chip indicator goes to the far left, well below cards
-            const cardY = playerY + 50;
-            const cardWidth = 60;
-            const cardSpacing = 8;
-            const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
-            const cardLeftEdge = playerX - (cardsTotalWidth / 2);
-            chipIndicatorX = cardLeftEdge - 80; // Much further left
-            chipIndicatorY = cardY + 42 + 90; // Much further below
-        } else if (isSidePlayer) {
-            // Side players: chip indicator goes to OPPOSITE side from blind indicators
-            // If blind is on left (toward center), chip goes to right (away from center), and vice versa
-            const isRightSide = cos(angle) > 0;
+        // If player has both chips and current bet, position chips to the LEFT of bet at same height
+        if (hasCurrentBet && betPos) {
+            // Position chip indicator to the LEFT of bet indicator at the same Y coordinate
+            const indicatorSpacing = 40; // Space between CHIPS and BET buttons (40px)
+            chipIndicatorX = betPos.x - indicatorSpacing; // Position to the left of BET
+            chipIndicatorY = betPos.y; // Same height as BET
             
-            // Determine where blind indicator is
-            let blindIsOnLeft = false;
+            // Ensure we don't overlap with blind indicators
             if (blindPos) {
-                blindIsOnLeft = blindPos.x < playerX;
+                const minDistanceFromBlind = isSidePlayer ? 120 : 90;
+                const dx = chipIndicatorX - blindPos.x;
+                const dy = chipIndicatorY - blindPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < minDistanceFromBlind) {
+                    // If chip would overlap blind, move it further left
+                    const extraOffset = minDistanceFromBlind - distance + 20;
+                    chipIndicatorX = blindPos.x - minDistanceFromBlind - extraOffset;
+                }
             }
-            
-            // Position chip indicator on OPPOSITE side from blind, with large offset
-            if (blindIsOnLeft) {
-                // Blind is on left, so chip goes to right (away from center)
-                chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
-            } else {
-                // Blind is on right or center, so chip goes to left (away from center)
-                chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
-            }
-            
-            // Position well below bet indicator
-            chipIndicatorY = playerY + 150; // Much further down
         } else {
-            // Bottom player: position directly below, well separated
-            chipIndicatorX = playerX;
-            chipIndicatorY = playerY + 150; // Much further below bet indicator
+            // No current bet - position chips normally (below or separate)
+            const minDistanceFromBlind = isSidePlayer ? 120 : 90;
+            
+            if (isTopPlayer) {
+                // Top player: chip indicator goes to the far left, well below cards
+                const cardY = playerY + 50;
+                const cardWidth = 60;
+                const cardSpacing = 8;
+                const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
+                const cardLeftEdge = playerX - (cardsTotalWidth / 2);
+                chipIndicatorX = cardLeftEdge - 80; // Much further left
+                chipIndicatorY = cardY + 42 + 90; // Much further below
+            } else if (isSidePlayer) {
+                // Side players: chip indicator goes to OPPOSITE side from blind indicators
+                const isRightSide = cos(angle) > 0;
+                
+                // Determine where blind indicator is
+                let blindIsOnLeft = false;
+                if (blindPos) {
+                    blindIsOnLeft = blindPos.x < playerX;
+                }
+                
+                // Position chip indicator on OPPOSITE side from blind, with large offset
+                if (blindIsOnLeft) {
+                    // Blind is on left, so chip goes to right (away from center)
+                    chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
+                } else {
+                    // Blind is on right or center, so chip goes to left (away from center)
+                    chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
+                }
+                
+                // Position well below bet indicator
+                chipIndicatorY = playerY + 150; // Much further down
+            } else {
+                // Bottom player: position directly below, well separated
+                chipIndicatorX = playerX;
+                chipIndicatorY = playerY + 150; // Much further below bet indicator
+            }
         }
         
         // Aggressive conflict resolution with multiple attempts
@@ -2846,8 +2868,8 @@ function drawBetIndicators() {
             }
         }
         
-        // Final aggressive check against bet indicators
-        if (betPos) {
+        // Final aggressive check against bet indicators (only if not positioning next to bet)
+        if (betPos && !hasCurrentBet) {
             const dx = chipIndicatorX - betPos.x;
             const dy = chipIndicatorY - betPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
