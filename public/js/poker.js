@@ -1136,12 +1136,6 @@ class PokerClient {
         
         this.hideBettingControls();
     }
-            action: 'raise',
-            amount: raiseAmount,
-            roomId: this.roomId
-        });
-        this.hideBettingControls();
-    }
 
     allIn() {
         const allInAmount = this.game.players[0]?.chips || 0;
