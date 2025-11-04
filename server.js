@@ -3387,7 +3387,13 @@ io.on('connection', (socket) => {
                 ...allWarCards.map(wc => wc.card).filter(c => c)
             ];
             if (allCards.length > 0 && winner && winner.player) {
-                winner.player.hand = [...(winner.player.hand || []), ...allCards.sort(() => Math.random() - 0.5)];
+                // ✅ CRITICAL FIX: Use proper Fisher-Yates shuffle
+                const shuffledCards = [...allCards];
+                for (let i = shuffledCards.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+                }
+                winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
                 awardWarBattle(room, roomCode, winner);
             } else {
                 endWarGame(room, roomCode);
