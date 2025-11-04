@@ -1189,7 +1189,8 @@ class WarClient {
         const playerElement = document.querySelector(`[data-player-index="${playerIndex}"]`);
         if (playerElement) {
             playerElement.classList.add('war-victory');
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Track timeout for cleanup
+            this.safeSetTimeout(() => {
                 playerElement.classList.remove('war-victory');
             }, 3000);
         }
@@ -1986,7 +1987,8 @@ class WarClient {
             const cardId = card.id || `battle-${index}` || `war-${index}`;
             const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
             if (cardElement) {
-                setTimeout(() => {
+                // ✅ CRITICAL FIX: Track timeout for cleanup
+                this.safeSetTimeout(() => {
                     cardElement.classList.add('collecting');
                     // Create flying card
                     this.createFlyingCard(cardElement, winnerIndex);

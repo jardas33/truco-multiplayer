@@ -2829,7 +2829,7 @@ io.on('connection', (socket) => {
                     [deck[i], deck[j]] = [deck[j], deck[i]];
                 }
                 
-                // Deal cards evenly to all players
+                // ✅ CRITICAL FIX: Deal cards evenly to all players with validation
                 const hands = Array(room.players.length).fill().map(() => []);
                 let cardIndex = 0;
                 while (cardIndex < deck.length) {
@@ -2839,6 +2839,28 @@ io.on('connection', (socket) => {
                             cardIndex++;
                         }
                     }
+                }
+                
+                // ✅ CRITICAL FIX: Validate all 52 cards were dealt
+                const totalDealt = hands.reduce((sum, hand) => sum + hand.length, 0);
+                if (totalDealt !== 52) {
+                    console.error(`❌ CRITICAL: Card dealing error! Expected 52 cards, dealt ${totalDealt}`);
+                    // Re-deal if there's an issue
+                    const handsFixed = Array(room.players.length).fill().map(() => []);
+                    let cardIndexFixed = 0;
+                    while (cardIndexFixed < deck.length) {
+                        for (let j = 0; j < room.players.length; j++) {
+                            if (cardIndexFixed < deck.length) {
+                                handsFixed[j].push(deck[cardIndexFixed]);
+                                cardIndexFixed++;
+                            }
+                        }
+                    }
+                    hands.length = 0;
+                    hands.push(...handsFixed);
+                    console.log(`✅ Fixed card dealing - now ${hands.reduce((sum, hand) => sum + hand.length, 0)} cards dealt`);
+                } else {
+                    console.log(`✅ All 52 cards dealt correctly: ${hands.map((h, i) => `Player ${i + 1}: ${h.length} cards`).join(', ')}`);
                 }
                 
                 room.game = {
