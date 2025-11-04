@@ -2784,6 +2784,7 @@ function drawBetIndicators() {
         const absSinAngle = Math.abs(sin(angle));
         const sinAngle = sin(angle);
         const isTopPlayer = sinAngle < -0.5;
+        const isBottomPlayer = sinAngle > 0.5;
         const isSidePlayer = absCosAngle > absSinAngle;
         
         const blindPos = blindIndicatorPositions.get(index);
