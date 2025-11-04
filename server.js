@@ -1807,12 +1807,17 @@ io.on('connection', (socket) => {
                         actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
                     }
                 } else {
-                    // Post-flop: if no raises, action should return to small blind (first to act)
+                    // Post-flop: if no raises, action should return to first player after big blind (same as preflop)
                     if (room.game.lastRaisePlayer === -1) {
-                        const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
-                        let expectedPlayer = smallBlindPos;
+                        // No raises - action should return to first player after big blind
+                        const bigBlindPosPostFlop = (room.game.dealerPosition + 2) % room.game.players.length;
+                        let expectedPlayer = (bigBlindPosPostFlop + 1) % room.game.players.length;
                         while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
                             expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                            // Safety check to prevent infinite loop
+                            if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length) {
+                                break;
+                            }
                         }
                         actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
                     } else {
