@@ -1693,15 +1693,14 @@ function drawPlayers() {
     // Draw cards AFTER all player boxes and highlights are drawn
     // This ensures cards are always on top, even over the blue highlight line
     playerPositions.forEach(({ x, y, player, index }) => {
-        if (player.hand && player.hand.length > 0 && !player.isFolded) {
-            // Only show card faces for local player (or at showdown)
-            // Check if it's showdown phase - be more strict
-            const gamePhase = window.game?.gamePhase || '';
-            const isShowdown = gamePhase.toLowerCase() === 'showdown' || (window.game.winners && window.game.winners.length > 0);
-            
+        if (!player.isFolded) {
             // Get local player index - check multiple sources
             const localPlayerIndex = window.pokerClient?.localPlayerIndex;
             const isLocalPlayer = index === localPlayerIndex;
+            
+            // Check if it's showdown phase - be more strict
+            const gamePhase = window.game?.gamePhase || '';
+            const isShowdown = gamePhase.toLowerCase() === 'showdown' || (window.game.winners && window.game.winners.length > 0);
             
             // STRICT: Only show cards for local player, NEVER for opponents unless showdown
             // Always default to false (card back) unless explicitly local player
@@ -1715,20 +1714,25 @@ function drawPlayers() {
                 shouldShowCardImages = true;
             }
             
-            // Debug logging (less frequent)
-            if (frameCount % 600 === 0) {
-                console.log('Card visibility check:', {
-                    index,
-                    localPlayerIndex,
-                    isLocalPlayer,
-                    gamePhase,
-                    isShowdown,
-                    shouldShow: shouldShowCardImages
-                });
+            // For opponents, always show 2 card backs (even if hand is empty/hidden)
+            // For local player, show actual cards if available
+            let cardsToShow = [];
+            if (isLocalPlayer && player.hand && player.hand.length > 0) {
+                cardsToShow = player.hand;
+            } else if (!isLocalPlayer) {
+                // Opponent - show 2 card backs (create placeholder cards if needed)
+                if (player.hand && player.hand.length > 0 && isShowdown) {
+                    cardsToShow = player.hand; // Show actual cards at showdown
+                } else {
+                    // Show 2 card backs for opponents
+                    cardsToShow = [{ name: 'back' }, { name: 'back' }];
+                }
             }
             
-            const cardY = y + 50; // Position cards further below player info
-            drawPlayerCards(x, cardY, player.hand, shouldShowCardImages);
+            if (cardsToShow.length > 0) {
+                const cardY = y + 50; // Position cards further below player info
+                drawPlayerCards(x, cardY, cardsToShow, shouldShowCardImages);
+            }
         }
     });
 }
@@ -1942,11 +1946,13 @@ function drawBlindIndicators() {
         const playerX = centerX + cos(angle) * playerRadiusX;
         const playerY = centerY + sin(angle) * playerRadiusY;
         
-        // Calculate indicator position - closer to player boxes, especially for left/right positions
+        // Calculate indicator position - closer to player boxes, especially for left/right and top positions
         // For left/right positions (angle near 0 or PI), position closer to player box
-        // For top/bottom positions, position between player and center
+        // For top position, position closer to player box (further from center)
+        // For bottom position, position between player and center
         const absCosAngle = Math.abs(cos(angle));
         const absSinAngle = Math.abs(sin(angle));
+        const sinAngle = sin(angle); // Negative for top, positive for bottom
         
         // If player is on left or right side (horizontal position), position indicator closer
         let indicatorRadiusX, indicatorRadiusY;
@@ -1954,8 +1960,12 @@ function drawBlindIndicators() {
             // Left or right side - position much closer to player box
             indicatorRadiusX = playerRadiusX * 0.75; // 75% of player radius = closer to player
             indicatorRadiusY = playerRadiusY * 0.75;
+        } else if (sinAngle < -0.5) {
+            // Top position (angle near -PI/2) - position much closer to player box
+            indicatorRadiusX = playerRadiusX * 0.75; // 75% of player radius = closer to player
+            indicatorRadiusY = playerRadiusY * 0.75;
         } else {
-            // Top or bottom - position between player and center
+            // Bottom position - position between player and center
             indicatorRadiusX = playerRadiusX * 0.5; // 50% of player radius
             indicatorRadiusY = playerRadiusY * 0.5;
         }
