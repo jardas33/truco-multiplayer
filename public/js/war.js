@@ -405,6 +405,7 @@ class WarClient {
         this.game = new WarGame();
         this.localPlayerIndex = 0;
         this.canAct = false;
+        this.isStartingBattle = false; // ✅ CRITICAL FIX: Prevent race conditions
         this.battleHistory = [];
         this.statistics = {
             totalBattles: 0,
@@ -415,6 +416,8 @@ class WarClient {
         };
         this.animationQueue = [];
         this.isAnimating = false;
+        this.pendingBattleTimeout = null; // ✅ CRITICAL FIX: Track pending timeouts
+        this.activeParticles = []; // ✅ CRITICAL FIX: Track particles for cleanup
     }
 
     // Initialize the client
@@ -465,8 +468,19 @@ class WarClient {
     setupSocketListeners() {
         const socket = window.gameFramework.socket;
         
+        // ✅ CRITICAL FIX: Validate socket exists
+        if (!socket) {
+            console.error('❌ Socket not available');
+            return;
+        }
+        
         socket.on('roomCreated', (data) => {
             console.log('🏠 Room created:', data);
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid room created data');
+                return;
+            }
             const roomCode = data.roomId || data; // Handle both old and new formats
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
@@ -475,37 +489,77 @@ class WarClient {
         
         socket.on('roomJoined', (data) => {
             console.log('🏠 Room joined:', data);
-            this.localPlayerIndex = data.playerIndex;
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid room joined data');
+                return;
+            }
+            this.localPlayerIndex = data.playerIndex !== undefined ? data.playerIndex : this.localPlayerIndex;
             this.showPlayerCustomization();
             this.showGameControls();
         });
         
         socket.on('gameStarted', (data) => {
             console.log('🎮 Game started:', data);
+            // ✅ CRITICAL FIX: Validate data before starting game
+            if (!data || !data.players) {
+                console.error('❌ Invalid game started data');
+                return;
+            }
             this.startGame(data);
         });
         
         socket.on('battleStarted', (data) => {
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid battle started data');
+                return;
+            }
             this.updateBattleStarted(data);
         });
         
         socket.on('battleResolved', (data) => {
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid battle resolved data');
+                return;
+            }
             this.updateBattleResolved(data);
         });
         
         socket.on('warStarted', (data) => {
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid war started data');
+                return;
+            }
             this.updateWarStarted(data);
         });
         
         socket.on('warResolved', (data) => {
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid war resolved data');
+                return;
+            }
             this.updateWarResolved(data);
         });
         
         socket.on('nextBattle', (data) => {
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid next battle data');
+                return;
+            }
             this.updateNextBattle(data);
         });
         
         socket.on('gameOver', (data) => {
+            // ✅ CRITICAL FIX: Validate data
+            if (!data) {
+                console.error('❌ Invalid game over data');
+                return;
+            }
             this.showGameOver(data);
         });
         
@@ -513,6 +567,40 @@ class WarClient {
         socket.on('error', (error) => {
             console.error('Socket error:', error);
             UIUtils.showGameMessage(`Error: ${error}`, 'error');
+        });
+        
+        // ✅ CRITICAL FIX: Handle disconnection
+        socket.on('disconnect', (reason) => {
+            console.warn('⚠️ Disconnected from server:', reason);
+            this.canAct = false;
+            this.hideActionControls();
+            UIUtils.showGameMessage('Disconnected from server. Please refresh the page.', 'error');
+            
+            // Clean up on disconnect
+            this.cleanup();
+        });
+        
+        // ✅ CRITICAL FIX: Handle reconnection
+        socket.on('reconnect', () => {
+            console.log('✅ Reconnected to server');
+            UIUtils.showGameMessage('Reconnected to server!', 'success');
+            
+            // Try to rejoin room if we were in one
+            if (window.gameFramework && window.gameFramework.roomId) {
+                const roomId = typeof window.gameFramework.roomId === 'object' ? 
+                              window.gameFramework.roomId.roomId : 
+                              window.gameFramework.roomId;
+                if (roomId) {
+                    console.log('🔄 Attempting to rejoin room:', roomId);
+                    this.joinRoom(roomId);
+                }
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle connection errors
+        socket.on('connect_error', (error) => {
+            console.error('❌ Connection error:', error);
+            UIUtils.showGameMessage('Connection error. Please check your internet connection.', 'error');
         });
     }
 
@@ -614,27 +702,71 @@ class WarClient {
 
     // Start battle
     startBattle() {
+        // ✅ CRITICAL FIX: Validate game state before starting battle
         if (!this.canAct || this.game.gameOver) {
+            console.log('⚠️ Cannot start battle: canAct=', this.canAct, 'gameOver=', this.game.gameOver);
             return;
         }
         
+        // ✅ CRITICAL FIX: Check if there are enough players with cards
+        const activePlayers = this.game.players.filter(p => p && p.hand && p.hand.length > 0);
+        if (activePlayers.length < 2) {
+            console.log('⚠️ Not enough players with cards to start battle');
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Prevent multiple simultaneous battle starts
+        if (this.isStartingBattle) {
+            console.log('⚠️ Battle already starting');
+            return;
+        }
+        
+        this.isStartingBattle = true;
+        
         const socket = window.gameFramework.socket;
+        if (!socket || !socket.connected) {
+            console.error('❌ Socket not connected');
+            this.isStartingBattle = false;
+            return;
+        }
+        
+        const roomId = typeof window.gameFramework.roomId === 'object' ? 
+                      window.gameFramework.roomId.roomId : 
+                      window.gameFramework.roomId;
+        
+        if (!roomId) {
+            console.error('❌ No room ID available');
+            this.isStartingBattle = false;
+            return;
+        }
+        
         socket.emit('startBattle', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex
         });
         
         this.canAct = false;
         this.hideActionControls();
+        
+        // ✅ CRITICAL FIX: Reset flag after a delay
+        setTimeout(() => {
+            this.isStartingBattle = false;
+        }, 1000);
     }
 
     // Update battle started
     updateBattleStarted(data) {
-        this.game.battleCards = data.battleCards || [];
+        // ✅ CRITICAL FIX: Validate data before processing
+        if (!data) {
+            console.error('❌ Invalid battle started data');
+            return;
+        }
+        
+        this.game.battleCards = (data.battleCards || []).filter(bc => bc && bc.card);
         this.game.battleNumber = data.battleNumber || this.game.battleNumber;
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: p.hand || [],
+            hand: Array.isArray(p.hand) ? p.hand : [],
             position: index
         }));
         
@@ -642,27 +774,44 @@ class WarClient {
         this.statistics.totalBattles++;
         
         // Add to battle history
-        this.battleHistory.push({
-            battleNumber: this.game.battleNumber,
-            cards: [...this.game.battleCards],
-            timestamp: Date.now()
-        });
-        
-        // Keep only last 10 battles in history
-        if (this.battleHistory.length > 10) {
-            this.battleHistory.shift();
+        if (this.game.battleCards.length > 0) {
+            this.battleHistory.push({
+                battleNumber: this.game.battleNumber,
+                cards: [...this.game.battleCards],
+                timestamp: Date.now()
+            });
+            
+            // Keep only last 10 battles in history
+            if (this.battleHistory.length > 10) {
+                this.battleHistory.shift();
+            }
         }
         
         this.updateUI();
         this.showWarMessage('⚔️ BATTLE! ⚔️', 'battle');
         this.hideActionControls();
         this.createBattleParticles();
+        
+        // ✅ CRITICAL FIX: Clear any pending battle auto-starts
+        this.clearPendingActions();
+    }
+    
+    // ✅ CRITICAL FIX: Clear pending actions to prevent race conditions
+    clearPendingActions() {
+        if (this.pendingBattleTimeout) {
+            clearTimeout(this.pendingBattleTimeout);
+            this.pendingBattleTimeout = null;
+        }
     }
     
     // Create particle effects for battle
     createBattleParticles() {
         const battleArea = document.getElementById('battleArea');
         if (!battleArea) return;
+        
+        // ✅ CRITICAL FIX: Clean up existing particles first
+        const existingParticles = battleArea.querySelectorAll('.battle-particle');
+        existingParticles.forEach(p => p.remove());
         
         for (let i = 0; i < 20; i++) {
             const particle = document.createElement('div');
@@ -672,30 +821,44 @@ class WarClient {
             particle.style.animationDelay = Math.random() * 0.5 + 's';
             battleArea.appendChild(particle);
             
-            setTimeout(() => particle.remove(), 2000);
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.remove();
+                }
+            }, 2000);
         }
     }
 
     // Update battle resolved
     updateBattleResolved(data) {
+        // ✅ CRITICAL FIX: Validate data
+        if (!data) {
+            console.error('❌ Invalid battle resolved data');
+            return;
+        }
+        
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: p.hand || [],
+            hand: Array.isArray(p.hand) ? p.hand : [],
             position: index
         }));
         
         // Update statistics
         if (data.winner) {
             const winnerName = data.winner.name;
-            if (!this.statistics.cardsWonByPlayer[winnerName]) {
-                this.statistics.cardsWonByPlayer[winnerName] = 0;
+            if (winnerName) {
+                if (!this.statistics.cardsWonByPlayer[winnerName]) {
+                    this.statistics.cardsWonByPlayer[winnerName] = 0;
+                }
+                this.statistics.cardsWonByPlayer[winnerName] += data.winner.cardsWon || 0;
+                
+                // Highlight winner card
+                if (data.winner.playerIndex !== undefined) {
+                    setTimeout(() => {
+                        this.highlightWinnerCard(data.winner.playerIndex);
+                    }, 300);
+                }
             }
-            this.statistics.cardsWonByPlayer[winnerName] += data.winner.cardsWon || 0;
-            
-            // Highlight winner card
-            setTimeout(() => {
-                this.highlightWinnerCard(data.winner.playerIndex);
-            }, 300);
         }
         
         // Animate card collection
@@ -756,10 +919,16 @@ class WarClient {
 
     // Update war started
     updateWarStarted(data) {
-        this.game.warCards = data.warCards || [];
+        // ✅ CRITICAL FIX: Validate data
+        if (!data) {
+            console.error('❌ Invalid war started data');
+            return;
+        }
+        
+        this.game.warCards = (data.warCards || []).filter(wc => wc && wc.card);
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: p.hand || [],
+            hand: Array.isArray(p.hand) ? p.hand : [],
             position: index
         }));
         this.game.isWar = true;
@@ -788,6 +957,10 @@ class WarClient {
         const battleArea = document.getElementById('battleArea');
         if (!battleArea) return;
         
+        // ✅ CRITICAL FIX: Clean up existing particles first
+        const existingWarParticles = battleArea.querySelectorAll('.war-particle');
+        existingWarParticles.forEach(p => p.remove());
+        
         // Create war explosion effect
         for (let i = 0; i < 30; i++) {
             const particle = document.createElement('div');
@@ -800,7 +973,11 @@ class WarClient {
             particle.style.setProperty('--distance', distance + 'px');
             battleArea.appendChild(particle);
             
-            setTimeout(() => particle.remove(), 1500);
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.remove();
+                }
+            }, 1500);
         }
     }
     
@@ -822,9 +999,15 @@ class WarClient {
 
     // Update war resolved
     updateWarResolved(data) {
+        // ✅ CRITICAL FIX: Validate data
+        if (!data) {
+            console.error('❌ Invalid war resolved data');
+            return;
+        }
+        
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: p.hand || [],
+            hand: Array.isArray(p.hand) ? p.hand : [],
             position: index
         }));
         
@@ -832,7 +1015,7 @@ class WarClient {
         this.statistics.currentWarCount = 0;
         
         // Update statistics
-        if (data.winner) {
+        if (data.winner && data.winner.name) {
             const winnerName = data.winner.name;
             if (!this.statistics.cardsWonByPlayer[winnerName]) {
                 this.statistics.cardsWonByPlayer[winnerName] = 0;
@@ -842,10 +1025,10 @@ class WarClient {
         
         // Animate card collection
         const allWarCards = [
-            ...(this.game.battleCards || []).map(bc => bc.card),
-            ...(this.game.warCards || []).map(wc => wc.card)
+            ...(this.game.battleCards || []).map(bc => bc?.card).filter(c => c),
+            ...(this.game.warCards || []).map(wc => wc?.card).filter(c => c)
         ];
-        if (allWarCards.length > 0 && data.winner) {
+        if (allWarCards.length > 0 && data.winner && data.winner.playerIndex !== undefined) {
             this.animateCardCollection(allWarCards, data.winner.playerIndex);
         }
         
@@ -881,6 +1064,14 @@ class WarClient {
     
     // Create confetti effect
     createConfetti() {
+        // ✅ CRITICAL FIX: Clean up existing confetti first
+        const existingConfetti = document.querySelectorAll('.confetti');
+        existingConfetti.forEach(c => {
+            if (c.parentNode) {
+                c.remove();
+            }
+        });
+        
         const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181', '#AA96DA'];
         const confettiCount = 50;
         
@@ -894,69 +1085,115 @@ class WarClient {
             confetti.style.setProperty('--rotation', (Math.random() * 360) + 'deg');
             confetti.style.setProperty('--x-variance', (Math.random() * 200 - 100) + 'px');
             document.body.appendChild(confetti);
+            this.activeParticles.push(confetti);
             
-            setTimeout(() => confetti.remove(), 3000);
+            setTimeout(() => {
+                if (confetti.parentNode) {
+                    confetti.remove();
+                    const index = this.activeParticles.indexOf(confetti);
+                    if (index > -1) {
+                        this.activeParticles.splice(index, 1);
+                    }
+                }
+            }, 3000);
         }
     }
 
     // Update next battle
     updateNextBattle(data) {
-        this.game.battleNumber = data.battleNumber;
-        this.game.players = data.players.map((p, index) => ({
+        // ✅ CRITICAL FIX: Validate data and clear pending actions
+        this.clearPendingActions();
+        
+        if (!data) {
+            console.error('❌ Invalid next battle data');
+            return;
+        }
+        
+        this.game.battleNumber = data.battleNumber || this.game.battleNumber;
+        this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: p.hand || [],
+            hand: Array.isArray(p.hand) ? p.hand : [],
             position: index
         }));
+        
+        // ✅ CRITICAL FIX: Check if game should continue
+        const activePlayers = this.game.players.filter(p => p.hand && p.hand.length > 0);
+        if (activePlayers.length < 2 && !this.game.gameOver) {
+            console.log('⚠️ Not enough players with cards - waiting for game over');
+            return;
+        }
         
         this.canAct = true;
         this.updateUI();
         this.showActionControls();
         
-        // Auto-start next battle after a short delay
-        setTimeout(() => {
-            if (!this.game.gameOver && this.canAct && 
+        // ✅ CRITICAL FIX: Auto-start next battle with proper validation
+        this.pendingBattleTimeout = setTimeout(() => {
+            if (!this.game.gameOver && 
+                this.canAct && 
                 (!this.game.battleCards || this.game.battleCards.length === 0) &&
-                (!this.game.warCards || this.game.warCards.length === 0)) {
+                (!this.game.warCards || this.game.warCards.length === 0) &&
+                activePlayers.length >= 2) {
                 console.log('⚔️ Auto-starting next battle');
                 this.startBattle();
             }
+            this.pendingBattleTimeout = null;
         }, 2000);
     }
 
     // Show game over with celebration
     showGameOver(data) {
-        if (data.winner) {
-            this.game.winner = this.game.players.find(p => p.name === data.winner.name) || data.winner;
-            this.game.gameOver = true;
-            
-            // Massive confetti celebration
-            this.createVictoryConfetti();
-            
-            // Create victory screen
-            this.createVictoryScreen(data);
-            
-            // Show winner glow on player
-            const winnerIndex = this.game.players.findIndex(p => p.name === data.winner.name);
-            if (winnerIndex !== -1) {
-                const playerElement = document.querySelector(`[data-player-index="${winnerIndex}"]`);
-                if (playerElement) {
-                    playerElement.classList.add('game-winner');
-                }
-            }
-            
-            UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards} cards!`, 'success');
-            this.updateUI();
-            this.hideActionControls();
-            
-            // Show final statistics
-            setTimeout(() => {
-                this.showFinalStatistics(data);
-            }, 4000);
+        // ✅ CRITICAL FIX: Clear any pending actions
+        this.clearPendingActions();
+        
+        // ✅ CRITICAL FIX: Validate data
+        if (!data || !data.winner) {
+            console.error('❌ Invalid game over data');
+            return;
         }
+        
+        this.game.gameOver = true;
+        this.game.winner = this.game.players.find(p => p && p.name === data.winner.name) || data.winner;
+        
+        // ✅ CRITICAL FIX: Prevent any further actions
+        this.canAct = false;
+        this.hideActionControls();
+        
+        // Massive confetti celebration
+        this.createVictoryConfetti();
+        
+        // Create victory screen
+        this.createVictoryScreen(data);
+        
+        // Show winner glow on player
+        const winnerIndex = this.game.players.findIndex(p => p && p.name === data.winner.name);
+        if (winnerIndex !== -1) {
+            const playerElement = document.querySelector(`[data-player-index="${winnerIndex}"]`);
+            if (playerElement) {
+                playerElement.classList.add('game-winner');
+            }
+        }
+        
+        UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards || 0} cards!`, 'success');
+        this.updateUI();
+        
+        // Show final statistics
+        setTimeout(() => {
+            this.showFinalStatistics(data);
+        }, 4000);
     }
     
     // Create victory confetti (more intense)
     createVictoryConfetti() {
+        // ✅ CRITICAL FIX: Clean up existing confetti first
+        const existingConfetti = document.querySelectorAll('.confetti');
+        existingConfetti.forEach(c => {
+            if (c.parentNode) {
+                c.remove();
+            }
+        });
+        this.activeParticles = [];
+        
         const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181', '#AA96DA', '#FFA07A', '#20B2AA'];
         const confettiCount = 100;
         
@@ -973,9 +1210,46 @@ class WarClient {
                 confetti.style.setProperty('--rotation', (Math.random() * 720) + 'deg');
                 confetti.style.setProperty('--x-variance', (Math.random() * 400 - 200) + 'px');
                 document.body.appendChild(confetti);
+                this.activeParticles.push(confetti);
                 
-                setTimeout(() => confetti.remove(), 4000);
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.remove();
+                        const index = this.activeParticles.indexOf(confetti);
+                        if (index > -1) {
+                            this.activeParticles.splice(index, 1);
+                        }
+                    }
+                }, 4000);
             }, i * 20);
+        }
+    }
+    
+    // ✅ CRITICAL FIX: Cleanup method for memory management
+    cleanup() {
+        // Clear all timeouts
+        this.clearPendingActions();
+        
+        // Remove all particles
+        this.activeParticles.forEach(p => {
+            if (p && p.parentNode) {
+                p.remove();
+            }
+        });
+        this.activeParticles = [];
+        
+        // Remove confetti
+        const allConfetti = document.querySelectorAll('.confetti');
+        allConfetti.forEach(c => {
+            if (c.parentNode) {
+                c.remove();
+            }
+        });
+        
+        // Remove victory screen if exists
+        const victoryScreen = document.getElementById('victoryScreen');
+        if (victoryScreen) {
+            victoryScreen.remove();
         }
     }
     
@@ -1141,23 +1415,38 @@ class WarClient {
         const scoresBody = document.getElementById('scoresBody');
         if (!scoresBody) return;
         
+        // ✅ CRITICAL FIX: Validate players array
+        if (!this.game.players || !Array.isArray(this.game.players) || this.game.players.length === 0) {
+            scoresBody.innerHTML = '<tr><td colspan="2">No players</td></tr>';
+            return;
+        }
+        
         scoresBody.innerHTML = '';
         
         // Calculate total cards for percentage
-        const totalCards = this.game.players.reduce((sum, p) => sum + (p.hand?.length || 0), 0);
+        const totalCards = this.game.players.reduce((sum, p) => {
+            if (!p || !p.hand) return sum;
+            return sum + (Array.isArray(p.hand) ? p.hand.length : 0);
+        }, 0);
         
         this.game.players.forEach((player, index) => {
+            // ✅ CRITICAL FIX: Validate player exists
+            if (!player) {
+                console.warn(`⚠️ Player at index ${index} is null/undefined`);
+                return;
+            }
+            
             const row = document.createElement('tr');
             row.setAttribute('data-player-index', index);
-            row.setAttribute('data-player-name', player.name);
+            row.setAttribute('data-player-name', player.name || `Player ${index + 1}`);
             
-            const cardCount = player.hand?.length || 0;
-            const percentage = totalCards > 0 ? (cardCount / totalCards * 100) : 0;
+            const cardCount = Array.isArray(player.hand) ? player.hand.length : 0;
+            const percentage = totalCards > 0 ? Math.min(100, (cardCount / totalCards * 100)) : 0;
             
             row.innerHTML = `
                 <td class="player-name-cell">
                     <div class="player-name-wrapper">
-                        <span class="player-name">${player.name}</span>
+                        <span class="player-name">${player.name || `Player ${index + 1}`}</span>
                         ${player.isBot ? '<span class="bot-badge">🤖</span>' : ''}
                     </div>
                 </td>
@@ -1219,11 +1508,20 @@ class WarClient {
         const battleArea = document.getElementById('battleArea');
         if (!battleArea) return;
         
+        // ✅ CRITICAL FIX: Clear existing content but preserve particles
+        const particles = battleArea.querySelectorAll('.battle-particle, .war-particle');
         battleArea.innerHTML = '';
+        particles.forEach(p => battleArea.appendChild(p));
         
         // Show battle cards with proper card images and animations
         if (this.game.battleCards && this.game.battleCards.length > 0) {
             this.game.battleCards.forEach((battleCard, index) => {
+                // ✅ CRITICAL FIX: Validate battle card data
+                if (!battleCard || !battleCard.card) {
+                    console.warn(`⚠️ Invalid battle card at index ${index}`);
+                    return;
+                }
+                
                 const cardDiv = this.createCardElement(
                     battleCard.card, 
                     'battle-card',
@@ -1235,7 +1533,7 @@ class WarClient {
                     }
                 );
                 cardDiv.setAttribute('data-card-id', `battle-${index}`);
-                cardDiv.setAttribute('data-player-index', battleCard.playerIndex);
+                cardDiv.setAttribute('data-player-index', battleCard.playerIndex || index);
                 if (battleCard.playerIndex === this.localPlayerIndex) {
                     cardDiv.classList.add('my-card');
                 }
@@ -1245,50 +1543,67 @@ class WarClient {
         
         // Show war cards with flip animations
         if (this.game.warCards && this.game.warCards.length > 0) {
-            // Group war cards by player
-            const warCardsByPlayer = {};
-            this.game.warCards.forEach((warCard, index) => {
-                if (!warCardsByPlayer[warCard.playerIndex]) {
-                    warCardsByPlayer[warCard.playerIndex] = [];
-                }
-                warCardsByPlayer[warCard.playerIndex].push({...warCard, originalIndex: index});
-            });
+            // ✅ CRITICAL FIX: Filter out invalid war cards
+            const validWarCards = this.game.warCards.filter(wc => wc && wc.card);
             
-            // Create war card groups
-            Object.keys(warCardsByPlayer).forEach((playerIndex, groupIndex) => {
-                const playerCards = warCardsByPlayer[playerIndex];
-                
-                // Create container for this player's war cards
-                const playerGroup = document.createElement('div');
-                playerGroup.className = 'war-card-group';
-                playerGroup.setAttribute('data-player-index', playerIndex);
-                
-                playerCards.forEach((warCard, cardIndex) => {
-                    const cardDiv = this.createCardElement(
-                        warCard.card,
-                        'battle-card war-card',
-                        {
-                            animate: true,
-                            delay: (groupIndex * 200) + (cardIndex * 50),
-                            isWar: true,
-                            faceUp: warCard.faceUp
-                        }
-                    );
-                    cardDiv.setAttribute('data-card-id', `war-${warCard.originalIndex}`);
-                    cardDiv.setAttribute('data-player-index', playerIndex);
-                    if (warCard.playerIndex === this.localPlayerIndex) {
-                        cardDiv.classList.add('my-card');
+            if (validWarCards.length > 0) {
+                // Group war cards by player
+                const warCardsByPlayer = {};
+                validWarCards.forEach((warCard, index) => {
+                    const playerIndex = warCard.playerIndex !== undefined ? warCard.playerIndex : index;
+                    if (!warCardsByPlayer[playerIndex]) {
+                        warCardsByPlayer[playerIndex] = [];
                     }
-                    
-                    if (!warCard.faceUp) {
-                        cardDiv.classList.add('face-down');
-                    }
-                    
-                    playerGroup.appendChild(cardDiv);
+                    warCardsByPlayer[playerIndex].push({...warCard, originalIndex: index});
                 });
                 
-                battleArea.appendChild(playerGroup);
-            });
+                // Create war card groups
+                Object.keys(warCardsByPlayer).forEach((playerIndex, groupIndex) => {
+                    const playerCards = warCardsByPlayer[playerIndex];
+                    
+                    // ✅ CRITICAL FIX: Validate player cards
+                    if (!playerCards || playerCards.length === 0) return;
+                    
+                    // Create container for this player's war cards
+                    const playerGroup = document.createElement('div');
+                    playerGroup.className = 'war-card-group';
+                    playerGroup.setAttribute('data-player-index', playerIndex);
+                    
+                    playerCards.forEach((warCard, cardIndex) => {
+                        // ✅ CRITICAL FIX: Validate war card before creating element
+                        if (!warCard || !warCard.card) {
+                            console.warn(`⚠️ Invalid war card at index ${cardIndex}`);
+                            return;
+                        }
+                        
+                        const cardDiv = this.createCardElement(
+                            warCard.card,
+                            'battle-card war-card',
+                            {
+                                animate: true,
+                                delay: (groupIndex * 200) + (cardIndex * 50),
+                                isWar: true,
+                                faceUp: warCard.faceUp !== false // Default to face up if not specified
+                            }
+                        );
+                        cardDiv.setAttribute('data-card-id', `war-${warCard.originalIndex}`);
+                        cardDiv.setAttribute('data-player-index', playerIndex);
+                        if (warCard.playerIndex === this.localPlayerIndex) {
+                            cardDiv.classList.add('my-card');
+                        }
+                        
+                        if (warCard.faceUp === false) {
+                            cardDiv.classList.add('face-down');
+                        }
+                        
+                        playerGroup.appendChild(cardDiv);
+                    });
+                    
+                    if (playerGroup.children.length > 0) {
+                        battleArea.appendChild(playerGroup);
+                    }
+                });
+            }
         }
         
         // Show message if no cards with enhanced styling
@@ -1306,6 +1621,16 @@ class WarClient {
     
     // Create card element with proper image and animations
     createCardElement(card, className = '', options = {}) {
+        // ✅ CRITICAL FIX: Validate card exists
+        if (!card) {
+            console.error('❌ Attempted to create card element with null/undefined card');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = className || 'card';
+            errorDiv.textContent = '?';
+            errorDiv.style.background = '#ff0000';
+            return errorDiv;
+        }
+        
         const {
             animate = true,
             delay = 0,
@@ -1347,7 +1672,7 @@ class WarClient {
         cardBack.className = 'card-back';
         cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
         
-        // Try to use card image if available
+        // ✅ CRITICAL FIX: Try to use card image if available with proper error handling
         if (window.cardImages && card.name && faceUp) {
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
             const cardImage = window.cardImages[imageName];
@@ -1355,8 +1680,19 @@ class WarClient {
             if (cardImage && cardImage.width > 0) {
                 const img = document.createElement('img');
                 img.src = cardImage.src || `Images/Cards/${imageName}.png`;
-                img.alt = card.name;
+                img.alt = card.name || 'Card';
                 img.className = 'card-image';
+                img.onerror = () => {
+                    // ✅ CRITICAL FIX: Fallback if image fails to load
+                    img.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'card-text';
+                    fallback.innerHTML = `
+                        <div class="card-name">${card.name || 'Unknown'}</div>
+                        <div class="card-value">${this.getCardDisplayValue(card)}</div>
+                    `;
+                    cardFront.appendChild(fallback);
+                };
                 cardFront.appendChild(img);
                 
                 // Add card value overlay
@@ -1369,7 +1705,7 @@ class WarClient {
                 const textDiv = document.createElement('div');
                 textDiv.className = 'card-text';
                 textDiv.innerHTML = `
-                    <div class="card-name">${card.name}</div>
+                    <div class="card-name">${card.name || 'Unknown'}</div>
                     <div class="card-value">${this.getCardDisplayValue(card)}</div>
                 `;
                 cardFront.appendChild(textDiv);
@@ -1390,7 +1726,7 @@ class WarClient {
         cardDiv.appendChild(cardInner);
         
         // Add glow effect for high-value cards
-        if (card.value >= 12) {
+        if (card.value && card.value >= 12) {
             cardDiv.classList.add('card-high-value');
         }
         
@@ -1399,11 +1735,27 @@ class WarClient {
     
     // Get display value for card
     getCardDisplayValue(card) {
-        if (!card.value) return '';
+        // ✅ CRITICAL FIX: Validate card and handle edge cases
+        if (!card) return '?';
+        if (typeof card.value !== 'number') {
+            // Try to get value from rank
+            if (card.rank) {
+                const rankUpper = card.rank.toUpperCase();
+                if (rankUpper === 'ACE') return 'A';
+                if (rankUpper === 'KING') return 'K';
+                if (rankUpper === 'QUEEN') return 'Q';
+                if (rankUpper === 'JACK') return 'J';
+                return rankUpper;
+            }
+            return '?';
+        }
         if (card.value === 14) return 'A';
         if (card.value === 13) return 'K';
         if (card.value === 12) return 'Q';
         if (card.value === 11) return 'J';
+        if (card.value >= 2 && card.value <= 10) {
+            return card.value.toString();
+        }
         return card.value.toString();
     }
     
@@ -1422,8 +1774,18 @@ class WarClient {
     
     // Animate card collection (cards moving to winner)
     animateCardCollection(cards, winnerIndex) {
-        cards.forEach((card, index) => {
-            const cardElement = document.querySelector(`[data-card-id="${card.id || index}"]`);
+        // ✅ CRITICAL FIX: Validate cards array
+        if (!cards || !Array.isArray(cards) || cards.length === 0) {
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Filter out null/undefined cards
+        const validCards = cards.filter(c => c);
+        
+        validCards.forEach((card, index) => {
+            // ✅ CRITICAL FIX: Use battle card index if available
+            const cardId = card.id || `battle-${index}` || `war-${index}`;
+            const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
             if (cardElement) {
                 setTimeout(() => {
                     cardElement.classList.add('collecting');
@@ -1436,35 +1798,55 @@ class WarClient {
     
     // Create flying card animation
     createFlyingCard(sourceElement, targetIndex) {
+        // ✅ CRITICAL FIX: Validate source element
+        if (!sourceElement || !sourceElement.parentNode) {
+            return;
+        }
+        
         const flyingCard = sourceElement.cloneNode(true);
         flyingCard.classList.add('flying-card');
         flyingCard.style.position = 'fixed';
         flyingCard.style.zIndex = '10000';
+        flyingCard.style.pointerEvents = 'none';
         
-        const rect = sourceElement.getBoundingClientRect();
-        flyingCard.style.left = rect.left + 'px';
-        flyingCard.style.top = rect.top + 'px';
-        flyingCard.style.width = rect.width + 'px';
-        flyingCard.style.height = rect.height + 'px';
-        
-        document.body.appendChild(flyingCard);
-        
-        // Get target position (player area)
-        const targetElement = document.querySelector(`[data-player-index="${targetIndex}"]`);
-        const targetRect = targetElement ? targetElement.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2 };
-        
-        // Animate
-        setTimeout(() => {
-            flyingCard.style.transition = 'all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-            flyingCard.style.left = targetRect.left + 'px';
-            flyingCard.style.top = targetRect.top + 'px';
-            flyingCard.style.transform = 'scale(0.3) rotate(360deg)';
-            flyingCard.style.opacity = '0';
+        try {
+            const rect = sourceElement.getBoundingClientRect();
+            flyingCard.style.left = rect.left + 'px';
+            flyingCard.style.top = rect.top + 'px';
+            flyingCard.style.width = rect.width + 'px';
+            flyingCard.style.height = rect.height + 'px';
             
+            document.body.appendChild(flyingCard);
+            
+            // Get target position (player area)
+            const targetElement = document.querySelector(`[data-player-index="${targetIndex}"]`);
+            const targetRect = targetElement ? targetElement.getBoundingClientRect() : { 
+                left: window.innerWidth / 2, 
+                top: window.innerHeight / 2 
+            };
+            
+            // Animate
             setTimeout(() => {
+                if (flyingCard.parentNode) {
+                    flyingCard.style.transition = 'all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    flyingCard.style.left = targetRect.left + 'px';
+                    flyingCard.style.top = targetRect.top + 'px';
+                    flyingCard.style.transform = 'scale(0.3) rotate(360deg)';
+                    flyingCard.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        if (flyingCard.parentNode) {
+                            flyingCard.remove();
+                        }
+                    }, 800);
+                }
+            }, 10);
+        } catch (error) {
+            console.error('❌ Error creating flying card:', error);
+            if (flyingCard.parentNode) {
                 flyingCard.remove();
-            }, 800);
-        }, 10);
+            }
+        }
     }
 
     // Update player areas
@@ -1490,24 +1872,45 @@ class WarClient {
     // Show war message
     showWarMessage(message, type) {
         const warMessage = document.getElementById('warMessage');
-        warMessage.textContent = message;
-        warMessage.className = `war-message ${type}`;
+        if (!warMessage) {
+            console.warn('⚠️ War message element not found');
+            return;
+        }
+        
+        warMessage.textContent = message || '';
+        warMessage.className = `war-message ${type || 'battle'}`;
         warMessage.style.display = 'block';
+        
+        // ✅ CRITICAL FIX: Ensure message is visible and animated
+        warMessage.style.opacity = '1';
+        warMessage.style.visibility = 'visible';
     }
 
     // Hide war message
     hideWarMessage() {
-        document.getElementById('warMessage').style.display = 'none';
+        const warMessage = document.getElementById('warMessage');
+        if (warMessage) {
+            warMessage.style.display = 'none';
+            warMessage.style.opacity = '0';
+        }
     }
 
     // Show action controls
     showActionControls() {
-        document.getElementById('actionControls').style.display = 'flex';
+        const actionControls = document.getElementById('actionControls');
+        if (actionControls) {
+            actionControls.style.display = 'flex';
+            actionControls.style.opacity = '1';
+        }
     }
 
     // Hide action controls
     hideActionControls() {
-        document.getElementById('actionControls').style.display = 'none';
+        const actionControls = document.getElementById('actionControls');
+        if (actionControls) {
+            actionControls.style.display = 'none';
+            actionControls.style.opacity = '0';
+        }
     }
 
     // Show room code

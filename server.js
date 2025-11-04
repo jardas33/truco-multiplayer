@@ -3102,40 +3102,62 @@ io.on('connection', (socket) => {
                 return;
             }
             
-            // Start a battle - each player plays a card
+            // ✅ CRITICAL FIX: Start a battle - each player plays a card
             room.game.battleCards = [];
             
-            for (let i = 0; i < room.game.players.length; i++) {
-                const player = room.game.players[i];
-                if (player.hand && player.hand.length > 0) {
-                    const card = player.hand.shift();
-                    room.game.battleCards.push({
-                        card: card,
-                        player: player,
-                        playerIndex: i
-                    });
-                }
+            // ✅ CRITICAL FIX: Filter out players with no cards before battle
+            const activePlayers = room.game.players.filter(p => p && p.hand && p.hand.length > 0);
+            
+            if (activePlayers.length === 0) {
+                console.log('⚠️ No players with cards - ending game');
+                endWarGame(room, roomCode);
+                return;
             }
             
-            // Check if we have enough cards for battle
-            if (room.game.battleCards.length < 2) {
-                // End game - not enough cards
-                const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
-                const winner = playersWithCards.length === 1 ? playersWithCards[0] : 
-                              room.game.players.reduce((max, player) => 
-                                  (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
-                              );
-                
+            if (activePlayers.length === 1) {
+                // Only one player left - they win
+                console.log(`🏆 ${activePlayers[0].name} wins (all others have no cards)`);
                 room.game.gameOver = true;
-                room.game.winner = winner;
+                room.game.winner = activePlayers[0];
                 
                 io.to(roomCode).emit('gameOver', {
                     winner: {
-                        name: winner.name,
-                        cards: winner.hand?.length || 0
+                        name: activePlayers[0].name,
+                        cards: activePlayers[0].hand?.length || 0
                     },
                     finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
                 });
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Only play cards from active players
+            for (let i = 0; i < room.game.players.length; i++) {
+                const player = room.game.players[i];
+                if (player && player.hand && player.hand.length > 0) {
+                    const card = player.hand.shift();
+                    if (card) {
+                        room.game.battleCards.push({
+                            card: card,
+                            player: player,
+                            playerIndex: i
+                        });
+                    }
+                }
+            }
+            
+            // ✅ CRITICAL FIX: Check if we have enough cards for battle
+            if (room.game.battleCards.length < 2) {
+                // End game - not enough cards
+                console.log('⚠️ Not enough cards for battle - ending game');
+                endWarGame(room, roomCode);
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Validate all battle cards have valid card data
+            room.game.battleCards = room.game.battleCards.filter(bc => bc && bc.card && bc.player);
+            if (room.game.battleCards.length < 2) {
+                console.log('⚠️ Invalid battle cards - ending game');
+                endWarGame(room, roomCode);
                 return;
             }
             
@@ -3188,41 +3210,114 @@ io.on('connection', (socket) => {
     // Helper function to start a war
     function startWar(room, roomCode, warPlayers) {
         console.log('⚔️ WAR! Starting war sequence');
+        
+        // ✅ CRITICAL FIX: Check if any players have enough cards for war
+        const validWarPlayers = warPlayers.filter(wp => {
+            const player = room.game.players[wp.playerIndex];
+            return player && player.hand && player.hand.length > 0;
+        });
+        
+        if (validWarPlayers.length === 0) {
+            console.log('⚠️ No players with cards for war - ending game');
+            endWarGame(room, roomCode);
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: If only one player has cards, they win automatically
+        if (validWarPlayers.length === 1) {
+            console.log(`🏆 ${validWarPlayers[0].player.name} wins by default (others have no cards)`);
+            const winner = validWarPlayers[0];
+            const allCards = [
+                ...room.game.battleCards.map(bc => bc.card),
+                ...room.game.warCards.map(wc => wc.card).filter(c => c) // Filter out nulls
+            ];
+            winner.player.hand = [...(winner.player.hand || []), ...allCards.sort(() => Math.random() - 0.5)];
+            awardWarBattle(room, roomCode, winner);
+            return;
+        }
+        
         room.game.isWar = true;
         room.game.gamePhase = 'war';
         
         // Each player in war plays 3 cards face down, 1 face up
         room.game.warCards = [];
-        const warCardsToPlay = Math.min(3, Math.min(...warPlayers.map(p => room.game.players[p.playerIndex].hand?.length || 0)));
         
-        for (let warPlayer of warPlayers) {
+        // ✅ CRITICAL FIX: Calculate minimum cards available for all war players
+        const minCardsAvailable = Math.min(...validWarPlayers.map(wp => {
+            const player = room.game.players[wp.playerIndex];
+            return player.hand?.length || 0;
+        }));
+        
+        // ✅ CRITICAL FIX: Ensure we don't try to play more cards than available
+        const warCardsToPlay = Math.min(3, Math.max(0, minCardsAvailable - 1)); // -1 for face-up card
+        
+        // ✅ CRITICAL FIX: If no cards available for war, end game
+        if (warCardsToPlay < 0 || minCardsAvailable === 0) {
+            console.log('⚠️ Insufficient cards for war - ending game');
+            endWarGame(room, roomCode);
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Only process players who have enough cards
+        for (let warPlayer of validWarPlayers) {
             const player = room.game.players[warPlayer.playerIndex];
-            if (player.hand && player.hand.length >= warCardsToPlay + 1) {
+            const cardsNeeded = warCardsToPlay + 1; // face-down + face-up
+            
+            if (player.hand && player.hand.length >= cardsNeeded) {
                 // Play face down cards
                 for (let i = 0; i < warCardsToPlay; i++) {
-                    const card = player.hand.shift();
-                    room.game.warCards.push({
-                        card: card,
-                        player: player,
-                        playerIndex: warPlayer.playerIndex,
-                        faceUp: false
-                    });
+                    if (player.hand.length > 0) {
+                        const card = player.hand.shift();
+                        if (card) {
+                            room.game.warCards.push({
+                                card: card,
+                                player: player,
+                                playerIndex: warPlayer.playerIndex,
+                                faceUp: false
+                            });
+                        }
+                    }
                 }
                 
                 // Play face up card
-                const faceUpCard = player.hand.shift();
-                room.game.warCards.push({
-                    card: faceUpCard,
-                    player: player,
-                    playerIndex: warPlayer.playerIndex,
-                    faceUp: true
-                });
+                if (player.hand.length > 0) {
+                    const faceUpCard = player.hand.shift();
+                    if (faceUpCard) {
+                        room.game.warCards.push({
+                            card: faceUpCard,
+                            player: player,
+                            playerIndex: warPlayer.playerIndex,
+                            faceUp: true
+                        });
+                    }
+                }
+            } else {
+                // ✅ CRITICAL FIX: Player doesn't have enough cards - play what they have face up
+                console.log(`⚠️ Player ${player.name} doesn't have enough cards for war (has ${player.hand?.length || 0}, needs ${cardsNeeded})`);
+                while (player.hand && player.hand.length > 0) {
+                    const card = player.hand.shift();
+                    if (card) {
+                        room.game.warCards.push({
+                            card: card,
+                            player: player,
+                            playerIndex: warPlayer.playerIndex,
+                            faceUp: true // Play remaining cards face up
+                        });
+                    }
+                }
             }
+        }
+        
+        // ✅ CRITICAL FIX: Check if we have any war cards
+        if (room.game.warCards.length === 0) {
+            console.log('⚠️ No war cards played - ending game');
+            endWarGame(room, roomCode);
+            return;
         }
         
         io.to(roomCode).emit('warStarted', {
             warCards: room.game.warCards,
-            warPlayers: warPlayers.map(p => p.player.name),
+            warPlayers: validWarPlayers.map(p => p.player.name),
             players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
         });
         
@@ -3232,44 +3327,119 @@ io.on('connection', (socket) => {
         }, 2000);
     }
     
+    // ✅ CRITICAL FIX: Helper function to end war game properly
+    function endWarGame(room, roomCode) {
+        const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
+        const gameWinner = playersWithCards.length === 1 ? playersWithCards[0] :
+                         (playersWithCards.length > 0 ? playersWithCards.reduce((max, player) => 
+                             (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
+                         ) : room.game.players[0]); // Fallback to first player if all empty
+        
+        room.game.gameOver = true;
+        room.game.winner = gameWinner;
+        room.game.battleCards = [];
+        room.game.warCards = [];
+        room.game.isWar = false;
+        room.game.gamePhase = 'finished';
+        
+        io.to(roomCode).emit('gameOver', {
+            winner: {
+                name: gameWinner.name,
+                cards: gameWinner.hand?.length || 0
+            },
+            finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
+        });
+    }
+    
     // Helper function to resolve a war
     function resolveWar(room, roomCode) {
         if (!room.game || room.game.gameOver) return;
         
         console.log('⚔️ Resolving war');
         
-        // Find highest face-up card
-        const faceUpCards = room.game.warCards.filter(wc => wc.faceUp);
-        if (faceUpCards.length === 0) {
-            // No face-up cards, award to first player
-            const winner = room.game.battleCards[0];
-            awardWarBattle(room, roomCode, winner);
+        // ✅ CRITICAL FIX: Validate war cards exist
+        if (!room.game.warCards || room.game.warCards.length === 0) {
+            console.log('⚠️ No war cards to resolve - ending game');
+            endWarGame(room, roomCode);
             return;
         }
         
+        // Find highest face-up card
+        const faceUpCards = room.game.warCards.filter(wc => wc && wc.faceUp && wc.card);
+        if (faceUpCards.length === 0) {
+            // ✅ CRITICAL FIX: No face-up cards - check if any cards at all
+            const allWarCards = room.game.warCards.filter(wc => wc && wc.card);
+            if (allWarCards.length === 0) {
+                console.log('⚠️ No valid war cards - ending game');
+                endWarGame(room, roomCode);
+                return;
+            }
+            // Award to first player with valid card
+            const winner = allWarCards[0];
+            const allCards = [
+                ...(room.game.battleCards || []).map(bc => bc?.card).filter(c => c),
+                ...allWarCards.map(wc => wc.card).filter(c => c)
+            ];
+            if (allCards.length > 0 && winner && winner.player) {
+                winner.player.hand = [...(winner.player.hand || []), ...allCards.sort(() => Math.random() - 0.5)];
+                awardWarBattle(room, roomCode, winner);
+            } else {
+                endWarGame(room, roomCode);
+            }
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Validate card values exist
         let highestCard = faceUpCards[0];
         let winners = [faceUpCards[0]];
         
         for (let i = 1; i < faceUpCards.length; i++) {
             const warCard = faceUpCards[i];
-            if (warCard.card.value > highestCard.card.value) {
-                highestCard = warCard;
-                winners = [warCard];
-            } else if (warCard.card.value === highestCard.card.value) {
-                winners.push(warCard);
+            if (warCard && warCard.card && warCard.card.value !== undefined) {
+                if (warCard.card.value > highestCard.card.value) {
+                    highestCard = warCard;
+                    winners = [warCard];
+                } else if (warCard.card.value === highestCard.card.value) {
+                    winners.push(warCard);
+                }
             }
+        }
+        
+        // ✅ CRITICAL FIX: Check if we have a valid winner
+        if (!winners[0] || !winners[0].player || !winners[0].card) {
+            console.log('⚠️ Invalid winner - ending game');
+            endWarGame(room, roomCode);
+            return;
         }
         
         // Award all cards to winner
         const winner = winners[0];
         const allCards = [
-            ...room.game.battleCards.map(bc => bc.card),
-            ...room.game.warCards.map(wc => wc.card)
+            ...(room.game.battleCards || []).map(bc => bc?.card).filter(c => c),
+            ...(room.game.warCards || []).map(wc => wc?.card).filter(c => c)
         ];
         
+        // ✅ CRITICAL FIX: Check if winner still exists and has valid player reference
+        if (!winner.player || !room.game.players.find(p => p === winner.player)) {
+            console.log('⚠️ Winner player reference invalid - ending game');
+            endWarGame(room, roomCode);
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Handle consecutive wars - if still tied, start another war
+        if (winners.length > 1) {
+            console.log('⚔️⚔️ Multiple winners - starting another war!');
+            // Clear current war cards but keep battle cards
+            room.game.warCards = [];
+            startWar(room, roomCode, winners);
+            return;
+        }
+        
         // Shuffle and add to winner's hand
-        const shuffledCards = allCards.sort(() => Math.random() - 0.5);
-        winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
+        if (allCards.length > 0) {
+            const shuffledCards = allCards.sort(() => Math.random() - 0.5);
+            winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
+        }
         
         console.log(`⚔️ ${winner.player.name} wins the war and gets ${allCards.length} cards!`);
         
@@ -3289,24 +3459,26 @@ io.on('connection', (socket) => {
         room.game.gamePhase = 'playing';
         room.game.battleNumber++;
         
-        // Check for game over
-        const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
+        // ✅ CRITICAL FIX: Check for game over with proper validation
+        const playersWithCards = room.game.players.filter(p => p && p.hand && p.hand.length > 0);
         if (playersWithCards.length <= 1) {
             const gameWinner = playersWithCards.length === 1 ? playersWithCards[0] :
-                             room.game.players.reduce((max, player) => 
-                                 (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
-                             );
+                             (room.game.players.length > 0 ? room.game.players.reduce((max, player) => 
+                                 (player.hand?.length || 0) > ((max && max.hand?.length) || 0) ? player : max
+                             ) : null);
             
-            room.game.gameOver = true;
-            room.game.winner = gameWinner;
-            
-            io.to(roomCode).emit('gameOver', {
-                winner: {
-                    name: gameWinner.name,
-                    cards: gameWinner.hand?.length || 0
-                },
-                finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
-            });
+            if (gameWinner) {
+                room.game.gameOver = true;
+                room.game.winner = gameWinner;
+                
+                io.to(roomCode).emit('gameOver', {
+                    winner: {
+                        name: gameWinner.name,
+                        cards: gameWinner.hand?.length || 0
+                    },
+                    finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
+                });
+            }
         } else {
             // Next battle
             setTimeout(() => {
@@ -3320,12 +3492,24 @@ io.on('connection', (socket) => {
     
     // Helper function to award a battle
     function awardWarBattle(room, roomCode, winner) {
+        // ✅ CRITICAL FIX: Validate winner exists
+        if (!winner || !winner.player || !room.game.players.find(p => p === winner.player)) {
+            console.log('⚠️ Invalid winner - ending game');
+            endWarGame(room, roomCode);
+            return;
+        }
+        
         console.log(`⚔️ ${winner.player.name} wins the battle!`);
         
-        // Award all battle cards to winner
-        const allCards = room.game.battleCards.map(bc => bc.card);
-        const shuffledCards = allCards.sort(() => Math.random() - 0.5);
-        winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
+        // ✅ CRITICAL FIX: Award all battle cards to winner with null checks
+        const allCards = (room.game.battleCards || [])
+            .map(bc => bc?.card)
+            .filter(c => c !== null && c !== undefined);
+        
+        if (allCards.length > 0) {
+            const shuffledCards = allCards.sort(() => Math.random() - 0.5);
+            winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
+        }
         
         io.to(roomCode).emit('battleResolved', {
             winner: {
@@ -3340,24 +3524,28 @@ io.on('connection', (socket) => {
         room.game.battleCards = [];
         room.game.battleNumber++;
         
-        // Check for game over
-        const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
+        // ✅ CRITICAL FIX: Check for game over with proper validation
+        const playersWithCards = room.game.players.filter(p => p && p.hand && p.hand.length > 0);
         if (playersWithCards.length <= 1) {
             const gameWinner = playersWithCards.length === 1 ? playersWithCards[0] :
-                             room.game.players.reduce((max, player) => 
-                                 (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
-                             );
+                             (room.game.players.length > 0 ? room.game.players.reduce((max, player) => 
+                                 (player.hand?.length || 0) > ((max && max.hand?.length) || 0) ? player : max
+                             ) : null);
             
-            room.game.gameOver = true;
-            room.game.winner = gameWinner;
-            
-            io.to(roomCode).emit('gameOver', {
-                winner: {
-                    name: gameWinner.name,
-                    cards: gameWinner.hand?.length || 0
-                },
-                finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
-            });
+            if (gameWinner) {
+                room.game.gameOver = true;
+                room.game.winner = gameWinner;
+                
+                io.to(roomCode).emit('gameOver', {
+                    winner: {
+                        name: gameWinner.name,
+                        cards: gameWinner.hand?.length || 0
+                    },
+                    finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
+                });
+            } else {
+                endWarGame(room, roomCode);
+            }
         } else {
             // Next battle
             setTimeout(() => {
