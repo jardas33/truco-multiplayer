@@ -2913,7 +2913,8 @@ function drawBetIndicators() {
             let hasConflict = false;
             
             // Check against blind indicators
-            if (blindPos) {
+            // Skip conflict check for bottom players when positioning chips next to blind (intentional side-by-side)
+            if (blindPos && !isBottomPlayer) {
                 const dx = chipIndicatorX - blindPos.x;
                 const dy = chipIndicatorY - blindPos.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
@@ -2924,6 +2925,25 @@ function drawBetIndicators() {
                     const extraDistance = minDistanceFromBlind - distance + 20; // Extra buffer
                     chipIndicatorX = blindPos.x + cos(angleAway) * (minDistanceFromBlind + extraDistance);
                     chipIndicatorY = blindPos.y + sin(angleAway) * (minDistanceFromBlind + extraDistance);
+                }
+            } else if (blindPos && isBottomPlayer) {
+                // For bottom player, ensure chips stay at same Y level and close to blind
+                // Only check if chips drifted too far away (more than 30px horizontally)
+                const dx = chipIndicatorX - blindPos.x;
+                const dy = chipIndicatorY - blindPos.y;
+                const horizontalDistance = Math.abs(dx);
+                const verticalDistance = Math.abs(dy);
+                
+                // If chips drifted too far horizontally or vertically, snap them back
+                if (horizontalDistance > 30 || verticalDistance > 5) {
+                    const blindIsLeft = blindPos.x < playerX;
+                    const spacing = 15;
+                    if (blindIsLeft) {
+                        chipIndicatorX = blindPos.x + spacing;
+                    } else {
+                        chipIndicatorX = blindPos.x - spacing;
+                    }
+                    chipIndicatorY = blindPos.y; // Ensure same Y level
                 }
             }
             
