@@ -1297,12 +1297,12 @@ class WarClient {
         this.createBattleParticles();
         
         // ✅ CRITICAL FIX: Add significant delay before resolving battle so players can see cards
-        // Cards will appear with 300ms delays, so wait for all cards + extra time
-        const maxCardDelay = (this.game.battleCards.length - 1) * 300 + 600; // Last card delay + animation time
+        // Cards will appear with 800ms delays, so wait for all cards + extra time
+        const maxCardDelay = (this.game.battleCards.length - 1) * 800 + 1200; // Last card delay + animation time
         this.safeSetTimeout(() => {
             // Cards are now visible, wait a bit more before resolving
             console.log('⏳ Cards displayed, waiting before resolution...');
-        }, maxCardDelay + 2000); // ✅ CRITICAL FIX: Wait 2 seconds after cards appear before resolving
+        }, maxCardDelay + 5000); // ✅ CRITICAL FIX: Wait 5 seconds after cards appear before resolving
         
         // ✅ CRITICAL FIX: Clear any pending battle auto-starts
         this.clearPendingActions();
@@ -2218,7 +2218,7 @@ class WarClient {
                     'battle-card',
                     {
                         animate: true,
-                        delay: index * 300, // ✅ CRITICAL FIX: Increased delay from 100ms to 300ms for better visibility
+                        delay: index * 800, // ✅ CRITICAL FIX: Increased delay to 800ms for much better visibility
                         isWar: false,
                         faceUp: true
                     }
@@ -2272,7 +2272,7 @@ class WarClient {
                             'battle-card war-card',
                             {
                                 animate: true,
-                                delay: (groupIndex * 500) + (cardIndex * 200), // ✅ CRITICAL FIX: Increased delays for war cards (500ms between groups, 200ms between cards)
+                                delay: (groupIndex * 1000) + (cardIndex * 400), // ✅ CRITICAL FIX: Increased delays for war cards (1000ms between groups, 400ms between cards)
                                 isWar: true,
                                 faceUp: warCard.faceUp !== false // Default to face up if not specified
                             }

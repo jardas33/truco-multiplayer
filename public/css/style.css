@@ -182,8 +182,18 @@ canvas {
     top: 0 !important;
     left: 0 !important;
     z-index: 1 !important;
-    /* Remove pointer-events: none so cards can be clicked */
-    /* pointer-events: none !important; */
+    /* ✅ CRITICAL FIX: Allow buttons to be clickable by not blocking pointer events */
+    pointer-events: auto !important;
+}
+
+/* ✅ CRITICAL FIX: Ensure buttons are always above canvas and clickable */
+#Game button,
+#Game .nav-button,
+#Game .action-controls,
+#Game .action-controls button {
+    pointer-events: auto !important;
+    z-index: 3000 !important;
+    position: relative !important;
 }
 
 .close-button {

@@ -901,9 +901,10 @@
             transform: translateX(-50%);
             display: flex;
             gap: 15px;
-            z-index: 2000;
+            z-index: 3000;
             align-items: center;
             justify-content: center;
+            pointer-events: auto !important;
         }
 
         .nav-button {
@@ -1009,7 +1010,8 @@
             transform: translateX(-50%);
             display: flex;
             gap: 10px;
-            z-index: 1000;
+            z-index: 3000;
+            pointer-events: auto !important;
         }
 
         .action-controls button {
@@ -1023,6 +1025,8 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: auto !important;
+            z-index: 3001;
         }
 
         .action-controls button::before {
