@@ -1584,7 +1584,15 @@ function drawPlayers() {
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const x = centerX + cos(angle) * radiusX;
-        const y = centerY + sin(angle) * radiusY;
+        
+        // Adjust top-middle player (index 0) to be higher - move further from center
+        let adjustedRadiusY = radiusY;
+        if (index === 0 || Math.abs(angle + HALF_PI) < 0.1) {
+            // Top-middle position - increase radius to move player higher
+            adjustedRadiusY = radiusY * 1.15; // Move 15% higher
+        }
+        
+        const y = centerY + sin(angle) * adjustedRadiusY;
         
         // Store position for card drawing later
         playerPositions.push({ x, y, player, index });
