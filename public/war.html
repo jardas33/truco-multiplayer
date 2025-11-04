@@ -882,6 +882,63 @@
             }
         }
 
+        /* Navigation Buttons - Top Center */
+        .game-navigation-buttons {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .nav-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav-button.back-button {
+            background: linear-gradient(135deg, #FF8C00, #FF6347);
+            border: 2px solid rgba(255, 140, 0, 0.5);
+        }
+
+        .nav-button.back-button:hover {
+            background: linear-gradient(135deg, #FF6347, #FF4500);
+            border-color: rgba(255, 140, 0, 0.8);
+        }
+
+        .nav-button.menu-button {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            border: 2px solid rgba(33, 150, 243, 0.5);
+        }
+
+        .nav-button.menu-button:hover {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+            border-color: rgba(33, 150, 243, 0.8);
+        }
+
         .game-info {
             position: absolute;
             top: 20px;
