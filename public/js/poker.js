@@ -2798,12 +2798,10 @@ function drawBetIndicators() {
         
         let chipIndicatorX, chipIndicatorY;
         
-        // If player has both chips and current bet, position them side by side at same height
+        // If player has both chips and current bet, position them appropriately
         if (hasCurrentBet && betPos) {
-            // For top player, always position BET on left, CHIPS on right (side by side)
-            // For left side players (cos(angle) < 0), CHIPS on left, BET on right
-            // For other players, BET on left, CHIPS on right
-            const isLeftSidePlayer = cos(angle) < 0;
+            // For top/bottom players: side by side horizontally (same Y, different X)
+            // For side players: vertical stacking (same X, different Y)
             const indicatorSpacing = 40; // Space between buttons (40px)
             
             if (isTopPlayer) {
@@ -2811,16 +2809,38 @@ function drawBetIndicators() {
                 // Use bet position Y exactly, and position chips to the right
                 chipIndicatorX = betPos.x + indicatorSpacing;
                 chipIndicatorY = betPos.y; // EXACTLY same height as BET
-            } else if (isLeftSidePlayer) {
-                // Left side: CHIPS on left, BET on right
-                // Position chip indicator to the LEFT of bet indicator
-                chipIndicatorX = betPos.x - indicatorSpacing;
-                chipIndicatorY = betPos.y; // Same height as BET
-            } else {
-                // Other players: BET on left, CHIPS on right
-                // Position chip indicator to the RIGHT of bet indicator
+            } else if (isSidePlayer) {
+                // Side players: vertical stacking (same X, different Y)
+                // CHIPS should be above or below BET depending on which has blind indicator
+                // Use same X position as bet, but different Y (vertical stacking)
+                chipIndicatorX = betPos.x; // Same X position (same width)
+                
+                // If blind exists, chips go above blind, then bet goes below
+                // Position chips above bet with proper spacing
+                if (blindPos) {
+                    // Blind -> Chips -> Bet (vertical stack)
+                    // Position chips above blind, bet below chips
+                    chipIndicatorY = blindPos.y - 50; // 50px above blind
+                    // Ensure bet is below chips (bet should already be positioned correctly)
+                } else {
+                    // No blind - position chips above bet
+                    chipIndicatorY = betPos.y - 50; // 50px above bet
+                }
+            } else if (isBottomPlayer) {
+                // Bottom player: side by side horizontally (same Y, different X)
+                // BET on left, CHIPS on right
                 chipIndicatorX = betPos.x + indicatorSpacing;
                 chipIndicatorY = betPos.y; // Same height as BET
+            } else {
+                // Other players (left side): CHIPS on left, BET on right (side by side)
+                const isLeftSidePlayer = cos(angle) < 0;
+                if (isLeftSidePlayer) {
+                    chipIndicatorX = betPos.x - indicatorSpacing;
+                    chipIndicatorY = betPos.y; // Same height as BET
+                } else {
+                    chipIndicatorX = betPos.x + indicatorSpacing;
+                    chipIndicatorY = betPos.y; // Same height as BET
+                }
             }
             
             // Ensure we don't overlap with blind indicators
@@ -3149,8 +3169,10 @@ function drawBetIndicators() {
                     finalIndicatorX = referenceX;
                     
                     // Position bet button below chips (or blind if no chips)
+                    // Ensure proper vertical spacing to prevent overlap
                     const referenceY = chipPosForBet ? chipPosForBet.y : blindPosForBet.y;
-                    finalIndicatorY = referenceY + 50; // Increased vertical spacing (was 30)
+                    const minVerticalSpacing = 60; // Minimum vertical spacing to prevent overlap
+                    finalIndicatorY = referenceY + minVerticalSpacing; // Increased vertical spacing
                 } else {
                     // No blind or chips - position relative to player
                     const isRightSide = cos(angle) > 0;
