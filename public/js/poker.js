@@ -1767,9 +1767,14 @@ function drawGameInfo() {
     }
     
     // Total players
-    if (window.game && window.game.players) {
+    if (window.game && window.game.players && window.game.players.length > 0) {
         fill(200, 200, 255);
         text('Players: ' + window.game.players.length, infoX + 15, yOffset);
+        yOffset += 20;
+    } else {
+        // Show 0 players if game exists but no players
+        fill(200, 200, 255);
+        text('Players: 0', infoX + 15, yOffset);
         yOffset += 20;
     }
     
