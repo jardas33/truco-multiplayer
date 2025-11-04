@@ -405,6 +405,16 @@ class WarClient {
         this.game = new WarGame();
         this.localPlayerIndex = 0;
         this.canAct = false;
+        this.battleHistory = [];
+        this.statistics = {
+            totalBattles: 0,
+            totalWars: 0,
+            longestWar: 0,
+            currentWarCount: 0,
+            cardsWonByPlayer: {}
+        };
+        this.animationQueue = [];
+        this.isAnimating = false;
     }
 
     // Initialize the client
@@ -628,9 +638,42 @@ class WarClient {
             position: index
         }));
         
+        // Update statistics
+        this.statistics.totalBattles++;
+        
+        // Add to battle history
+        this.battleHistory.push({
+            battleNumber: this.game.battleNumber,
+            cards: [...this.game.battleCards],
+            timestamp: Date.now()
+        });
+        
+        // Keep only last 10 battles in history
+        if (this.battleHistory.length > 10) {
+            this.battleHistory.shift();
+        }
+        
         this.updateUI();
-        this.showWarMessage('BATTLE!', 'battle');
+        this.showWarMessage('⚔️ BATTLE! ⚔️', 'battle');
         this.hideActionControls();
+        this.createBattleParticles();
+    }
+    
+    // Create particle effects for battle
+    createBattleParticles() {
+        const battleArea = document.getElementById('battleArea');
+        if (!battleArea) return;
+        
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'battle-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 0.5 + 's';
+            battleArea.appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 2000);
+        }
     }
 
     // Update battle resolved
@@ -640,13 +683,74 @@ class WarClient {
             hand: p.hand || [],
             position: index
         }));
+        
+        // Update statistics
+        if (data.winner) {
+            const winnerName = data.winner.name;
+            if (!this.statistics.cardsWonByPlayer[winnerName]) {
+                this.statistics.cardsWonByPlayer[winnerName] = 0;
+            }
+            this.statistics.cardsWonByPlayer[winnerName] += data.winner.cardsWon || 0;
+            
+            // Highlight winner card
+            setTimeout(() => {
+                this.highlightWinnerCard(data.winner.playerIndex);
+            }, 300);
+        }
+        
+        // Animate card collection
+        if (this.game.battleCards && this.game.battleCards.length > 0 && data.winner) {
+            this.animateCardCollection(this.game.battleCards.map(bc => bc.card), data.winner.playerIndex);
+        }
+        
         this.game.battleCards = [];
         
         this.updateUI();
         this.hideWarMessage();
+        this.updateStatistics();
         
         if (data.winner) {
-            UIUtils.showGameMessage(`${data.winner.name} wins the battle and gets ${data.winner.cardsWon} cards!`, 'success');
+            UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the battle and gets ${data.winner.cardsWon} cards!`, 'success');
+            this.createWinnerEffect(data.winner.playerIndex);
+        }
+    }
+    
+    // Highlight winner card
+    highlightWinnerCard(winnerIndex) {
+        const battleArea = document.getElementById('battleArea');
+        if (!battleArea) return;
+        
+        const cards = battleArea.querySelectorAll('.battle-card');
+        cards.forEach((card, index) => {
+            const battleCard = this.game.battleCards[index];
+            if (battleCard && battleCard.playerIndex === winnerIndex) {
+                card.classList.add('winner');
+                setTimeout(() => {
+                    card.classList.remove('winner');
+                }, 2000);
+            } else if (battleCard) {
+                card.classList.add('loser');
+                setTimeout(() => {
+                    card.classList.remove('loser');
+                }, 2000);
+            }
+        });
+    }
+    
+    // Create winner effect
+    createWinnerEffect(playerIndex) {
+        const playerElement = document.querySelector(`[data-player-index="${playerIndex}"]`);
+        if (playerElement) {
+            const effect = document.createElement('div');
+            effect.className = 'winner-effect';
+            effect.style.position = 'absolute';
+            const rect = playerElement.getBoundingClientRect();
+            effect.style.left = rect.left + rect.width / 2 + 'px';
+            effect.style.top = rect.top + rect.height / 2 + 'px';
+            effect.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(effect);
+            
+            setTimeout(() => effect.remove(), 2000);
         }
     }
 
@@ -661,9 +765,59 @@ class WarClient {
         this.game.isWar = true;
         this.game.gamePhase = 'war';
         
+        // Update statistics
+        this.statistics.totalWars++;
+        this.statistics.currentWarCount++;
+        if (this.statistics.currentWarCount > this.statistics.longestWar) {
+            this.statistics.longestWar = this.statistics.currentWarCount;
+        }
+        
         this.updateUI();
-        this.showWarMessage('⚔️ WAR! ⚔️', 'war');
+        this.showWarMessage('⚔️⚔️⚔️ WAR! ⚔️⚔️⚔️', 'war');
         this.hideActionControls();
+        this.createWarEffect();
+        
+        // Animate war cards flipping
+        setTimeout(() => {
+            this.animateWarCards();
+        }, 500);
+    }
+    
+    // Create war effect (intense visual)
+    createWarEffect() {
+        const battleArea = document.getElementById('battleArea');
+        if (!battleArea) return;
+        
+        // Create war explosion effect
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'war-particle';
+            particle.style.left = '50%';
+            particle.style.top = '50%';
+            const angle = (Math.PI * 2 * i) / 30;
+            const distance = 200 + Math.random() * 100;
+            particle.style.setProperty('--angle', angle + 'rad');
+            particle.style.setProperty('--distance', distance + 'px');
+            battleArea.appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 1500);
+        }
+    }
+    
+    // Animate war cards flipping
+    animateWarCards() {
+        const battleArea = document.getElementById('battleArea');
+        if (!battleArea) return;
+        
+        const faceDownCards = battleArea.querySelectorAll('.face-down');
+        faceDownCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('flipping');
+                setTimeout(() => {
+                    card.classList.remove('flipping');
+                }, 600);
+            }, index * 100);
+        });
     }
 
     // Update war resolved
@@ -673,6 +827,28 @@ class WarClient {
             hand: p.hand || [],
             position: index
         }));
+        
+        // Reset war count
+        this.statistics.currentWarCount = 0;
+        
+        // Update statistics
+        if (data.winner) {
+            const winnerName = data.winner.name;
+            if (!this.statistics.cardsWonByPlayer[winnerName]) {
+                this.statistics.cardsWonByPlayer[winnerName] = 0;
+            }
+            this.statistics.cardsWonByPlayer[winnerName] += data.winner.cardsWon || 0;
+        }
+        
+        // Animate card collection
+        const allWarCards = [
+            ...(this.game.battleCards || []).map(bc => bc.card),
+            ...(this.game.warCards || []).map(wc => wc.card)
+        ];
+        if (allWarCards.length > 0 && data.winner) {
+            this.animateCardCollection(allWarCards, data.winner.playerIndex);
+        }
+        
         this.game.warCards = [];
         this.game.battleCards = [];
         this.game.isWar = false;
@@ -680,9 +856,46 @@ class WarClient {
         
         this.updateUI();
         this.hideWarMessage();
+        this.updateStatistics();
         
         if (data.winner) {
             UIUtils.showGameMessage(`⚔️ ${data.winner.name} wins the war and gets ${data.winner.cardsWon} cards!`, 'success');
+            this.createWarVictoryEffect(data.winner.playerIndex);
+        }
+    }
+    
+    // Create war victory effect (more intense)
+    createWarVictoryEffect(playerIndex) {
+        // Create confetti effect
+        this.createConfetti();
+        
+        // Create winner glow
+        const playerElement = document.querySelector(`[data-player-index="${playerIndex}"]`);
+        if (playerElement) {
+            playerElement.classList.add('war-victory');
+            setTimeout(() => {
+                playerElement.classList.remove('war-victory');
+            }, 3000);
+        }
+    }
+    
+    // Create confetti effect
+    createConfetti() {
+        const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181', '#AA96DA'];
+        const confettiCount = 50;
+        
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.top = '-10px';
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            confetti.style.setProperty('--rotation', (Math.random() * 360) + 'deg');
+            confetti.style.setProperty('--x-variance', (Math.random() * 200 - 100) + 'px');
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 3000);
         }
     }
 
@@ -710,23 +923,142 @@ class WarClient {
         }, 2000);
     }
 
-    // Show game over
+    // Show game over with celebration
     showGameOver(data) {
         if (data.winner) {
             this.game.winner = this.game.players.find(p => p.name === data.winner.name) || data.winner;
             this.game.gameOver = true;
             
+            // Massive confetti celebration
+            this.createVictoryConfetti();
+            
+            // Create victory screen
+            this.createVictoryScreen(data);
+            
+            // Show winner glow on player
+            const winnerIndex = this.game.players.findIndex(p => p.name === data.winner.name);
+            if (winnerIndex !== -1) {
+                const playerElement = document.querySelector(`[data-player-index="${winnerIndex}"]`);
+                if (playerElement) {
+                    playerElement.classList.add('game-winner');
+                }
+            }
+            
             UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards} cards!`, 'success');
             this.updateUI();
             this.hideActionControls();
             
-            // Show game over message for longer
+            // Show final statistics
             setTimeout(() => {
-                if (data.finalScores) {
-                    const scoresText = data.finalScores.map(s => `${s.name}: ${s.cards} cards`).join(', ');
-                    UIUtils.showGameMessage(`Final Scores: ${scoresText}`, 'info');
+                this.showFinalStatistics(data);
+            }, 4000);
+        }
+    }
+    
+    // Create victory confetti (more intense)
+    createVictoryConfetti() {
+        const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181', '#AA96DA', '#FFA07A', '#20B2AA'];
+        const confettiCount = 100;
+        
+        for (let i = 0; i < confettiCount; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.width = (Math.random() * 10 + 8) + 'px';
+                confetti.style.height = (Math.random() * 10 + 8) + 'px';
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.setProperty('--rotation', (Math.random() * 720) + 'deg');
+                confetti.style.setProperty('--x-variance', (Math.random() * 400 - 200) + 'px');
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 4000);
+            }, i * 20);
+        }
+    }
+    
+    // Create victory screen overlay
+    createVictoryScreen(data) {
+        const victoryScreen = document.createElement('div');
+        victoryScreen.id = 'victoryScreen';
+        victoryScreen.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            animation: victoryFadeIn 0.5s ease-out;
+        `;
+        
+        victoryScreen.innerHTML = `
+            <div style="text-align: center; animation: victoryScale 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
+                <div style="font-size: 72px; margin-bottom: 20px; animation: victorySpin 2s ease-in-out infinite;">🏆</div>
+                <h1 style="color: #FFD700; font-size: 48px; margin: 0 0 20px 0; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);">
+                    ${data.winner.name} Wins!
+                </h1>
+                <div style="color: white; font-size: 24px; margin-bottom: 30px;">
+                    Final Score: ${data.winner.cards} cards
+                </div>
+                <div style="color: #ccc; font-size: 16px;">
+                    Total Battles: ${this.statistics.totalBattles} | Wars: ${this.statistics.totalWars}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(victoryScreen);
+        
+        // Add CSS animations if not already in style
+        if (!document.getElementById('victoryAnimations')) {
+            const style = document.createElement('style');
+            style.id = 'victoryAnimations';
+            style.textContent = `
+                @keyframes victoryFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
                 }
-            }, 3000);
+                @keyframes victoryScale {
+                    from { transform: scale(0); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                @keyframes victorySpin {
+                    0%, 100% { transform: rotate(0deg) scale(1); }
+                    50% { transform: rotate(360deg) scale(1.2); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Auto-remove after 8 seconds
+        setTimeout(() => {
+            victoryScreen.style.animation = 'victoryFadeIn 0.5s ease-out reverse';
+            setTimeout(() => victoryScreen.remove(), 500);
+        }, 8000);
+    }
+    
+    // Show final statistics
+    showFinalStatistics(data) {
+        if (data.finalScores) {
+            const statsText = data.finalScores.map(s => `${s.name}: ${s.cards} cards`).join(' | ');
+            UIUtils.showGameMessage(`📊 Final Scores: ${statsText}`, 'info');
+            
+            // Show detailed statistics
+            setTimeout(() => {
+                const detailStats = `
+                    📈 Game Statistics:
+                    • Battles Fought: ${this.statistics.totalBattles}
+                    • Wars Declared: ${this.statistics.totalWars}
+                    • Longest War: ${this.statistics.longestWar} consecutive wars
+                `;
+                UIUtils.showGameMessage(detailStats, 'info');
+            }, 2000);
         }
     }
 
@@ -738,27 +1070,148 @@ class WarClient {
         this.updatePlayerAreas();
     }
 
-    // Update game info
+    // Update game info with animations
     updateGameInfo() {
-        document.getElementById('roundNumber').textContent = this.game.roundNumber;
-        document.getElementById('battleNumber').textContent = this.game.battleNumber;
-        document.getElementById('currentPlayerName').textContent = this.game.players[this.game.currentPlayer]?.name || '-';
-        document.getElementById('cardsInPlay').textContent = this.game.battleCards.length + this.game.warCards.length;
+        const roundNumberEl = document.getElementById('roundNumber');
+        const battleNumberEl = document.getElementById('battleNumber');
+        const currentPlayerEl = document.getElementById('currentPlayerName');
+        const cardsInPlayEl = document.getElementById('cardsInPlay');
+        
+        // Animate number changes
+        if (roundNumberEl) {
+            const newValue = this.game.roundNumber;
+            if (roundNumberEl.textContent !== newValue.toString()) {
+                roundNumberEl.style.animation = 'numberPulse 0.3s ease-out';
+                setTimeout(() => {
+                    roundNumberEl.textContent = newValue;
+                    roundNumberEl.style.animation = '';
+                }, 150);
+            }
+        }
+        
+        if (battleNumberEl) {
+            const newValue = this.game.battleNumber;
+            if (battleNumberEl.textContent !== newValue.toString()) {
+                battleNumberEl.style.animation = 'numberPulse 0.3s ease-out';
+                setTimeout(() => {
+                    battleNumberEl.textContent = newValue;
+                    battleNumberEl.style.animation = '';
+                }, 150);
+            }
+        }
+        
+        if (currentPlayerEl) {
+            const newValue = this.game.players[this.game.currentPlayer]?.name || '-';
+            if (currentPlayerEl.textContent !== newValue) {
+                currentPlayerEl.style.opacity = '0';
+                setTimeout(() => {
+                    currentPlayerEl.textContent = newValue;
+                    currentPlayerEl.style.opacity = '1';
+                }, 200);
+            }
+        }
+        
+        if (cardsInPlayEl) {
+            const newValue = (this.game.battleCards?.length || 0) + (this.game.warCards?.length || 0);
+            if (cardsInPlayEl.textContent !== newValue.toString()) {
+                cardsInPlayEl.style.animation = 'numberPulse 0.3s ease-out';
+                setTimeout(() => {
+                    cardsInPlayEl.textContent = newValue;
+                    cardsInPlayEl.style.animation = '';
+                }, 150);
+            }
+        }
+        
+        // Add CSS animation if not exists
+        if (!document.getElementById('numberPulseAnimation')) {
+            const style = document.createElement('style');
+            style.id = 'numberPulseAnimation';
+            style.textContent = `
+                @keyframes numberPulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.3); color: #FFD700; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 
-    // Update scores
+    // Update scores with enhanced visualization
     updateScores() {
         const scoresBody = document.getElementById('scoresBody');
+        if (!scoresBody) return;
+        
         scoresBody.innerHTML = '';
         
-        this.game.players.forEach(player => {
+        // Calculate total cards for percentage
+        const totalCards = this.game.players.reduce((sum, p) => sum + (p.hand?.length || 0), 0);
+        
+        this.game.players.forEach((player, index) => {
             const row = document.createElement('tr');
+            row.setAttribute('data-player-index', index);
+            row.setAttribute('data-player-name', player.name);
+            
+            const cardCount = player.hand?.length || 0;
+            const percentage = totalCards > 0 ? (cardCount / totalCards * 100) : 0;
+            
             row.innerHTML = `
-                <td>${player.name}</td>
-                <td>${player.hand.length}</td>
+                <td class="player-name-cell">
+                    <div class="player-name-wrapper">
+                        <span class="player-name">${player.name}</span>
+                        ${player.isBot ? '<span class="bot-badge">🤖</span>' : ''}
+                    </div>
+                </td>
+                <td class="player-cards-cell">
+                    <div class="cards-display">
+                        <div class="card-count">${cardCount}</div>
+                        <div class="card-stack-visual">
+                            ${this.createCardStackVisual(cardCount)}
+                        </div>
+                        <div class="card-progress-bar">
+                            <div class="card-progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                </td>
             `;
+            
             scoresBody.appendChild(row);
         });
+    }
+    
+    // Create visual representation of card stack
+    createCardStackVisual(count) {
+        if (count === 0) return '<div class="no-cards">No cards</div>';
+        
+        const stackHeight = Math.min(count * 2, 30);
+        const stackElements = [];
+        const layers = Math.min(Math.ceil(count / 5), 5);
+        
+        for (let i = 0; i < layers; i++) {
+            stackElements.push(`<div class="card-stack-layer" style="z-index: ${layers - i}; transform: translateY(${i * 2}px);"></div>`);
+        }
+        
+        return `<div class="card-stack" style="height: ${stackHeight}px;">${stackElements.join('')}</div>`;
+    }
+    
+    // Update statistics display
+    updateStatistics() {
+        const statsContainer = document.getElementById('statisticsContainer');
+        if (!statsContainer) return;
+        
+        statsContainer.innerHTML = `
+            <div class="stat-item">
+                <span class="stat-label">Battles:</span>
+                <span class="stat-value">${this.statistics.totalBattles}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Wars:</span>
+                <span class="stat-value">${this.statistics.totalWars}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Longest War:</span>
+                <span class="stat-value">${this.statistics.longestWar}</span>
+            </div>
+        `;
     }
 
     // Update battle area
@@ -768,10 +1221,21 @@ class WarClient {
         
         battleArea.innerHTML = '';
         
-        // Show battle cards with proper card images
+        // Show battle cards with proper card images and animations
         if (this.game.battleCards && this.game.battleCards.length > 0) {
             this.game.battleCards.forEach((battleCard, index) => {
-                const cardDiv = this.createCardElement(battleCard.card, 'battle-card');
+                const cardDiv = this.createCardElement(
+                    battleCard.card, 
+                    'battle-card',
+                    {
+                        animate: true,
+                        delay: index * 100,
+                        isWar: false,
+                        faceUp: true
+                    }
+                );
+                cardDiv.setAttribute('data-card-id', `battle-${index}`);
+                cardDiv.setAttribute('data-player-index', battleCard.playerIndex);
                 if (battleCard.playerIndex === this.localPlayerIndex) {
                     cardDiv.classList.add('my-card');
                 }
@@ -779,42 +1243,112 @@ class WarClient {
             });
         }
         
-        // Show war cards (face up only)
+        // Show war cards with flip animations
         if (this.game.warCards && this.game.warCards.length > 0) {
+            // Group war cards by player
+            const warCardsByPlayer = {};
             this.game.warCards.forEach((warCard, index) => {
-                if (warCard.faceUp) {
-                    const cardDiv = this.createCardElement(warCard.card, 'battle-card war-card');
+                if (!warCardsByPlayer[warCard.playerIndex]) {
+                    warCardsByPlayer[warCard.playerIndex] = [];
+                }
+                warCardsByPlayer[warCard.playerIndex].push({...warCard, originalIndex: index});
+            });
+            
+            // Create war card groups
+            Object.keys(warCardsByPlayer).forEach((playerIndex, groupIndex) => {
+                const playerCards = warCardsByPlayer[playerIndex];
+                
+                // Create container for this player's war cards
+                const playerGroup = document.createElement('div');
+                playerGroup.className = 'war-card-group';
+                playerGroup.setAttribute('data-player-index', playerIndex);
+                
+                playerCards.forEach((warCard, cardIndex) => {
+                    const cardDiv = this.createCardElement(
+                        warCard.card,
+                        'battle-card war-card',
+                        {
+                            animate: true,
+                            delay: (groupIndex * 200) + (cardIndex * 50),
+                            isWar: true,
+                            faceUp: warCard.faceUp
+                        }
+                    );
+                    cardDiv.setAttribute('data-card-id', `war-${warCard.originalIndex}`);
+                    cardDiv.setAttribute('data-player-index', playerIndex);
                     if (warCard.playerIndex === this.localPlayerIndex) {
                         cardDiv.classList.add('my-card');
                     }
-                    battleArea.appendChild(cardDiv);
-                } else {
-                    // Show face-down card back
-                    const cardDiv = document.createElement('div');
-                    cardDiv.className = 'battle-card war-card face-down';
-                    cardDiv.innerHTML = '<div class="card-back">🂠</div>';
-                    battleArea.appendChild(cardDiv);
-                }
+                    
+                    if (!warCard.faceUp) {
+                        cardDiv.classList.add('face-down');
+                    }
+                    
+                    playerGroup.appendChild(cardDiv);
+                });
+                
+                battleArea.appendChild(playerGroup);
             });
         }
         
-        // Show message if no cards
+        // Show message if no cards with enhanced styling
         if ((!this.game.battleCards || this.game.battleCards.length === 0) && 
             (!this.game.warCards || this.game.warCards.length === 0)) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'battle-message';
-            messageDiv.textContent = 'Ready for battle!';
+            messageDiv.innerHTML = `
+                <div class="battle-message-icon">⚔️</div>
+                <div class="battle-message-text">Ready for battle!</div>
+            `;
             battleArea.appendChild(messageDiv);
         }
     }
     
-    // Create card element with proper image
-    createCardElement(card, className = '') {
+    // Create card element with proper image and animations
+    createCardElement(card, className = '', options = {}) {
+        const {
+            animate = true,
+            delay = 0,
+            isWinner = false,
+            isWar = false,
+            faceUp = true
+        } = options;
+        
         const cardDiv = document.createElement('div');
         cardDiv.className = className || 'card';
         
+        // Add animation classes
+        if (animate) {
+            cardDiv.classList.add('card-enter');
+            cardDiv.style.animationDelay = `${delay}ms`;
+        }
+        
+        if (isWinner) {
+            cardDiv.classList.add('card-winner');
+        }
+        
+        if (isWar) {
+            cardDiv.classList.add('card-war');
+        }
+        
+        // Create card inner container for flip effect
+        const cardInner = document.createElement('div');
+        cardInner.className = 'card-inner';
+        if (!faceUp) {
+            cardInner.classList.add('flipped');
+        }
+        
+        // Card front
+        const cardFront = document.createElement('div');
+        cardFront.className = 'card-front';
+        
+        // Card back
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back';
+        cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
+        
         // Try to use card image if available
-        if (window.cardImages && card.name) {
+        if (window.cardImages && card.name && faceUp) {
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
             const cardImage = window.cardImages[imageName];
             
@@ -822,31 +1356,115 @@ class WarClient {
                 const img = document.createElement('img');
                 img.src = cardImage.src || `Images/Cards/${imageName}.png`;
                 img.alt = card.name;
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '5px';
-                cardDiv.appendChild(img);
+                img.className = 'card-image';
+                cardFront.appendChild(img);
+                
+                // Add card value overlay
+                const valueOverlay = document.createElement('div');
+                valueOverlay.className = 'card-value-overlay';
+                valueOverlay.textContent = this.getCardDisplayValue(card);
+                cardFront.appendChild(valueOverlay);
             } else {
-                // Fallback to text
-                cardDiv.textContent = card.name;
-                cardDiv.style.display = 'flex';
-                cardDiv.style.alignItems = 'center';
-                cardDiv.style.justifyContent = 'center';
-                cardDiv.style.fontSize = '10px';
-                cardDiv.style.fontWeight = 'bold';
+                // Fallback to text with enhanced styling
+                const textDiv = document.createElement('div');
+                textDiv.className = 'card-text';
+                textDiv.innerHTML = `
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-value">${this.getCardDisplayValue(card)}</div>
+                `;
+                cardFront.appendChild(textDiv);
             }
-        } else {
-            // Fallback to text
-            cardDiv.textContent = card.name || 'Unknown';
-            cardDiv.style.display = 'flex';
-            cardDiv.style.alignItems = 'center';
-            cardDiv.style.justifyContent = 'center';
-            cardDiv.style.fontSize = '10px';
-            cardDiv.style.fontWeight = 'bold';
+        } else if (faceUp) {
+            // Fallback to text with enhanced styling
+            const textDiv = document.createElement('div');
+            textDiv.className = 'card-text';
+            textDiv.innerHTML = `
+                <div class="card-name">${card.name || 'Unknown'}</div>
+                <div class="card-value">${this.getCardDisplayValue(card)}</div>
+            `;
+            cardFront.appendChild(textDiv);
+        }
+        
+        cardInner.appendChild(cardFront);
+        cardInner.appendChild(cardBack);
+        cardDiv.appendChild(cardInner);
+        
+        // Add glow effect for high-value cards
+        if (card.value >= 12) {
+            cardDiv.classList.add('card-high-value');
         }
         
         return cardDiv;
+    }
+    
+    // Get display value for card
+    getCardDisplayValue(card) {
+        if (!card.value) return '';
+        if (card.value === 14) return 'A';
+        if (card.value === 13) return 'K';
+        if (card.value === 12) return 'Q';
+        if (card.value === 11) return 'J';
+        return card.value.toString();
+    }
+    
+    // Animate card flip
+    flipCard(cardElement, faceUp = true) {
+        if (!cardElement) return;
+        const cardInner = cardElement.querySelector('.card-inner');
+        if (cardInner) {
+            if (faceUp) {
+                cardInner.classList.remove('flipped');
+            } else {
+                cardInner.classList.add('flipped');
+            }
+        }
+    }
+    
+    // Animate card collection (cards moving to winner)
+    animateCardCollection(cards, winnerIndex) {
+        cards.forEach((card, index) => {
+            const cardElement = document.querySelector(`[data-card-id="${card.id || index}"]`);
+            if (cardElement) {
+                setTimeout(() => {
+                    cardElement.classList.add('collecting');
+                    // Create flying card
+                    this.createFlyingCard(cardElement, winnerIndex);
+                }, index * 50);
+            }
+        });
+    }
+    
+    // Create flying card animation
+    createFlyingCard(sourceElement, targetIndex) {
+        const flyingCard = sourceElement.cloneNode(true);
+        flyingCard.classList.add('flying-card');
+        flyingCard.style.position = 'fixed';
+        flyingCard.style.zIndex = '10000';
+        
+        const rect = sourceElement.getBoundingClientRect();
+        flyingCard.style.left = rect.left + 'px';
+        flyingCard.style.top = rect.top + 'px';
+        flyingCard.style.width = rect.width + 'px';
+        flyingCard.style.height = rect.height + 'px';
+        
+        document.body.appendChild(flyingCard);
+        
+        // Get target position (player area)
+        const targetElement = document.querySelector(`[data-player-index="${targetIndex}"]`);
+        const targetRect = targetElement ? targetElement.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2 };
+        
+        // Animate
+        setTimeout(() => {
+            flyingCard.style.transition = 'all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+            flyingCard.style.left = targetRect.left + 'px';
+            flyingCard.style.top = targetRect.top + 'px';
+            flyingCard.style.transform = 'scale(0.3) rotate(360deg)';
+            flyingCard.style.opacity = '0';
+            
+            setTimeout(() => {
+                flyingCard.remove();
+            }, 800);
+        }, 10);
     }
 
     // Update player areas
