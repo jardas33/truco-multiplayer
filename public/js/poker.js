@@ -1695,6 +1695,20 @@ class PokerClient {
         }, 100);
     }
 
+    // Clean up game buttons
+    cleanupGameButtons() {
+        const backToMainMenuBtn = document.getElementById('backToMainMenuBtnGame');
+        const gameMenuBtn = document.getElementById('gameMenuBtnGame');
+        if (backToMainMenuBtn) {
+            backToMainMenuBtn.remove();
+            console.log('🎴 Removed Back to Main Menu button');
+        }
+        if (gameMenuBtn) {
+            gameMenuBtn.remove();
+            console.log('🎴 Removed Poker Menu button');
+        }
+    }
+    
     // Reset client state
     reset() {
         console.log('Resetting Poker client state...');
@@ -1702,6 +1716,7 @@ class PokerClient {
         this.isMyTurn = false;
         this.canAct = false;
         this.game = new PokerGame();
+        this.cleanupGameButtons();
         console.log('SUCCESS: Poker client state reset');
     }
 }
