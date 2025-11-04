@@ -1271,24 +1271,24 @@ function drawGameState() {
     drawCommunityCards();
     drawPlayers();
     drawPot();
-    drawChips();
+    // Removed drawChips() - chips were overlapping with player boxes
     drawGameInfo();
 }
 
 function drawPokerTable() {
     const centerX = width/2;
     const centerY = height/2;
-    const tableWidth = width * 0.8;
-    const tableHeight = height * 0.6;
+    const tableWidth = width * 0.75; // Slightly smaller to avoid edge artifacts
+    const tableHeight = height * 0.55; // Slightly smaller to avoid edge artifacts
     
     push();
     
     // Draw table shadow (more realistic)
-    fill(0, 0, 0, 60);
+    fill(0, 0, 0, 80);
     noStroke();
-    ellipse(centerX + 12, centerY + 12, tableWidth + 24, tableHeight + 24);
+    ellipse(centerX + 8, centerY + 8, tableWidth + 16, tableHeight + 16);
     
-    // Draw table rim (outermost)
+    // Draw table rim (outermost) - clean ellipse, no extensions
     fill(101, 67, 33);
     noStroke();
     ellipse(centerX, centerY, tableWidth, tableHeight);
@@ -1296,28 +1296,22 @@ function drawPokerTable() {
     // Draw table edge
     fill(139, 69, 19);
     noStroke();
-    ellipse(centerX, centerY, tableWidth - 30, tableHeight - 25);
+    ellipse(centerX, centerY, tableWidth - 25, tableHeight - 20);
     
-    // Draw main table felt with gradient
-    for (let i = 0; i < (tableWidth - 60) / 2; i += 2) {
-        const alpha = map(i, 0, (tableWidth - 60) / 2, 255, 200);
-        fill(0, 120, 0, alpha);
-        noStroke();
-        ellipse(centerX, centerY, tableWidth - 60 - i * 2, tableHeight - 50 - i * 2);
-    }
-    
-    // Draw subtle felt texture
-    fill(0, 100, 0, 40);
+    // Draw main table felt - clean gradient without weird shapes
+    fill(0, 100, 0); // Base green felt color
     noStroke();
-    for (let i = 0; i < 20; i++) {
-        const angle = (TWO_PI / 20) * i;
-        const x = centerX + cos(angle) * (tableWidth * 0.15);
-        const y = centerY + sin(angle) * (tableHeight * 0.15);
-        ellipse(x, y, 8, 8);
-    }
+    ellipse(centerX, centerY, tableWidth - 50, tableHeight - 40);
     
-    // Draw table center area for community cards - only if there are community cards
-    // Removed empty white circle - it will only show when cards are present
+    // Draw subtle felt texture dots
+    fill(0, 120, 0, 30);
+    noStroke();
+    for (let i = 0; i < 15; i++) {
+        const angle = (TWO_PI / 15) * i;
+        const x = centerX + cos(angle) * (tableWidth * 0.2);
+        const y = centerY + sin(angle) * (tableHeight * 0.2);
+        ellipse(x, y, 6, 6);
+    }
     
     pop();
 }
@@ -1496,22 +1490,22 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
 }
 
 function drawPot() {
+    // Pot positioned exactly in the center of the table
     const centerX = width/2;
-    // Move pot much higher to avoid overlapping with player cards - above the table center
-    const centerY = height/2 - 180; 
+    const centerY = height/2; // True center, not offset
     
     push();
     
     // Add subtle pulsing animation to the pot
     const time = millis() * 0.002;
     const pulseScale = 1 + sin(time) * 0.03;
-    const potWidth = 140 * pulseScale;
-    const potHeight = 75 * pulseScale;
+    const potWidth = 130 * pulseScale;
+    const potHeight = 70 * pulseScale;
     
     // Draw pot shadow with more depth
     fill(0, 0, 0, 120);
     noStroke();
-    ellipse(centerX + 5, centerY + 5, potWidth, potHeight);
+    ellipse(centerX + 4, centerY + 4, potWidth, potHeight);
     
     // Draw pot background with more subtle gold color
     fill(218, 165, 32); // More subtle gold
@@ -1522,7 +1516,7 @@ function drawPot() {
     // Draw pot inner circle with gradient effect
     fill(255, 215, 0, 200); // Lighter gold inner
     noStroke();
-    ellipse(centerX, centerY, 120 * pulseScale, 60 * pulseScale);
+    ellipse(centerX, centerY, 110 * pulseScale, 55 * pulseScale);
     
     // Draw pot text with better styling and larger size
     textAlign(CENTER, CENTER);
