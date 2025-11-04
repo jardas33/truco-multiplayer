@@ -795,11 +795,24 @@ class WarClient {
         });
         
         socket.on('gameStarted', (data) => {
-            console.log('🎮 Game started:', data);
+            console.log('🎮 Game started event received:', data);
             // ✅ CRITICAL FIX: Validate data before starting game
-            if (!data || !data.players) {
-                console.error('❌ Invalid game started data');
+            if (!data) {
+                console.error('❌ Invalid game started data - data is null/undefined');
+                UIUtils.showGameMessage('Invalid game data received. Please refresh the page.', 'error');
                 return;
+            }
+            if (!data.players || !Array.isArray(data.players)) {
+                console.error('❌ Invalid game started data - players missing or not an array');
+                console.error('Data received:', data);
+                UIUtils.showGameMessage('Invalid game data received. Please refresh the page.', 'error');
+                return;
+            }
+            // Re-enable start button
+            const startGameBtn = document.getElementById('startGameBtn');
+            if (startGameBtn) {
+                startGameBtn.disabled = false;
+                startGameBtn.textContent = 'Start Game';
             }
             this.startGame(data);
         });
