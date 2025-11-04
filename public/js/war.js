@@ -751,8 +751,8 @@ class WarClient {
         UIUtils.showGame();
         this.updateUI();
         
-        // Auto-start first battle after a short delay
-        setTimeout(() => {
+        // ✅ CRITICAL FIX: Auto-start first battle after a short delay with tracked timeout
+        const autoStartTimeout = this.safeSetTimeout(() => {
             this.canAct = true;
             this.showActionControls();
             // Auto-start battle if it's a new game and no battle is in progress
@@ -764,6 +764,11 @@ class WarClient {
                 this.startBattle();
             }
         }, 1500);
+        
+        // Store timeout for potential cleanup
+        if (!this.pendingBattleTimeout) {
+            this.pendingBattleTimeout = autoStartTimeout;
+        }
     }
 
     // Start battle
@@ -839,8 +844,8 @@ class WarClient {
         this.canAct = false;
         this.hideActionControls();
         
-        // ✅ CRITICAL FIX: Reset flag and button state after a delay
-        setTimeout(() => {
+        // ✅ CRITICAL FIX: Reset flag and button state after a delay with tracked timeout
+        const resetTimeout = this.safeSetTimeout(() => {
             this.isStartingBattle = false;
             if (battleBtn) {
                 battleBtn.disabled = false;
@@ -849,6 +854,11 @@ class WarClient {
                 battleBtn.style.cursor = 'pointer';
             }
         }, 1000);
+        
+        // Update pending battle timeout reference
+        if (!this.pendingBattleTimeout) {
+            this.pendingBattleTimeout = resetTimeout;
+        }
     }
 
     // Update battle started
