@@ -2692,38 +2692,56 @@ function drawBetIndicators() {
         const isTopPlayer = sinAngle < -0.5;
         const isSidePlayer = absCosAngle > absSinAngle;
         
-        // Calculate initial position - place chip indicator BELOW bet indicator area
-        let chipIndicatorX = playerX;
-        let chipIndicatorY = playerY + 130; // Start well below where bet indicators would be
-        
         const blindPos = blindIndicatorPositions.get(index);
-        const minDistanceFromBlind = isSidePlayer ? 100 : 80;
-        const minDistanceFromBet = isSidePlayer ? 110 : 90;
+        const betPos = betIndicatorPositions.get(index);
+        
+        // Zone-based positioning: assign chip indicators to specific zones that don't overlap with blind/bet zones
+        // Use MUCH larger minimum distances
+        const minDistanceFromBlind = isSidePlayer ? 120 : 90;
+        const minDistanceFromBet = isSidePlayer ? 130 : 100;
+        
+        let chipIndicatorX, chipIndicatorY;
         
         if (isTopPlayer) {
-            // For top player, position to the left of cards (away from blind indicators on right)
+            // Top player: chip indicator goes to the far left, well below cards
             const cardY = playerY + 50;
             const cardWidth = 60;
             const cardSpacing = 8;
             const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
             const cardLeftEdge = playerX - (cardsTotalWidth / 2);
-            chipIndicatorX = cardLeftEdge - 60; // Further left to avoid bet indicator
-            chipIndicatorY = cardY + 42 + 70; // Position well below bet indicator area
+            chipIndicatorX = cardLeftEdge - 80; // Much further left
+            chipIndicatorY = cardY + 42 + 90; // Much further below
         } else if (isSidePlayer) {
-            // Side players: position chip indicator with significant horizontal offset
+            // Side players: chip indicator goes to OPPOSITE side from blind indicators
+            // If blind is on left (toward center), chip goes to right (away from center), and vice versa
             const isRightSide = cos(angle) > 0;
-            const horizontalOffset = isRightSide ? -60 : 60; // Larger offset
-            chipIndicatorX = playerX + horizontalOffset;
-            chipIndicatorY = playerY + 130; // Well below bet indicator
+            
+            // Determine where blind indicator is
+            let blindIsOnLeft = false;
+            if (blindPos) {
+                blindIsOnLeft = blindPos.x < playerX;
+            }
+            
+            // Position chip indicator on OPPOSITE side from blind, with large offset
+            if (blindIsOnLeft) {
+                // Blind is on left, so chip goes to right (away from center)
+                chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
+            } else {
+                // Blind is on right or center, so chip goes to left (away from center)
+                chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
+            }
+            
+            // Position well below bet indicator
+            chipIndicatorY = playerY + 150; // Much further down
         } else {
-            // Bottom player: position directly below
+            // Bottom player: position directly below, well separated
             chipIndicatorX = playerX;
-            chipIndicatorY = playerY + 130; // Well below bet indicator (which is at playerY + 80)
+            chipIndicatorY = playerY + 150; // Much further below bet indicator
         }
         
-        // Try multiple positions to find one that doesn't conflict
+        // Aggressive conflict resolution with multiple attempts
         let attempts = 0;
-        const maxAttempts = 20;
+        const maxAttempts = 30;
         while (attempts < maxAttempts) {
             let hasConflict = false;
             
@@ -2734,21 +2752,37 @@ function drawBetIndicators() {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < minDistanceFromBlind) {
                     hasConflict = true;
-                    // Move away from blind indicator
+                    // Move significantly away from blind indicator
                     const angleAway = atan2(chipIndicatorY - blindPos.y, chipIndicatorX - blindPos.x);
-                    chipIndicatorX = blindPos.x + cos(angleAway) * minDistanceFromBlind;
-                    chipIndicatorY = blindPos.y + sin(angleAway) * minDistanceFromBlind;
+                    const extraDistance = minDistanceFromBlind - distance + 20; // Extra buffer
+                    chipIndicatorX = blindPos.x + cos(angleAway) * (minDistanceFromBlind + extraDistance);
+                    chipIndicatorY = blindPos.y + sin(angleAway) * (minDistanceFromBlind + extraDistance);
+                }
+            }
+            
+            // Check against bet indicators (from first pass)
+            if (betPos) {
+                const dx = chipIndicatorX - betPos.x;
+                const dy = chipIndicatorY - betPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < minDistanceFromBet) {
+                    hasConflict = true;
+                    // Move significantly away from bet indicator
+                    const angleAway = atan2(chipIndicatorY - betPos.y, chipIndicatorX - betPos.x);
+                    const extraDistance = minDistanceFromBet - distance + 20; // Extra buffer
+                    chipIndicatorX = betPos.x + cos(angleAway) * (minDistanceFromBet + extraDistance);
+                    chipIndicatorY = betPos.y + sin(angleAway) * (minDistanceFromBet + extraDistance);
                 }
             }
             
             // Check against all other chip indicators already placed
-            if (checkPositionConflict(chipIndicatorX, chipIndicatorY, chipIndicatorPositions, 60)) {
+            if (checkPositionConflict(chipIndicatorX, chipIndicatorY, chipIndicatorPositions, 80)) {
                 hasConflict = true;
                 // Move in a spiral pattern to find a new position
-                const spiralAngle = (attempts * PI / 4);
-                const spiralRadius = 30 + (attempts * 10);
+                const spiralAngle = (attempts * PI / 6);
+                const spiralRadius = 50 + (attempts * 15);
                 chipIndicatorX = playerX + cos(spiralAngle) * spiralRadius;
-                chipIndicatorY = playerY + 130 + sin(spiralAngle) * spiralRadius;
+                chipIndicatorY = playerY + 150 + sin(spiralAngle) * spiralRadius;
             }
             
             if (!hasConflict) {
@@ -2758,26 +2792,29 @@ function drawBetIndicators() {
             attempts++;
         }
         
-        // Avoid overlap with blind indicators
+        // Final aggressive check against blind indicators
         if (blindPos) {
-            const minDistance = 70; // Increased minimum distance
-            const distanceX = chipIndicatorX - blindPos.x;
-            const distanceY = chipIndicatorY - blindPos.y;
-            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-            
-            if (distance < minDistance) {
-                // Move chip indicator further away from blind indicator
+            const dx = chipIndicatorX - blindPos.x;
+            const dy = chipIndicatorY - blindPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < minDistanceFromBlind) {
                 const angleAway = atan2(chipIndicatorY - blindPos.y, chipIndicatorX - blindPos.x);
-                const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
-                const angleDiff = Math.abs(angleAway - angleToPlayer);
-                
-                let adjustedAngle = angleAway;
-                if (angleDiff < PI / 4 || angleDiff > 7 * PI / 4) {
-                    adjustedAngle = angleToPlayer + PI / 2;
-                }
-                
-                chipIndicatorX = blindPos.x + cos(adjustedAngle) * minDistance;
-                chipIndicatorY = blindPos.y + sin(adjustedAngle) * minDistance;
+                const extraBuffer = minDistanceFromBlind - distance + 30;
+                chipIndicatorX = blindPos.x + cos(angleAway) * (minDistanceFromBlind + extraBuffer);
+                chipIndicatorY = blindPos.y + sin(angleAway) * (minDistanceFromBlind + extraBuffer);
+            }
+        }
+        
+        // Final aggressive check against bet indicators
+        if (betPos) {
+            const dx = chipIndicatorX - betPos.x;
+            const dy = chipIndicatorY - betPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < minDistanceFromBet) {
+                const angleAway = atan2(chipIndicatorY - betPos.y, chipIndicatorX - betPos.x);
+                const extraBuffer = minDistanceFromBet - distance + 30;
+                chipIndicatorX = betPos.x + cos(angleAway) * (minDistanceFromBet + extraBuffer);
+                chipIndicatorY = betPos.y + sin(angleAway) * (minDistanceFromBet + extraBuffer);
             }
         }
         
