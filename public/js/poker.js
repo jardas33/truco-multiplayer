@@ -2885,18 +2885,12 @@ function drawBetIndicators() {
                 // Bottom player: position side by side with blind indicator if it exists
                 // Check if this player has a blind indicator
                 if (blindPos) {
-                    // Position chips side by side with blind indicator, closer together
-                    // If blind is to the left of player, chips go to the right, and vice versa
-                    const blindIsLeft = blindPos.x < playerX;
+                    // For bottom players, always position chips to the RIGHT of the blind button
+                    // Bottom players: BB button on left, CHIPS button on right (side by side)
                     const spacing = 15; // Very close spacing between blind and chips buttons
                     
-                    if (blindIsLeft) {
-                        // Blind on left, chips on right
-                        chipIndicatorX = blindPos.x + spacing;
-                    } else {
-                        // Blind on right or center, chips on left
-                        chipIndicatorX = blindPos.x - spacing;
-                    }
+                    // Always position chips to the right of blind (blind is typically on left for bottom players)
+                    chipIndicatorX = blindPos.x + spacing;
                     // Same Y level as blind indicator (horizontal layout for top/bottom players)
                     chipIndicatorY = blindPos.y;
                 } else {
@@ -2928,7 +2922,7 @@ function drawBetIndicators() {
                     chipIndicatorY = blindPos.y + sin(angleAway) * (minDistanceFromBlind + extraDistance);
                 }
             } else if (blindPos && isBottomPlayer) {
-                // For bottom player, ensure chips stay at same Y level and close to blind
+                // For bottom player, ensure chips stay at same Y level and close to blind (to the RIGHT)
                 // Only check if chips drifted too far away (more than 30px horizontally)
                 const dx = chipIndicatorX - blindPos.x;
                 const dy = chipIndicatorY - blindPos.y;
@@ -2936,14 +2930,11 @@ function drawBetIndicators() {
                 const verticalDistance = Math.abs(dy);
                 
                 // If chips drifted too far horizontally or vertically, snap them back
-                if (horizontalDistance > 30 || verticalDistance > 5) {
-                    const blindIsLeft = blindPos.x < playerX;
+                // For bottom players, chips should always be to the RIGHT of blind (positive dx)
+                if (horizontalDistance > 30 || verticalDistance > 5 || dx < 0) {
                     const spacing = 15;
-                    if (blindIsLeft) {
-                        chipIndicatorX = blindPos.x + spacing;
-                    } else {
-                        chipIndicatorX = blindPos.x - spacing;
-                    }
+                    // Always position chips to the right of blind for bottom players
+                    chipIndicatorX = blindPos.x + spacing;
                     chipIndicatorY = blindPos.y; // Ensure same Y level
                 }
             }
@@ -2968,11 +2959,22 @@ function drawBetIndicators() {
             // Check against all other chip indicators already placed
             if (checkPositionConflict(chipIndicatorX, chipIndicatorY, chipIndicatorPositions, 80)) {
                 hasConflict = true;
-                // Move in a spiral pattern to find a new position
-                const spiralAngle = (attempts * PI / 6);
-                const spiralRadius = 50 + (attempts * 15);
-                chipIndicatorX = playerX + cos(spiralAngle) * spiralRadius;
-                chipIndicatorY = playerY + 150 + sin(spiralAngle) * spiralRadius;
+                // For bottom players with blind, try to maintain position relative to blind
+                if (isBottomPlayer && blindPos) {
+                    // Try to find a position that's still close to blind but doesn't conflict
+                    const spacing = 15;
+                    chipIndicatorX = blindPos.x + spacing;
+                    chipIndicatorY = blindPos.y;
+                    // Try small adjustments
+                    const adjustment = (attempts % 3) * 5; // 0, 5, or 10px adjustment
+                    chipIndicatorX = blindPos.x + spacing + adjustment;
+                } else {
+                    // Move in a spiral pattern to find a new position
+                    const spiralAngle = (attempts * PI / 6);
+                    const spiralRadius = 50 + (attempts * 15);
+                    chipIndicatorX = playerX + cos(spiralAngle) * spiralRadius;
+                    chipIndicatorY = playerY + 150 + sin(spiralAngle) * spiralRadius;
+                }
             }
             
             if (!hasConflict) {
@@ -2983,7 +2985,8 @@ function drawBetIndicators() {
         }
         
         // Final aggressive check against blind indicators
-        if (blindPos) {
+        // Skip this check for bottom players - they should stay close to blind
+        if (blindPos && !isBottomPlayer) {
             const dx = chipIndicatorX - blindPos.x;
             const dy = chipIndicatorY - blindPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -2992,6 +2995,15 @@ function drawBetIndicators() {
                 const extraBuffer = minDistanceFromBlind - distance + 30;
                 chipIndicatorX = blindPos.x + cos(angleAway) * (minDistanceFromBlind + extraBuffer);
                 chipIndicatorY = blindPos.y + sin(angleAway) * (minDistanceFromBlind + extraBuffer);
+            }
+        } else if (blindPos && isBottomPlayer) {
+            // For bottom players, ensure chips stay to the right of blind at same Y level
+            const dx = chipIndicatorX - blindPos.x;
+            const dy = chipIndicatorY - blindPos.y;
+            if (dx < 0 || Math.abs(dx) > 30 || Math.abs(dy) > 5) {
+                // Reset to correct position
+                chipIndicatorX = blindPos.x + 15;
+                chipIndicatorY = blindPos.y;
             }
         }
         
