@@ -1501,6 +1501,7 @@ class PokerClient {
     // Betting actions - use the correct method that emits to server
     fold() {
         console.log('🎴 Player folded');
+        this.addHistoryEntry('You folded', 'player-action');
         
         const roomId = this.getRoomId();
         if (!roomId) {
