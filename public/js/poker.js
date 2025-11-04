@@ -2354,7 +2354,7 @@ function drawGameInfo() {
 }
 
 function drawChipIndicators() {
-    // Draw chip indicators for each player showing their chip count
+    // Draw chip indicators for each player showing their total bet amount (not chips)
     if (!window.game || !window.game.players || window.game.players.length < 2) {
         return;
     }
