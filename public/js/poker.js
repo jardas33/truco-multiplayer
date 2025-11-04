@@ -2839,9 +2839,28 @@ function drawBetIndicators() {
                 // Position well below bet indicator
                 chipIndicatorY = playerY + 150; // Much further down
             } else {
-                // Bottom player: position directly below, well separated
-                chipIndicatorX = playerX;
-                chipIndicatorY = playerY + 150; // Much further below bet indicator
+                // Bottom player: position side by side with blind indicator if it exists
+                // Check if this player has a blind indicator
+                if (blindPos) {
+                    // Position chips side by side with blind indicator
+                    // If blind is to the left of player, chips go to the right, and vice versa
+                    const blindIsLeft = blindPos.x < playerX;
+                    const spacing = 40; // Space between blind and chips buttons
+                    
+                    if (blindIsLeft) {
+                        // Blind on left, chips on right
+                        chipIndicatorX = blindPos.x + spacing;
+                    } else {
+                        // Blind on right or center, chips on left
+                        chipIndicatorX = blindPos.x - spacing;
+                    }
+                    // Same Y level as blind indicator
+                    chipIndicatorY = blindPos.y;
+                } else {
+                    // No blind indicator - position directly below player
+                    chipIndicatorX = playerX;
+                    chipIndicatorY = playerY + 150; // Much further below bet indicator
+                }
             }
         }
         
