@@ -486,45 +486,45 @@ class WarClient {
     // Initialize the client
     initialize() {
         try {
-            console.log('🎮 Initializing War client');
+        console.log('🎮 Initializing War client');
             
             // ✅ CRITICAL FIX: Load card images as HTML images for war game
             this.loadCardImages();
-            
-            // Check if dependencies are available
-            console.log('🔍 Checking dependencies:');
-            console.log('  - GameFramework:', typeof GameFramework);
-            console.log('  - CardUtils:', typeof CardUtils);
-            console.log('  - UIUtils:', typeof UIUtils);
-            console.log('  - window.gameFramework:', typeof window.gameFramework);
-            
-            // Initialize game framework
-            if (typeof GameFramework !== 'undefined') {
-                GameFramework.initialize('war');
-                console.log('✅ GameFramework initialized');
-            } else {
-                console.error('❌ GameFramework not available');
+        
+        // Check if dependencies are available
+        console.log('🔍 Checking dependencies:');
+        console.log('  - GameFramework:', typeof GameFramework);
+        console.log('  - CardUtils:', typeof CardUtils);
+        console.log('  - UIUtils:', typeof UIUtils);
+        console.log('  - window.gameFramework:', typeof window.gameFramework);
+        
+        // Initialize game framework
+        if (typeof GameFramework !== 'undefined') {
+            GameFramework.initialize('war');
+            console.log('✅ GameFramework initialized');
+        } else {
+            console.error('❌ GameFramework not available');
                 UIUtils.showGameMessage('Game framework not available. Please refresh the page.', 'error');
                 return;
-            }
-            
+        }
+        
             // ✅ CRITICAL FIX: Setup UI event listeners with error handling
             try {
-                this.setupUI();
+        this.setupUI();
             } catch (error) {
                 console.error('❌ Error setting up UI:', error);
                 UIUtils.showGameMessage('Error setting up UI. Some features may not work.', 'error');
             }
-            
+        
             // ✅ CRITICAL FIX: Setup socket event listeners with error handling
             try {
-                this.setupSocketListeners();
+        this.setupSocketListeners();
             } catch (error) {
                 console.error('❌ Error setting up socket listeners:', error);
                 UIUtils.showGameMessage('Error setting up connection. Please refresh the page.', 'error');
             }
-            
-            console.log('✅ War client initialized');
+        
+        console.log('✅ War client initialized');
         } catch (error) {
             console.error('❌ Critical error initializing War client:', error);
             UIUtils.showGameMessage('Failed to initialize game. Please refresh the page.', 'error');
@@ -999,9 +999,9 @@ class WarClient {
         } else {
             // Fallback to prompt if input field doesn't exist
             roomCode = prompt('Enter room code:');
-            if (!roomCode) {
-                return;
-            }
+        if (!roomCode) {
+            return;
+        }
             roomCode = roomCode.trim().toUpperCase();
         }
         
@@ -1028,7 +1028,7 @@ class WarClient {
         // Try to join room immediately first
         if (typeof GameFramework !== 'undefined' && GameFramework.joinRoom) {
             console.log('✅ GameFramework available, joining room immediately');
-            GameFramework.joinRoom(roomCode);
+        GameFramework.joinRoom(roomCode);
             return;
         }
         
@@ -1372,11 +1372,11 @@ class WarClient {
                 }
                 this.statistics.cardsWonByPlayer[winnerName] += data.winner.cardsWon || 0;
                 
-                // ✅ CRITICAL FIX: Highlight winner card with tracked timeout
+                // ✅ CRITICAL FIX: Highlight winner card with tracked timeout (increased delay for visibility)
                 if (data.winner.playerIndex !== undefined) {
                     this.safeSetTimeout(() => {
                         this.highlightWinnerCard(data.winner.playerIndex);
-                    }, 300);
+                    }, 800); // ✅ CRITICAL FIX: Increased from 300ms to 800ms so players can see cards before highlight
                 }
             }
         }
@@ -1913,10 +1913,10 @@ class WarClient {
         
         this.updateUIScheduled = true;
         requestAnimationFrame(() => {
-            this.updateGameInfo();
-            this.updateScores();
-            this.updateBattleArea();
-            this.updatePlayerAreas();
+        this.updateGameInfo();
+        this.updateScores();
+        this.updateBattleArea();
+        this.updatePlayerAreas();
             this.updateUIScheduled = false;
         });
     }
@@ -2164,8 +2164,8 @@ class WarClient {
                 if (battleCard.playerIndex === this.localPlayerIndex) {
                     cardDiv.classList.add('my-card');
                 }
-                battleArea.appendChild(cardDiv);
-            });
+            battleArea.appendChild(cardDiv);
+        });
         }
         
         // Show war cards with flip animations
@@ -2267,7 +2267,7 @@ class WarClient {
             faceUp = true
         } = options;
         
-        const cardDiv = document.createElement('div');
+                const cardDiv = document.createElement('div');
         cardDiv.className = className || 'card';
         cardDiv.setAttribute('role', 'img');
         cardDiv.setAttribute('aria-label', faceUp ? `${card.name || 'Card'} (${this.getCardDisplayValue(card)})` : 'Face down card');
@@ -2663,10 +2663,10 @@ class WarClient {
         if (addBotBtn) {
             addBotBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
             if (isRoomCreator) {
-                addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
-                addBotBtn.style.setProperty('color', 'white', 'important');
-                addBotBtn.style.setProperty('border', 'none', 'important');
-                console.log('✅ Add Bot button shown and styled green');
+            addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
+            addBotBtn.style.setProperty('color', 'white', 'important');
+            addBotBtn.style.setProperty('border', 'none', 'important');
+            console.log('✅ Add Bot button shown and styled green');
             } else {
                 console.log('❌ Add Bot button hidden - not room creator');
             }
@@ -2677,10 +2677,10 @@ class WarClient {
         if (removeBotBtn) {
             removeBotBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
             if (isRoomCreator) {
-                removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
-                removeBotBtn.style.setProperty('color', 'white', 'important');
-                removeBotBtn.style.setProperty('border', 'none', 'important');
-                console.log('✅ Remove Bot button shown and styled red');
+            removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
+            removeBotBtn.style.setProperty('color', 'white', 'important');
+            removeBotBtn.style.setProperty('border', 'none', 'important');
+            console.log('✅ Remove Bot button shown and styled red');
             } else {
                 console.log('❌ Remove Bot button hidden - not room creator');
             }
@@ -2691,11 +2691,11 @@ class WarClient {
         if (startGameBtn) {
             startGameBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
             if (isRoomCreator) {
-                startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
-                startGameBtn.style.setProperty('color', 'white', 'important');
-                startGameBtn.style.setProperty('border', 'none', 'important');
+            startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
+            startGameBtn.style.setProperty('color', 'white', 'important');
+            startGameBtn.style.setProperty('border', 'none', 'important');
                 // Button will be enabled/disabled by updateStartGameButton based on player count
-                console.log('✅ Start Game button shown and styled orange');
+            console.log('✅ Start Game button shown and styled orange');
             } else {
                 console.log('❌ Start Game button hidden - not room creator');
             }
@@ -2725,8 +2725,8 @@ class WarClient {
         
         // ✅ CRITICAL FIX: Use clipboard API with fallback
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(roomCode).then(() => {
-                UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
+        navigator.clipboard.writeText(roomCode).then(() => {
+            UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
                 
                 // Show success message in UI
                 if (copySuccessMessage) {
