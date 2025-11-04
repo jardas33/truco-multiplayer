@@ -2565,10 +2565,24 @@ io.on('connection', (socket) => {
             
             console.log(`🔍 Room found with ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
             
-            const minPlayers = room.gameType === 'truco' ? 4 : 2; // Truco needs 4, other games need at least 2
+            // ✅ CRITICAL FIX: Define minimum players per game type
+            const minPlayers = room.gameType === 'truco' ? 4 : 
+                               (room.gameType === 'war' ? 2 : 
+                               (room.gameType === 'battleship' ? 2 : 2)); // Truco: 4, War: 2, Battleship: 2, others: 2
             if (room.players.length < minPlayers) {
-                console.log(`❌ Room ${roomCode} needs ${minPlayers} players, has ${room.players.length}`);
-                socket.emit('error', `Need ${minPlayers} players to start the game`);
+                console.log(`❌ Room ${actualRoomCode} needs ${minPlayers} players, has ${room.players.length}`);
+                socket.emit('error', `Need at least ${minPlayers} players to start the game. Current: ${room.players.length}`);
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Validate maximum players (prevent starting with too many)
+            const maxPlayersStart = room.gameType === 'truco' ? 4 : 
+                                    (room.gameType === 'poker' ? 7 : 
+                                    (room.gameType === 'war' ? 4 : 
+                                    (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
+            if (room.players.length > maxPlayersStart) {
+                console.log(`❌ Room ${actualRoomCode} has too many players (${room.players.length}/${maxPlayersStart})`);
+                socket.emit('error', `Too many players. Maximum ${maxPlayersStart} players allowed. Current: ${room.players.length}`);
                 return;
             }
 
