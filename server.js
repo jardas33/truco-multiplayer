@@ -2418,6 +2418,118 @@ io.on('connection', (socket) => {
                 
                 console.log(`🐟 Go Fish game created with hands:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
                 console.log(`🐟 Pond has ${pond.length} cards`);
+            } else if (room.gameType === 'poker') {
+                // For Poker, initialize game state for Texas Hold'em
+                console.log(`🎴 Creating Poker game for ${room.players.length} players`);
+                
+                // Create a standard deck for Poker
+                const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+                const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+                const deck = [];
+                
+                for (let suit of suits) {
+                    for (let rank of ranks) {
+                        let value;
+                        if (rank === 'ace') {
+                            value = 14;
+                        } else if (rank === 'king') {
+                            value = 13;
+                        } else if (rank === 'queen') {
+                            value = 12;
+                        } else if (rank === 'jack') {
+                            value = 11;
+                        } else {
+                            value = parseInt(rank);
+                        }
+                        
+                        deck.push({
+                            name: `${rank} of ${suit}`,
+                            suit: suit,
+                            rank: rank,
+                            value: value
+                        });
+                    }
+                }
+                
+                // Shuffle deck
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+                
+                // Initialize player states
+                const players = room.players.map((player, index) => ({
+                    ...player,
+                    hand: [],
+                    chips: player.startingChips || 1000,
+                    currentBet: 0,
+                    totalBet: 0,
+                    isFolded: false,
+                    isAllIn: false,
+                    handRank: null,
+                    bestHand: null
+                }));
+                
+                // Set dealer position (starts at 0, rotates each hand)
+                const dealerPosition = 0;
+                const smallBlindPos = (dealerPosition + 1) % players.length;
+                const bigBlindPos = (dealerPosition + 2) % players.length;
+                
+                // Post blinds
+                const smallBlind = 10;
+                const bigBlind = 20;
+                
+                players[smallBlindPos].chips -= smallBlind;
+                players[smallBlindPos].currentBet = smallBlind;
+                players[smallBlindPos].totalBet = smallBlind;
+                
+                players[bigBlindPos].chips -= bigBlind;
+                players[bigBlindPos].currentBet = bigBlind;
+                players[bigBlindPos].totalBet = bigBlind;
+                
+                const pot = smallBlind + bigBlind;
+                const currentBet = bigBlind;
+                
+                // Deal hole cards (2 cards to each player)
+                const hands = Array(players.length).fill().map(() => []);
+                for (let i = 0; i < 2; i++) {
+                    for (let j = 0; j < players.length; j++) {
+                        if (deck.length > 0) {
+                            hands[j].push(deck.pop());
+                        }
+                    }
+                }
+                
+                // Assign hands to players
+                players.forEach((player, index) => {
+                    player.hand = hands[index];
+                });
+                
+                // Set current player (starts after big blind)
+                const currentPlayer = (bigBlindPos + 1) % players.length;
+                
+                room.game = {
+                    started: true,
+                    gameType: 'poker',
+                    deck: deck,
+                    players: players,
+                    communityCards: [],
+                    pot: pot,
+                    currentBet: currentBet,
+                    currentPlayer: currentPlayer,
+                    gamePhase: 'preflop', // preflop, flop, turn, river, showdown
+                    dealerPosition: dealerPosition,
+                    smallBlind: smallBlind,
+                    bigBlind: bigBlind,
+                    bettingRoundComplete: false,
+                    lastRaisePlayer: bigBlindPos, // Track who last raised to check betting round completion
+                    winners: []
+                };
+                
+                console.log(`🎴 Poker game initialized with ${players.length} players`);
+                console.log(`🎴 Dealer: Player ${dealerPosition + 1}, SB: Player ${smallBlindPos + 1}, BB: Player ${bigBlindPos + 1}`);
+                console.log(`🎴 Current player: ${currentPlayer + 1} (${players[currentPlayer].name})`);
+                console.log(`🎴 Pot: $${pot}, Current bet: $${currentBet}`);
             } else if (room.gameType === 'blackjack') {
                 // For Blackjack, initialize game state for betting phase
                 console.log(`🃏 Creating Blackjack game for ${room.players.length} players`);
@@ -2592,6 +2704,38 @@ io.on('connection', (socket) => {
                 
                 // No broadcast for Go Fish - each player gets individual data
                 console.log(`🐟 Go Fish: Individual gameStarted events sent to all players`);
+            } else if (room.gameType === 'poker') {
+                // For Poker, send gameStarted to each player individually
+                console.log(`🎴 Sending gameStarted to ${room.players.length} players in Poker room`);
+                
+                room.players.forEach((player, playerIndex) => {
+                    if (!player.isBot) {
+                        const gameStartedData = {
+                            players: room.game.players.map((p, index) => ({
+                                ...p,
+                                hand: index === playerIndex ? p.hand : [], // Only show own hand
+                                isLocal: p.id === player.id
+                            })),
+                            communityCards: room.game.communityCards || [],
+                            pot: room.game.pot,
+                            currentBet: room.game.currentBet,
+                            localPlayerIndex: playerIndex,
+                            currentPlayer: room.game.currentPlayer,
+                            gamePhase: room.game.gamePhase,
+                            dealerPosition: room.game.dealerPosition,
+                            smallBlind: room.game.smallBlind,
+                            bigBlind: room.game.bigBlind
+                        };
+                        
+                        io.to(player.id).emit('gameStarted', gameStartedData);
+                        console.log(`🎴 Poker gameStarted sent to player ${playerIndex}: ${player.name}`);
+                    }
+                });
+                
+                // Handle bot actions for poker
+                setTimeout(() => {
+                    handlePokerBotActions(roomCode, room);
+                }, 2000);
             } else if (room.gameType === 'blackjack') {
                 // For Blackjack, send gameStarted to each player individually
                 console.log(`🃏 Sending gameStarted to ${room.players.length} players in Blackjack room`);
@@ -5248,20 +5392,55 @@ function determineRoundWinner(playedCards, room) {
                         break;
                 }
                 
-                // Move to next player
+                // Track if this was a raise
+                if (action === 'raise' || action === 'bet') {
+                    room.game.lastRaisePlayer = playerIndex;
+                }
+                
+                // Move to next active player
+                const startPlayer = room.game.currentPlayer;
                 do {
                     room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
-                } while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn);
+                } while (
+                    room.game.players[room.game.currentPlayer].isFolded || 
+                    room.game.players[room.game.currentPlayer].isAllIn ||
+                    room.game.currentPlayer === startPlayer // Prevent infinite loop
+                );
                 
-                // Emit updated game state
-                io.to(roomCode).emit('gameState', {
-                    players: room.game.players,
-                    pot: room.game.pot,
-                    currentBet: room.game.currentBet,
-                    currentPlayer: room.game.currentPlayer,
-                    gamePhase: room.game.gamePhase,
-                    communityCards: room.game.communityCards || []
-                });
+                // Check if betting round is complete
+                // Round is complete when all active players have matched bets and action returns to last raiser
+                const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
+                const actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+                
+                if (allBetsMatched && actionBackToLastRaiser && activePlayers.length > 1) {
+                    // Betting round complete - advance to next phase
+                    console.log(`🎴 Betting round complete for ${room.game.gamePhase}`);
+                    advancePokerPhase(roomCode, room);
+                } else if (activePlayers.length <= 1) {
+                    // Only one player left - go to showdown
+                    console.log(`🎴 Only one player left, going to showdown`);
+                    handlePokerShowdown(roomCode, room);
+                } else {
+                    // Continue betting round
+                    // Emit updated game state
+                    io.to(roomCode).emit('gameState', {
+                        players: room.game.players,
+                        pot: room.game.pot,
+                        currentBet: room.game.currentBet,
+                        currentPlayer: room.game.currentPlayer,
+                        gamePhase: room.game.gamePhase,
+                        communityCards: room.game.communityCards || []
+                    });
+                    
+                    // Handle bot actions
+                    const currentPlayer = room.game.players[room.game.currentPlayer];
+                    if (currentPlayer && currentPlayer.isBot) {
+                        setTimeout(() => {
+                            handlePokerBotAction(roomCode, room, currentPlayer);
+                        }, 1500);
+                    }
+                }
                 
                 return; // Exit early for poker
             }
