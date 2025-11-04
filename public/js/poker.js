@@ -2811,20 +2811,24 @@ function drawBetIndicators() {
                 chipIndicatorY = betPos.y; // EXACTLY same height as BET
             } else if (isSidePlayer) {
                 // Side players: vertical stacking (same X, different Y)
-                // CHIPS should be above or below BET depending on which has blind indicator
+                // Order: Blind (if exists, top) -> Chips (middle) -> Bet (bottom)
                 // Use same X position as bet, but different Y (vertical stacking)
                 chipIndicatorX = betPos.x; // Same X position (same width)
                 
-                // If blind exists, chips go above blind, then bet goes below
-                // Position chips above bet with proper spacing
+                // Position chips with proper vertical spacing
+                // If blind exists, stack: Blind (top) -> Chips (middle) -> Bet (bottom)
+                // If no blind, stack: Chips (top) -> Bet (bottom)
+                const minVerticalSpacing = 60; // Minimum vertical spacing to prevent overlap
+                
                 if (blindPos) {
-                    // Blind -> Chips -> Bet (vertical stack)
-                    // Position chips above blind, bet below chips
-                    chipIndicatorY = blindPos.y - 50; // 50px above blind
-                    // Ensure bet is below chips (bet should already be positioned correctly)
+                    // Blind exists - position chips below blind, above bet
+                    // Blind is at blindPos.y (top)
+                    // Position chips below blind with spacing
+                    chipIndicatorY = blindPos.y + minVerticalSpacing;
+                    // Bet will be positioned below chips (at chipPos.y + minVerticalSpacing)
                 } else {
                     // No blind - position chips above bet
-                    chipIndicatorY = betPos.y - 50; // 50px above bet
+                    chipIndicatorY = betPos.y - minVerticalSpacing; // Above bet
                 }
             } else if (isBottomPlayer) {
                 // Bottom player: side by side horizontally (same Y, different X)
