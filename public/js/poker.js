@@ -785,6 +785,7 @@ class PokerClient {
         });
         
         socket.on('gameState', (data) => {
+            console.log('🎴 gameState event received:', data);
             this.updateGameState(data);
         });
         
