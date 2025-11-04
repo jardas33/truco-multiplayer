@@ -2720,8 +2720,8 @@ function drawBetIndicators() {
     
     window.game.players.forEach((player, index) => {
         // Only calculate chip positions for players who have chips (totalBet - currentBet > 0)
-        const chipsAmount = (player.totalBet || 0) - (player.currentBet || 0);
-        if (!player || player.isFolded || chipsAmount <= 0) return;
+        const chipsAmountCalc = (player.totalBet || 0) - (player.currentBet || 0);
+        if (!player || player.isFolded || chipsAmountCalc <= 0) return;
         
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const playerX = centerX + cos(angle) * playerRadiusX;
