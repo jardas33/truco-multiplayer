@@ -3305,14 +3305,27 @@ function drawBlindIndicators() {
         // Always show blind indicators if gamePhase exists (preflop, flop, turn, river, showdown)
         const hasActiveGamePhase = window.game.gamePhase && window.game.gamePhase !== '';
         
+        // Debug logging for first player
+        if (index === 0 && hasActiveGamePhase) {
+            console.log('🎴 drawBlindIndicators: Player 0, dealerPosition:', dealerPosition, 'smallBlindPos:', smallBlindPos, 'bigBlindPos:', bigBlindPos, 'gamePhase:', window.game.gamePhase);
+        }
+        
         if (index === dealerPosition && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'D', color: [255, 215, 0], size: 30, text: 'D', amount: null });
+            if (index === 0) console.log('🎴 Adding D indicator for player', index);
         }
         if (index === smallBlindPos && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: null }); // Remove amount display
+            if (index === 1) console.log('🎴 Adding SB indicator for player', index);
         }
         if (index === bigBlindPos && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: null }); // Remove amount display
+            if (index === 2) console.log('🎴 Adding BB indicator for player', index);
+        }
+        
+        // Debug: Log if no indicators were added for a player who should have one
+        if (indicatorsToDraw.length === 0 && hasActiveGamePhase && (index === dealerPosition || index === smallBlindPos || index === bigBlindPos)) {
+            console.log('🎴 WARNING: Player', index, 'should have indicator but none added. hasActiveGamePhase:', hasActiveGamePhase);
         }
         
         // For top player, center the stack vertically
