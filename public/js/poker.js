@@ -2454,7 +2454,12 @@ function drawChipIndicators() {
     const chipPositionsFromBet = window.chipIndicatorPositions || new Map();
     
     window.game.players.forEach((player, index) => {
-        if (!player || player.isFolded || !player.totalBet || player.totalBet === 0) return; // Only show if player has bet something
+        // Show chips if player has bet something in previous rounds (excluding current bet)
+        // Chips = totalBet - currentBet (amount bet in previous rounds, not current round)
+        // If player has currentBet > 0, don't show chips (they'll show BET instead)
+        // Only show chips if (totalBet - currentBet) > 0
+        const chipsAmount = (player.totalBet || 0) - (player.currentBet || 0);
+        if (!player || player.isFolded || chipsAmount <= 0) return;
         
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const playerX = centerX + cos(angle) * playerRadiusX;
@@ -2580,10 +2585,11 @@ function drawChipIndicators() {
         noStroke();
         text('CHIPS', chipIndicatorX, chipIndicatorY - 6);
         
-        // Draw total bet amount below (not chips)
+        // Draw chips amount below (totalBet - currentBet, i.e., amount from previous rounds)
+        const chipsAmount = (player.totalBet || 0) - (player.currentBet || 0);
         textSize(9);
         fill(255, 255, 255);
-        text('$' + player.totalBet, chipIndicatorX, chipIndicatorY + 28);
+        text('$' + chipsAmount, chipIndicatorX, chipIndicatorY + 28);
         
         pop();
     });
@@ -2713,7 +2719,9 @@ function drawBetIndicators() {
     };
     
     window.game.players.forEach((player, index) => {
-        if (!player || player.isFolded || !player.totalBet || player.totalBet === 0) return;
+        // Only calculate chip positions for players who have chips (totalBet - currentBet > 0)
+        const chipsAmount = (player.totalBet || 0) - (player.currentBet || 0);
+        if (!player || player.isFolded || chipsAmount <= 0) return;
         
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const playerX = centerX + cos(angle) * playerRadiusX;
@@ -3009,7 +3017,7 @@ function drawBetIndicators() {
                    // Check if bet indicator overlaps with blind indicator - AGGRESSIVE CHECK
                    if (blindPos) {
                        // Use MUCH larger minimum distance for side players
-                       const minDistance = isSidePlayer ? 130 : 85; // Very large distance for side players
+                       const minDistance = isSidePlayer ? 150 : 95; // Even larger distance for side players
                        const distanceX = finalIndicatorX - blindPos.x;
                        const distanceY = finalIndicatorY - blindPos.y;
                        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
@@ -3022,11 +3030,11 @@ function drawBetIndicators() {
                                const blindIsOnLeft = blindPos.x < playerX;
                                
                                if (blindIsOnLeft) {
-                                   // Blind on left, force bet to right with large offset
-                                   finalIndicatorX = blindPos.x + minDistance + 40;
+                                   // Blind on left, force bet to right with very large offset
+                                   finalIndicatorX = blindPos.x + minDistance + 60;
                                } else {
-                                   // Blind on right, force bet to left with large offset
-                                   finalIndicatorX = blindPos.x - minDistance - 40;
+                                   // Blind on right, force bet to left with very large offset
+                                   finalIndicatorX = blindPos.x - minDistance - 60;
                                }
                                
                                // Also ensure vertical separation
@@ -3054,7 +3062,7 @@ function drawBetIndicators() {
                    // Check if bet indicator overlaps with chip indicator - AGGRESSIVE CHECK
                    if (chipPos) {
                        // Use MUCH larger minimum distance for side players
-                       const minDistance = isSidePlayer ? 140 : 100; // Very large distance for side players
+                       const minDistance = isSidePlayer ? 160 : 110; // Even larger distance for side players
                        const distanceX = finalIndicatorX - chipPos.x;
                        const distanceY = finalIndicatorY - chipPos.y;
                        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
@@ -3066,9 +3074,9 @@ function drawBetIndicators() {
                                const horizontalSep = Math.abs(distanceX);
                                const verticalSep = Math.abs(distanceY);
                                
-                               if (horizontalSep < 80) {
+                               if (horizontalSep < 90) {
                                    // Too close horizontally - move bet indicator much further horizontally
-                                   const horizontalOffset = minDistance - horizontalSep + 50;
+                                   const horizontalOffset = minDistance - horizontalSep + 60;
                                    if (distanceX > 0) {
                                        finalIndicatorX = chipPos.x + horizontalOffset;
                                    } else {
@@ -3076,14 +3084,14 @@ function drawBetIndicators() {
                                    }
                                }
                                
-                               if (verticalSep < 80) {
+                               if (verticalSep < 90) {
                                    // Too close vertically - move bet indicator much further vertically
                                    if (chipPos.y > finalIndicatorY) {
                                        // Chip is below bet - move bet indicator up with extra space
-                                       finalIndicatorY = chipPos.y - (minDistance + 20);
+                                       finalIndicatorY = chipPos.y - (minDistance + 30);
                                    } else {
                                        // Chip is above bet - move bet indicator down with extra space
-                                       finalIndicatorY = chipPos.y + (minDistance + 20);
+                                       finalIndicatorY = chipPos.y + (minDistance + 30);
                                    }
                                }
                            } else {

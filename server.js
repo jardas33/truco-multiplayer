@@ -5056,8 +5056,13 @@ io.on('connection', (socket) => {
 function advancePokerPhase(roomCode, room) {
     console.log(`🎴 Advancing poker phase from ${room.game.gamePhase}`);
     
-    // Reset current bets for new betting round
+    // When phase advances, currentBet becomes part of totalBet (chips), then currentBet resets
+    // This ensures chips show amount bet in previous rounds, and bet shows current round amount
     room.game.players.forEach(player => {
+        // CurrentBet is already in totalBet from when it was bet
+        // But we need to ensure the display logic works: chips = totalBet - currentBet
+        // Since totalBet already includes currentBet, when we reset currentBet to 0,
+        // chips will correctly show the accumulated amount
         player.currentBet = 0;
     });
     room.game.currentBet = 0; // Reset current bet to 0 for new betting round
@@ -5411,7 +5416,8 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
             const callAmt = Math.min(room.game.currentBet - botPlayer.currentBet, botPlayer.chips);
             botPlayer.chips -= callAmt;
             botPlayer.currentBet += callAmt;
-            botPlayer.totalBet += callAmt;
+            // totalBet will be updated when phase advances (currentBet added to totalBet)
+            botPlayer.totalBet += callAmt; // Keep this for now, but we'll adjust logic
             room.game.pot += callAmt;
             if (botPlayer.chips === 0) {
                 botPlayer.isAllIn = true;
@@ -5432,7 +5438,8 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
             
             botPlayer.chips -= raiseIncrementBot;
             botPlayer.currentBet = totalBetDesiredBot;
-            botPlayer.totalBet += raiseIncrementBot;
+            // totalBet will be updated when phase advances (currentBet added to totalBet)
+            botPlayer.totalBet += raiseIncrementBot; // Keep this for now, but we'll adjust logic
             room.game.pot += raiseIncrementBot;
             room.game.currentBet = botPlayer.currentBet;
             room.game.lastRaisePlayer = playerIndex;
