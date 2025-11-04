@@ -1353,13 +1353,21 @@ class PokerClient {
         // Update pot display
         document.getElementById('potAmount').textContent = this.game.pot;
         
-        // Update call amount
-        const localPlayer = this.game.players[this.localPlayerIndex];
-        if (localPlayer) {
-            const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
-            const callAmountElement = document.getElementById('callAmount');
-            if (callAmountElement) {
-                callAmountElement.textContent = callAmount;
+        // Update call amount and call button text
+        if (this.localPlayerIndex !== undefined) {
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            if (localPlayer) {
+                const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+                const callAmountElement = document.getElementById('callAmount');
+                if (callAmountElement) {
+                    callAmountElement.textContent = callAmount;
+                }
+                
+                // Update call button text (Call $X or Check)
+                const callBtn = document.getElementById('callBtn');
+                if (callBtn) {
+                    callBtn.textContent = callAmount > 0 ? `✅ Call $${callAmount}` : '✅ Check';
+                }
             }
         }
         
@@ -1468,13 +1476,25 @@ class PokerClient {
         }
 
         // Update current bet info
-        if (currentBetInfo && this.game) {
-            const callAmount = this.game.currentBet - (this.game.players[0]?.currentBet || 0);
-            currentBetInfo.innerHTML = `
-                <div>Current Bet: $${this.game.currentBet || 0}</div>
-                <div>To Call: $${Math.max(0, callAmount)}</div>
-                <div>Your Chips: $${this.game.players[0]?.chips || 0}</div>
-            `;
+        if (currentBetInfo && this.game && this.localPlayerIndex !== undefined) {
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            if (localPlayer) {
+                const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+                currentBetInfo.innerHTML = `
+                    <div>Current Bet: $${this.game.currentBet || 0}</div>
+                    <div>To Call: $${Math.max(0, callAmount)}</div>
+                    <div>Your Chips: $${localPlayer.chips || 0}</div>
+                `;
+            }
+        }
+        
+        // Update call button text immediately when controls are set up
+        if (callBtn && this.localPlayerIndex !== undefined) {
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            if (localPlayer) {
+                const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+                callBtn.textContent = callAmount > 0 ? `✅ Call $${callAmount}` : '✅ Check';
+            }
         }
     }
 
