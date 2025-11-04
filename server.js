@@ -1798,12 +1798,16 @@ io.on('connection', (socket) => {
                 // For post-flop: action must return to last raiser (or small blind if no raises)
                 let actionBackToLastRaiser;
                 if (room.game.gamePhase === 'preflop') {
-                    if (room.game.lastRaisePlayer === bigBlindPos) {
+                    // If no raises (lastRaisePlayer is still -1 or equals bigBlind), action should return to big blind
+                    if (room.game.lastRaisePlayer === -1 || room.game.lastRaisePlayer === bigBlindPos) {
+                        // No raises - action should return to big blind
                         actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
                     } else {
+                        // There was a raise - action should return to last raiser
                         actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
                     }
                 } else {
+                    // Post-flop: if no raises, action should return to small blind (first to act)
                     if (room.game.lastRaisePlayer === -1) {
                         const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
                         let expectedPlayer = smallBlindPos;
@@ -1812,11 +1816,12 @@ io.on('connection', (socket) => {
                         }
                         actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
                     } else {
+                        // There was a raise - action should return to last raiser
                         actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
                     }
                 }
                 
-                console.log(`🎴 Betting round check: phase=${room.game.gamePhase}, allBetsMatched=${allBetsMatched}, actionBackToLastRaiser=${actionBackToLastRaiser}, activePlayers=${activePlayers.length}`);
+                console.log(`🎴 Betting round check: phase=${room.game.gamePhase}, allBetsMatched=${allBetsMatched}, actionBackToLastRaiser=${actionBackToLastRaiser}, activePlayers=${activePlayers.length}, lastRaisePlayer=${room.game.lastRaisePlayer}`);
                 
                 if (allBetsMatched && actionBackToLastRaiser && activePlayers.length > 1) {
                     // Betting round complete - advance to next phase
@@ -5032,6 +5037,7 @@ function advancePokerPhase(roomCode, room) {
     room.game.players.forEach(player => {
         player.currentBet = 0;
     });
+    room.game.currentBet = 0; // Reset current bet to 0 for new betting round
     room.game.lastRaisePlayer = -1; // Reset raise tracking
     
     switch (room.game.gamePhase) {

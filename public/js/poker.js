@@ -1356,8 +1356,11 @@ class PokerClient {
         // Update call amount
         const localPlayer = this.game.players[this.localPlayerIndex];
         if (localPlayer) {
-            const callAmount = this.game.currentBet - localPlayer.currentBet;
-            document.getElementById('callAmount').textContent = callAmount;
+            const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+            const callAmountElement = document.getElementById('callAmount');
+            if (callAmountElement) {
+                callAmountElement.textContent = callAmount;
+            }
         }
         
         // Update community cards
@@ -1646,9 +1649,12 @@ class PokerClient {
         const callBtn = document.getElementById('callBtn');
         const raiseBtn = document.getElementById('raiseBtn');
         
-        if (callBtn) {
-            const callAmount = this.game.currentBet - (this.game.players[0]?.currentBet || 0);
-            callBtn.textContent = callAmount > 0 ? `✅ Call $${callAmount}` : '✅ Check';
+        if (callBtn && this.localPlayerIndex !== undefined) {
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            if (localPlayer) {
+                const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+                callBtn.textContent = callAmount > 0 ? `✅ Call $${callAmount}` : '✅ Check';
+            }
         }
         
         if (raiseBtn) {
