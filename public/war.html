@@ -1067,7 +1067,14 @@
             display: none !important;
         }
         
-        /* ✅ CRITICAL FIX: Room code input styling */
+        /* Ensure buttons are visible by default */
+        #createRoomBtn,
+        #joinRoomBtn,
+        #roomCodeInput {
+            display: inline-block !important;
+        }
+        
+        /* ✅ CRITICAL FIX: Room code input styling to match Go Fish */
         #roomCodeInput:focus {
             outline: 2px solid #FFD700;
             outline-offset: 2px;
@@ -1143,11 +1150,12 @@
             ← Back to Main Menu
           </button>
           
-          <!-- Room Code Input for Joining -->
-          <input type="text" id="roomCodeInput" placeholder="Enter room code" maxlength="10" style="margin: 8px; padding: 10px 15px; border: none; border-radius: 5px; font-size: 14px; background: rgba(255,255,255,0.9); color: #333; text-transform: uppercase;">
-          
-          <button id="createRoomBtn">Create Room</button>
-          <button id="joinRoomBtn">Join Room</button>
+          <!-- Room Controls -->
+          <div style="margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="roomCodeInput" placeholder="Enter room code to join" style="width: 200px; padding: 8px; border: 2px solid #FFD700; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 5px; text-align: center; font-size: 14px;">
+            <button id="joinRoomBtn">Join Room</button>
+            <button id="createRoomBtn">Create Room</button>
+          </div>
           
           <!-- Room Code Display with Copy Button Next to Yellow Box -->
                 <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
