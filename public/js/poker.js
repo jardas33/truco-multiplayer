@@ -1881,14 +1881,21 @@ function drawBlindIndicators() {
     
     const centerX = width/2;
     const centerY = height/2;
-    const radiusX = width * 0.35;
-    const radiusY = height * 0.28;
+    const playerRadiusX = width * 0.35;  // Player position radius
+    const playerRadiusY = height * 0.28;
     
     // Table dimensions for boundary checking
     const tableWidth = width * 0.75;
     const tableHeight = height * 0.55;
     const tableRadiusX = tableWidth / 2 - 50; // Inner table radius (accounting for rim)
     const tableRadiusY = tableHeight / 2 - 40;
+    
+    // Player box dimensions (from drawPlayers function)
+    const playerBoxWidth = 180;
+    const playerBoxHeight = 130;
+    const playerBoxOffsetX = playerBoxWidth / 2; // 90px
+    const playerBoxOffsetY = playerBoxHeight / 2; // 65px
+    const cardOffsetY = 50; // Cards are 50px below player box
     
     // Get dealer position - default to 0 if not set
     const dealerPosition = window.game.dealerPosition !== undefined ? window.game.dealerPosition : 0;
@@ -1899,34 +1906,65 @@ function drawBlindIndicators() {
     const smallBlindAmount = window.game.smallBlind || 10;
     const bigBlindAmount = window.game.bigBlind || 20;
     
+    // Indicator size
+    const indicatorRadius = 15; // Radius of indicator circle
+    const textOffsetY = 20; // Distance below indicator for amount text
+    
     window.game.players.forEach((player, index) => {
         if (!player || player.isFolded) return; // Skip folded players
         
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
-        const playerX = centerX + cos(angle) * radiusX;
-        const playerY = centerY + sin(angle) * radiusY;
+        const playerX = centerX + cos(angle) * playerRadiusX;
+        const playerY = centerY + sin(angle) * playerRadiusY;
         
-        // Calculate indicator position - closer to player and inside table
-        // Position indicator slightly toward center from player position
-        const indicatorOffsetX = -cos(angle) * 25; // Move toward center
-        const indicatorOffsetY = -sin(angle) * 25; // Move toward center
-        const indicatorX = playerX + indicatorOffsetX;
-        const indicatorY = playerY + indicatorOffsetY - 35; // Slightly above player
+        // Calculate indicator position - positioned between player and center, avoiding overlap
+        // Move indicator significantly toward center (60% of way from player to center)
+        const indicatorRadiusX = playerRadiusX * 0.4; // 40% of player radius = closer to center
+        const indicatorRadiusY = playerRadiusY * 0.4;
         
-        // Check if indicator is inside table ellipse
-        const dx = (indicatorX - centerX) / tableRadiusX;
-        const dy = (indicatorY - centerY) / tableRadiusY;
-        const isInsideTable = (dx * dx + dy * dy) <= 1;
+        const indicatorX = centerX + cos(angle) * indicatorRadiusX;
+        const indicatorY = centerY + sin(angle) * indicatorRadiusY;
         
-        // If outside, adjust position to be just inside the table
+        // Ensure indicator doesn't overlap with player box
+        // Player box extends from (playerX - 90, playerY - 65) to (playerX + 90, playerY + 65)
+        // Cards are at playerY + 50 to playerY + 134
+        const playerBoxLeft = playerX - playerBoxOffsetX;
+        const playerBoxRight = playerX + playerBoxOffsetX;
+        const playerBoxTop = playerY - playerBoxOffsetY;
+        const playerBoxBottom = playerY + playerBoxOffsetY + cardOffsetY + 84; // Card height is 84
+        
         let finalIndicatorX = indicatorX;
         let finalIndicatorY = indicatorY;
         
+        // Check if indicator overlaps with player box
+        const indicatorLeft = indicatorX - indicatorRadius;
+        const indicatorRight = indicatorX + indicatorRadius;
+        const indicatorTop = indicatorY - indicatorRadius;
+        const indicatorBottom = indicatorY + indicatorRadius + textOffsetY;
+        
+        const overlapsBox = !(indicatorRight < playerBoxLeft || 
+                             indicatorLeft > playerBoxRight || 
+                             indicatorBottom < playerBoxTop || 
+                             indicatorTop > playerBoxBottom);
+        
+        if (overlapsBox) {
+            // Move indicator further toward center to avoid overlap
+            const adjustedRadiusX = playerRadiusX * 0.25; // Even closer to center
+            const adjustedRadiusY = playerRadiusY * 0.25;
+            finalIndicatorX = centerX + cos(angle) * adjustedRadiusX;
+            finalIndicatorY = centerY + sin(angle) * adjustedRadiusY;
+        }
+        
+        // Ensure indicator is inside table ellipse
+        const dx = (finalIndicatorX - centerX) / tableRadiusX;
+        const dy = (finalIndicatorY - centerY) / tableRadiusY;
+        const isInsideTable = (dx * dx + dy * dy) <= 1;
+        
         if (!isInsideTable) {
             // Move indicator toward center to keep it inside
-            const angleToCenter = atan2(indicatorY - centerY, indicatorX - centerX);
-            finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 20);
-            finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 20);
+            const angleToCenter = atan2(finalIndicatorY - centerY, finalIndicatorX - centerX);
+            finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 30);
+            finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 30);
         }
         
         push();
