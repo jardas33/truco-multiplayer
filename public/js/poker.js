@@ -1207,9 +1207,44 @@ class PokerClient {
 
     // Update player action
     updatePlayerAction(data) {
-        this.game.players[data.playerIndex] = data.players[data.playerIndex];
-        this.game.currentBet = data.currentBet;
-        this.game.pot = data.pot;
+        console.log('🎴 updatePlayerAction received:', data);
+        
+        // Handle different data structures from server
+        if (data.players && Array.isArray(data.players)) {
+            // Full game state update
+            this.game.players = data.players;
+            this.game.currentBet = data.currentBet || this.game.currentBet;
+            this.game.pot = data.pot || this.game.pot;
+            this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : this.game.currentPlayer;
+            this.game.gamePhase = data.gamePhase || this.game.gamePhase;
+            if (data.communityCards) {
+                this.game.communityCards = data.communityCards;
+            }
+        } else if (data.player && data.playerIndex !== undefined) {
+            // Single player update
+            if (!this.game.players) {
+                this.game.players = [];
+            }
+            this.game.players[data.playerIndex] = data.player;
+            if (data.currentBet !== undefined) {
+                this.game.currentBet = data.currentBet;
+            }
+            if (data.pot !== undefined) {
+                this.game.pot = data.pot;
+            }
+            if (data.currentPlayer !== undefined) {
+                this.game.currentPlayer = data.currentPlayer;
+            }
+        } else {
+            console.warn('🎴 updatePlayerAction: Unknown data structure:', data);
+            return;
+        }
+        
+        // Update local player index
+        if (this.localPlayerIndex !== undefined) {
+            this.isMyTurn = (this.game.currentPlayer === this.localPlayerIndex);
+            this.canAct = this.isMyTurn && !this.game.players[this.localPlayerIndex]?.isFolded && !this.game.players[this.localPlayerIndex]?.isAllIn;
+        }
         
         this.updateUI();
     }
