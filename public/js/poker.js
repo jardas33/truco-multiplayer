@@ -2222,13 +2222,14 @@ function drawBlindIndicators() {
         
         // If player is on left or right side (horizontal position), position indicator closer
         let indicatorRadiusX, indicatorRadiusY;
+        let isTopPlayer = false;
         if (absCosAngle > absSinAngle) {
             // Left or right side - position much closer to player box
             indicatorRadiusX = playerRadiusX * 0.75; // 75% of player radius = closer to player
             indicatorRadiusY = playerRadiusY * 0.75;
         } else if (sinAngle < -0.5) {
-            // Top position (angle near -PI/2) - position very close to player box (just below cards)
-            // Use 85% of player radius to position indicator very close to player's cards
+            // Top position (angle near -PI/2) - position indicators to the RIGHT of cards
+            isTopPlayer = true;
             indicatorRadiusX = playerRadiusX * 0.85; // 85% of player radius = very close to player
             indicatorRadiusY = playerRadiusY * 0.85;
         } else {
@@ -2237,16 +2238,21 @@ function drawBlindIndicators() {
             indicatorRadiusY = playerRadiusY * 0.5;
         }
         
-        const indicatorX = centerX + cos(angle) * indicatorRadiusX;
+        let indicatorX = centerX + cos(angle) * indicatorRadiusX;
         let indicatorY = centerY + sin(angle) * indicatorRadiusY;
         
-        // For top player, position indicator just below their cards (not near center)
-        if (sinAngle < -0.5) {
-            // Position indicator closer to player's card area (cards are at playerY + 50)
-            // Move indicator to be just below the cards, not halfway to center
+        // For top player, position indicators to the RIGHT of their cards
+        if (isTopPlayer) {
+            // Cards are at playerX (center of cards), playerY + 50
+            // Two cards side by side: each card is ~60px wide, total width ~120px
+            // Position indicators to the right of the cards
             const cardY = playerY + 50; // Cards are positioned here
-            const cardBottom = cardY + 84; // Card height is 84
-            indicatorY = cardBottom + 25; // Position 25px below cards
+            const cardWidth = 60; // Approximate card width
+            const cardSpacing = 10; // Spacing between cards
+            const cardsTotalWidth = (cardWidth * 2) + cardSpacing; // Total width of both cards
+            const cardRightEdge = playerX + (cardsTotalWidth / 2); // Right edge of cards
+            indicatorX = cardRightEdge + 30; // Position 30px to the right of cards
+            indicatorY = cardY + 42; // Position at middle of cards (card height is 84, so middle is 42)
         }
         
         // Ensure indicator doesn't overlap with player box
@@ -2293,60 +2299,59 @@ function drawBlindIndicators() {
         
         push();
         
-        // Draw dealer button - always show if game is active
+        // For top player, stack indicators vertically if multiple indicators
+        let indicatorOffsetY = 0;
+        const indicatorSpacing = 50; // Space between stacked indicators
+        const indicatorsToDraw = [];
+        
+        // Check which indicators this player has
         if (index === dealerPosition && window.game.gamePhase) {
-            fill(255, 215, 0); // Gold
-            stroke(255, 255, 255);
-            strokeWeight(2);
-            ellipse(finalIndicatorX, finalIndicatorY, 30, 30);
-            
-            fill(0, 0, 0);
-            textAlign(CENTER, CENTER);
-            textSize(12);
-            textStyle(BOLD);
-            noStroke();
-            text('D', finalIndicatorX, finalIndicatorY);
+            indicatorsToDraw.push({ type: 'D', color: [255, 215, 0], size: 30, text: 'D', amount: null });
         }
-        
-        // Draw small blind indicator - always show if game is active
         if (index === smallBlindPos && window.game.gamePhase) {
-            fill(100, 200, 255); // Light blue
-            stroke(255, 255, 255);
-            strokeWeight(2);
-            ellipse(finalIndicatorX, finalIndicatorY, 28, 28);
-            
-            fill(0, 0, 0);
-            textAlign(CENTER, CENTER);
-            textSize(10);
-            textStyle(BOLD);
-            noStroke();
-            text('SB', finalIndicatorX, finalIndicatorY);
-            
-            // Show blind amount below indicator with spacing
-            textSize(9);
-            fill(255, 255, 255);
-            text('$' + smallBlindAmount, finalIndicatorX, finalIndicatorY + textOffsetY);
+            indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: smallBlindAmount });
+        }
+        if (index === bigBlindPos && window.game.gamePhase) {
+            indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: bigBlindAmount });
         }
         
-        // Draw big blind indicator - always show if game is active
-        if (index === bigBlindPos && window.game.gamePhase) {
-            fill(255, 100, 100); // Light red
+        // For top player, center the stack vertically
+        if (isTopPlayer && indicatorsToDraw.length > 0) {
+            const totalHeight = (indicatorsToDraw.length - 1) * indicatorSpacing;
+            indicatorOffsetY = -totalHeight / 2; // Start from top of stack
+        }
+        
+        // Draw each indicator
+        indicatorsToDraw.forEach((indicator, i) => {
+            const currentY = isTopPlayer ? (finalIndicatorY + indicatorOffsetY) : finalIndicatorY;
+            const currentX = isTopPlayer ? finalIndicatorX : finalIndicatorX;
+            
+            // Draw indicator circle
+            fill(indicator.color[0], indicator.color[1], indicator.color[2]);
             stroke(255, 255, 255);
             strokeWeight(2);
-            ellipse(finalIndicatorX, finalIndicatorY, 28, 28);
+            ellipse(currentX, currentY, indicator.size, indicator.size);
             
+            // Draw text
             fill(0, 0, 0);
             textAlign(CENTER, CENTER);
-            textSize(10);
+            textSize(indicator.type === 'D' ? 12 : 10);
             textStyle(BOLD);
             noStroke();
-            text('BB', finalIndicatorX, finalIndicatorY);
+            text(indicator.text, currentX, currentY);
             
-            // Show blind amount below indicator with spacing
-            textSize(9);
-            fill(255, 255, 255);
-            text('$' + bigBlindAmount, finalIndicatorX, finalIndicatorY + textOffsetY);
-        }
+            // Draw amount if applicable (for SB and BB)
+            if (indicator.amount !== null) {
+                textSize(9);
+                fill(255, 255, 255);
+                text('$' + indicator.amount, currentX, currentY + textOffsetY);
+            }
+            
+            // Move to next position for stacking (only for top player)
+            if (isTopPlayer) {
+                indicatorOffsetY += indicatorSpacing;
+            }
+        });
         
         pop();
     });
