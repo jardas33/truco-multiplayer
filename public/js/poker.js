@@ -2165,8 +2165,12 @@ function drawPlayers() {
                 if (player.hand && player.hand.length > 0 && isShowdown) {
                     cardsToShow = player.hand; // Show actual cards at showdown
                 } else {
-                    // Show 2 card backs for opponents
-                    cardsToShow = [{ name: 'back' }, { name: 'back' }];
+                    // Show 2 card backs for opponents (always show, even if hand is empty or not dealt yet)
+                    // Create card objects with proper structure for CardRenderer
+                    cardsToShow = [
+                        { name: 'back', suit: null, rank: null },
+                        { name: 'back', suit: null, rank: null }
+                    ];
                 }
             }
             
