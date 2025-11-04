@@ -2159,8 +2159,9 @@ function drawPlayerCards(x, y, hand, shouldShowCardImages) {
 }
 
 function drawPot() {
-    // Pot positioned exactly in the center of the table
-    const centerX = width/2;
+    // Pot position: center when no community cards, move left when community cards appear
+    const hasCommunityCards = window.game && window.game.communityCards && window.game.communityCards.length > 0;
+    const centerX = hasCommunityCards ? width/2 - 120 : width/2; // Move left when cards appear
     const centerY = height/2; // True center, not offset
     
     push();
@@ -2321,11 +2322,59 @@ function drawBetIndicators() {
     const playerBoxOffsetY = playerBoxHeight / 2;
     const cardOffsetY = 50;
     
-    // Get dealer position
+    // Get dealer position and blind positions
     const dealerPosition = window.game.dealerPosition !== undefined ? window.game.dealerPosition : 0;
     const smallBlindPos = (dealerPosition + 1) % window.game.players.length;
     const bigBlindPos = (dealerPosition + 2) % window.game.players.length;
     
+    // First pass: Calculate blind indicator positions to avoid overlap with bet indicators
+    const blindIndicatorPositions = new Map(); // Store blind indicator positions by player index
+    
+    window.game.players.forEach((player, index) => {
+        if (!player || player.isFolded) return;
+        
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const playerX = centerX + cos(angle) * playerRadiusX;
+        const playerY = centerY + sin(angle) * playerRadiusY;
+        
+        const absCosAngle = Math.abs(cos(angle));
+        const absSinAngle = Math.abs(sin(angle));
+        const sinAngle = sin(angle);
+        const isTopPlayer = sinAngle < -0.5;
+        
+        let blindIndicatorX, blindIndicatorY;
+        
+        if (isTopPlayer) {
+            // Top player - blind indicators are to the RIGHT of cards
+            const cardY = playerY + 50;
+            const cardWidth = 60;
+            const cardSpacing = 8;
+            const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
+            const cardRightEdge = playerX + (cardsTotalWidth / 2);
+            blindIndicatorX = cardRightEdge + 35;
+            blindIndicatorY = cardY + 42;
+        } else {
+            // For other players, calculate blind indicator position
+            let indicatorRadiusX, indicatorRadiusY;
+            if (absCosAngle > absSinAngle) {
+                indicatorRadiusX = playerRadiusX * 0.75;
+                indicatorRadiusY = playerRadiusY * 0.75;
+            } else {
+                indicatorRadiusX = playerRadiusX * 0.5;
+                indicatorRadiusY = playerRadiusY * 0.5;
+            }
+            blindIndicatorX = centerX + cos(angle) * indicatorRadiusX;
+            blindIndicatorY = centerY + sin(angle) * indicatorRadiusY;
+        }
+        
+        // Store blind indicator position if this player has one
+        const hasBlindIndicator = (index === dealerPosition || index === smallBlindPos || index === bigBlindPos) && window.game.gamePhase;
+        if (hasBlindIndicator) {
+            blindIndicatorPositions.set(index, { x: blindIndicatorX, y: blindIndicatorY });
+        }
+    });
+    
+    // Second pass: Draw bet indicators, avoiding blind indicator positions
     window.game.players.forEach((player, index) => {
         if (!player || player.isFolded || player.currentBet === 0) return; // Only show if player has a bet
         
@@ -2373,8 +2422,11 @@ function drawBetIndicators() {
         const textHeight = 20; // Space for text below indicator
         const indicatorTotalHeight = indicatorSize + textHeight;
         
+        // Check if this player has blind indicators and get their position
+        const blindPos = blindIndicatorPositions.get(index);
+        
         if (isTopPlayer) {
-            // Top player - position to the LEFT of cards, similar to blind indicators
+            // Top player - position to the LEFT of cards (opposite from blind indicators on right)
             const cardY = playerY + 50;
             const cardWidth = 60;
             const cardSpacing = 8;
@@ -2382,6 +2434,16 @@ function drawBetIndicators() {
             const cardLeftEdge = playerX - (cardsTotalWidth / 2);
             finalIndicatorX = cardLeftEdge - 35; // Position 35px to the left of cards
             finalIndicatorY = cardY + 42; // Center vertically with cards
+            
+            // If there are blind indicators on the right, ensure bet indicator is far enough left
+            if (blindPos) {
+                const minDistance = 60; // Minimum distance between bet and blind indicators
+                const distanceX = Math.abs(finalIndicatorX - blindPos.x);
+                if (distanceX < minDistance) {
+                    // Move bet indicator further left
+                    finalIndicatorX = cardLeftEdge - (minDistance - distanceX + 35);
+                }
+            }
         } else {
             // For other players, position between player box and cards, but ensure no overlap
             // Position it below the player box but above cards, and offset to avoid overlap
@@ -2405,6 +2467,21 @@ function drawBetIndicators() {
                 // Move indicator closer to center (away from player)
                 finalIndicatorX = centerX + cos(angleToPlayer) * (playerRadiusX * 0.3);
                 finalIndicatorY = centerY + sin(angleToPlayer) * (playerRadiusY * 0.3);
+            }
+            
+            // Check if bet indicator overlaps with blind indicator
+            if (blindPos) {
+                const minDistance = 50; // Minimum distance between bet and blind indicators
+                const distanceX = finalIndicatorX - blindPos.x;
+                const distanceY = finalIndicatorY - blindPos.y;
+                const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+                
+                if (distance < minDistance) {
+                    // Move bet indicator away from blind indicator
+                    const angleAway = atan2(finalIndicatorY - blindPos.y, finalIndicatorX - blindPos.x);
+                    finalIndicatorX = blindPos.x + cos(angleAway) * minDistance;
+                    finalIndicatorY = blindPos.y + sin(angleAway) * minDistance;
+                }
             }
         }
         
@@ -2597,10 +2674,10 @@ function drawBlindIndicators() {
             indicatorsToDraw.push({ type: 'D', color: [255, 215, 0], size: 30, text: 'D', amount: null });
         }
         if (index === smallBlindPos && window.game.gamePhase) {
-            indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: smallBlindAmount });
+            indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: null }); // Remove amount display
         }
         if (index === bigBlindPos && window.game.gamePhase) {
-            indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: bigBlindAmount });
+            indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: null }); // Remove amount display
         }
         
         // For top player, center the stack vertically
