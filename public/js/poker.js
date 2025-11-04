@@ -924,34 +924,80 @@ class PokerClient {
         }
         
         // Show Back to Main Menu and Poker Menu buttons during gameplay in center top
-        // Create or get buttons - they need to be outside the Menu div to be visible
-        let backToMainMenuBtn = document.getElementById('backToMainMenuBtnGame');
-        let gameMenuBtn = document.getElementById('gameMenuBtnGame');
+        // Remove any existing buttons first to prevent duplicates
+        const existingBackBtn = document.getElementById('backToMainMenuBtnGame');
+        const existingMenuBtn = document.getElementById('gameMenuBtnGame');
+        if (existingBackBtn) existingBackBtn.remove();
+        if (existingMenuBtn) existingMenuBtn.remove();
         
-        // Create buttons if they don't exist
-        if (!backToMainMenuBtn) {
-            backToMainMenuBtn = document.createElement('button');
-            backToMainMenuBtn.id = 'backToMainMenuBtnGame';
-            backToMainMenuBtn.textContent = '← Back to Main Menu';
-            backToMainMenuBtn.onclick = () => {
-                console.log('🔙 Back to Main Menu clicked from game');
-                window.location.replace('/');
-            };
-            document.body.appendChild(backToMainMenuBtn);
-            console.log('🎴 Created Back to Main Menu button for gameplay');
-        }
+        // Create new buttons - they need to be outside the Menu div to be visible
+        const backToMainMenuBtn = document.createElement('button');
+        backToMainMenuBtn.id = 'backToMainMenuBtnGame';
+        backToMainMenuBtn.textContent = '← Back to Main Menu';
+        backToMainMenuBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔙 Back to Main Menu clicked from game');
+            
+            if (confirm('Are you sure you want to leave the game and return to the main menu? You will lose your current game progress.')) {
+                // Clean up socket connection
+                const socket = window.gameFramework?.socket;
+                const roomId = this.getRoomId();
+                if (socket && roomId) {
+                    console.log('🎴 Leaving room before navigation:', roomId);
+                    socket.emit('leaveRoom', roomId);
+                }
+                
+                // Clean up game state
+                window.game = null;
+                window.pokerClient = null;
+                if (typeof gameState !== 'undefined') {
+                    gameState = gameStateEnum.Menu;
+                    window.gameState = gameStateEnum.Menu;
+                }
+                
+                // Navigate after cleanup
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 100);
+            }
+        };
+        document.body.appendChild(backToMainMenuBtn);
+        console.log('🎴 Created Back to Main Menu button for gameplay');
         
-        if (!gameMenuBtn) {
-            gameMenuBtn = document.createElement('button');
-            gameMenuBtn.id = 'gameMenuBtnGame';
-            gameMenuBtn.textContent = 'Poker Game Menu';
-            gameMenuBtn.onclick = () => {
-                console.log('🎴 Poker Menu clicked from game');
-                window.location.reload();
-            };
-            document.body.appendChild(gameMenuBtn);
-            console.log('🎴 Created Poker Menu button for gameplay');
-        }
+        const gameMenuBtn = document.createElement('button');
+        gameMenuBtn.id = 'gameMenuBtnGame';
+        gameMenuBtn.textContent = 'Poker Game Menu';
+        gameMenuBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎴 Poker Menu clicked from game');
+            
+            if (confirm('Are you sure you want to return to the poker menu? You will lose your current game progress.')) {
+                // Clean up socket connection
+                const socket = window.gameFramework?.socket;
+                const roomId = this.getRoomId();
+                if (socket && roomId) {
+                    console.log('🎴 Leaving room before reload:', roomId);
+                    socket.emit('leaveRoom', roomId);
+                }
+                
+                // Clean up game state
+                window.game = null;
+                window.pokerClient = null;
+                if (typeof gameState !== 'undefined') {
+                    gameState = gameStateEnum.Menu;
+                    window.gameState = gameStateEnum.Menu;
+                }
+                
+                // Reload after cleanup
+                setTimeout(() => {
+                    window.location.reload();
+                }, 100);
+            }
+        };
+        document.body.appendChild(gameMenuBtn);
+        console.log('🎴 Created Poker Menu button for gameplay');
         
         // Style and position the buttons in center top
         if (backToMainMenuBtn) {
@@ -970,6 +1016,7 @@ class PokerClient {
             backToMainMenuBtn.style.fontSize = '14px';
             backToMainMenuBtn.style.fontWeight = 'bold';
             backToMainMenuBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+            backToMainMenuBtn.style.pointerEvents = 'auto';
             console.log('🎴 Back to Main Menu button shown during gameplay (center top)');
         }
         
@@ -989,6 +1036,7 @@ class PokerClient {
             gameMenuBtn.style.fontSize = '14px';
             gameMenuBtn.style.fontWeight = 'bold';
             gameMenuBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+            gameMenuBtn.style.pointerEvents = 'auto';
             console.log('🎴 Poker Menu button shown during gameplay (center top)');
         }
         
