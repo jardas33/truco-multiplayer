@@ -2241,6 +2241,7 @@ io.on('connection', (socket) => {
         }
 
         const maxPlayersAddBot = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
+        // Check if room is full (maxPlayersAddBot includes all players + bots)
         if (room.players.length >= maxPlayersAddBot) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersAddBot}), cannot add bot`);
             socket.emit('error', 'Room is full');

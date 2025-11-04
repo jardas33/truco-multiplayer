@@ -689,6 +689,12 @@ class PokerClient {
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();
+            
+            // Update start game button based on initial players
+            if (data.players) {
+                this.updateStartGameButton(data.players);
+                this.updatePlayerList(data.players);
+            }
         });
         
         socket.on('roomJoined', (data) => {
@@ -705,6 +711,12 @@ class PokerClient {
             console.log('Local player index set to:', this.localPlayerIndex);
             this.showPlayerCustomization();
             this.showGameControls();
+            
+            // Update start game button based on current players
+            if (data.players) {
+                this.updateStartGameButton(data.players);
+                this.updatePlayerList(data.players);
+            }
         });
         
         socket.on('gameStarted', (data) => {
@@ -793,10 +805,64 @@ class PokerClient {
         });
         
         // Error handling
+        socket.on('playerJoined', (data) => {
+            console.log('🎴 Player joined room:', data);
+            this.updatePlayerList(data.players || []);
+            this.updateStartGameButton(data.players || []);
+        });
+        
+        socket.on('playersUpdated', (players) => {
+            console.log('🎴 Players updated:', players);
+            this.updatePlayerList(players || []);
+            this.updateStartGameButton(players || []);
+        });
+        
         socket.on('error', (error) => {
             console.error('Socket error:', error);
             UIUtils.showGameMessage('Error: ' + error, 'error');
         });
+    }
+    
+    // Update player list display
+    updatePlayerList(players) {
+        const playerList = document.getElementById('playerList');
+        if (!playerList) return;
+        
+        console.log('🎴 Updating player list with:', players);
+        
+        let playerListHTML = '<h3 style="margin: 8px 0 6px 0; font-size: 16px;">Players in Room:</h3>';
+        players.forEach((player, index) => {
+            const playerType = player.isBot ? '🤖 Bot' : '👤 Player';
+            const displayName = player.name || `Player ${index + 1}`;
+            
+            playerListHTML += `<div style="margin: 3px 0; padding: 6px; border: 1px solid #4CAF50; border-radius: 3px; background-color: rgba(0, 100, 0, 0.8); color: white; font-size: 13px;">
+                <strong style="color: #FFD700;">${playerType}:</strong> <span style="color: #FFFFFF;">${displayName}</span>
+            </div>`;
+        });
+        
+        playerList.innerHTML = playerListHTML;
+        console.log('✅ Player list updated');
+    }
+    
+    // Update start game button state based on player count
+    updateStartGameButton(players) {
+        const startGameBtn = document.getElementById('startGameBtn');
+        if (!startGameBtn) return;
+        
+        const playerCount = players.length || 0;
+        const minPlayers = 2; // Minimum 2 players required to start
+        
+        if (playerCount < minPlayers) {
+            startGameBtn.disabled = true;
+            startGameBtn.style.opacity = '0.5';
+            startGameBtn.style.cursor = 'not-allowed';
+            console.log(`🎴 Start Game button disabled - need ${minPlayers} players, have ${playerCount}`);
+        } else {
+            startGameBtn.disabled = false;
+            startGameBtn.style.opacity = '1';
+            startGameBtn.style.cursor = 'pointer';
+            console.log(`🎴 Start Game button enabled - ${playerCount} players`);
+        }
     }
 
     // Create room
@@ -1661,8 +1727,12 @@ class PokerClient {
         const startGameBtn = document.getElementById('startGameBtn');
         if (startGameBtn) {
             startGameBtn.style.display = 'inline-block';
-            startGameBtn.disabled = false;
-            console.log('SUCCESS: Start Game button shown and styled orange');
+            // Initially disable if we don't have enough players yet
+            // Will be updated when playerJoined/playersUpdated events fire
+            startGameBtn.disabled = true;
+            startGameBtn.style.opacity = '0.5';
+            startGameBtn.style.cursor = 'not-allowed';
+            console.log('SUCCESS: Start Game button shown (disabled until 2+ players)');
         }
         
         // Hide Back to Main Menu and Poker Menu buttons during room creation (they'll be shown when game starts)
