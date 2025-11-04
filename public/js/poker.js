@@ -1359,10 +1359,16 @@ function drawPlayers() {
     const radiusX = width * 0.35;  // Increased radius for better spacing from center
     const radiusY = height * 0.28; // Increased radius for better spacing
     
+    // Store player positions for drawing cards later (after highlights)
+    const playerPositions = [];
+    
     window.game.players.forEach((player, index) => {
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const x = centerX + cos(angle) * radiusX;
         const y = centerY + sin(angle) * radiusY;
+        
+        // Store position for card drawing later
+        playerPositions.push({ x, y, player, index });
         
         push();
         
@@ -1435,14 +1441,8 @@ function drawPlayers() {
             text('Bet: $' + player.currentBet, x, y + 18);
         }
         
-        // Draw player cards in a better position - moved down to avoid overlap
-        if (player.hand && player.hand.length > 0 && !player.isFolded) {
-            const shouldShowCardImages = index === 0 || index === window.pokerClient?.localPlayerIndex || player.hand.some(card => card.isRevealed);
-            const cardY = y + 50; // Position cards further below player info
-            drawPlayerCards(x, cardY, player.hand, shouldShowCardImages);
-        }
-        
         // Highlight current player with subtle, professional styling
+        // Draw highlight BEFORE cards so cards appear on top
         if (index === window.game.currentPlayer && !player.isFolded) {
             const time = millis() * 0.003;
             const pulseAlpha = 30 + sin(time) * 15;
@@ -1461,6 +1461,22 @@ function drawPlayers() {
         }
         
         pop();
+    });
+    
+    // Draw cards AFTER all player boxes and highlights are drawn
+    // This ensures cards are always on top, even over the blue highlight line
+    playerPositions.forEach(({ x, y, player, index }) => {
+        if (player.hand && player.hand.length > 0 && !player.isFolded) {
+            // Only show card faces for local player (or at showdown)
+            // Check if it's showdown phase
+            const isShowdown = window.game.gamePhase === 'showdown' || window.game.winners?.length > 0;
+            // Only show cards for local player, or at showdown
+            const isLocalPlayer = index === window.pokerClient?.localPlayerIndex;
+            const shouldShowCardImages = isLocalPlayer || isShowdown;
+            
+            const cardY = y + 50; // Position cards further below player info
+            drawPlayerCards(x, cardY, player.hand, shouldShowCardImages);
+        }
     });
 }
 
