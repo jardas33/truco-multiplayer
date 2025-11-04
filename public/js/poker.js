@@ -3121,18 +3121,17 @@ function drawBetIndicators() {
                 }
             }
             
-            // If there are chip indicators, ensure bet indicator doesn't overlap
+            // If there are chip indicators, position bet and chips side by side at same height
             if (chipPos) {
-                const minDistance = 70; // Increased minimum distance between bet and chip indicators
-                const distanceX = Math.abs(finalIndicatorX - chipPos.x);
-                const distanceY = Math.abs(finalIndicatorY - chipPos.y);
-                const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+                // For top player, when both chips and bet exist, position them side by side
+                // BET should be on the left, CHIPS on the right, at the same Y level
+                const indicatorSpacing = 40; // Space between buttons (40px)
                 
-                if (distance < minDistance) {
-                    // Move bet indicator further left to avoid chip indicator
-                    const extraOffset = minDistance - distanceX + 10;
-                    finalIndicatorX = cardLeftEdge - (35 + extraOffset);
-                }
+                // Use the chip's Y position as reference to ensure they're at same height
+                finalIndicatorY = chipPos.y; // EXACTLY same height as CHIPS
+                
+                // Position bet to the left of chips
+                finalIndicatorX = chipPos.x - indicatorSpacing;
             }
         } else {
             // For other players, position between player box and cards, but ensure no overlap
