@@ -766,63 +766,83 @@ class PokerClient {
 
     // Start game
     startGame(data = null) {
-        console.log('Starting game with data:', data);
-        console.log('Current game players:', this.game.players);
+        console.log('🎴 Starting game with data:', data);
         
+        // Server now manages all game state, so we just sync from server data
         if (data && data.players) {
-            console.log('Initializing game with players:', data.players);
-            this.game.initialize(data.players);
-        } else {
-            console.log('WARNING: No player data provided, using room players');
-            // Get players from the room
-            const roomPlayers = window.gameFramework.players || [];
-            console.log('Room players:', roomPlayers);
+            console.log('🎴 Syncing game state from server');
+            // Use server data directly - don't re-initialize
+            this.game.players = data.players.map(p => ({
+                ...p,
+                hand: p.hand || [],
+                chips: p.chips || 1000,
+                currentBet: p.currentBet || 0,
+                totalBet: p.totalBet || 0,
+                isFolded: p.isFolded || false,
+                isAllIn: p.isAllIn || false
+            }));
             
-            if (roomPlayers && roomPlayers.length > 0) {
-                // Convert room players to game players
-                const gamePlayers = roomPlayers.map(player => ({
-                    name: player.name,
-                    startingChips: 1000,
-                    isBot: player.isBot || false
-                }));
-                
-                console.log('Converted game players:', gamePlayers);
-                this.game.initialize(gamePlayers);
-            } else {
-                console.error('ERROR: No players available to start game');
-                UIUtils.showGameMessage('No players available to start game. Please add players first.', 'error');
-                return;
+            // Sync other game state
+            if (data.communityCards) {
+                this.game.communityCards = data.communityCards;
+            }
+            if (data.pot !== undefined) {
+                this.game.pot = data.pot;
+            }
+            if (data.currentBet !== undefined) {
+                this.game.currentBet = data.currentBet;
+            }
+            if (data.currentPlayer !== undefined) {
+                this.game.currentPlayer = data.currentPlayer;
+            }
+            if (data.gamePhase) {
+                this.game.gamePhase = data.gamePhase;
+            }
+            if (data.dealerPosition !== undefined) {
+                this.game.dealerPosition = data.dealerPosition;
+            }
+            if (data.smallBlind !== undefined) {
+                this.game.smallBlind = data.smallBlind;
+            }
+            if (data.bigBlind !== undefined) {
+                this.game.bigBlind = data.bigBlind;
             }
         }
         
-        console.log('Final game players before startNewHand:', this.game.players);
-        console.log('Players length:', this.game.players?.length);
-        
-        if (this.game.players.length === 0) {
-            console.error('ERROR: Cannot start game with 0 players');
-            UIUtils.showGameMessage('Cannot start game with 0 players. Please add players first.', 'error');
-            return;
-        }
-        
-        // Start the game
-        this.game.startNewHand();
+        console.log('🎴 Game state synced from server');
+        console.log('🎴 Players:', this.game.players.length);
+        console.log('🎴 Phase:', this.game.gamePhase);
+        console.log('🎴 Current player:', this.game.currentPlayer);
         
         // Update game state
         if (typeof gameStateEnum !== 'undefined') {
             gameState = gameStateEnum.Playing;
             window.gameState = gameStateEnum.Playing;
-            console.log('Game state set to Playing');
+            console.log('🎴 Game state set to Playing');
             // Start the draw loop when game starts
             loop();
         }
         
         // Set global game instance
         window.game = this.game;
-        console.log('Global game instance set');
+        console.log('🎴 Global game instance set');
+        
+        // Update turn state
+        this.isMyTurn = (this.game.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn && 
+                      this.game.players[this.localPlayerIndex] && 
+                      !this.game.players[this.localPlayerIndex].isFolded &&
+                      !this.game.players[this.localPlayerIndex].isAllIn;
         
         // Update UI
         this.updateUI();
-        this.showBettingControls();
+        
+        // Show/hide betting controls based on turn
+        if (this.isMyTurn && this.canAct) {
+            this.showBettingControls();
+        } else {
+            this.hideBettingControls();
+        }
     }
 
     // Update game state
