@@ -1781,6 +1781,7 @@ io.on('connection', (socket) => {
                 // Move to next active player
                 const startPlayer = room.game.currentPlayer;
                 let attempts = 0;
+                let foundNextPlayer = false;
                 do {
                     room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
                     attempts++;
@@ -1788,13 +1789,33 @@ io.on('connection', (socket) => {
                     // Safety check to prevent infinite loop
                     if (attempts >= room.game.players.length) {
                         console.error(`❌ Could not find next active player after ${attempts} attempts`);
+                        // If all players are folded/all-in, check if we should go to showdown
+                        const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                        if (activePlayers.length <= 1) {
+                            console.log(`🎴 All players inactive, going to showdown`);
+                            handlePokerShowdown(roomCode, room);
+                            return;
+                        }
                         break;
                     }
-                } while (
-                    (room.game.players[room.game.currentPlayer].isFolded || 
-                     room.game.players[room.game.currentPlayer].isAllIn) &&
-                    room.game.currentPlayer !== startPlayer
-                );
+                    
+                    // Check if we found an active player
+                    if (!room.game.players[room.game.currentPlayer].isFolded && 
+                        !room.game.players[room.game.currentPlayer].isAllIn) {
+                        foundNextPlayer = true;
+                        break;
+                    }
+                } while (room.game.currentPlayer !== startPlayer);
+                
+                // If we didn't find a next player, check if we should end the round
+                if (!foundNextPlayer && attempts >= room.game.players.length) {
+                    const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                    if (activePlayers.length <= 1) {
+                        console.log(`🎴 No active players found, going to showdown`);
+                        handlePokerShowdown(roomCode, room);
+                        return;
+                    }
+                }
                 
                 console.log(`🎴 Turn advanced from ${startPlayer} (${room.game.players[startPlayer]?.name}) to ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name})`);
                 
@@ -6100,6 +6121,7 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
     // Move to next active player
     const startPlayer = room.game.currentPlayer;
     let attempts = 0;
+    let foundNextPlayer = false;
     do {
         room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
         attempts++;
@@ -6107,13 +6129,33 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
         // Safety check to prevent infinite loop
         if (attempts >= room.game.players.length) {
             console.error(`❌ Could not find next active player after ${attempts} attempts`);
+            // If all players are folded/all-in, check if we should go to showdown
+            const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+            if (activePlayers.length <= 1) {
+                console.log(`🎴 All players inactive after bot action, going to showdown`);
+                handlePokerShowdown(roomCode, room);
+                return;
+            }
             break;
         }
-    } while (
-        (room.game.players[room.game.currentPlayer].isFolded || 
-         room.game.players[room.game.currentPlayer].isAllIn) &&
-        room.game.currentPlayer !== startPlayer
-    );
+        
+        // Check if we found an active player
+        if (!room.game.players[room.game.currentPlayer].isFolded && 
+            !room.game.players[room.game.currentPlayer].isAllIn) {
+            foundNextPlayer = true;
+            break;
+        }
+    } while (room.game.currentPlayer !== startPlayer);
+    
+    // If we didn't find a next player, check if we should end the round
+    if (!foundNextPlayer && attempts >= room.game.players.length) {
+        const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+        if (activePlayers.length <= 1) {
+            console.log(`🎴 No active players found after bot action, going to showdown`);
+            handlePokerShowdown(roomCode, room);
+            return;
+        }
+    }
     
     console.log(`🎴 Bot turn advanced from ${startPlayer} to ${room.game.currentPlayer}`);
     
@@ -6125,31 +6167,46 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
     const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
     
     // For preflop: action must return to big blind (lastRaisePlayer) after everyone acts
-    // For post-flop: action must return to first player after big blind (same as preflop)
+    // For post-flop: action must return to first active player after big blind (if no raises)
     let actionBackToLastRaiser;
     if (room.game.gamePhase === 'preflop') {
         // If no raises (lastRaisePlayer is still -1 or equals bigBlind), action should return to big blind
         if (room.game.lastRaisePlayer === -1 || room.game.lastRaisePlayer === bigBlindPos) {
-            // No raises - action should return to big blind
-            actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
+            // No raises - action should return to big blind (if not folded/all-in)
+            // If big blind is folded/all-in, find first active player after big blind
+            let targetPlayer = bigBlindPos;
+            if (room.game.players[bigBlindPos].isFolded || room.game.players[bigBlindPos].isAllIn) {
+                // Big blind is inactive, find first active player after big blind
+                targetPlayer = (bigBlindPos + 1) % room.game.players.length;
+                let searchAttempts = 0;
+                while ((room.game.players[targetPlayer].isFolded || room.game.players[targetPlayer].isAllIn) && searchAttempts < room.game.players.length) {
+                    targetPlayer = (targetPlayer + 1) % room.game.players.length;
+                    searchAttempts++;
+                }
+            }
+            actionBackToLastRaiser = room.game.currentPlayer === targetPlayer;
         } else {
             // There was a raise - action should return to last raiser
             actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
         }
     } else {
-        // Post-flop: if no raises, action should return to first player after big blind (same as preflop)
+        // Post-flop: if no raises, action should return to first active player after big blind
         if (room.game.lastRaisePlayer === -1) {
-            // No raises - action should return to first player after big blind
+            // No raises - action should return to first active player after big blind
             const bigBlindPosPostFlop = (room.game.dealerPosition + 2) % room.game.players.length;
             let expectedPlayer = (bigBlindPosPostFlop + 1) % room.game.players.length;
-            while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
+            let searchAttempts = 0;
+            while ((room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) && searchAttempts < room.game.players.length) {
                 expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                searchAttempts++;
                 // Safety check to prevent infinite loop
-                if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length) {
+                if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length && searchAttempts > 0) {
                     break;
                 }
             }
-            actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
+            // If we're at the expected player OR if all remaining players are all-in (betting round should complete)
+            actionBackToLastRaiser = (room.game.currentPlayer === expectedPlayer) || 
+                (activePlayers.filter(p => !p.isAllIn).length <= 1 && allBetsMatched);
         } else {
             // There was a raise - action should return to last raiser
             actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
