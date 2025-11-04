@@ -2312,59 +2312,66 @@ function drawBlindIndicators() {
         let indicatorY = centerY + sin(angle) * indicatorRadiusY;
         
         // For top player, position indicators to the RIGHT of their cards
-        if (isTopPlayer) {
-            // Cards are at playerX (center of cards), playerY + 50
-            // Two cards side by side: each card is ~60px wide, total width ~120px
-            // Position indicators to the right of the cards
-            const cardY = playerY + 50; // Cards are positioned here
-            const cardWidth = 60; // Approximate card width
-            const cardSpacing = 10; // Spacing between cards
-            const cardsTotalWidth = (cardWidth * 2) + cardSpacing; // Total width of both cards
-            const cardRightEdge = playerX + (cardsTotalWidth / 2); // Right edge of cards
-            indicatorX = cardRightEdge + 30; // Position 30px to the right of cards
-            indicatorY = cardY + 42; // Position at middle of cards (card height is 84, so middle is 42)
-        }
-        
-        // Ensure indicator doesn't overlap with player box
-        // Player box extends from (playerX - 90, playerY - 65) to (playerX + 90, playerY + 65)
-        // Cards are at playerY + 50 to playerY + 134
-        const playerBoxLeft = playerX - playerBoxOffsetX;
-        const playerBoxRight = playerX + playerBoxOffsetX;
-        const playerBoxTop = playerY - playerBoxOffsetY;
-        const playerBoxBottom = playerY + playerBoxOffsetY + cardOffsetY + 84; // Card height is 84
-        
         let finalIndicatorX = indicatorX;
         let finalIndicatorY = indicatorY;
         
-        // Check if indicator overlaps with player box
-        const indicatorLeft = indicatorX - indicatorRadius;
-        const indicatorRight = indicatorX + indicatorRadius;
-        const indicatorTop = indicatorY - indicatorRadius;
-        const indicatorBottom = indicatorY + indicatorRadius + textOffsetY;
-        
-        const overlapsBox = !(indicatorRight < playerBoxLeft || 
-                             indicatorLeft > playerBoxRight || 
-                             indicatorBottom < playerBoxTop || 
-                             indicatorTop > playerBoxBottom);
-        
-        if (overlapsBox) {
-            // Move indicator further toward center to avoid overlap
-            const adjustedRadiusX = playerRadiusX * 0.25; // Even closer to center
-            const adjustedRadiusY = playerRadiusY * 0.25;
-            finalIndicatorX = centerX + cos(angle) * adjustedRadiusX;
-            finalIndicatorY = centerY + sin(angle) * adjustedRadiusY;
-        }
-        
-        // Ensure indicator is inside table ellipse
-        const dx = (finalIndicatorX - centerX) / tableRadiusX;
-        const dy = (finalIndicatorY - centerY) / tableRadiusY;
-        const isInsideTable = (dx * dx + dy * dy) <= 1;
-        
-        if (!isInsideTable) {
-            // Move indicator toward center to keep it inside
-            const angleToCenter = atan2(finalIndicatorY - centerY, finalIndicatorX - centerX);
-            finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 30);
-            finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 30);
+        if (isTopPlayer) {
+            // Cards are at playerX (center of cards), playerY + 50
+            // From drawPlayerCards: cardWidth = 60, spacing = 8
+            // Two cards side by side: total width = (60 * 2) + 8 = 128px
+            // Cards are centered at playerX, so:
+            // - Left edge = playerX - 64
+            // - Right edge = playerX + 64
+            const cardY = playerY + 50; // Cards are positioned here
+            const cardWidth = 60; // Card width from drawPlayerCards
+            const cardSpacing = 8; // Spacing from drawPlayerCards
+            const cardsTotalWidth = (cardWidth * 2) + cardSpacing; // 128px total width
+            const cardRightEdge = playerX + (cardsTotalWidth / 2); // Right edge of cards = playerX + 64
+            finalIndicatorX = cardRightEdge + 35; // Position 35px to the right of cards
+            finalIndicatorY = cardY + 42; // Position at middle of cards (card height is 84, so middle is 42)
+            
+            // For top player, skip overlap and boundary checks - we've explicitly positioned it
+            // The indicator is intentionally to the right of the cards, outside the player box
+        } else {
+            // For other players, check for overlaps and table boundaries
+            // Ensure indicator doesn't overlap with player box
+            // Player box extends from (playerX - 90, playerY - 65) to (playerX + 90, playerY + 65)
+            // Cards are at playerY + 50 to playerY + 134
+            const playerBoxLeft = playerX - playerBoxOffsetX;
+            const playerBoxRight = playerX + playerBoxOffsetX;
+            const playerBoxTop = playerY - playerBoxOffsetY;
+            const playerBoxBottom = playerY + playerBoxOffsetY + cardOffsetY + 84; // Card height is 84
+            
+            // Check if indicator overlaps with player box
+            const indicatorLeft = indicatorX - indicatorRadius;
+            const indicatorRight = indicatorX + indicatorRadius;
+            const indicatorTop = indicatorY - indicatorRadius;
+            const indicatorBottom = indicatorY + indicatorRadius + textOffsetY;
+            
+            const overlapsBox = !(indicatorRight < playerBoxLeft || 
+                                 indicatorLeft > playerBoxRight || 
+                                 indicatorBottom < playerBoxTop || 
+                                 indicatorTop > playerBoxBottom);
+            
+            if (overlapsBox) {
+                // Move indicator further toward center to avoid overlap
+                const adjustedRadiusX = playerRadiusX * 0.25; // Even closer to center
+                const adjustedRadiusY = playerRadiusY * 0.25;
+                finalIndicatorX = centerX + cos(angle) * adjustedRadiusX;
+                finalIndicatorY = centerY + sin(angle) * adjustedRadiusY;
+            }
+            
+            // Ensure indicator is inside table ellipse
+            const dx = (finalIndicatorX - centerX) / tableRadiusX;
+            const dy = (finalIndicatorY - centerY) / tableRadiusY;
+            const isInsideTable = (dx * dx + dy * dy) <= 1;
+            
+            if (!isInsideTable) {
+                // Move indicator toward center to keep it inside
+                const angleToCenter = atan2(finalIndicatorY - centerY, finalIndicatorX - centerX);
+                finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 30);
+                finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 30);
+            }
         }
         
         push();
