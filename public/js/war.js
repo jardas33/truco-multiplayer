@@ -567,11 +567,39 @@ class WarClient {
     // Start game
     startGame(data = null) {
         if (data) {
-            this.game.initialize(data.players);
-            this.localPlayerIndex = data.localPlayerIndex;
+            // Initialize game with server data
+            this.game.players = data.players.map((player, index) => ({
+                ...player,
+                hand: player.hand || [],
+                position: index
+            }));
+            this.localPlayerIndex = data.localPlayerIndex || 0;
+            this.game.battleNumber = data.battleNumber || 1;
+            this.game.gamePhase = data.gamePhase || 'playing';
+            this.game.currentPlayer = data.currentPlayer || 0;
+            
+            // Set global game instance
+            window.game = this.game;
+            
+            console.log('⚔️ War game started with players:', this.game.players.map(p => ({ name: p.name, cards: p.hand.length })));
         }
         
         UIUtils.showGame();
+        this.updateUI();
+        
+        // Auto-start first battle after a short delay
+        setTimeout(() => {
+            this.canAct = true;
+            this.showActionControls();
+            // Auto-start battle if it's a new game and no battle is in progress
+            if (this.game.battleNumber === 1 && 
+                (!this.game.battleCards || this.game.battleCards.length === 0) &&
+                (!this.game.warCards || this.game.warCards.length === 0) &&
+                !this.game.gameOver) {
+                console.log('⚔️ Auto-starting first battle');
+                this.startBattle();
+            }
+        }, 1500);
     }
 
     // Start battle
@@ -592,62 +620,114 @@ class WarClient {
 
     // Update battle started
     updateBattleStarted(data) {
-        this.game.battleCards = data.battleCards;
-        this.game.battleNumber = data.battleNumber;
-        this.game.players = data.players;
+        this.game.battleCards = data.battleCards || [];
+        this.game.battleNumber = data.battleNumber || this.game.battleNumber;
+        this.game.players = (data.players || []).map((p, index) => ({
+            ...p,
+            hand: p.hand || [],
+            position: index
+        }));
         
         this.updateUI();
         this.showWarMessage('BATTLE!', 'battle');
+        this.hideActionControls();
     }
 
     // Update battle resolved
     updateBattleResolved(data) {
-        this.game.players = data.players;
+        this.game.players = (data.players || []).map((p, index) => ({
+            ...p,
+            hand: p.hand || [],
+            position: index
+        }));
         this.game.battleCards = [];
         
         this.updateUI();
         this.hideWarMessage();
         
-        UIUtils.showGameMessage(`${data.winner.name} wins the battle and gets ${data.winner.cardsWon} cards!`, 'success');
+        if (data.winner) {
+            UIUtils.showGameMessage(`${data.winner.name} wins the battle and gets ${data.winner.cardsWon} cards!`, 'success');
+        }
     }
 
     // Update war started
     updateWarStarted(data) {
-        this.game.warCards = data.warCards;
-        this.game.players = data.players;
+        this.game.warCards = data.warCards || [];
+        this.game.players = (data.players || []).map((p, index) => ({
+            ...p,
+            hand: p.hand || [],
+            position: index
+        }));
         this.game.isWar = true;
+        this.game.gamePhase = 'war';
         
         this.updateUI();
-        this.showWarMessage('WAR!', 'war');
+        this.showWarMessage('⚔️ WAR! ⚔️', 'war');
+        this.hideActionControls();
     }
 
     // Update war resolved
     updateWarResolved(data) {
-        this.game.players = data.players;
+        this.game.players = (data.players || []).map((p, index) => ({
+            ...p,
+            hand: p.hand || [],
+            position: index
+        }));
         this.game.warCards = [];
+        this.game.battleCards = [];
         this.game.isWar = false;
+        this.game.gamePhase = 'playing';
         
         this.updateUI();
         this.hideWarMessage();
         
-        UIUtils.showGameMessage(`${data.winner.name} wins the war and gets ${data.winner.cardsWon} cards!`, 'success');
+        if (data.winner) {
+            UIUtils.showGameMessage(`⚔️ ${data.winner.name} wins the war and gets ${data.winner.cardsWon} cards!`, 'success');
+        }
     }
 
     // Update next battle
     updateNextBattle(data) {
         this.game.battleNumber = data.battleNumber;
-        this.game.players = data.players;
+        this.game.players = data.players.map((p, index) => ({
+            ...p,
+            hand: p.hand || [],
+            position: index
+        }));
         
         this.canAct = true;
         this.updateUI();
         this.showActionControls();
+        
+        // Auto-start next battle after a short delay
+        setTimeout(() => {
+            if (!this.game.gameOver && this.canAct && 
+                (!this.game.battleCards || this.game.battleCards.length === 0) &&
+                (!this.game.warCards || this.game.warCards.length === 0)) {
+                console.log('⚔️ Auto-starting next battle');
+                this.startBattle();
+            }
+        }, 2000);
     }
 
     // Show game over
     showGameOver(data) {
-        UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards} cards!`, 'success');
-        this.updateUI();
-        this.hideActionControls();
+        if (data.winner) {
+            this.game.winner = this.game.players.find(p => p.name === data.winner.name) || data.winner;
+            this.game.gameOver = true;
+            
+            UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards} cards!`, 'success');
+            this.updateUI();
+            this.hideActionControls();
+            
+            // Show game over message for longer
+            setTimeout(() => {
+                if (data.finalScores) {
+                    const scoresText = data.finalScores.map(s => `${s.name}: ${s.cards} cards`).join(', ');
+                    UIUtils.showGameMessage(`Final Scores: ${scoresText}`, 'info');
+                }
+            }, 3000);
+        }
     }
 
     // Update UI
@@ -684,35 +764,109 @@ class WarClient {
     // Update battle area
     updateBattleArea() {
         const battleArea = document.getElementById('battleArea');
+        if (!battleArea) return;
+        
         battleArea.innerHTML = '';
         
-        // Show battle cards
-        this.game.battleCards.forEach(battleCard => {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'battle-card';
-            cardDiv.textContent = battleCard.card.name;
-            battleArea.appendChild(cardDiv);
-        });
+        // Show battle cards with proper card images
+        if (this.game.battleCards && this.game.battleCards.length > 0) {
+            this.game.battleCards.forEach((battleCard, index) => {
+                const cardDiv = this.createCardElement(battleCard.card, 'battle-card');
+                if (battleCard.playerIndex === this.localPlayerIndex) {
+                    cardDiv.classList.add('my-card');
+                }
+                battleArea.appendChild(cardDiv);
+            });
+        }
         
         // Show war cards (face up only)
-        this.game.warCards.forEach(warCard => {
-            if (warCard.faceUp) {
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'battle-card';
-                cardDiv.textContent = warCard.card.name;
-                battleArea.appendChild(cardDiv);
+        if (this.game.warCards && this.game.warCards.length > 0) {
+            this.game.warCards.forEach((warCard, index) => {
+                if (warCard.faceUp) {
+                    const cardDiv = this.createCardElement(warCard.card, 'battle-card war-card');
+                    if (warCard.playerIndex === this.localPlayerIndex) {
+                        cardDiv.classList.add('my-card');
+                    }
+                    battleArea.appendChild(cardDiv);
+                } else {
+                    // Show face-down card back
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'battle-card war-card face-down';
+                    cardDiv.innerHTML = '<div class="card-back">🂠</div>';
+                    battleArea.appendChild(cardDiv);
+                }
+            });
+        }
+        
+        // Show message if no cards
+        if ((!this.game.battleCards || this.game.battleCards.length === 0) && 
+            (!this.game.warCards || this.game.warCards.length === 0)) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'battle-message';
+            messageDiv.textContent = 'Ready for battle!';
+            battleArea.appendChild(messageDiv);
+        }
+    }
+    
+    // Create card element with proper image
+    createCardElement(card, className = '') {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = className || 'card';
+        
+        // Try to use card image if available
+        if (window.cardImages && card.name) {
+            const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
+            const cardImage = window.cardImages[imageName];
+            
+            if (cardImage && cardImage.width > 0) {
+                const img = document.createElement('img');
+                img.src = cardImage.src || `Images/Cards/${imageName}.png`;
+                img.alt = card.name;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '5px';
+                cardDiv.appendChild(img);
+            } else {
+                // Fallback to text
+                cardDiv.textContent = card.name;
+                cardDiv.style.display = 'flex';
+                cardDiv.style.alignItems = 'center';
+                cardDiv.style.justifyContent = 'center';
+                cardDiv.style.fontSize = '10px';
+                cardDiv.style.fontWeight = 'bold';
             }
-        });
+        } else {
+            // Fallback to text
+            cardDiv.textContent = card.name || 'Unknown';
+            cardDiv.style.display = 'flex';
+            cardDiv.style.alignItems = 'center';
+            cardDiv.style.justifyContent = 'center';
+            cardDiv.style.fontSize = '10px';
+            cardDiv.style.fontWeight = 'bold';
+        }
+        
+        return cardDiv;
     }
 
     // Update player areas
     updatePlayerAreas() {
-        // This would update the visual representation of players
-        // For now, just log the state
-        console.log('Players:', this.game.players.map(p => ({
-            name: p.name,
-            hand: p.hand.length
-        })));
+        // Update player visualization in the game area
+        // The scores table already shows player info, but we can add visual indicators
+        const scoresBody = document.getElementById('scoresBody');
+        if (scoresBody) {
+            // Highlight current player or winner
+            const rows = scoresBody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                row.classList.remove('active', 'winner');
+                if (this.game.currentPlayer === index && !this.game.gameOver) {
+                    row.classList.add('active');
+                }
+                if (this.game.gameOver && this.game.winner && this.game.winner.name === this.game.players[index]?.name) {
+                    row.classList.add('winner');
+                }
+            });
+        }
     }
 
     // Show war message

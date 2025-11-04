@@ -2790,6 +2790,79 @@ io.on('connection', (socket) => {
                 };
                 
                 console.log(`🃏 Blackjack game initialized with ${players.length} players in betting phase`);
+            } else if (room.gameType === 'war') {
+                // For War, initialize game state
+                console.log(`⚔️ Creating War game for ${room.players.length} players`);
+                
+                // Create a standard deck for War
+                const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+                const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+                const deck = [];
+                
+                for (let suit of suits) {
+                    for (let rank of ranks) {
+                        let value;
+                        if (rank === 'ace') {
+                            value = 14;
+                        } else if (rank === 'king') {
+                            value = 13;
+                        } else if (rank === 'queen') {
+                            value = 12;
+                        } else if (rank === 'jack') {
+                            value = 11;
+                        } else {
+                            value = parseInt(rank);
+                        }
+                        
+                        deck.push({
+                            name: `${rank} of ${suit}`,
+                            suit: suit,
+                            rank: rank,
+                            value: value
+                        });
+                    }
+                }
+                
+                // Shuffle deck
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+                
+                // Deal cards evenly to all players
+                const hands = Array(room.players.length).fill().map(() => []);
+                let cardIndex = 0;
+                while (cardIndex < deck.length) {
+                    for (let j = 0; j < room.players.length; j++) {
+                        if (cardIndex < deck.length) {
+                            hands[j].push(deck[cardIndex]);
+                            cardIndex++;
+                        }
+                    }
+                }
+                
+                room.game = {
+                    started: true,
+                    gameType: 'war',
+                    deck: deck,
+                    hands: hands,
+                    players: room.players.map((player, index) => ({
+                        ...player,
+                        hand: hands[index] || []
+                    })),
+                    currentPlayer: 0,
+                    gamePhase: 'playing', // playing, war, finished
+                    roundNumber: 1,
+                    battleNumber: 1,
+                    battleCards: [],
+                    warCards: [],
+                    gameOver: false,
+                    winner: null,
+                    isWar: false
+                };
+                
+                console.log(`⚔️ War game initialized with ${room.players.length} players`);
+                console.log(`⚔️ Cards dealt:`, hands.map((hand, i) => `Player ${i}: ${hand.length} cards`));
             } else {
                 // For Truco and other games, create shared deck and distribute cards
                 console.log(`🔍 Creating deck...`);
@@ -2899,6 +2972,30 @@ io.on('connection', (socket) => {
                 
                 // No broadcast for Go Fish - each player gets individual data
                 console.log(`🐟 Go Fish: Individual gameStarted events sent to all players`);
+            } else if (room.gameType === 'war') {
+                // For War, send gameStarted to each player individually
+                console.log(`⚔️ Sending gameStarted to ${room.players.length} players in War room`);
+                
+                room.players.forEach((player, playerIndex) => {
+                    if (!player.isBot) {
+                        const gameStartedData = {
+                            players: room.game.players.map((p, index) => ({
+                                ...p,
+                                hand: p.hand || [], // Show all players' hands (card counts)
+                                isLocal: p.id === player.id
+                            })),
+                            localPlayerIndex: playerIndex,
+                            currentPlayer: room.game.currentPlayer,
+                            battleNumber: room.game.battleNumber,
+                            gamePhase: room.game.gamePhase
+                        };
+                        
+                        io.to(player.id).emit('gameStarted', gameStartedData);
+                        console.log(`⚔️ gameStarted sent to player ${playerIndex}: ${player.name}`);
+                    }
+                });
+                
+                console.log(`⚔️ War: gameStarted events sent to all players`);
             } else if (room.gameType === 'poker') {
                 // For Poker, send gameStarted to each player individually
                 console.log(`🎴 Sending gameStarted to ${room.players.length} players in Poker room`);
@@ -2980,6 +3077,297 @@ io.on('connection', (socket) => {
         console.log('🔍 Test event received from client:', data);
         socket.emit('test', { message: 'Server socket test response', timestamp: Date.now() });
     });
+
+    // ⚔️ WAR GAME SPECIFIC EVENT HANDLERS
+    socket.on('startBattle', (data) => {
+        try {
+            console.log(`⚔️ Start battle event received:`, data);
+            const roomCode = data.roomId || data;
+            const room = rooms.get(roomCode);
+            
+            if (!room || room.gameType !== 'war') {
+                console.log(`❌ Room ${roomCode} not found or not a war game`);
+                socket.emit('error', 'Room not found or invalid game type');
+                return;
+            }
+            
+            if (!room.game || !room.game.started) {
+                console.log(`❌ No active war game in room ${roomCode}`);
+                socket.emit('error', 'No active game');
+                return;
+            }
+            
+            if (room.game.gameOver) {
+                console.log(`❌ Game is over in room ${roomCode}`);
+                return;
+            }
+            
+            // Start a battle - each player plays a card
+            room.game.battleCards = [];
+            
+            for (let i = 0; i < room.game.players.length; i++) {
+                const player = room.game.players[i];
+                if (player.hand && player.hand.length > 0) {
+                    const card = player.hand.shift();
+                    room.game.battleCards.push({
+                        card: card,
+                        player: player,
+                        playerIndex: i
+                    });
+                }
+            }
+            
+            // Check if we have enough cards for battle
+            if (room.game.battleCards.length < 2) {
+                // End game - not enough cards
+                const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
+                const winner = playersWithCards.length === 1 ? playersWithCards[0] : 
+                              room.game.players.reduce((max, player) => 
+                                  (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
+                              );
+                
+                room.game.gameOver = true;
+                room.game.winner = winner;
+                
+                io.to(roomCode).emit('gameOver', {
+                    winner: {
+                        name: winner.name,
+                        cards: winner.hand?.length || 0
+                    },
+                    finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
+                });
+                return;
+            }
+            
+            // Emit battle started
+            io.to(roomCode).emit('battleStarted', {
+                battleCards: room.game.battleCards,
+                battleNumber: room.game.battleNumber,
+                players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+            });
+            
+            // Resolve battle after delay
+            setTimeout(() => {
+                resolveWarBattle(room, roomCode);
+            }, 1500);
+            
+        } catch (error) {
+            console.error(`❌ Error in startBattle handler:`, error);
+            socket.emit('error', 'Failed to start battle');
+        }
+    });
+    
+    // Helper function to resolve a war battle
+    function resolveWarBattle(room, roomCode) {
+        if (!room.game || room.game.gameOver) return;
+        
+        console.log('⚔️ Resolving war battle');
+        
+        // Find highest card
+        let highestCard = room.game.battleCards[0];
+        let winners = [room.game.battleCards[0]];
+        
+        for (let i = 1; i < room.game.battleCards.length; i++) {
+            const battleCard = room.game.battleCards[i];
+            if (battleCard.card.value > highestCard.card.value) {
+                highestCard = battleCard;
+                winners = [battleCard];
+            } else if (battleCard.card.value === highestCard.card.value) {
+                winners.push(battleCard);
+            }
+        }
+        
+        // Check for war
+        if (winners.length > 1) {
+            startWar(room, roomCode, winners);
+        } else {
+            awardWarBattle(room, roomCode, winners[0]);
+        }
+    }
+    
+    // Helper function to start a war
+    function startWar(room, roomCode, warPlayers) {
+        console.log('⚔️ WAR! Starting war sequence');
+        room.game.isWar = true;
+        room.game.gamePhase = 'war';
+        
+        // Each player in war plays 3 cards face down, 1 face up
+        room.game.warCards = [];
+        const warCardsToPlay = Math.min(3, Math.min(...warPlayers.map(p => room.game.players[p.playerIndex].hand?.length || 0)));
+        
+        for (let warPlayer of warPlayers) {
+            const player = room.game.players[warPlayer.playerIndex];
+            if (player.hand && player.hand.length >= warCardsToPlay + 1) {
+                // Play face down cards
+                for (let i = 0; i < warCardsToPlay; i++) {
+                    const card = player.hand.shift();
+                    room.game.warCards.push({
+                        card: card,
+                        player: player,
+                        playerIndex: warPlayer.playerIndex,
+                        faceUp: false
+                    });
+                }
+                
+                // Play face up card
+                const faceUpCard = player.hand.shift();
+                room.game.warCards.push({
+                    card: faceUpCard,
+                    player: player,
+                    playerIndex: warPlayer.playerIndex,
+                    faceUp: true
+                });
+            }
+        }
+        
+        io.to(roomCode).emit('warStarted', {
+            warCards: room.game.warCards,
+            warPlayers: warPlayers.map(p => p.player.name),
+            players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+        });
+        
+        // Resolve war after delay
+        setTimeout(() => {
+            resolveWar(room, roomCode);
+        }, 2000);
+    }
+    
+    // Helper function to resolve a war
+    function resolveWar(room, roomCode) {
+        if (!room.game || room.game.gameOver) return;
+        
+        console.log('⚔️ Resolving war');
+        
+        // Find highest face-up card
+        const faceUpCards = room.game.warCards.filter(wc => wc.faceUp);
+        if (faceUpCards.length === 0) {
+            // No face-up cards, award to first player
+            const winner = room.game.battleCards[0];
+            awardWarBattle(room, roomCode, winner);
+            return;
+        }
+        
+        let highestCard = faceUpCards[0];
+        let winners = [faceUpCards[0]];
+        
+        for (let i = 1; i < faceUpCards.length; i++) {
+            const warCard = faceUpCards[i];
+            if (warCard.card.value > highestCard.card.value) {
+                highestCard = warCard;
+                winners = [warCard];
+            } else if (warCard.card.value === highestCard.card.value) {
+                winners.push(warCard);
+            }
+        }
+        
+        // Award all cards to winner
+        const winner = winners[0];
+        const allCards = [
+            ...room.game.battleCards.map(bc => bc.card),
+            ...room.game.warCards.map(wc => wc.card)
+        ];
+        
+        // Shuffle and add to winner's hand
+        const shuffledCards = allCards.sort(() => Math.random() - 0.5);
+        winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
+        
+        console.log(`⚔️ ${winner.player.name} wins the war and gets ${allCards.length} cards!`);
+        
+        io.to(roomCode).emit('warResolved', {
+            winner: {
+                name: winner.player.name,
+                playerIndex: winner.playerIndex,
+                cardsWon: allCards.length
+            },
+            players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+        });
+        
+        // Reset for next battle
+        room.game.battleCards = [];
+        room.game.warCards = [];
+        room.game.isWar = false;
+        room.game.gamePhase = 'playing';
+        room.game.battleNumber++;
+        
+        // Check for game over
+        const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
+        if (playersWithCards.length <= 1) {
+            const gameWinner = playersWithCards.length === 1 ? playersWithCards[0] :
+                             room.game.players.reduce((max, player) => 
+                                 (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
+                             );
+            
+            room.game.gameOver = true;
+            room.game.winner = gameWinner;
+            
+            io.to(roomCode).emit('gameOver', {
+                winner: {
+                    name: gameWinner.name,
+                    cards: gameWinner.hand?.length || 0
+                },
+                finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
+            });
+        } else {
+            // Next battle
+            setTimeout(() => {
+                io.to(roomCode).emit('nextBattle', {
+                    battleNumber: room.game.battleNumber,
+                    players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+                });
+            }, 1500);
+        }
+    }
+    
+    // Helper function to award a battle
+    function awardWarBattle(room, roomCode, winner) {
+        console.log(`⚔️ ${winner.player.name} wins the battle!`);
+        
+        // Award all battle cards to winner
+        const allCards = room.game.battleCards.map(bc => bc.card);
+        const shuffledCards = allCards.sort(() => Math.random() - 0.5);
+        winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
+        
+        io.to(roomCode).emit('battleResolved', {
+            winner: {
+                name: winner.player.name,
+                playerIndex: winner.playerIndex,
+                cardsWon: allCards.length
+            },
+            players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+        });
+        
+        // Reset for next battle
+        room.game.battleCards = [];
+        room.game.battleNumber++;
+        
+        // Check for game over
+        const playersWithCards = room.game.players.filter(p => p.hand && p.hand.length > 0);
+        if (playersWithCards.length <= 1) {
+            const gameWinner = playersWithCards.length === 1 ? playersWithCards[0] :
+                             room.game.players.reduce((max, player) => 
+                                 (player.hand?.length || 0) > (max.hand?.length || 0) ? player : max
+                             );
+            
+            room.game.gameOver = true;
+            room.game.winner = gameWinner;
+            
+            io.to(roomCode).emit('gameOver', {
+                winner: {
+                    name: gameWinner.name,
+                    cards: gameWinner.hand?.length || 0
+                },
+                finalScores: room.game.players.map(p => ({ name: p.name, cards: p.hand?.length || 0 }))
+            });
+        } else {
+            // Next battle
+            setTimeout(() => {
+                io.to(roomCode).emit('nextBattle', {
+                    battleNumber: room.game.battleNumber,
+                    players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+                });
+            }, 1500);
+        }
+    }
 
     // 🐟 GO FISH SPECIFIC EVENT HANDLERS
     socket.on('askForCards', (data) => {
@@ -5198,8 +5586,10 @@ function handlePokerShowdown(roomCode, room) {
 function startNewPokerHand(roomCode, room) {
     console.log(`🎴 Starting new poker hand`);
     
-    // Move dealer button
+    // Move dealer button clockwise (rotates to next player)
+    // SB and BB positions automatically rotate because they're calculated from dealerPosition
     room.game.dealerPosition = (room.game.dealerPosition + 1) % room.game.players.length;
+    console.log(`🎴 Dealer button moved to position ${room.game.dealerPosition} (${room.game.players[room.game.dealerPosition]?.name})`);
     
     // Reset player states
     room.game.players.forEach(player => {
