@@ -5818,6 +5818,7 @@ function determineRoundWinner(playedCards, room) {
             }
             
             // Handle poker-specific actions
+            console.log(`🎴 DEBUG: Checking poker condition - room.gameType: "${room.gameType}", match: ${room.gameType === 'poker'}`);
             if (room.gameType === 'poker') {
                 console.log(`🎴 Poker player action received`);
                 const playerIndex = data.playerIndex;
