@@ -643,6 +643,33 @@ class PokerClient {
         
         // Copy room code
         document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
+        
+        // Back to Main Menu button (in menu)
+        const backToMainMenuBtn = document.getElementById('backToMainMenu');
+        if (backToMainMenuBtn) {
+            backToMainMenuBtn.onclick = () => {
+                console.log('🔙 Back to Main Menu clicked');
+                window.location.replace('/');
+            };
+        }
+        
+        // Back to Poker Menu button (during game)
+        const backToMainMenuBtnGame = document.getElementById('backToMainMenuBtn');
+        if (backToMainMenuBtnGame) {
+            backToMainMenuBtnGame.onclick = () => {
+                console.log('🔙 Back to Poker Menu clicked');
+                window.location.reload();
+            };
+        }
+        
+        // Poker Menu button (gameMenuBtn)
+        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        if (gameMenuBtn) {
+            gameMenuBtn.onclick = () => {
+                console.log('🎴 Poker Menu clicked');
+                window.location.reload();
+            };
+        }
     }
 
     // Setup socket event listeners
@@ -652,6 +679,13 @@ class PokerClient {
         socket.on('roomCreated', (data) => {
             console.log('Room created:', data);
             const roomCode = data.roomId || data; // Handle both old and new formats
+            
+            // Store roomId in gameFramework
+            if (window.gameFramework) {
+                window.gameFramework.roomId = roomCode;
+                console.log('🎴 Stored roomId in gameFramework:', roomCode);
+            }
+            
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();
@@ -659,7 +693,15 @@ class PokerClient {
         
         socket.on('roomJoined', (data) => {
             console.log('Room joined:', data);
-            this.localPlayerIndex = data.playerIndex || data.playerIndex === 0 ? data.playerIndex : 0;
+            const roomCode = data.roomId || data; // Handle both old and new formats
+            
+            // Store roomId in gameFramework
+            if (window.gameFramework) {
+                window.gameFramework.roomId = roomCode;
+                console.log('🎴 Stored roomId in gameFramework:', roomCode);
+            }
+            
+            this.localPlayerIndex = data.playerIndex !== undefined && data.playerIndex !== null ? data.playerIndex : 0;
             console.log('Local player index set to:', this.localPlayerIndex);
             this.showPlayerCustomization();
             this.showGameControls();
@@ -1005,10 +1047,37 @@ class PokerClient {
         this.updateUI();
     }
 
+    // Get room ID (handles both object and string formats)
+    getRoomId() {
+        if (typeof window.gameFramework === 'undefined' || !window.gameFramework.roomId) {
+            console.error('❌ No roomId in gameFramework');
+            return null;
+        }
+        const roomId = window.gameFramework.roomId;
+        const extractedRoomId = typeof roomId === 'object' && roomId.roomId ? roomId.roomId : roomId;
+        console.log('🎴 getRoomId:', extractedRoomId);
+        return extractedRoomId;
+    }
+
     // Player action
     playerAction(action) {
         if (!this.canAct) {
             UIUtils.showGameMessage('It\'s not your turn', 'error');
+            return;
+        }
+        
+        // Get room ID properly
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('❌ No roomId available for player action');
+            UIUtils.showGameMessage('Room not found. Please create or join a room first.', 'error');
+            return;
+        }
+        
+        // Validate local player index
+        if (this.localPlayerIndex === undefined || this.localPlayerIndex === null) {
+            console.error('❌ No localPlayerIndex available for player action');
+            UIUtils.showGameMessage('Player index not set. Please wait for game to initialize.', 'error');
             return;
         }
         
@@ -1021,9 +1090,17 @@ class PokerClient {
             }
         }
         
+        console.log('🎴 Emitting playerAction:', { roomId, playerIndex: this.localPlayerIndex, action, amount });
+        
         const socket = window.gameFramework.socket;
+        if (!socket || !socket.connected) {
+            console.error('❌ Socket not connected');
+            UIUtils.showGameMessage('Not connected to server. Please refresh the page.', 'error');
+            return;
+        }
+        
         socket.emit('playerAction', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: action,
             amount: amount
@@ -1170,6 +1247,18 @@ class PokerClient {
     // Betting actions - use the correct method that emits to server
     fold() {
         console.log('🎴 Player folded');
+        
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('❌ No roomId available for fold');
+            return;
+        }
+        
+        if (this.localPlayerIndex === undefined || this.localPlayerIndex === null) {
+            console.error('❌ No localPlayerIndex available for fold');
+            return;
+        }
+        
         const socket = window.gameFramework?.socket;
         if (!socket || !socket.connected) {
             console.error('❌ Socket not connected');
@@ -1177,7 +1266,7 @@ class PokerClient {
         }
         
         socket.emit('playerAction', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: 'fold',
             amount: 0
@@ -1187,6 +1276,17 @@ class PokerClient {
     }
 
     call() {
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('❌ No roomId available for call');
+            return;
+        }
+        
+        if (this.localPlayerIndex === undefined || this.localPlayerIndex === null) {
+            console.error('❌ No localPlayerIndex available for call');
+            return;
+        }
+        
         const localPlayer = this.game.players[this.localPlayerIndex];
         if (!localPlayer) {
             console.error('❌ Local player not found');
@@ -1203,7 +1303,7 @@ class PokerClient {
         }
         
         socket.emit('playerAction', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: 'call',
             amount: callAmount
@@ -1213,6 +1313,17 @@ class PokerClient {
     }
 
     raise() {
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('❌ No roomId available for raise');
+            return;
+        }
+        
+        if (this.localPlayerIndex === undefined || this.localPlayerIndex === null) {
+            console.error('❌ No localPlayerIndex available for raise');
+            return;
+        }
+        
         const betAmountInput = document.getElementById('betAmount');
         if (!betAmountInput) {
             console.error('❌ Bet amount input not found');
@@ -1248,7 +1359,7 @@ class PokerClient {
         }
         
         socket.emit('playerAction', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: 'raise',
             amount: raiseAmount
@@ -1258,6 +1369,17 @@ class PokerClient {
     }
     
     allIn() {
+        const roomId = this.getRoomId();
+        if (!roomId) {
+            console.error('❌ No roomId available for allIn');
+            return;
+        }
+        
+        if (this.localPlayerIndex === undefined || this.localPlayerIndex === null) {
+            console.error('❌ No localPlayerIndex available for allIn');
+            return;
+        }
+        
         const localPlayer = this.game.players[this.localPlayerIndex];
         if (!localPlayer) {
             console.error('❌ Local player not found');
@@ -1274,7 +1396,7 @@ class PokerClient {
         }
         
         socket.emit('playerAction', {
-            roomId: window.gameFramework.roomId,
+            roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: 'raise',
             amount: allInAmount
