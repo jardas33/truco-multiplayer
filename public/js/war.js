@@ -419,6 +419,9 @@ class WarClient {
         this.pendingBattleTimeout = null; // ✅ CRITICAL FIX: Track pending timeouts
         this.activeParticles = []; // ✅ CRITICAL FIX: Track particles for cleanup
         this.updateUIScheduled = false; // ✅ CRITICAL FIX: Track UI update scheduling
+        this.touchStartHandler = null; // ✅ CRITICAL FIX: Track touch handlers for cleanup
+        this.touchEndHandler = null; // ✅ CRITICAL FIX: Track touch handlers for cleanup
+        this.allTimeouts = []; // ✅ CRITICAL FIX: Track all timeouts for cleanup
     }
 
     // Initialize the client
@@ -498,20 +501,27 @@ class WarClient {
                 }
             };
             
-            // ✅ CRITICAL FIX: Add touch support for mobile
-            battleBtn.addEventListener('touchstart', (e) => {
+            // ✅ CRITICAL FIX: Add touch support for mobile with cleanup tracking
+            this.touchStartHandler = (e) => {
                 e.preventDefault();
                 battleBtn.style.transform = 'scale(0.95)';
-            }, { passive: false });
-            
-            battleBtn.addEventListener('touchend', (e) => {
+            };
+            this.touchEndHandler = (e) => {
                 e.preventDefault();
                 battleBtn.style.transform = '';
                 if (!battleBtn.disabled) {
                     this.startBattle();
                 }
-            }, { passive: false });
+            };
+            
+            battleBtn.addEventListener('touchstart', this.touchStartHandler, { passive: false });
+            battleBtn.addEventListener('touchend', this.touchEndHandler, { passive: false });
         }
+        
+        // ✅ CRITICAL FIX: Add beforeunload cleanup
+        window.addEventListener('beforeunload', () => {
+            this.cleanup();
+        });
         
         // Copy room code
         if (copyRoomCodeBtn) {
@@ -889,6 +899,25 @@ class WarClient {
             clearTimeout(this.pendingBattleTimeout);
             this.pendingBattleTimeout = null;
         }
+        
+        // ✅ CRITICAL FIX: Clear all tracked timeouts
+        this.allTimeouts.forEach(timeout => {
+            if (timeout) clearTimeout(timeout);
+        });
+        this.allTimeouts = [];
+    }
+    
+    // ✅ CRITICAL FIX: Safe setTimeout wrapper that tracks timeouts
+    safeSetTimeout(callback, delay) {
+        const timeout = setTimeout(() => {
+            const index = this.allTimeouts.indexOf(timeout);
+            if (index > -1) {
+                this.allTimeouts.splice(index, 1);
+            }
+            callback();
+        }, delay);
+        this.allTimeouts.push(timeout);
+        return timeout;
     }
     
     // Create particle effects for battle
@@ -1000,7 +1029,8 @@ class WarClient {
             effect.style.transform = 'translate(-50%, -50%)';
             document.body.appendChild(effect);
             
-            setTimeout(() => effect.remove(), 2000);
+            // ✅ CRITICAL FIX: Track timeout for cleanup
+            this.safeSetTimeout(() => effect.remove(), 2000);
         }
     }
 
@@ -1021,9 +1051,13 @@ class WarClient {
         this.game.isWar = true;
         this.game.gamePhase = 'war';
         
-        // Update statistics
+        // ✅ CRITICAL FIX: Update statistics correctly for consecutive wars
+        // Note: currentWarCount is incremented here, but only reset when war is resolved
+        // This allows tracking consecutive wars properly
         this.statistics.totalWars++;
         this.statistics.currentWarCount++;
+        
+        // ✅ CRITICAL FIX: Update longest war only when current exceeds it
         if (this.statistics.currentWarCount > this.statistics.longestWar) {
             this.statistics.longestWar = this.statistics.currentWarCount;
         }
@@ -1060,7 +1094,8 @@ class WarClient {
             particle.style.setProperty('--distance', distance + 'px');
             battleArea.appendChild(particle);
             
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Track timeout for cleanup
+            this.safeSetTimeout(() => {
                 if (particle.parentNode) {
                     particle.remove();
                 }
@@ -1075,9 +1110,10 @@ class WarClient {
         
         const faceDownCards = battleArea.querySelectorAll('.face-down');
         faceDownCards.forEach((card, index) => {
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Track timeouts for cleanup
+            this.safeSetTimeout(() => {
                 card.classList.add('flipping');
-                setTimeout(() => {
+                this.safeSetTimeout(() => {
                     card.classList.remove('flipping');
                 }, 600);
             }, index * 100);
@@ -1174,7 +1210,8 @@ class WarClient {
             document.body.appendChild(confetti);
             this.activeParticles.push(confetti);
             
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Track timeout for cleanup
+            this.safeSetTimeout(() => {
                 if (confetti.parentNode) {
                     confetti.remove();
                     const index = this.activeParticles.indexOf(confetti);
@@ -1214,8 +1251,8 @@ class WarClient {
         this.updateUI();
         this.showActionControls();
         
-        // ✅ CRITICAL FIX: Auto-start next battle with proper validation
-        this.pendingBattleTimeout = setTimeout(() => {
+        // ✅ CRITICAL FIX: Auto-start next battle with proper validation and tracked timeout
+        this.pendingBattleTimeout = this.safeSetTimeout(() => {
             if (!this.game.gameOver && 
                 this.canAct && 
                 (!this.game.battleCards || this.game.battleCards.length === 0) &&
@@ -1252,10 +1289,21 @@ class WarClient {
         // Create victory screen
         this.createVictoryScreen(data);
         
-        // Show winner glow on player
+        // ✅ CRITICAL FIX: Show winner glow on player with proper element selection
         const winnerIndex = this.game.players.findIndex(p => p && p.name === data.winner.name);
         if (winnerIndex !== -1) {
-            const playerElement = document.querySelector(`[data-player-index="${winnerIndex}"]`);
+            // Try multiple selectors to find player element
+            let playerElement = document.querySelector(`[data-player-index="${winnerIndex}"]`);
+            if (!playerElement) {
+                // Try finding in scores table
+                const scoresBody = document.getElementById('scoresBody');
+                if (scoresBody) {
+                    const rows = scoresBody.querySelectorAll('tr');
+                    if (rows[winnerIndex]) {
+                        playerElement = rows[winnerIndex];
+                    }
+                }
+            }
             if (playerElement) {
                 playerElement.classList.add('game-winner');
             }
@@ -1264,8 +1312,8 @@ class WarClient {
         UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards || 0} cards!`, 'success');
         this.updateUI();
         
-        // Show final statistics
-        setTimeout(() => {
+        // ✅ CRITICAL FIX: Show final statistics with tracked timeout
+        this.safeSetTimeout(() => {
             this.showFinalStatistics(data);
         }, 4000);
     }
@@ -1299,7 +1347,8 @@ class WarClient {
                 document.body.appendChild(confetti);
                 this.activeParticles.push(confetti);
                 
-                setTimeout(() => {
+                // ✅ CRITICAL FIX: Track timeout for cleanup
+                this.safeSetTimeout(() => {
                     if (confetti.parentNode) {
                         confetti.remove();
                         const index = this.activeParticles.indexOf(confetti);
@@ -1316,6 +1365,33 @@ class WarClient {
     cleanup() {
         // Clear all timeouts
         this.clearPendingActions();
+        
+        // ✅ CRITICAL FIX: Remove all event listeners
+        const battleBtn = document.getElementById('battleBtn');
+        if (battleBtn && this.touchStartHandler && this.touchEndHandler) {
+            battleBtn.removeEventListener('touchstart', this.touchStartHandler);
+            battleBtn.removeEventListener('touchend', this.touchEndHandler);
+            this.touchStartHandler = null;
+            this.touchEndHandler = null;
+        }
+        
+        // ✅ CRITICAL FIX: Remove socket listeners to prevent memory leaks
+        if (window.gameFramework && window.gameFramework.socket) {
+            const socket = window.gameFramework.socket;
+            socket.removeAllListeners('roomCreated');
+            socket.removeAllListeners('roomJoined');
+            socket.removeAllListeners('gameStarted');
+            socket.removeAllListeners('battleStarted');
+            socket.removeAllListeners('battleResolved');
+            socket.removeAllListeners('warStarted');
+            socket.removeAllListeners('warResolved');
+            socket.removeAllListeners('nextBattle');
+            socket.removeAllListeners('gameOver');
+            socket.removeAllListeners('error');
+            socket.removeAllListeners('disconnect');
+            socket.removeAllListeners('reconnect');
+            socket.removeAllListeners('connect_error');
+        }
         
         // Remove all particles
         this.activeParticles.forEach(p => {
@@ -1397,10 +1473,10 @@ class WarClient {
             document.head.appendChild(style);
         }
         
-        // Auto-remove after 8 seconds
-        setTimeout(() => {
+        // ✅ CRITICAL FIX: Auto-remove after 8 seconds with tracked timeouts
+        this.safeSetTimeout(() => {
             victoryScreen.style.animation = 'victoryFadeIn 0.5s ease-out reverse';
-            setTimeout(() => victoryScreen.remove(), 500);
+            this.safeSetTimeout(() => victoryScreen.remove(), 500);
         }, 8000);
     }
     
@@ -1410,8 +1486,8 @@ class WarClient {
             const statsText = data.finalScores.map(s => `${s.name}: ${s.cards} cards`).join(' | ');
             UIUtils.showGameMessage(`📊 Final Scores: ${statsText}`, 'info');
             
-            // Show detailed statistics
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Show detailed statistics with tracked timeout
+            this.safeSetTimeout(() => {
                 const detailStats = `
                     📈 Game Statistics:
                     • Battles Fought: ${this.statistics.totalBattles}
@@ -1452,7 +1528,8 @@ class WarClient {
             const newValue = this.game.roundNumber;
             if (roundNumberEl.textContent !== newValue.toString()) {
                 roundNumberEl.style.animation = 'numberPulse 0.3s ease-out';
-                setTimeout(() => {
+                // ✅ CRITICAL FIX: Track timeout for cleanup
+                this.safeSetTimeout(() => {
                     roundNumberEl.textContent = newValue;
                     roundNumberEl.style.animation = '';
                 }, 150);
@@ -1463,7 +1540,8 @@ class WarClient {
             const newValue = this.game.battleNumber;
             if (battleNumberEl.textContent !== newValue.toString()) {
                 battleNumberEl.style.animation = 'numberPulse 0.3s ease-out';
-                setTimeout(() => {
+                // ✅ CRITICAL FIX: Track timeout for cleanup
+                this.safeSetTimeout(() => {
                     battleNumberEl.textContent = newValue;
                     battleNumberEl.style.animation = '';
                 }, 150);
@@ -1474,7 +1552,8 @@ class WarClient {
             const newValue = this.game.players[this.game.currentPlayer]?.name || '-';
             if (currentPlayerEl.textContent !== newValue) {
                 currentPlayerEl.style.opacity = '0';
-                setTimeout(() => {
+                // ✅ CRITICAL FIX: Track timeout for cleanup
+                this.safeSetTimeout(() => {
                     currentPlayerEl.textContent = newValue;
                     currentPlayerEl.style.opacity = '1';
                 }, 200);
@@ -1485,7 +1564,8 @@ class WarClient {
             const newValue = (this.game.battleCards?.length || 0) + (this.game.warCards?.length || 0);
             if (cardsInPlayEl.textContent !== newValue.toString()) {
                 cardsInPlayEl.style.animation = 'numberPulse 0.3s ease-out';
-                setTimeout(() => {
+                // ✅ CRITICAL FIX: Track timeout for cleanup
+                this.safeSetTimeout(() => {
                     cardsInPlayEl.textContent = newValue;
                     cardsInPlayEl.style.animation = '';
                 }, 150);
@@ -1934,8 +2014,8 @@ class WarClient {
                 top: window.innerHeight / 2 
             };
             
-            // Animate
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Animate with tracked timeouts
+            this.safeSetTimeout(() => {
                 if (flyingCard.parentNode) {
                     flyingCard.style.transition = 'all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
                     flyingCard.style.left = targetRect.left + 'px';
@@ -1943,7 +2023,7 @@ class WarClient {
                     flyingCard.style.transform = 'scale(0.3) rotate(360deg)';
                     flyingCard.style.opacity = '0';
                     
-                    setTimeout(() => {
+                    this.safeSetTimeout(() => {
                         if (flyingCard.parentNode) {
                             flyingCard.remove();
                         }
