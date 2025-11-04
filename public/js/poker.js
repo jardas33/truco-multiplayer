@@ -1646,6 +1646,7 @@ class PokerClient {
         }
         
         console.log('🎴 Player raised:', raiseAmount);
+        this.addHistoryEntry(`You raised to $${totalBetAmount}`, 'player-action');
         
         const socket = window.gameFramework?.socket;
         if (!socket || !socket.connected) {
