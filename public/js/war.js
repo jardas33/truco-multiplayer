@@ -730,23 +730,54 @@ class WarClient {
 
     // Start game
     startGame(data = null) {
-        if (data) {
-            // Initialize game with server data
-            this.game.players = data.players.map((player, index) => ({
-                ...player,
-                hand: player.hand || [],
-                position: index
-            }));
-            this.localPlayerIndex = data.localPlayerIndex || 0;
-            this.game.battleNumber = data.battleNumber || 1;
-            this.game.gamePhase = data.gamePhase || 'playing';
-            this.game.currentPlayer = data.currentPlayer || 0;
-            
-            // Set global game instance
-            window.game = this.game;
-            
-            console.log('⚔️ War game started with players:', this.game.players.map(p => ({ name: p.name, cards: p.hand.length })));
+        // ✅ CRITICAL FIX: Validate data before starting game
+        if (!data || !data.players || !Array.isArray(data.players)) {
+            console.error('❌ Invalid game started data');
+            UIUtils.showGameMessage('Invalid game data received. Please refresh the page.', 'error');
+            return;
         }
+        
+        // ✅ CRITICAL FIX: Validate minimum player count
+        if (data.players.length < 2) {
+            console.error('❌ Insufficient players to start game');
+            UIUtils.showGameMessage('Need at least 2 players to start the game.', 'error');
+            return;
+        }
+        
+        // Initialize game with server data
+        this.game.players = data.players.map((player, index) => ({
+            ...player,
+            hand: Array.isArray(player.hand) ? player.hand : [],
+            position: index
+        }));
+        this.localPlayerIndex = data.localPlayerIndex !== undefined ? data.localPlayerIndex : 0;
+        this.game.battleNumber = data.battleNumber || 1;
+        this.game.gamePhase = data.gamePhase || 'playing';
+        this.game.currentPlayer = data.currentPlayer !== undefined ? data.currentPlayer : 0;
+        this.game.roundNumber = data.roundNumber || 1;
+        this.game.battleCards = [];
+        this.game.warCards = [];
+        this.game.gameOver = false;
+        this.game.winner = null;
+        this.game.isWar = false;
+        
+        // ✅ CRITICAL FIX: Validate card count consistency (52 cards total in standard deck)
+        const totalCards = this.game.players.reduce((sum, p) => sum + (Array.isArray(p.hand) ? p.hand.length : 0), 0);
+        if (totalCards !== 52 && totalCards > 0) {
+            console.warn(`⚠️ Card count mismatch: Expected 52, got ${totalCards}. Cards may be in play or game state is inconsistent.`);
+        }
+        
+        // Reset statistics
+        this.statistics.totalBattles = 0;
+        this.statistics.totalWars = 0;
+        this.statistics.longestWar = 0;
+        this.statistics.currentWarCount = 0;
+        this.statistics.cardsWonByPlayer = {};
+        
+        // Set global game instance
+        window.game = this.game;
+        
+        console.log('⚔️ War game started with players:', this.game.players.map(p => ({ name: p.name, cards: p.hand.length })));
         
         UIUtils.showGame();
         this.updateUI();
@@ -2155,32 +2186,41 @@ class WarClient {
         const removeBotBtn = document.getElementById('removeBotBtn');
         const startGameBtn = document.getElementById('startGameBtn');
         
+        // ✅ CRITICAL FIX: Only show controls if we're the room creator
+        const isRoomCreator = window.isRoomCreator || window.gameFramework?.isRoomCreator || false;
+        
         if (addBotBtn) {
-            addBotBtn.style.display = 'inline-block';
-            addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
-            addBotBtn.style.setProperty('color', 'white', 'important');
-            addBotBtn.style.setProperty('border', 'none', 'important');
-            console.log('✅ Add Bot button shown and styled green');
+            addBotBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
+            if (isRoomCreator) {
+                addBotBtn.style.setProperty('background-color', '#4CAF50', 'important');
+                addBotBtn.style.setProperty('color', 'white', 'important');
+                addBotBtn.style.setProperty('border', 'none', 'important');
+                console.log('✅ Add Bot button shown and styled green');
+            }
         }
         
         if (removeBotBtn) {
-            removeBotBtn.style.display = 'inline-block';
-            removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
-            removeBotBtn.style.setProperty('color', 'white', 'important');
-            removeBotBtn.style.setProperty('border', 'none', 'important');
-            console.log('✅ Remove Bot button shown and styled red');
+            removeBotBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
+            if (isRoomCreator) {
+                removeBotBtn.style.setProperty('background-color', '#f44336', 'important');
+                removeBotBtn.style.setProperty('color', 'white', 'important');
+                removeBotBtn.style.setProperty('border', 'none', 'important');
+                console.log('✅ Remove Bot button shown and styled red');
+            }
         }
         
         if (startGameBtn) {
-            startGameBtn.style.display = 'inline-block';
-            startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
-            startGameBtn.style.setProperty('color', 'white', 'important');
-            startGameBtn.style.setProperty('border', 'none', 'important');
-            startGameBtn.disabled = false;
-            console.log('✅ Start Game button shown and styled orange');
+            startGameBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
+            if (isRoomCreator) {
+                startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
+                startGameBtn.style.setProperty('color', 'white', 'important');
+                startGameBtn.style.setProperty('border', 'none', 'important');
+                startGameBtn.disabled = false;
+                console.log('✅ Start Game button shown and styled orange');
+            }
         }
         
-        // Show game menu button
+        // Show game menu button (always visible)
         const gameMenuBtn = document.getElementById('gameMenuBtn');
         if (gameMenuBtn) {
             gameMenuBtn.style.display = 'inline-block';
