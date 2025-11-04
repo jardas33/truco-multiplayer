@@ -563,7 +563,21 @@ class WarClient {
         }
         
         if (startGameBtn) {
-            startGameBtn.onclick = () => this.startGame();
+            startGameBtn.onclick = () => {
+                // ✅ CRITICAL FIX: Emit startGame event to server, don't call startGame() directly
+                const socket = window.gameFramework?.socket;
+                const roomId = window.gameFramework?.roomId;
+                if (socket && roomId) {
+                    console.log('🎮 Start Game button clicked, emitting startGame event to server');
+                    socket.emit('startGame', roomId);
+                    // Disable button while starting
+                    startGameBtn.disabled = true;
+                    startGameBtn.textContent = 'Starting...';
+                } else {
+                    console.error('❌ Socket or roomId not available');
+                    UIUtils.showGameMessage('Connection not available. Please refresh the page.', 'error');
+                }
+            };
             startGameBtn.setAttribute('aria-label', 'Start the game');
         }
         
