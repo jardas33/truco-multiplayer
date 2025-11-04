@@ -2056,18 +2056,12 @@ function drawPlayers() {
         strokeWeight(2);
         rect(x - 85, y - 55, 170, 120, 10);
         
-        // Draw player status indicator (folded/active)
+        // Draw player status indicator (folded/active) - background overlay
         if (player.isFolded) {
             fill(100, 100, 100, 200);
             stroke(150, 150, 150);
             strokeWeight(2);
             rect(x - 85, y - 55, 170, 120, 10);
-            
-            textAlign(CENTER, CENTER);
-            textSize(18);
-            textStyle(BOLD);
-            fill(150, 150, 150);
-            text('FOLDED', x, y);
         }
         
         // Draw player name with better styling and larger size
@@ -2102,6 +2096,16 @@ function drawPlayers() {
         stroke(0, 0, 0);
         strokeWeight(1);
         text('$' + player.chips, x, y - 2);
+        
+        // Draw FOLDED text below chip value (if folded) to avoid overlap
+        if (player.isFolded) {
+            textAlign(CENTER, CENTER);
+            textSize(18);
+            textStyle(BOLD);
+            fill(150, 150, 150);
+            noStroke();
+            text('FOLDED', x, y + 18); // Position below chip value
+        }
         
         // Current bet is now shown as a visual indicator on the table (see drawBetIndicators)
         
@@ -2782,18 +2786,17 @@ function drawBetIndicators() {
             // No current bet - position chips normally (below or separate)
             
             if (isTopPlayer) {
-                // Top player: chip indicator goes to the far left, well below cards
-                // Check if community cards are displayed and adjust position to avoid overlap
+                // Top player: position chips button between player cards and community cards
                 const cardY = playerY + 50;
                 const cardWidth = 60;
                 const cardSpacing = 8;
                 const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
                 const cardLeftEdge = playerX - (cardsTotalWidth / 2);
+                const cardRightEdge = playerX + (cardsTotalWidth / 2);
                 
-                // Check if community cards exist and calculate their bounds to avoid overlap
-                // Position chips closer to player (reduce from -80 to -50)
-                let chipXBase = cardLeftEdge - 50; // Closer to player (was -80)
-                const chipYBase = cardY + 42 + 70; // Closer vertically (was +90)
+                // Position chips button between player cards and community cards
+                let chipXBase;
+                const chipYBase = cardY + 42 + 70; // Position below cards
                 
                 if (window.game.communityCards && window.game.communityCards.length > 0) {
                     const centerX = width/2;
@@ -2803,26 +2806,13 @@ function drawBetIndicators() {
                     const communitySpacing = 20;
                     const totalCommunityWidth = (window.game.communityCards.length - 1) * (communityCardWidth + communitySpacing);
                     const communityStartX = centerX - totalCommunityWidth / 2;
-                    const communityEndX = communityStartX + totalCommunityWidth + communityCardWidth;
-                    const communityTopY = centerY - communityCardHeight/2;
-                    const communityBottomY = centerY + communityCardHeight/2;
                     
-                    // Check if chip position would overlap with community cards
-                    // Chip indicator is 28px diameter, so radius is 14px
-                    // Text below adds about 28px height
-                    const chipRadius = 14;
-                    const chipTextHeight = 28;
-                    const chipTop = chipYBase - chipRadius;
-                    const chipBottom = chipYBase + chipRadius + chipTextHeight;
-                    
-                    // Check if chip overlaps with community cards horizontally and vertically
-                    const horizontalOverlap = chipXBase < communityEndX + 20; // 20px buffer
-                    const verticalOverlap = (chipTop < communityBottomY + 20) && (chipBottom > communityTopY - 20);
-                    
-                    if (horizontalOverlap && verticalOverlap) {
-                        // Move chip indicator further left to avoid community cards, but still closer than before
-                        chipXBase = communityStartX - 80; // Closer than before (was -100)
-                    }
+                    // Position chips button at the midpoint between player cards and community cards
+                    const midpointX = (cardRightEdge + communityStartX) / 2;
+                    chipXBase = midpointX;
+                } else {
+                    // No community cards - position closer to player cards
+                    chipXBase = cardLeftEdge - 50;
                 }
                 
                 chipIndicatorX = chipXBase;
