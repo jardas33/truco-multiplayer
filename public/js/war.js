@@ -1023,8 +1023,28 @@ class WarClient {
 
     // Add bot
     addBot() {
-        const socket = window.gameFramework.socket;
-        socket.emit('addBot', { roomId: window.gameFramework.roomId });
+        const socket = window.gameFramework?.socket;
+        const roomId = window.gameFramework?.roomId;
+        if (!socket || !roomId) {
+            console.error('❌ Socket or roomId not available');
+            UIUtils.showGameMessage('Connection not available. Please refresh the page.', 'error');
+            return;
+        }
+        
+        // ✅ CRITICAL FIX: Check current player count before adding bot
+        const playerList = document.getElementById('playerList');
+        if (playerList) {
+            const currentPlayers = playerList.querySelectorAll('.player-item').length;
+            const maxPlayers = 4; // War supports up to 4 players
+            if (currentPlayers >= maxPlayers) {
+                console.log(`❌ Room is full (${currentPlayers}/${maxPlayers}), cannot add bot`);
+                UIUtils.showGameMessage(`Room is full. Maximum ${maxPlayers} players allowed.`, 'error');
+                return;
+            }
+        }
+        
+        console.log('🤖 Adding bot to room:', roomId);
+        socket.emit('addBot', { roomId: roomId });
     }
 
     // Remove bot
@@ -2758,14 +2778,51 @@ class WarClient {
             return;
         }
         
-        // Enable button if we have at least 2 players
+        // ✅ CRITICAL FIX: Validate player count (min: 2, max: 4 for War)
         const playerCount = players && Array.isArray(players) ? players.length : 0;
-        startGameBtn.disabled = playerCount < 2;
+        const minPlayers = 2;
+        const maxPlayers = 4;
         
-        if (playerCount < 2) {
-            startGameBtn.title = 'Need at least 2 players to start';
+        // Disable if below minimum or above maximum
+        startGameBtn.disabled = playerCount < minPlayers || playerCount > maxPlayers;
+        
+        if (playerCount < minPlayers) {
+            startGameBtn.title = `Need at least ${minPlayers} players to start (current: ${playerCount})`;
+            startGameBtn.style.opacity = '0.5';
+        } else if (playerCount > maxPlayers) {
+            startGameBtn.title = `Too many players. Maximum ${maxPlayers} players allowed (current: ${playerCount})`;
+            startGameBtn.style.opacity = '0.5';
         } else {
             startGameBtn.title = 'Start the game';
+            startGameBtn.style.opacity = '1';
+        }
+        
+        // ✅ CRITICAL FIX: Update Add Bot button state based on player count
+        this.updateAddBotButtonState(playerCount);
+    }
+    
+    // ✅ CRITICAL FIX: Update Add Bot button state
+    updateAddBotButtonState(playerCount) {
+        const addBotBtn = document.getElementById('addBotBtn');
+        if (!addBotBtn) return;
+        
+        const isRoomCreator = window.isRoomCreator || window.gameFramework?.isRoomCreator || false;
+        if (!isRoomCreator) {
+            return; // Only room creator can add bots
+        }
+        
+        const maxPlayers = 4; // War supports up to 4 players
+        
+        if (playerCount >= maxPlayers) {
+            addBotBtn.disabled = true;
+            addBotBtn.style.opacity = '0.5';
+            addBotBtn.title = `Room is full (${maxPlayers} players maximum)`;
+            console.log(`✅ Add Bot button disabled - room is full (${playerCount}/${maxPlayers})`);
+        } else {
+            addBotBtn.disabled = false;
+            addBotBtn.style.opacity = '1';
+            addBotBtn.title = `Add a bot player (${playerCount}/${maxPlayers})`;
+            console.log(`✅ Add Bot button enabled - room has space (${playerCount}/${maxPlayers})`);
         }
     }
 

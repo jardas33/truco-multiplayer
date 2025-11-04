@@ -2026,7 +2026,11 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayersJoin = room.gameType === 'truco' ? 4 : (room.gameType === 'battleship' ? 2 : (room.gameType === 'poker' ? 7 : 6)); // Truco needs 4, Battleship needs 2, Poker needs 7, other games can have up to 6
+        // ✅ CRITICAL FIX: Define max players per game type for joining
+        const maxPlayersJoin = room.gameType === 'truco' ? 4 : 
+                               (room.gameType === 'battleship' ? 2 : 
+                               (room.gameType === 'poker' ? 7 : 
+                               (room.gameType === 'war' ? 4 : 6))); // Truco: 4, Battleship: 2, Poker: 7, War: 4, others: 6
         
         // For battleship rooms, handle reconnection by replacing disconnected players
         if (room.gameType === 'battleship' && room.players.length >= maxPlayersJoin) {
@@ -2445,7 +2449,11 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayersAddBot = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
+        // ✅ CRITICAL FIX: Define max players per game type
+        const maxPlayersAddBot = room.gameType === 'truco' ? 4 : 
+                                  (room.gameType === 'poker' ? 7 : 
+                                  (room.gameType === 'war' ? 4 : 
+                                  (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
         // Check if room is full (maxPlayersAddBot includes all players + bots)
         if (room.players.length >= maxPlayersAddBot) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersAddBot}), cannot add bot`);
@@ -2476,7 +2484,11 @@ io.on('connection', (socket) => {
         // Emit players updated event
         io.to(roomCode).emit('playersUpdated', room.players);
 
-        const maxPlayersFull = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
+        // ✅ CRITICAL FIX: Define max players per game type for room full check
+        const maxPlayersFull = room.gameType === 'truco' ? 4 : 
+                               (room.gameType === 'poker' ? 7 : 
+                               (room.gameType === 'war' ? 4 : 
+                               (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
         if (room.players.length === maxPlayersFull) {
             console.log(`🎯 Room ${roomCode} is now full with ${room.players.length} players`);
             io.to(roomCode).emit('roomFull');
@@ -2516,7 +2528,11 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('playersUpdated', room.players);
 
         // If room is no longer full, emit roomNotFull event
-        const maxPlayersNotFull = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
+        // ✅ CRITICAL FIX: Define max players per game type for room not full check
+        const maxPlayersNotFull = room.gameType === 'truco' ? 4 : 
+                                  (room.gameType === 'poker' ? 7 : 
+                                  (room.gameType === 'war' ? 4 : 
+                                  (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
         if (room.players.length < maxPlayersNotFull) {
             io.to(roomCode).emit('roomNotFull');
         }
