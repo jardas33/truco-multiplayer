@@ -1547,6 +1547,13 @@ class PokerClient {
             console.log('SUCCESS: Game Menu button shown');
         }
         
+        // Show Back to Poker Menu button during game
+        const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
+        if (backToMainMenuBtn) {
+            backToMainMenuBtn.style.display = 'inline-block';
+            console.log('SUCCESS: Back to Poker Menu button shown');
+        }
+        
         // Force button colors with !important
         setTimeout(() => {
             if (addBotBtn) {
