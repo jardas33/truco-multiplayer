@@ -5526,7 +5526,7 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
         
         // Continue with next bot or player
         const nextPlayer = room.game.players[room.game.currentPlayer];
-        if (nextPlayer && nextPlayer.isBot) {
+        if (nextPlayer && nextPlayer.isBot && !nextPlayer.isFolded && !nextPlayer.isAllIn) {
             setTimeout(() => {
                 handlePokerBotAction(roomCode, room, nextPlayer);
             }, 1500);

@@ -3265,13 +3265,16 @@ function drawBlindIndicators() {
         const indicatorsToDraw = [];
         
         // Check which indicators this player has
-        if (index === dealerPosition && window.game.gamePhase) {
+        // Always show blind indicators if gamePhase exists (preflop, flop, turn, river, showdown)
+        const hasActiveGamePhase = window.game.gamePhase && window.game.gamePhase !== '';
+        
+        if (index === dealerPosition && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'D', color: [255, 215, 0], size: 30, text: 'D', amount: null });
         }
-        if (index === smallBlindPos && window.game.gamePhase) {
+        if (index === smallBlindPos && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: null }); // Remove amount display
         }
-        if (index === bigBlindPos && window.game.gamePhase) {
+        if (index === bigBlindPos && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: null }); // Remove amount display
         }
         
