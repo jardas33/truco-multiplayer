@@ -2040,16 +2040,7 @@ function drawPlayers() {
         strokeWeight(1);
         text('$' + player.chips, x, y - 2);
         
-        // Draw current bet if any with larger text
-        if (player.currentBet > 0) {
-            textAlign(CENTER, CENTER);
-            textSize(14); // Increased from 12
-            textStyle(BOLD);
-            fill(255, 150, 150);
-            stroke(0, 0, 0);
-            strokeWeight(1);
-            text('Bet: $' + player.currentBet, x, y + 18);
-        }
+        // Current bet is now shown as a visual indicator on the table (see drawBetIndicators)
         
         // Highlight current player with subtle, professional styling
         // Draw highlight BEFORE cards so cards appear on top
@@ -2283,6 +2274,122 @@ function drawGameInfo() {
     strokeWeight(2);
     text('Hand Rankings', width - 110, 40);
     pop();
+}
+
+function drawBetIndicators() {
+    // Draw bet indicators for each player showing their current bet amount
+    if (!window.game || !window.game.players || window.game.players.length < 2) {
+        return;
+    }
+    
+    const centerX = width/2;
+    const centerY = height/2;
+    const playerRadiusX = width * 0.35;
+    const playerRadiusY = height * 0.28;
+    
+    // Table dimensions for boundary checking
+    const tableWidth = width * 0.75;
+    const tableHeight = height * 0.55;
+    const tableRadiusX = tableWidth / 2 - 50;
+    const tableRadiusY = tableHeight / 2 - 40;
+    
+    // Player box dimensions
+    const playerBoxWidth = 180;
+    const playerBoxHeight = 130;
+    const playerBoxOffsetX = playerBoxWidth / 2;
+    const playerBoxOffsetY = playerBoxHeight / 2;
+    const cardOffsetY = 50;
+    
+    // Get dealer position
+    const dealerPosition = window.game.dealerPosition !== undefined ? window.game.dealerPosition : 0;
+    const smallBlindPos = (dealerPosition + 1) % window.game.players.length;
+    const bigBlindPos = (dealerPosition + 2) % window.game.players.length;
+    
+    window.game.players.forEach((player, index) => {
+        if (!player || player.isFolded || player.currentBet === 0) return; // Only show if player has a bet
+        
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const playerX = centerX + cos(angle) * playerRadiusX;
+        const playerY = centerY + sin(angle) * playerRadiusY;
+        
+        // Calculate position similar to blind indicators
+        const absCosAngle = Math.abs(cos(angle));
+        const absSinAngle = Math.abs(sin(angle));
+        const sinAngle = sin(angle);
+        const isTopPlayer = sinAngle < -0.5;
+        
+        let indicatorRadiusX, indicatorRadiusY;
+        if (absCosAngle > absSinAngle) {
+            // Left or right side
+            indicatorRadiusX = playerRadiusX * 0.75;
+            indicatorRadiusY = playerRadiusY * 0.75;
+        } else if (isTopPlayer) {
+            // Top position - position to the left of cards (opposite side from blind indicators)
+            indicatorRadiusX = playerRadiusX * 0.85;
+            indicatorRadiusY = playerRadiusY * 0.85;
+        } else {
+            // Bottom position
+            indicatorRadiusX = playerRadiusX * 0.5;
+            indicatorRadiusY = playerRadiusY * 0.5;
+        }
+        
+        let indicatorX = centerX + cos(angle) * indicatorRadiusX;
+        let indicatorY = centerY + sin(angle) * indicatorRadiusY;
+        
+        // For top player, position to the LEFT of cards (opposite from blind indicators)
+        let finalIndicatorX = indicatorX;
+        let finalIndicatorY = indicatorY;
+        
+        if (isTopPlayer) {
+            const cardY = playerY + 50;
+            const cardWidth = 60;
+            const cardSpacing = 8;
+            const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
+            const cardLeftEdge = playerX - (cardsTotalWidth / 2);
+            finalIndicatorX = cardLeftEdge - 35; // Position 35px to the left of cards
+            finalIndicatorY = cardY + 42;
+        } else {
+            // For other players, position below player box but above cards
+            // Position it slightly below the player box but above the cards
+            finalIndicatorX = playerX;
+            finalIndicatorY = playerY + 80; // Position between player box and cards
+        }
+        
+        // Ensure indicator is inside table
+        const dx = (finalIndicatorX - centerX) / tableRadiusX;
+        const dy = (finalIndicatorY - centerY) / tableRadiusY;
+        const isInsideTable = (dx * dx + dy * dy) <= 1;
+        
+        if (!isInsideTable && !isTopPlayer) {
+            const angleToCenter = atan2(finalIndicatorY - centerY, finalIndicatorX - centerX);
+            finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 30);
+            finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 30);
+        }
+        
+        push();
+        
+        // Draw bet indicator circle (similar to blind indicators but different color)
+        const betColor = [255, 200, 100]; // Orange/gold color for bets
+        fill(betColor[0], betColor[1], betColor[2]);
+        stroke(255, 255, 255);
+        strokeWeight(2);
+        ellipse(finalIndicatorX, finalIndicatorY, 28, 28);
+        
+        // Draw "BET" text
+        fill(0, 0, 0);
+        textAlign(CENTER, CENTER);
+        textSize(9);
+        textStyle(BOLD);
+        noStroke();
+        text('BET', finalIndicatorX, finalIndicatorY - 5);
+        
+        // Draw bet amount below
+        textSize(9);
+        fill(255, 255, 255);
+        text('$' + player.currentBet, finalIndicatorX, finalIndicatorY + 28);
+        
+        pop();
+    });
 }
 
 function drawBlindIndicators() {
