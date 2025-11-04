@@ -2791,8 +2791,9 @@ function drawBetIndicators() {
                 const cardLeftEdge = playerX - (cardsTotalWidth / 2);
                 
                 // Check if community cards exist and calculate their bounds to avoid overlap
-                let chipXBase = cardLeftEdge - 80; // Default position
-                const chipYBase = cardY + 42 + 90; // Position below cards
+                // Position chips closer to player (reduce from -80 to -50)
+                let chipXBase = cardLeftEdge - 50; // Closer to player (was -80)
+                const chipYBase = cardY + 42 + 70; // Closer vertically (was +90)
                 
                 if (window.game.communityCards && window.game.communityCards.length > 0) {
                     const centerX = width/2;
@@ -2819,8 +2820,8 @@ function drawBetIndicators() {
                     const verticalOverlap = (chipTop < communityBottomY + 20) && (chipBottom > communityTopY - 20);
                     
                     if (horizontalOverlap && verticalOverlap) {
-                        // Move chip indicator much further left to avoid community cards
-                        chipXBase = communityStartX - 100; // Position well to the left of community cards
+                        // Move chip indicator further left to avoid community cards, but still closer than before
+                        chipXBase = communityStartX - 80; // Closer than before (was -100)
                     }
                 }
                 
@@ -3338,6 +3339,38 @@ function drawBlindIndicators() {
             // The indicator is intentionally to the right of the cards, outside the player box
         } else {
             // For other players, check for overlaps and table boundaries
+            // First check for overlap with chips/bet indicators
+            const chipPos = window.chipIndicatorPositions?.get(index);
+            const betPos = window.betIndicatorPositions?.get(index);
+            
+            // Check overlap with chip indicator
+            if (chipPos) {
+                const dx = indicatorX - chipPos.x;
+                const dy = indicatorY - chipPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = 60; // Minimum distance from chip indicator
+                if (distance < minDistance) {
+                    // Move blind indicator away from chip
+                    const angleAway = atan2(indicatorY - chipPos.y, indicatorX - chipPos.x);
+                    indicatorX = chipPos.x + cos(angleAway) * (minDistance + 20);
+                    indicatorY = chipPos.y + sin(angleAway) * (minDistance + 20);
+                }
+            }
+            
+            // Check overlap with bet indicator
+            if (betPos) {
+                const dx = indicatorX - betPos.x;
+                const dy = indicatorY - betPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = 60; // Minimum distance from bet indicator
+                if (distance < minDistance) {
+                    // Move blind indicator away from bet
+                    const angleAway = atan2(indicatorY - betPos.y, indicatorX - betPos.x);
+                    indicatorX = betPos.x + cos(angleAway) * (minDistance + 20);
+                    indicatorY = betPos.y + sin(angleAway) * (minDistance + 20);
+                }
+            }
+            
             // Ensure indicator doesn't overlap with player box
             // Player box extends from (playerX - 90, playerY - 65) to (playerX + 90, playerY + 65)
             // Cards are at playerY + 50 to playerY + 134
