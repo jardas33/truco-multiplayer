@@ -5419,16 +5419,27 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
             break;
         case 'raise':
         case 'bet':
-            const raiseAmt = Math.min(amount, botPlayer.chips);
-            botPlayer.chips -= raiseAmt;
-            botPlayer.currentBet += raiseAmt;
-            botPlayer.totalBet += raiseAmt;
-            room.game.pot += raiseAmt;
+            // Amount is the total bet amount the bot wants to make
+            // Calculate the additional amount needed (raise increment)
+            const currentPlayerBetBot = botPlayer.currentBet || 0;
+            const totalBetDesiredBot = Math.min(amount, currentPlayerBetBot + botPlayer.chips);
+            const raiseIncrementBot = totalBetDesiredBot - currentPlayerBetBot;
+            
+            if (raiseIncrementBot <= 0) {
+                console.error(`❌ Invalid bot raise: totalBetDesired (${totalBetDesiredBot}) <= currentPlayerBet (${currentPlayerBetBot})`);
+                return; // Invalid raise
+            }
+            
+            botPlayer.chips -= raiseIncrementBot;
+            botPlayer.currentBet = totalBetDesiredBot;
+            botPlayer.totalBet += raiseIncrementBot;
+            room.game.pot += raiseIncrementBot;
             room.game.currentBet = botPlayer.currentBet;
             room.game.lastRaisePlayer = playerIndex;
             if (botPlayer.chips === 0) {
                 botPlayer.isAllIn = true;
             }
+            console.log(`🎴 Bot raise processed: player bet ${totalBetDesiredBot} (added ${raiseIncrementBot}), new currentBet: ${room.game.currentBet}`);
             break;
     }
     
