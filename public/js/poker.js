@@ -2822,26 +2822,19 @@ function drawBetIndicators() {
                 chipIndicatorX = chipXBase;
                 chipIndicatorY = chipYBase;
             } else if (isSidePlayer) {
-                // Side players: chip indicator goes to OPPOSITE side from blind indicators
-                const isRightSide = cos(angle) > 0;
-                
-                // Determine where blind indicator is
-                let blindIsOnLeft = false;
+                // Side players: buttons at same width (X) but different heights (vertical layout)
+                // Position chips button directly below or above blind indicator
                 if (blindPos) {
-                    blindIsOnLeft = blindPos.x < playerX;
-                }
-                
-                // Position chip indicator on OPPOSITE side from blind, with large offset
-                if (blindIsOnLeft) {
-                    // Blind is on left, so chip goes to right (away from center)
-                    chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
+                    // Same X position as blind, but different Y (vertical stacking)
+                    chipIndicatorX = blindPos.x;
+                    // Position chips button directly below blind indicator
+                    chipIndicatorY = blindPos.y + 30; // Close vertical spacing
                 } else {
-                    // Blind is on right or center, so chip goes to left (away from center)
-                    chipIndicatorX = playerX + (isRightSide ? -80 : 80); // Large offset
+                    // No blind - position relative to player
+                    const isRightSide = cos(angle) > 0;
+                    chipIndicatorX = playerX + (isRightSide ? -60 : 60);
+                    chipIndicatorY = playerY + 120;
                 }
-                
-                // Position well below bet indicator
-                chipIndicatorY = playerY + 150; // Much further down
             } else {
                 // Bottom player: position side by side with blind indicator if it exists
                 // Check if this player has a blind indicator
@@ -2849,7 +2842,7 @@ function drawBetIndicators() {
                     // Position chips side by side with blind indicator, closer together
                     // If blind is to the left of player, chips go to the right, and vice versa
                     const blindIsLeft = blindPos.x < playerX;
-                    const spacing = 25; // Closer spacing between blind and chips buttons (was 40)
+                    const spacing = 15; // Very close spacing between blind and chips buttons
                     
                     if (blindIsLeft) {
                         // Blind on left, chips on right
@@ -2858,7 +2851,7 @@ function drawBetIndicators() {
                         // Blind on right or center, chips on left
                         chipIndicatorX = blindPos.x - spacing;
                     }
-                    // Same Y level as blind indicator
+                    // Same Y level as blind indicator (horizontal layout for top/bottom players)
                     chipIndicatorY = blindPos.y;
                 } else {
                     // No blind indicator - position directly below player
@@ -3098,20 +3091,20 @@ function drawBetIndicators() {
                         // Both blind and chips exist - position bet to the right of chips
                         const blindIsLeft = blindPosForBet.x < chipPosForBet.x;
                         if (blindIsLeft) {
-                            // Blind on left, chips on right, bet goes further right
+                            // Blind on left, chips on right, bet goes further right (same height)
                             currentX = chipPosForBet.x;
-                            finalIndicatorX = currentX + 25; // Spacing between chips and bet
+                            finalIndicatorX = currentX + 15; // Close horizontal spacing
                         } else {
-                            // Chips on left, blind on right, bet goes to left of chips
+                            // Chips on left, blind on right, bet goes to left of chips (same height)
                             currentX = chipPosForBet.x;
-                            finalIndicatorX = currentX - 25; // Spacing between chips and bet
+                            finalIndicatorX = currentX - 15; // Close horizontal spacing
                         }
                     } else if (blindPosForBet) {
-                        // Only blind exists - position bet to the right of blind
-                        finalIndicatorX = blindPosForBet.x + 25;
+                        // Only blind exists - position bet to the right of blind (same height)
+                        finalIndicatorX = blindPosForBet.x + 15; // Close horizontal spacing
                     } else if (chipPosForBet) {
-                        // Only chips exists - position bet to the right of chips
-                        finalIndicatorX = chipPosForBet.x + 25;
+                        // Only chips exists - position bet to the right of chips (same height)
+                        finalIndicatorX = chipPosForBet.x + 15; // Close horizontal spacing
                     } else {
                         // Fallback
                         finalIndicatorX = playerX;
