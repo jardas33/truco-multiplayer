@@ -1933,7 +1933,7 @@ function drawBlindIndicators() {
     
     // Indicator size
     const indicatorRadius = 15; // Radius of indicator circle
-    const textOffsetY = 20; // Distance below indicator for amount text
+    const textOffsetY = 28; // Increased distance below indicator for amount text (was 20)
     
     window.game.players.forEach((player, index) => {
         if (!player || player.isFolded) return; // Skip folded players
@@ -1942,10 +1942,23 @@ function drawBlindIndicators() {
         const playerX = centerX + cos(angle) * playerRadiusX;
         const playerY = centerY + sin(angle) * playerRadiusY;
         
-        // Calculate indicator position - positioned between player and center, avoiding overlap
-        // Move indicator significantly toward center (60% of way from player to center)
-        const indicatorRadiusX = playerRadiusX * 0.4; // 40% of player radius = closer to center
-        const indicatorRadiusY = playerRadiusY * 0.4;
+        // Calculate indicator position - closer to player boxes, especially for left/right positions
+        // For left/right positions (angle near 0 or PI), position closer to player box
+        // For top/bottom positions, position between player and center
+        const absCosAngle = Math.abs(cos(angle));
+        const absSinAngle = Math.abs(sin(angle));
+        
+        // If player is on left or right side (horizontal position), position indicator closer
+        let indicatorRadiusX, indicatorRadiusY;
+        if (absCosAngle > absSinAngle) {
+            // Left or right side - position much closer to player box
+            indicatorRadiusX = playerRadiusX * 0.75; // 75% of player radius = closer to player
+            indicatorRadiusY = playerRadiusY * 0.75;
+        } else {
+            // Top or bottom - position between player and center
+            indicatorRadiusX = playerRadiusX * 0.5; // 50% of player radius
+            indicatorRadiusY = playerRadiusY * 0.5;
+        }
         
         const indicatorX = centerX + cos(angle) * indicatorRadiusX;
         const indicatorY = centerY + sin(angle) * indicatorRadiusY;
@@ -2023,10 +2036,10 @@ function drawBlindIndicators() {
             noStroke();
             text('SB', finalIndicatorX, finalIndicatorY);
             
-            // Show blind amount below indicator
+            // Show blind amount below indicator with spacing
             textSize(9);
             fill(255, 255, 255);
-            text('$' + smallBlindAmount, finalIndicatorX, finalIndicatorY + 18);
+            text('$' + smallBlindAmount, finalIndicatorX, finalIndicatorY + textOffsetY);
         }
         
         // Draw big blind indicator - always show if game is active
