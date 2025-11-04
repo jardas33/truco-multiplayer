@@ -885,6 +885,20 @@ class PokerClient {
                       !this.game.players[this.localPlayerIndex].isFolded &&
                       !this.game.players[this.localPlayerIndex].isAllIn;
         
+        // Log turn state for debugging
+        const dealerPos = this.game.dealerPosition !== undefined ? this.game.dealerPosition : 0;
+        const smallBlindPos = (dealerPos + 1) % this.game.players.length;
+        const bigBlindPos = (dealerPos + 2) % this.game.players.length;
+        console.log(`🎴 Turn State Check:`);
+        console.log(`🎴   Local Player Index: ${this.localPlayerIndex} (${this.game.players[this.localPlayerIndex]?.name})`);
+        console.log(`🎴   Current Player: ${this.game.currentPlayer} (${this.game.players[this.game.currentPlayer]?.name})`);
+        console.log(`🎴   Dealer: Position ${dealerPos}, SB: Position ${smallBlindPos}, BB: Position ${bigBlindPos}`);
+        console.log(`🎴   Is My Turn: ${this.isMyTurn}, Can Act: ${this.canAct}`);
+        if (this.localPlayerIndex === bigBlindPos) {
+            console.log(`🎴   ⚠️ You are the Big Blind - you should NOT be acting first!`);
+            console.log(`🎴   ⚠️ First to act should be position ${(bigBlindPos + 1) % this.game.players.length}`);
+        }
+        
         // Update UI
         this.updateUI();
         
@@ -926,6 +940,9 @@ class PokerClient {
                       this.game.players[this.localPlayerIndex] && 
                       !this.game.players[this.localPlayerIndex].isFolded &&
                       !this.game.players[this.localPlayerIndex].isAllIn;
+        
+        // Log turn state for debugging
+        console.log(`🎴 Game State Update: currentPlayer=${data.currentPlayer}, localPlayerIndex=${this.localPlayerIndex}, isMyTurn=${this.isMyTurn}`);
         
         // Show/hide betting controls based on turn
         if (this.isMyTurn && this.canAct) {
