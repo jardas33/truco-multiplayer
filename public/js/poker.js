@@ -2471,16 +2471,27 @@ function drawBetIndicators() {
             
             // Check if bet indicator overlaps with blind indicator
             if (blindPos) {
-                const minDistance = 50; // Minimum distance between bet and blind indicators
+                const minDistance = 55; // Minimum distance between bet and blind indicators (including text)
                 const distanceX = finalIndicatorX - blindPos.x;
                 const distanceY = finalIndicatorY - blindPos.y;
                 const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
                 
                 if (distance < minDistance) {
                     // Move bet indicator away from blind indicator
+                    // Try moving in a direction that doesn't conflict with player box
                     const angleAway = atan2(finalIndicatorY - blindPos.y, finalIndicatorX - blindPos.x);
-                    finalIndicatorX = blindPos.x + cos(angleAway) * minDistance;
-                    finalIndicatorY = blindPos.y + sin(angleAway) * minDistance;
+                    // If angle is too close to player box, adjust it
+                    const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
+                    const angleDiff = Math.abs(angleAway - angleToPlayer);
+                    
+                    let adjustedAngle = angleAway;
+                    if (angleDiff < PI / 4 || angleDiff > 7 * PI / 4) {
+                        // Too close to player direction, move perpendicular
+                        adjustedAngle = angleToPlayer + PI / 2;
+                    }
+                    
+                    finalIndicatorX = blindPos.x + cos(adjustedAngle) * minDistance;
+                    finalIndicatorY = blindPos.y + sin(adjustedAngle) * minDistance;
                 }
             }
         }
