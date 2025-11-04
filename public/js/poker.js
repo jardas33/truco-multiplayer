@@ -2796,7 +2796,7 @@ function drawBetIndicators() {
                 
                 // Position chips button between player cards and community cards
                 let chipXBase;
-                const chipYBase = cardY + 42 + 70; // Position below cards
+                const chipYBase = cardY + 42 + 60; // Position slightly closer to cards (was +70)
                 
                 if (window.game.communityCards && window.game.communityCards.length > 0) {
                     const centerX = width/2;
