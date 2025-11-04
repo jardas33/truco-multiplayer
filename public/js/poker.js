@@ -2056,10 +2056,10 @@ function drawBlindIndicators() {
             noStroke();
             text('BB', finalIndicatorX, finalIndicatorY);
             
-            // Show blind amount below indicator
+            // Show blind amount below indicator with spacing
             textSize(9);
             fill(255, 255, 255);
-            text('$' + bigBlindAmount, finalIndicatorX, finalIndicatorY + 18);
+            text('$' + bigBlindAmount, finalIndicatorX, finalIndicatorY + textOffsetY);
         }
         
         pop();
