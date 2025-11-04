@@ -136,6 +136,25 @@
             height: 100vh;
             background: radial-gradient(circle at center, #1a0000 0%, #4a0000 50%, #1a0000 100%);
             overflow: hidden;
+            pointer-events: none;
+        }
+        
+        /* ✅ CRITICAL FIX: Allow pointer events on interactive elements */
+        .war-table .battle-area,
+        .war-table .action-controls,
+        .war-table .game-navigation-buttons,
+        .war-table button,
+        .war-table .battle-card {
+            pointer-events: auto;
+        }
+        
+        /* ✅ CRITICAL FIX: Ensure buttons are always clickable */
+        #Game button,
+        #Game .nav-button,
+        #Game .action-controls button {
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 3000 !important;
         }
 
         .war-table::before {
