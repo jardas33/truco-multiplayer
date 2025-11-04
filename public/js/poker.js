@@ -2952,8 +2952,9 @@ function drawBetIndicators() {
         chipIndicatorPositions.set(index, { x: chipIndicatorX, y: chipIndicatorY });
     });
     
-    // Store chip positions globally so drawChipIndicators can use them
+    // Store chip and bet positions globally so drawBlindIndicators can use them
     window.chipIndicatorPositions = chipIndicatorPositions;
+    window.betIndicatorPositions = betIndicatorPositions;
     
     // Third pass: Draw bet indicators, avoiding both blind and chip indicator positions
     window.game.players.forEach((player, index) => {
