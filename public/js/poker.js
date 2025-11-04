@@ -2665,6 +2665,37 @@ function drawBetIndicators() {
         }
     });
     
+    // Calculate bet indicator positions first (for overlap checking)
+    const betIndicatorPositions = new Map();
+    window.game.players.forEach((player, index) => {
+        if (!player || player.isFolded || player.currentBet === 0) return;
+        
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const playerX = centerX + cos(angle) * playerRadiusX;
+        const playerY = centerY + sin(angle) * playerRadiusY;
+        
+        const absCosAngle = Math.abs(cos(angle));
+        const absSinAngle = Math.abs(sin(angle));
+        const sinAngle = sin(angle);
+        const isTopPlayer = sinAngle < -0.5;
+        
+        let betIndicatorX, betIndicatorY;
+        if (isTopPlayer) {
+            const cardY = playerY + 50;
+            const cardWidth = 60;
+            const cardSpacing = 8;
+            const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
+            const cardLeftEdge = playerX - (cardsTotalWidth / 2);
+            betIndicatorX = cardLeftEdge - 35;
+            betIndicatorY = cardY + 42;
+        } else {
+            betIndicatorX = playerX;
+            betIndicatorY = playerY + 80;
+        }
+        
+        betIndicatorPositions.set(index, { x: betIndicatorX, y: betIndicatorY });
+    });
+    
     // Second pass: Calculate chip indicator positions to avoid overlap
     const chipIndicatorPositions = new Map();
     
@@ -3124,7 +3155,13 @@ function drawBetIndicators() {
 function drawBlindIndicators() {
     // ALWAYS draw blind indicators if game exists and has players
     if (!window.game || !window.game.players || window.game.players.length < 2) {
+        console.log('🎴 drawBlindIndicators: Skipping - game not ready');
         return;
+    }
+    
+    // Debug: Check if gamePhase is set
+    if (!window.game.gamePhase) {
+        console.log('🎴 drawBlindIndicators: WARNING - gamePhase not set:', window.game.gamePhase);
     }
     
     const centerX = width/2;
