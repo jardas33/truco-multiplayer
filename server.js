@@ -1708,6 +1708,148 @@ io.on('connection', (socket) => {
                 return; // Exit early for blackjack
             }
             
+            // Handle poker-specific actions
+            if (room.gameType === 'poker') {
+                console.log(`🎴 Poker player action received (early handler)`);
+                const playerIndex = data.playerIndex;
+                const player = room.game?.players?.[playerIndex];
+                const action = data.action;
+                const amount = data.amount || 0;
+                
+                if (!player) {
+                    console.error(`❌ Invalid player index: ${playerIndex}`);
+                    socket.emit('error', 'Invalid player');
+                    return;
+                }
+                
+                // Verify it's the player's turn
+                console.log(`🎴 Turn verification: currentPlayer=${room.game.currentPlayer}, playerIndex=${playerIndex}, player.name=${player.name}`);
+                
+                if (room.game.currentPlayer !== playerIndex) {
+                    console.error(`❌ Not player's turn - current: ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name}), attempted: ${playerIndex} (${player.name})`);
+                    socket.emit('error', `Not your turn. It's ${room.game.players[room.game.currentPlayer]?.name}'s turn.`);
+                    return;
+                }
+                
+                console.log(`🎴 Processing poker action: ${action} by ${player.name} (amount: $${amount})`);
+                
+                // Process the action in the game state
+                switch (action) {
+                    case 'fold':
+                        player.isFolded = true;
+                        break;
+                    case 'call':
+                        const callAmount = Math.min(room.game.currentBet - player.currentBet, player.chips);
+                        player.chips -= callAmount;
+                        player.currentBet += callAmount;
+                        player.totalBet += callAmount;
+                        room.game.pot += callAmount;
+                        if (player.chips === 0) {
+                            player.isAllIn = true;
+                        }
+                        break;
+                    case 'raise':
+                    case 'bet':
+                        const raiseAmount = Math.min(amount, player.chips);
+                        player.chips -= raiseAmount;
+                        player.currentBet += raiseAmount;
+                        player.totalBet += raiseAmount;
+                        room.game.pot += raiseAmount;
+                        room.game.currentBet = player.currentBet;
+                        if (player.chips === 0) {
+                            player.isAllIn = true;
+                        }
+                        break;
+                }
+                
+                // Track if this was a raise
+                if (action === 'raise' || action === 'bet') {
+                    room.game.lastRaisePlayer = playerIndex;
+                }
+                
+                // Move to next active player
+                const startPlayer = room.game.currentPlayer;
+                let attempts = 0;
+                do {
+                    room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                    attempts++;
+                    
+                    // Safety check to prevent infinite loop
+                    if (attempts >= room.game.players.length) {
+                        console.error(`❌ Could not find next active player after ${attempts} attempts`);
+                        break;
+                    }
+                } while (
+                    (room.game.players[room.game.currentPlayer].isFolded || 
+                     room.game.players[room.game.currentPlayer].isAllIn) &&
+                    room.game.currentPlayer !== startPlayer
+                );
+                
+                console.log(`🎴 Turn advanced from ${startPlayer} (${room.game.players[startPlayer]?.name}) to ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name})`);
+                
+                // Check if betting round is complete
+                const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
+                
+                // Get big blind position for preflop logic
+                const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
+                
+                // For preflop: action must return to big blind (lastRaisePlayer) after everyone acts
+                // For post-flop: action must return to last raiser (or small blind if no raises)
+                let actionBackToLastRaiser;
+                if (room.game.gamePhase === 'preflop') {
+                    if (room.game.lastRaisePlayer === bigBlindPos) {
+                        actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
+                    } else {
+                        actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+                    }
+                } else {
+                    if (room.game.lastRaisePlayer === -1) {
+                        const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
+                        let expectedPlayer = smallBlindPos;
+                        while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
+                            expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                        }
+                        actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
+                    } else {
+                        actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+                    }
+                }
+                
+                console.log(`🎴 Betting round check: phase=${room.game.gamePhase}, allBetsMatched=${allBetsMatched}, actionBackToLastRaiser=${actionBackToLastRaiser}, activePlayers=${activePlayers.length}`);
+                
+                if (allBetsMatched && actionBackToLastRaiser && activePlayers.length > 1) {
+                    // Betting round complete - advance to next phase
+                    console.log(`🎴 Betting round complete for ${room.game.gamePhase}`);
+                    advancePokerPhase(roomCode, room);
+                } else if (activePlayers.length <= 1) {
+                    // Only one player left - go to showdown
+                    console.log(`🎴 Only one player left, going to showdown`);
+                    handlePokerShowdown(roomCode, room);
+                } else {
+                    // Continue betting round
+                    // Emit updated game state
+                    io.to(roomCode).emit('gameState', {
+                        players: room.game.players,
+                        pot: room.game.pot,
+                        currentBet: room.game.currentBet,
+                        currentPlayer: room.game.currentPlayer,
+                        gamePhase: room.game.gamePhase,
+                        communityCards: room.game.communityCards || []
+                    });
+                    
+                    // Handle bot actions
+                    const currentPlayer = room.game.players[room.game.currentPlayer];
+                    if (currentPlayer && currentPlayer.isBot) {
+                        setTimeout(() => {
+                            handlePokerBotAction(roomCode, room, currentPlayer);
+                        }, 1500);
+                    }
+                }
+                
+                return; // Exit early for poker
+            }
+            
             // Generic handler for other games
             console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
             if (room) {
