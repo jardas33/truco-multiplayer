@@ -3298,46 +3298,64 @@ io.on('connection', (socket) => {
             const player = room.game.players[warPlayer.playerIndex];
             const cardsNeeded = warCardsToPlay + 1; // face-down + face-up
             
-            if (player.hand && player.hand.length >= cardsNeeded) {
-                // Play face down cards
+            if (player.hand && Array.isArray(player.hand) && player.hand.length >= cardsNeeded) {
+                // ✅ CRITICAL FIX: Play face down cards with validation
                 for (let i = 0; i < warCardsToPlay; i++) {
-                    if (player.hand.length > 0) {
+                    if (player.hand && Array.isArray(player.hand) && player.hand.length > 0) {
                         const card = player.hand.shift();
-                        if (card) {
+                        // ✅ CRITICAL FIX: Validate card has required properties
+                        if (card && card.value && card.name && typeof card.value === 'number') {
                             room.game.warCards.push({
                                 card: card,
                                 player: player,
                                 playerIndex: warPlayer.playerIndex,
                                 faceUp: false
                             });
+                        } else {
+                            console.warn(`⚠️ Invalid face-down card removed from player ${warPlayer.playerIndex}'s hand`);
+                            if (card) {
+                                player.hand.unshift(card);
+                            }
                         }
                     }
                 }
                 
-                // Play face up card
-                if (player.hand.length > 0) {
+                // ✅ CRITICAL FIX: Play face up card with validation
+                if (player.hand && Array.isArray(player.hand) && player.hand.length > 0) {
                     const faceUpCard = player.hand.shift();
-                    if (faceUpCard) {
+                    // ✅ CRITICAL FIX: Validate card has required properties
+                    if (faceUpCard && faceUpCard.value && faceUpCard.name && typeof faceUpCard.value === 'number') {
                         room.game.warCards.push({
                             card: faceUpCard,
                             player: player,
                             playerIndex: warPlayer.playerIndex,
                             faceUp: true
                         });
+                    } else {
+                        console.warn(`⚠️ Invalid face-up card removed from player ${warPlayer.playerIndex}'s hand`);
+                        if (faceUpCard) {
+                            player.hand.unshift(faceUpCard);
+                        }
                     }
                 }
             } else {
-                // ✅ CRITICAL FIX: Player doesn't have enough cards - play what they have face up
+                // ✅ CRITICAL FIX: Player doesn't have enough cards - play what they have face up with validation
                 console.log(`⚠️ Player ${player.name} doesn't have enough cards for war (has ${player.hand?.length || 0}, needs ${cardsNeeded})`);
-                while (player.hand && player.hand.length > 0) {
+                while (player.hand && Array.isArray(player.hand) && player.hand.length > 0) {
                     const card = player.hand.shift();
-                    if (card) {
+                    // ✅ CRITICAL FIX: Validate card has required properties
+                    if (card && card.value && card.name && typeof card.value === 'number') {
                         room.game.warCards.push({
                             card: card,
                             player: player,
                             playerIndex: warPlayer.playerIndex,
                             faceUp: true // Play remaining cards face up
                         });
+                    } else {
+                        console.warn(`⚠️ Invalid card removed from player ${warPlayer.playerIndex}'s hand during war`);
+                        if (card) {
+                            player.hand.unshift(card);
+                        }
                     }
                 }
             }
