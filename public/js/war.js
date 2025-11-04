@@ -607,6 +607,54 @@ class WarClient {
             copyRoomCodeBtn.onclick = () => this.copyRoomCode();
             copyRoomCodeBtn.setAttribute('aria-label', 'Copy room code to clipboard');
         }
+        
+        // ✅ CRITICAL FIX: Add Enter key handler for room code input
+        const roomCodeInput = document.getElementById('roomCodeInput');
+        if (roomCodeInput) {
+            roomCodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.joinRoom();
+                }
+            });
+            roomCodeInput.setAttribute('aria-label', 'Enter room code to join');
+        }
+        
+        // ✅ CRITICAL FIX: Add change nickname button handler
+        const changeNicknameBtn = document.getElementById('changeNicknameBtn');
+        const nicknameInput = document.getElementById('nicknameInput');
+        if (changeNicknameBtn && nicknameInput) {
+            changeNicknameBtn.onclick = () => {
+                const newNickname = nicknameInput.value.trim();
+                if (newNickname && newNickname.length > 0 && newNickname.length <= 12) {
+                    const socket = window.gameFramework?.socket;
+                    if (socket) {
+                        const roomId = window.gameFramework?.roomId;
+                        if (roomId) {
+                            socket.emit('changeNickname', {
+                                roomId: roomId,
+                                nickname: newNickname
+                            });
+                            UIUtils.showGameMessage(`Nickname changed to: ${newNickname}`, 'success');
+                        } else {
+                            UIUtils.showGameMessage('Not in a room', 'error');
+                        }
+                    } else {
+                        UIUtils.showGameMessage('Connection not available', 'error');
+                    }
+                } else {
+                    UIUtils.showGameMessage('Nickname must be 1-12 characters', 'error');
+                }
+            };
+            
+            // Allow Enter key to change nickname
+            nicknameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    changeNicknameBtn.click();
+                }
+            });
+        }
     }
 
     // Setup socket event listeners
@@ -627,9 +675,28 @@ class WarClient {
                 return;
             }
             const roomCode = data.roomId || data; // Handle both old and new formats
+            
+            // ✅ CRITICAL FIX: Hide room code input after creating room
+            const roomCodeInput = document.getElementById('roomCodeInput');
+            if (roomCodeInput) {
+                roomCodeInput.style.display = 'none';
+            }
+            
+            // ✅ CRITICAL FIX: Hide create/join buttons
+            const createRoomBtn = document.getElementById('createRoomBtn');
+            const joinRoomBtn = document.getElementById('joinRoomBtn');
+            if (createRoomBtn) createRoomBtn.style.display = 'none';
+            if (joinRoomBtn) joinRoomBtn.style.display = 'none';
+            
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
             this.showGameControls();
+            
+            // ✅ CRITICAL FIX: Update player list if provided
+            if (data.players) {
+                this.updatePlayerList(data.players);
+                this.updateStartGameButton(data.players);
+            }
         });
         
         socket.on('roomJoined', (data) => {
@@ -639,9 +706,61 @@ class WarClient {
                 console.error('❌ Invalid room joined data');
                 return;
             }
+            
+            // ✅ CRITICAL FIX: Hide room code input after joining room
+            const roomCodeInput = document.getElementById('roomCodeInput');
+            if (roomCodeInput) {
+                roomCodeInput.style.display = 'none';
+            }
+            
+            // ✅ CRITICAL FIX: Hide create/join buttons
+            const createRoomBtn = document.getElementById('createRoomBtn');
+            const joinRoomBtn = document.getElementById('joinRoomBtn');
+            if (createRoomBtn) createRoomBtn.style.display = 'none';
+            if (joinRoomBtn) joinRoomBtn.style.display = 'none';
+            
             this.localPlayerIndex = data.playerIndex !== undefined ? data.playerIndex : this.localPlayerIndex;
             this.showPlayerCustomization();
             this.showGameControls();
+            
+            // ✅ CRITICAL FIX: Update player list if provided
+            if (data.players) {
+                this.updatePlayerList(data.players);
+                this.updateStartGameButton(data.players);
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle player list updates
+        socket.on('playerJoined', (data) => {
+            console.log('👤 Player joined:', data);
+            if (data && data.players) {
+                this.updatePlayerList(data.players);
+                this.updateStartGameButton(data.players);
+            }
+        });
+        
+        socket.on('playerLeft', (data) => {
+            console.log('👤 Player left:', data);
+            if (data && data.players) {
+                this.updatePlayerList(data.players);
+                this.updateStartGameButton(data.players);
+            }
+        });
+        
+        socket.on('botAdded', (data) => {
+            console.log('🤖 Bot added:', data);
+            if (data && data.players) {
+                this.updatePlayerList(data.players);
+                this.updateStartGameButton(data.players);
+            }
+        });
+        
+        socket.on('botRemoved', (data) => {
+            console.log('🤖 Bot removed:', data);
+            if (data && data.players) {
+                this.updatePlayerList(data.players);
+                this.updateStartGameButton(data.players);
+            }
         });
         
         socket.on('gameStarted', (data) => {
@@ -788,11 +907,74 @@ class WarClient {
 
     // Join room
     joinRoom() {
-        const roomCode = prompt('Enter room code:');
+        console.log('🎮 Join Room button clicked');
+        
+        // ✅ CRITICAL FIX: Get room code from input field instead of prompt
+        const roomCodeInput = document.getElementById('roomCodeInput');
+        let roomCode = '';
+        
+        if (roomCodeInput && roomCodeInput.value) {
+            roomCode = roomCodeInput.value.trim().toUpperCase();
+        } else {
+            // Fallback to prompt if input field doesn't exist
+            roomCode = prompt('Enter room code:');
+            if (!roomCode) {
+                return;
+            }
+            roomCode = roomCode.trim().toUpperCase();
+        }
+        
         if (!roomCode) {
+            UIUtils.showGameMessage('Please enter a room code', 'error');
+            if (roomCodeInput) {
+                roomCodeInput.focus();
+            }
             return;
         }
-        GameFramework.joinRoom(roomCode);
+        
+        // ✅ CRITICAL FIX: Validate room code format
+        if (!/^[A-Z0-9]+$/.test(roomCode)) {
+            UIUtils.showGameMessage('Invalid room code format. Use only letters and numbers.', 'error');
+            if (roomCodeInput) {
+                roomCodeInput.focus();
+                roomCodeInput.select();
+            }
+            return;
+        }
+        
+        console.log('✅ Joining room with code:', roomCode);
+        
+        // Try to join room immediately first
+        if (typeof GameFramework !== 'undefined' && GameFramework.joinRoom) {
+            console.log('✅ GameFramework available, joining room immediately');
+            GameFramework.joinRoom(roomCode);
+            return;
+        }
+        
+        // If not available, wait and retry
+        console.log('⏳ GameFramework not ready, waiting...');
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const tryJoinRoom = () => {
+            attempts++;
+            console.log(`🔄 Attempt ${attempts}/${maxAttempts} to join room`);
+            
+            if (typeof GameFramework !== 'undefined' && GameFramework.joinRoom) {
+                console.log('✅ GameFramework now available, joining room');
+                GameFramework.joinRoom(roomCode);
+                return;
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(tryJoinRoom, 200); // Wait 200ms between attempts
+            } else {
+                console.error('❌ GameFramework still not available after maximum attempts');
+                UIUtils.showGameMessage('Game framework not ready. Please refresh the page.', 'error');
+            }
+        };
+        
+        setTimeout(tryJoinRoom, 100);
     }
 
     // Add bot
@@ -2408,10 +2590,117 @@ class WarClient {
 
     // Copy room code
     copyRoomCode() {
-        const roomCode = document.getElementById('roomCodeText').textContent;
-        navigator.clipboard.writeText(roomCode).then(() => {
-            UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
+        const roomCodeText = document.getElementById('roomCodeText');
+        const copySuccessMessage = document.getElementById('copySuccessMessage');
+        
+        if (!roomCodeText || !roomCodeText.textContent) {
+            UIUtils.showGameMessage('No room code to copy', 'error');
+            return;
+        }
+        
+        const roomCode = roomCodeText.textContent;
+        
+        // ✅ CRITICAL FIX: Use clipboard API with fallback
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(roomCode).then(() => {
+                UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
+                
+                // Show success message in UI
+                if (copySuccessMessage) {
+                    copySuccessMessage.style.display = 'block';
+                    this.safeSetTimeout(() => {
+                        if (copySuccessMessage) {
+                            copySuccessMessage.style.display = 'none';
+                        }
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy room code:', err);
+                UIUtils.showGameMessage('Failed to copy room code. Please copy manually.', 'error');
+            });
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = roomCode;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                UIUtils.showGameMessage('Room code copied to clipboard!', 'success');
+                if (copySuccessMessage) {
+                    copySuccessMessage.style.display = 'block';
+                    this.safeSetTimeout(() => {
+                        if (copySuccessMessage) {
+                            copySuccessMessage.style.display = 'none';
+                        }
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                UIUtils.showGameMessage('Failed to copy room code. Please copy manually.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    }
+    
+    // ✅ CRITICAL FIX: Update player list
+    updatePlayerList(players) {
+        const playerList = document.getElementById('playerList');
+        if (!playerList) return;
+        
+        if (!players || !Array.isArray(players) || players.length === 0) {
+            playerList.innerHTML = '<div style="color: white; padding: 10px; text-align: center;">No players in room</div>';
+            return;
+        }
+        
+        playerList.innerHTML = '';
+        
+        players.forEach((player, index) => {
+            if (!player) return;
+            
+            const playerItem = document.createElement('div');
+            playerItem.className = 'player-item';
+            playerItem.setAttribute('data-player-index', index);
+            
+            const isLocalPlayer = index === this.localPlayerIndex;
+            const cardCount = Array.isArray(player.hand) ? player.hand.length : 0;
+            
+            playerItem.innerHTML = `
+                <div class="player-name">${isLocalPlayer ? 'You' : (player.name || `Player ${index + 1}`)}${player.isBot ? ' 🤖' : ''}</div>
+                <div class="player-cards">${cardCount} cards</div>
+            `;
+            
+            if (player.isBot) {
+                playerItem.querySelector('.player-name').style.color = '#4CAF50';
+            }
+            
+            playerList.appendChild(playerItem);
         });
+    }
+    
+    // ✅ CRITICAL FIX: Update start game button state
+    updateStartGameButton(players) {
+        const startGameBtn = document.getElementById('startGameBtn');
+        if (!startGameBtn) return;
+        
+        const isRoomCreator = window.isRoomCreator || window.gameFramework?.isRoomCreator || false;
+        
+        if (!isRoomCreator) {
+            startGameBtn.style.display = 'none';
+            return;
+        }
+        
+        // Enable button if we have at least 2 players
+        const playerCount = players && Array.isArray(players) ? players.length : 0;
+        startGameBtn.disabled = playerCount < 2;
+        
+        if (playerCount < 2) {
+            startGameBtn.title = 'Need at least 2 players to start';
+        } else {
+            startGameBtn.title = 'Start the game';
+        }
     }
 
     // Reset client state
