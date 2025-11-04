@@ -641,11 +641,41 @@ class PokerClient {
         });
         
         socket.on('gameStarted', (data) => {
-            console.log('Game started:', data);
+            console.log('🎴 Game started:', data);
             if (data.localPlayerIndex !== undefined) {
                 this.localPlayerIndex = data.localPlayerIndex;
-                console.log('Local player index from gameStarted:', this.localPlayerIndex);
+                console.log('🎴 Local player index from gameStarted:', this.localPlayerIndex);
             }
+            
+            // Sync game state from server
+            if (data.players) {
+                this.game.players = data.players;
+            }
+            if (data.communityCards) {
+                this.game.communityCards = data.communityCards;
+            }
+            if (data.pot !== undefined) {
+                this.game.pot = data.pot;
+            }
+            if (data.currentBet !== undefined) {
+                this.game.currentBet = data.currentBet;
+            }
+            if (data.currentPlayer !== undefined) {
+                this.game.currentPlayer = data.currentPlayer;
+            }
+            if (data.gamePhase) {
+                this.game.gamePhase = data.gamePhase;
+            }
+            if (data.dealerPosition !== undefined) {
+                this.game.dealerPosition = data.dealerPosition;
+            }
+            if (data.smallBlind !== undefined) {
+                this.game.smallBlind = data.smallBlind;
+            }
+            if (data.bigBlind !== undefined) {
+                this.game.bigBlind = data.bigBlind;
+            }
+            
             this.startGame(data);
         });
         
@@ -797,13 +827,41 @@ class PokerClient {
 
     // Update game state
     updateGameState(data) {
-        this.game.players = data.players || this.game.players;
-        this.game.communityCards = data.communityCards || this.game.communityCards;
-        this.game.pot = data.pot || this.game.pot;
-        this.game.currentBet = data.currentBet || this.game.currentBet;
-        this.game.currentPlayer = data.currentPlayer || this.game.currentPlayer;
-        this.game.gamePhase = data.gamePhase || this.game.gamePhase;
-        this.game.winners = data.winners || this.game.winners;
+        console.log('🎴 Updating game state:', data);
+        
+        // Fully sync game state from server
+        if (data.players) {
+            this.game.players = data.players;
+        }
+        if (data.communityCards !== undefined) {
+            this.game.communityCards = data.communityCards;
+        }
+        if (data.pot !== undefined) {
+            this.game.pot = data.pot;
+        }
+        if (data.currentBet !== undefined) {
+            this.game.currentBet = data.currentBet;
+        }
+        if (data.currentPlayer !== undefined) {
+            this.game.currentPlayer = data.currentPlayer;
+        }
+        if (data.gamePhase) {
+            this.game.gamePhase = data.gamePhase;
+        }
+        
+        // Update turn state
+        this.isMyTurn = (data.currentPlayer === this.localPlayerIndex);
+        this.canAct = this.isMyTurn && 
+                      this.game.players[this.localPlayerIndex] && 
+                      !this.game.players[this.localPlayerIndex].isFolded &&
+                      !this.game.players[this.localPlayerIndex].isAllIn;
+        
+        // Show/hide betting controls based on turn
+        if (this.isMyTurn && this.canAct) {
+            this.showBettingControls();
+        } else {
+            this.hideBettingControls();
+        }
         
         this.updateUI();
     }
