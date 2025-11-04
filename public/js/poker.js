@@ -2458,8 +2458,8 @@ function drawChipIndicators() {
         // Chips = totalBet - currentBet (amount bet in previous rounds, not current round)
         // If player has currentBet > 0, don't show chips (they'll show BET instead)
         // Only show chips if (totalBet - currentBet) > 0
-        const chipsAmount = (player.totalBet || 0) - (player.currentBet || 0);
-        if (!player || player.isFolded || chipsAmount <= 0) return;
+        const chipsAmountDisplay = (player.totalBet || 0) - (player.currentBet || 0);
+        if (!player || player.isFolded || chipsAmountDisplay <= 0) return;
         
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const playerX = centerX + cos(angle) * playerRadiusX;
@@ -2586,10 +2586,10 @@ function drawChipIndicators() {
         text('CHIPS', chipIndicatorX, chipIndicatorY - 6);
         
         // Draw chips amount below (totalBet - currentBet, i.e., amount from previous rounds)
-        const chipsAmount = (player.totalBet || 0) - (player.currentBet || 0);
+        const chipsAmountValue = (player.totalBet || 0) - (player.currentBet || 0);
         textSize(9);
         fill(255, 255, 255);
-        text('$' + chipsAmount, chipIndicatorX, chipIndicatorY + 28);
+        text('$' + chipsAmountValue, chipIndicatorX, chipIndicatorY + 28);
         
         pop();
     });
@@ -2741,11 +2741,22 @@ function drawBetIndicators() {
         
         let chipIndicatorX, chipIndicatorY;
         
-        // If player has both chips and current bet, position chips to the LEFT of bet at same height
+        // If player has both chips and current bet, position them side by side at same height
         if (hasCurrentBet && betPos) {
-            // Position chip indicator to the LEFT of bet indicator at the same Y coordinate
-            const indicatorSpacing = 40; // Space between CHIPS and BET buttons (40px)
-            chipIndicatorX = betPos.x - indicatorSpacing; // Position to the left of BET
+            // For left side players (cos(angle) < 0), CHIPS on left, BET on right
+            // For other players, BET on left, CHIPS on right
+            const isLeftSidePlayer = cos(angle) < 0;
+            const indicatorSpacing = 40; // Space between buttons (40px)
+            
+            if (isLeftSidePlayer) {
+                // Left side: CHIPS on left, BET on right
+                // Position chip indicator to the LEFT of bet indicator
+                chipIndicatorX = betPos.x - indicatorSpacing;
+            } else {
+                // Other players: BET on left, CHIPS on right
+                // Position chip indicator to the RIGHT of bet indicator
+                chipIndicatorX = betPos.x + indicatorSpacing;
+            }
             chipIndicatorY = betPos.y; // Same height as BET
             
             // Ensure we don't overlap with blind indicators
@@ -2824,7 +2835,9 @@ function drawBetIndicators() {
             }
             
             // Check against bet indicators (from first pass)
-            if (betPos) {
+            // If we're positioning chips next to bet (same height), skip this check
+            // Otherwise, ensure proper separation
+            if (betPos && !hasCurrentBet) {
                 const dx = chipIndicatorX - betPos.x;
                 const dy = chipIndicatorY - betPos.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
