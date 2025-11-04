@@ -2506,7 +2506,15 @@ io.on('connection', (socket) => {
                 });
                 
                 // Set current player (starts after big blind)
-                const currentPlayer = (bigBlindPos + 1) % players.length;
+                // CRITICAL: First player to act is the one AFTER the big blind
+                let currentPlayer = (bigBlindPos + 1) % players.length;
+                
+                // Skip folded or all-in players (shouldn't happen at start, but safety check)
+                let attempts = 0;
+                while ((players[currentPlayer].isFolded || players[currentPlayer].isAllIn) && attempts < players.length) {
+                    currentPlayer = (currentPlayer + 1) % players.length;
+                    attempts++;
+                }
                 
                 room.game = {
                     started: true,
@@ -2527,9 +2535,12 @@ io.on('connection', (socket) => {
                 };
                 
                 console.log(`🎴 Poker game initialized with ${players.length} players`);
-                console.log(`🎴 Dealer: Player ${dealerPosition + 1}, SB: Player ${smallBlindPos + 1}, BB: Player ${bigBlindPos + 1}`);
-                console.log(`🎴 Current player: ${currentPlayer + 1} (${players[currentPlayer].name})`);
+                console.log(`🎴 Dealer: Position ${dealerPosition} (${players[dealerPosition].name})`);
+                console.log(`🎴 Small Blind: Position ${smallBlindPos} (${players[smallBlindPos].name}) - Posts $${smallBlind}`);
+                console.log(`🎴 Big Blind: Position ${bigBlindPos} (${players[bigBlindPos].name}) - Posts $${bigBlind}`);
+                console.log(`🎴 First to Act: Position ${currentPlayer} (${players[currentPlayer].name}) - This is AFTER the big blind`);
                 console.log(`🎴 Pot: $${pot}, Current bet: $${currentBet}`);
+                console.log(`🎴 Turn Order Check: Current player ${currentPlayer} should NOT be big blind ${bigBlindPos}: ${currentPlayer !== bigBlindPos ? '✅ CORRECT' : '❌ ERROR'}`);
             } else if (room.gameType === 'blackjack') {
                 // For Blackjack, initialize game state for betting phase
                 console.log(`🃏 Creating Blackjack game for ${room.players.length} players`);
@@ -5355,9 +5366,12 @@ function determineRoundWinner(playedCards, room) {
                 }
                 
                 // Verify it's the player's turn
+                console.log(`🎴 Turn verification: currentPlayer=${room.game.currentPlayer}, playerIndex=${playerIndex}, player.name=${player.name}`);
+                console.log(`🎴 Player positions: dealer=${room.game.dealerPosition}, SB=${(room.game.dealerPosition + 1) % room.game.players.length}, BB=${(room.game.dealerPosition + 2) % room.game.players.length}`);
+                
                 if (room.game.currentPlayer !== playerIndex) {
-                    console.error(`❌ Not player's turn - current: ${room.game.currentPlayer}, player: ${playerIndex}`);
-                    socket.emit('error', 'Not your turn');
+                    console.error(`❌ Not player's turn - current: ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name}), attempted: ${playerIndex} (${player.name})`);
+                    socket.emit('error', `Not your turn. It's ${room.game.players[room.game.currentPlayer]?.name}'s turn.`);
                     return;
                 }
                 
@@ -5399,19 +5413,63 @@ function determineRoundWinner(playedCards, room) {
                 
                 // Move to next active player
                 const startPlayer = room.game.currentPlayer;
+                let attempts = 0;
                 do {
                     room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                    attempts++;
+                    
+                    // Safety check to prevent infinite loop
+                    if (attempts >= room.game.players.length) {
+                        console.error(`❌ Could not find next active player after ${attempts} attempts`);
+                        break;
+                    }
                 } while (
-                    room.game.players[room.game.currentPlayer].isFolded || 
-                    room.game.players[room.game.currentPlayer].isAllIn ||
-                    room.game.currentPlayer === startPlayer // Prevent infinite loop
+                    (room.game.players[room.game.currentPlayer].isFolded || 
+                     room.game.players[room.game.currentPlayer].isAllIn) &&
+                    room.game.currentPlayer !== startPlayer
                 );
+                
+                console.log(`🎴 Turn advanced from ${startPlayer} (${room.game.players[startPlayer]?.name}) to ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name})`);
                 
                 // Check if betting round is complete
                 // Round is complete when all active players have matched bets and action returns to last raiser
                 const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
                 const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
-                const actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+                
+                // Get big blind position for preflop logic
+                const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
+                
+                // For preflop: action must return to big blind (lastRaisePlayer) after everyone acts
+                // For post-flop: action must return to last raiser (or small blind if no raises)
+                let actionBackToLastRaiser;
+                if (room.game.gamePhase === 'preflop') {
+                    // In preflop, if no one raised, action returns to big blind
+                    // If someone raised, action returns to the last raiser
+                    if (room.game.lastRaisePlayer === bigBlindPos) {
+                        // No raises yet - action returns to big blind
+                        actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
+                    } else {
+                        // Someone raised - action returns to last raiser
+                        actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+                    }
+                } else {
+                    // Post-flop: action returns to last raiser (or small blind if no raises)
+                    if (room.game.lastRaisePlayer === -1) {
+                        // No raises in this round - action returns to small blind (first active player after dealer)
+                        const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
+                        let expectedPlayer = smallBlindPos;
+                        // Skip to first active player
+                        while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
+                            expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                        }
+                        actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
+                    } else {
+                        actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+                    }
+                }
+                
+                console.log(`🎴 Betting round check: phase=${room.game.gamePhase}, allBetsMatched=${allBetsMatched}, actionBackToLastRaiser=${actionBackToLastRaiser}, activePlayers=${activePlayers.length}`);
+                console.log(`🎴 Current player: ${room.game.currentPlayer}, lastRaisePlayer: ${room.game.lastRaisePlayer}`);
                 
                 if (allBetsMatched && actionBackToLastRaiser && activePlayers.length > 1) {
                     // Betting round complete - advance to next phase
