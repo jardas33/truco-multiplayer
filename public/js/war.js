@@ -1140,11 +1140,19 @@ class WarClient {
             historyLog.style.display = 'block';
         }
         
-        // ✅ CRITICAL FIX: Show navigation buttons when game starts
+        // ✅ CRITICAL FIX: Show navigation buttons when game starts and ensure they're clickable
         const navButtons = document.querySelector('.game-navigation-buttons');
         if (navButtons) {
             navButtons.style.display = 'flex';
+            navButtons.style.zIndex = '3000';
+            navButtons.style.pointerEvents = 'auto';
+            console.log('✅ Navigation buttons shown');
+        } else {
+            console.warn('⚠️ Navigation buttons container not found');
         }
+        
+        // ✅ CRITICAL FIX: Re-setup navigation buttons to ensure event handlers are attached
+        this.setupNavigationButtons();
         
         this.statistics.currentWarCount = 0;
         this.statistics.cardsWonByPlayer = {};
