@@ -2154,7 +2154,7 @@ class WarClient {
                     'battle-card',
                     {
                         animate: true,
-                        delay: index * 100,
+                        delay: index * 300, // ✅ CRITICAL FIX: Increased delay from 100ms to 300ms for better visibility
                         isWar: false,
                         faceUp: true
                     }
@@ -2208,7 +2208,7 @@ class WarClient {
                             'battle-card war-card',
                             {
                                 animate: true,
-                                delay: (groupIndex * 200) + (cardIndex * 50),
+                                delay: (groupIndex * 500) + (cardIndex * 200), // ✅ CRITICAL FIX: Increased delays for war cards (500ms between groups, 200ms between cards)
                                 isWar: true,
                                 faceUp: warCard.faceUp !== false // Default to face up if not specified
                             }

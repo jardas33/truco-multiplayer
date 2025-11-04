@@ -226,7 +226,11 @@ class UIUtils {
         const menuDiv = document.getElementById('Menu');
         if (canvas && menuDiv) {
             try {
-                canvas.parent(menuDiv);
+                // ✅ CRITICAL FIX: Use DOM appendChild instead of p5.js parent() method
+                if (canvas.parentNode) {
+                    canvas.parentNode.removeChild(canvas);
+                }
+                menuDiv.appendChild(canvas);
                 console.log('✅ Canvas moved back to Menu div');
             } catch (error) {
                 console.error('❌ Error moving canvas to Menu div:', error);
@@ -243,7 +247,11 @@ class UIUtils {
         const gameDiv = document.getElementById('Game');
         if (canvas && gameDiv) {
             try {
-                canvas.parent(gameDiv);
+                // ✅ CRITICAL FIX: Use DOM appendChild instead of p5.js parent() method
+                if (canvas.parentNode) {
+                    canvas.parentNode.removeChild(canvas);
+                }
+                gameDiv.appendChild(canvas);
                 console.log('✅ Canvas moved to Game div for gameplay');
             } catch (error) {
                 console.error('❌ Error moving canvas to Game div:', error);
