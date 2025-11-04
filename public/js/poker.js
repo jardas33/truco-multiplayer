@@ -1591,15 +1591,55 @@ class PokerClient {
             return;
         }
         
-        const minRaise = this.game.currentBet * 2;
-        const raiseAmount = Math.min(Math.max(minRaise, betAmount), localPlayer.chips);
+        // Calculate minimum raise: current bet + minimum raise increment (usually big blind)
+        const bigBlind = this.game.bigBlind || 20;
+        const currentPlayerBet = localPlayer.currentBet || 0;
+        const minRaiseTotal = this.game.currentBet + bigBlind; // Minimum total bet after raise
+        const minRaiseAmount = minRaiseTotal - currentPlayerBet; // Minimum additional amount to raise
         
-        if (raiseAmount < minRaise) {
-            console.error('❌ Raise amount too small. Minimum:', minRaise);
+        // Calculate total bet amount (current bet + raise)
+        let totalBetAmount = betAmount;
+        if (betAmount <= 0) {
+            // If no amount entered, use minimum raise
+            totalBetAmount = minRaiseTotal;
+        } else {
+            // Ensure bet amount is at least the minimum raise
+            totalBetAmount = Math.max(betAmount, minRaiseTotal);
+        }
+        
+        // Cap at player's available chips
+        const maxBet = currentPlayerBet + localPlayer.chips;
+        totalBetAmount = Math.min(totalBetAmount, maxBet);
+        
+        // Calculate the actual raise amount (additional chips to put in)
+        const raiseAmount = totalBetAmount - currentPlayerBet;
+        
+        if (raiseAmount <= 0) {
+            console.error('❌ Invalid raise amount');
             if (typeof UIUtils !== 'undefined') {
-                UIUtils.showGameMessage(`Minimum raise is $${minRaise}`, 'error');
+                UIUtils.showGameMessage('Please enter a valid raise amount', 'error');
             } else {
-                alert(`Minimum raise is $${minRaise}`);
+                alert('Please enter a valid raise amount');
+            }
+            return;
+        }
+        
+        if (raiseAmount < minRaiseAmount) {
+            console.error('❌ Raise amount too small. Minimum raise:', minRaiseAmount);
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage(`Minimum raise is $${minRaiseAmount} (total bet: $${minRaiseTotal})`, 'error');
+            } else {
+                alert(`Minimum raise is $${minRaiseAmount} (total bet: $${minRaiseTotal})`);
+            }
+            return;
+        }
+        
+        if (raiseAmount > localPlayer.chips) {
+            console.error('❌ Raise amount exceeds available chips');
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage('Insufficient chips', 'error');
+            } else {
+                alert('Insufficient chips');
             }
             return;
         }
@@ -1612,11 +1652,12 @@ class PokerClient {
             return;
         }
         
+        // Emit raise action with total bet amount (server will handle the raise logic)
         socket.emit('playerAction', {
             roomId: roomId,
             playerIndex: this.localPlayerIndex,
             action: 'raise',
-            amount: raiseAmount
+            amount: totalBetAmount // Send total bet amount, not just the raise increment
         });
         
         this.hideBettingControls();
@@ -2162,7 +2203,20 @@ function drawPlayerCards(x, y, hand, shouldShowCardImages) {
 function drawPot() {
     // Pot position: center when no community cards, move left when community cards appear
     const hasCommunityCards = window.game && window.game.communityCards && window.game.communityCards.length > 0;
-    const centerX = hasCommunityCards ? width/2 - 120 : width/2; // Move left when cards appear
+    
+    // Calculate how far left to move based on community card width
+    let potOffsetX = 0;
+    if (hasCommunityCards) {
+        const cardWidth = 80;
+        const spacing = 20;
+        const numCards = window.game.communityCards.length;
+        const totalCardWidth = (numCards * cardWidth) + ((numCards - 1) * spacing);
+        const potWidth = 130; // Pot ellipse width
+        // Move pot to the left of the cards with some padding
+        potOffsetX = -(totalCardWidth / 2 + potWidth / 2 + 40); // 40px padding
+    }
+    
+    const centerX = width/2 + potOffsetX;
     const centerY = height/2; // True center, not offset
     
     push();

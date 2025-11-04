@@ -1750,15 +1750,26 @@ io.on('connection', (socket) => {
                         break;
                     case 'raise':
                     case 'bet':
-                        const raiseAmount = Math.min(amount, player.chips);
-                        player.chips -= raiseAmount;
-                        player.currentBet += raiseAmount;
-                        player.totalBet += raiseAmount;
-                        room.game.pot += raiseAmount;
+                        // Amount is the total bet amount the player wants to make
+                        // Calculate the additional amount needed (raise increment)
+                        const currentPlayerBet2 = player.currentBet || 0;
+                        const totalBetDesired2 = Math.min(amount, currentPlayerBet2 + player.chips);
+                        const raiseIncrement2 = totalBetDesired2 - currentPlayerBet2;
+                        
+                        if (raiseIncrement2 <= 0) {
+                            console.error(`❌ Invalid raise: totalBetDesired (${totalBetDesired2}) <= currentPlayerBet (${currentPlayerBet2})`);
+                            return; // Invalid raise
+                        }
+                        
+                        player.chips -= raiseIncrement2;
+                        player.currentBet = totalBetDesired2;
+                        player.totalBet += raiseIncrement2;
+                        room.game.pot += raiseIncrement2;
                         room.game.currentBet = player.currentBet;
                         if (player.chips === 0) {
                             player.isAllIn = true;
                         }
+                        console.log(`🎴 Raise processed: player bet ${totalBetDesired2} (added ${raiseIncrement2}), new currentBet: ${room.game.currentBet}`);
                         break;
                 }
                 
@@ -6037,15 +6048,26 @@ function determineRoundWinner(playedCards, room) {
                         break;
                     case 'raise':
                     case 'bet':
-                        const raiseAmount = Math.min(amount, player.chips);
-                        player.chips -= raiseAmount;
-                        player.currentBet += raiseAmount;
-                        player.totalBet += raiseAmount;
-                        room.game.pot += raiseAmount;
+                        // Amount is the total bet amount the player wants to make
+                        // Calculate the additional amount needed (raise increment)
+                        const currentPlayerBet2 = player.currentBet || 0;
+                        const totalBetDesired2 = Math.min(amount, currentPlayerBet2 + player.chips);
+                        const raiseIncrement2 = totalBetDesired2 - currentPlayerBet2;
+                        
+                        if (raiseIncrement2 <= 0) {
+                            console.error(`❌ Invalid raise: totalBetDesired (${totalBetDesired2}) <= currentPlayerBet (${currentPlayerBet2})`);
+                            return; // Invalid raise
+                        }
+                        
+                        player.chips -= raiseIncrement2;
+                        player.currentBet = totalBetDesired2;
+                        player.totalBet += raiseIncrement2;
+                        room.game.pot += raiseIncrement2;
                         room.game.currentBet = player.currentBet;
                         if (player.chips === 0) {
                             player.isAllIn = true;
                         }
+                        console.log(`🎴 Raise processed: player bet ${totalBetDesired2} (added ${raiseIncrement2}), new currentBet: ${room.game.currentBet}`);
                         break;
                 }
                 
