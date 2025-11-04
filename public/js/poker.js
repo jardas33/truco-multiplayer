@@ -2739,6 +2739,9 @@ function drawBetIndicators() {
         // Check if player also has a current bet (both CHIPS and BET should show)
         const hasCurrentBet = player.currentBet > 0;
         
+        // Define minDistanceFromBlind in outer scope so it's available in conflict resolution loop
+        const minDistanceFromBlind = isSidePlayer ? 120 : 90;
+        
         let chipIndicatorX, chipIndicatorY;
         
         // If player has both chips and current bet, position them side by side at same height
@@ -2761,20 +2764,22 @@ function drawBetIndicators() {
             
             // Ensure we don't overlap with blind indicators
             if (blindPos) {
-                const minDistanceFromBlind = isSidePlayer ? 120 : 90;
                 const dx = chipIndicatorX - blindPos.x;
                 const dy = chipIndicatorY - blindPos.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance < minDistanceFromBlind) {
-                    // If chip would overlap blind, move it further left
+                    // If chip would overlap blind, move it further away
                     const extraOffset = minDistanceFromBlind - distance + 20;
-                    chipIndicatorX = blindPos.x - minDistanceFromBlind - extraOffset;
+                    if (isLeftSidePlayer) {
+                        chipIndicatorX = blindPos.x - minDistanceFromBlind - extraOffset;
+                    } else {
+                        chipIndicatorX = blindPos.x + minDistanceFromBlind + extraOffset;
+                    }
                 }
             }
         } else {
             // No current bet - position chips normally (below or separate)
-            const minDistanceFromBlind = isSidePlayer ? 120 : 90;
             
             if (isTopPlayer) {
                 // Top player: chip indicator goes to the far left, well below cards
@@ -2785,8 +2790,10 @@ function drawBetIndicators() {
                 const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
                 const cardLeftEdge = playerX - (cardsTotalWidth / 2);
                 
-                // Check if community cards exist and calculate their bounds
-                let needsLeftOffset = false;
+                // Check if community cards exist and calculate their bounds to avoid overlap
+                let chipXBase = cardLeftEdge - 80; // Default position
+                const chipYBase = cardY + 42 + 90; // Position below cards
+                
                 if (window.game.communityCards && window.game.communityCards.length > 0) {
                     const centerX = width/2;
                     const centerY = height/2;
@@ -2800,23 +2807,25 @@ function drawBetIndicators() {
                     const communityBottomY = centerY + communityCardHeight/2;
                     
                     // Check if chip position would overlap with community cards
-                    const chipX = cardLeftEdge - 80;
-                    const chipY = cardY + 42 + 90;
-                    const chipRadius = 14; // Half of chip indicator size (28px)
+                    // Chip indicator is 28px diameter, so radius is 14px
+                    // Text below adds about 28px height
+                    const chipRadius = 14;
+                    const chipTextHeight = 28;
+                    const chipTop = chipYBase - chipRadius;
+                    const chipBottom = chipYBase + chipRadius + chipTextHeight;
                     
-                    // Check overlap: chip is to the left of community cards, but check vertical overlap
-                    if (chipX < communityEndX && chipY > communityTopY - chipRadius && chipY < communityBottomY + chipRadius) {
-                        needsLeftOffset = true;
+                    // Check if chip overlaps with community cards horizontally and vertically
+                    const horizontalOverlap = chipXBase < communityEndX + 20; // 20px buffer
+                    const verticalOverlap = (chipTop < communityBottomY + 20) && (chipBottom > communityTopY - 20);
+                    
+                    if (horizontalOverlap && verticalOverlap) {
+                        // Move chip indicator much further left to avoid community cards
+                        chipXBase = communityStartX - 100; // Position well to the left of community cards
                     }
                 }
                 
-                if (needsLeftOffset) {
-                    // Move chip indicator further left to avoid community cards
-                    chipIndicatorX = cardLeftEdge - 150; // Much further left
-                } else {
-                    chipIndicatorX = cardLeftEdge - 80; // Normal position
-                }
-                chipIndicatorY = cardY + 42 + 90; // Much further below
+                chipIndicatorX = chipXBase;
+                chipIndicatorY = chipYBase;
             } else if (isSidePlayer) {
                 // Side players: chip indicator goes to OPPOSITE side from blind indicators
                 const isRightSide = cos(angle) > 0;
@@ -3381,29 +3390,16 @@ function drawBlindIndicators() {
         // SB and BB only show during active game phases
         const hasActiveGamePhase = window.game.gamePhase && window.game.gamePhase !== '';
         
-        // Debug logging for first player
-        if (index === 0 && hasActiveGamePhase) {
-            console.log('🎴 drawBlindIndicators: Player 0, dealerPosition:', dealerPosition, 'smallBlindPos:', smallBlindPos, 'bigBlindPos:', bigBlindPos, 'gamePhase:', window.game.gamePhase);
-        }
-        
         // D button always shows (as long as game exists)
         if (index === dealerPosition) {
             indicatorsToDraw.push({ type: 'D', color: [255, 215, 0], size: 30, text: 'D', amount: null });
-            if (index === 0) console.log('🎴 Adding D indicator for player', index);
         }
         // SB and BB only show during active phases
         if (index === smallBlindPos && hasActiveGamePhase) {
-            indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: null }); // Remove amount display
-            if (index === 1) console.log('🎴 Adding SB indicator for player', index);
+            indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: null });
         }
         if (index === bigBlindPos && hasActiveGamePhase) {
-            indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: null }); // Remove amount display
-            if (index === 2) console.log('🎴 Adding BB indicator for player', index);
-        }
-        
-        // Debug: Log if no indicators were added for a player who should have one
-        if (indicatorsToDraw.length === 0 && hasActiveGamePhase && (index === dealerPosition || index === smallBlindPos || index === bigBlindPos)) {
-            console.log('🎴 WARNING: Player', index, 'should have indicator but none added. hasActiveGamePhase:', hasActiveGamePhase);
+            indicatorsToDraw.push({ type: 'BB', color: [255, 100, 100], size: 28, text: 'BB', amount: null });
         }
         
         // For top player, center the stack vertically
