@@ -2449,6 +2449,10 @@ function drawChipIndicators() {
     });
     
     // Second pass: Draw chip indicators (showing total bet, not chips)
+    // Use positions calculated in drawBetIndicators() to avoid overlap
+    // Get chip indicator positions from a global storage (set by drawBetIndicators)
+    const chipPositionsFromBet = window.chipIndicatorPositions || new Map();
+    
     window.game.players.forEach((player, index) => {
         if (!player || player.isFolded || !player.totalBet || player.totalBet === 0) return; // Only show if player has bet something
         
@@ -2461,45 +2465,59 @@ function drawChipIndicators() {
         const sinAngle = sin(angle);
         const isTopPlayer = sinAngle < -0.5;
         
-        // Calculate chip indicator position - place it below bet indicator or in a safe location
-        let chipIndicatorX = playerX;
-        let chipIndicatorY = playerY + 100; // Position below bet indicator area
-        
         // Get existing indicator positions
         const blindPos = blindIndicatorPositions.get(index);
         const betPos = betIndicatorPositions.get(index);
         
-        // For top player, position to the left of cards (if no bet indicator) or below bet indicator
-        if (isTopPlayer) {
-            if (betPos) {
-                // Position below bet indicator
-                chipIndicatorX = betPos.x;
-                chipIndicatorY = betPos.y + 60; // Below bet indicator
-            } else {
-                // Position to the left of cards
+        // Use position from drawBetIndicators if available, otherwise calculate
+        let chipIndicatorX, chipIndicatorY;
+        if (chipPositionsFromBet.has(index)) {
+            const pos = chipPositionsFromBet.get(index);
+            chipIndicatorX = pos.x;
+            chipIndicatorY = pos.y;
+        } else {
+            // Fallback calculation - place chip indicator well below bet indicator
+            if (isTopPlayer) {
                 const cardY = playerY + 50;
                 const cardWidth = 60;
                 const cardSpacing = 8;
                 const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
                 const cardLeftEdge = playerX - (cardsTotalWidth / 2);
                 chipIndicatorX = cardLeftEdge - 35;
-                chipIndicatorY = cardY + 42;
-            }
-        } else {
-            // For other players, position below bet indicator or in a safe location
-            if (betPos) {
-                chipIndicatorX = betPos.x;
-                chipIndicatorY = betPos.y + 50; // Below bet indicator
+                chipIndicatorY = cardY + 42 + 80; // Well below bet indicator
             } else {
-                // No bet indicator, position below player box
                 chipIndicatorX = playerX;
-                chipIndicatorY = playerY + 90;
+                chipIndicatorY = playerY + 130; // Well below bet indicator (which is at playerY + 80)
+            }
+        }
+        
+        // Additional safety check: ensure chip indicator is far enough from bet indicator
+        if (betPos) {
+            const minDistance = 80; // Large minimum distance
+            const distanceX = chipIndicatorX - betPos.x;
+            const distanceY = chipIndicatorY - betPos.y;
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+            
+            if (distance < minDistance) {
+                // Force chip indicator to be below bet indicator with minimum spacing
+                if (!isTopPlayer) {
+                    chipIndicatorY = betPos.y + minDistance;
+                } else {
+                    // For top player, move further left
+                    const cardY = playerY + 50;
+                    const cardWidth = 60;
+                    const cardSpacing = 8;
+                    const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
+                    const cardLeftEdge = playerX - (cardsTotalWidth / 2);
+                    chipIndicatorX = cardLeftEdge - 35 - (minDistance - distanceX);
+                    chipIndicatorY = cardY + 42 + minDistance;
+                }
             }
         }
         
         // Avoid overlap with blind indicators
         if (blindPos) {
-            const minDistance = 55;
+            const minDistance = 70; // Increased minimum distance
             const distanceX = chipIndicatorX - blindPos.x;
             const distanceY = chipIndicatorY - blindPos.y;
             const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
@@ -2516,19 +2534,6 @@ function drawChipIndicators() {
                 
                 chipIndicatorX = blindPos.x + cos(adjustedAngle) * minDistance;
                 chipIndicatorY = blindPos.y + sin(adjustedAngle) * minDistance;
-            }
-        }
-        
-        // Avoid overlap with bet indicators
-        if (betPos && !isTopPlayer) {
-            const minDistance = 50;
-            const distanceX = chipIndicatorX - betPos.x;
-            const distanceY = chipIndicatorY - betPos.y;
-            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-            
-            if (distance < minDistance) {
-                // Move chip indicator further down
-                chipIndicatorY = betPos.y + minDistance;
             }
         }
         
@@ -2554,13 +2559,13 @@ function drawChipIndicators() {
         strokeWeight(2);
         ellipse(chipIndicatorX, chipIndicatorY, 28, 28);
         
-        // Draw "BET" text (since it shows total bet, not chips)
+        // Draw "CHIPS" text (shows total bet amount, not current chip count)
         fill(0, 0, 0);
         textAlign(CENTER, CENTER);
         textSize(8);
         textStyle(BOLD);
         noStroke();
-        text('TOTAL', chipIndicatorX, chipIndicatorY - 6);
+        text('CHIPS', chipIndicatorX, chipIndicatorY - 6);
         
         // Draw total bet amount below (not chips)
         textSize(9);
@@ -2662,32 +2667,36 @@ function drawBetIndicators() {
         const sinAngle = sin(angle);
         const isTopPlayer = sinAngle < -0.5;
         
+        // Calculate initial position - place chip indicator BELOW bet indicator area
         let chipIndicatorX = playerX;
-        let chipIndicatorY = playerY + 100;
+        let chipIndicatorY = playerY + 120; // Start below where bet indicators would be
         
         const blindPos = blindIndicatorPositions.get(index);
         
         if (isTopPlayer) {
+            // For top player, position to the left of cards (away from blind indicators on right)
             const cardY = playerY + 50;
             const cardWidth = 60;
             const cardSpacing = 8;
             const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
             const cardLeftEdge = playerX - (cardsTotalWidth / 2);
             chipIndicatorX = cardLeftEdge - 35;
-            chipIndicatorY = cardY + 42;
+            chipIndicatorY = cardY + 42 + 60; // Position below bet indicator area (bet is at cardY + 42)
         } else {
+            // For other players, position below bet indicator area
             chipIndicatorX = playerX;
-            chipIndicatorY = playerY + 90;
+            chipIndicatorY = playerY + 120; // Well below bet indicator (which is at playerY + 80)
         }
         
         // Avoid overlap with blind indicators
         if (blindPos) {
-            const minDistance = 55;
+            const minDistance = 70; // Increased minimum distance
             const distanceX = chipIndicatorX - blindPos.x;
             const distanceY = chipIndicatorY - blindPos.y;
             const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
             
             if (distance < minDistance) {
+                // Move chip indicator further away from blind indicator
                 const angleAway = atan2(chipIndicatorY - blindPos.y, chipIndicatorX - blindPos.x);
                 const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
                 const angleDiff = Math.abs(angleAway - angleToPlayer);
@@ -2702,8 +2711,24 @@ function drawBetIndicators() {
             }
         }
         
+        // Ensure indicator is inside the INNER table circle
+        const innerTableRadiusX = tableRadiusX * 0.85;
+        const innerTableRadiusY = tableRadiusY * 0.85;
+        const dx = (chipIndicatorX - centerX) / innerTableRadiusX;
+        const dy = (chipIndicatorY - centerY) / innerTableRadiusY;
+        const isInsideTable = (dx * dx + dy * dy) <= 1;
+        
+        if (!isInsideTable) {
+            const angleToCenter = atan2(chipIndicatorY - centerY, chipIndicatorX - centerX);
+            chipIndicatorX = centerX + cos(angleToCenter) * (innerTableRadiusX - 40);
+            chipIndicatorY = centerY + sin(angleToCenter) * (innerTableRadiusY - 40);
+        }
+        
         chipIndicatorPositions.set(index, { x: chipIndicatorX, y: chipIndicatorY });
     });
+    
+    // Store chip positions globally so drawChipIndicators can use them
+    window.chipIndicatorPositions = chipIndicatorPositions;
     
     // Third pass: Draw bet indicators, avoiding both blind and chip indicator positions
     window.game.players.forEach((player, index) => {
@@ -2779,14 +2804,15 @@ function drawBetIndicators() {
             
             // If there are chip indicators, ensure bet indicator doesn't overlap
             if (chipPos) {
-                const minDistance = 60; // Minimum distance between bet and chip indicators
+                const minDistance = 70; // Increased minimum distance between bet and chip indicators
                 const distanceX = Math.abs(finalIndicatorX - chipPos.x);
                 const distanceY = Math.abs(finalIndicatorY - chipPos.y);
                 const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
                 
                 if (distance < minDistance) {
-                    // Move bet indicator further left or adjust position
-                    finalIndicatorX = cardLeftEdge - (minDistance - distanceX + 35);
+                    // Move bet indicator further left to avoid chip indicator
+                    const extraOffset = minDistance - distanceX + 10;
+                    finalIndicatorX = cardLeftEdge - (35 + extraOffset);
                 }
             }
         } else {
@@ -2842,25 +2868,32 @@ function drawBetIndicators() {
                    
                    // Check if bet indicator overlaps with chip indicator
                    if (chipPos) {
-                       const minDistance = 55; // Minimum distance between bet and chip indicators
+                       const minDistance = 70; // Increased minimum distance between bet and chip indicators
                        const distanceX = finalIndicatorX - chipPos.x;
                        const distanceY = finalIndicatorY - chipPos.y;
                        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
                        
                        if (distance < minDistance) {
                            // Move bet indicator away from chip indicator
-                           const angleAway = atan2(finalIndicatorY - chipPos.y, finalIndicatorX - chipPos.x);
-                           const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
-                           const angleDiff = Math.abs(angleAway - angleToPlayer);
-                           
-                           let adjustedAngle = angleAway;
-                           if (angleDiff < PI / 4 || angleDiff > 7 * PI / 4) {
-                               // Too close to player direction, move perpendicular
-                               adjustedAngle = angleToPlayer + PI / 2;
+                           // For non-top players, move bet indicator up (toward player) to avoid chip indicator below
+                           if (chipPos.y > finalIndicatorY) {
+                               // Chip is below bet - move bet indicator up
+                               finalIndicatorY = chipPos.y - minDistance;
+                           } else {
+                               // Chip is above or to side - use angle-based movement
+                               const angleAway = atan2(finalIndicatorY - chipPos.y, finalIndicatorX - chipPos.x);
+                               const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
+                               const angleDiff = Math.abs(angleAway - angleToPlayer);
+                               
+                               let adjustedAngle = angleAway;
+                               if (angleDiff < PI / 4 || angleDiff > 7 * PI / 4) {
+                                   // Too close to player direction, move perpendicular
+                                   adjustedAngle = angleToPlayer + PI / 2;
+                               }
+                               
+                               finalIndicatorX = chipPos.x + cos(adjustedAngle) * minDistance;
+                               finalIndicatorY = chipPos.y + sin(adjustedAngle) * minDistance;
                            }
-                           
-                           finalIndicatorX = chipPos.x + cos(adjustedAngle) * minDistance;
-                           finalIndicatorY = chipPos.y + sin(adjustedAngle) * minDistance;
                        }
                    }
         }
