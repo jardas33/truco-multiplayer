@@ -642,15 +642,41 @@ class PokerClient {
         
         socket.on('gameStarted', (data) => {
             console.log('🎴 Game started:', data);
+            console.log('🎴 Game started - players in data:', data.players ? data.players.length : 'no players');
+            console.log('🎴 Game started - full data:', JSON.stringify(data, null, 2));
+            
             if (data.localPlayerIndex !== undefined) {
                 this.localPlayerIndex = data.localPlayerIndex;
                 console.log('🎴 Local player index from gameStarted:', this.localPlayerIndex);
             }
             
-            // Sync game state from server
-            if (data.players) {
-                this.game.players = data.players;
+            // CRITICAL: Ensure players array exists and is properly initialized
+            if (!data.players || data.players.length === 0) {
+                console.error('❌ No players in gameStarted event!');
+                console.error('❌ Data received:', data);
+                // Try to get players from room state if available
+                if (data.players === undefined) {
+                    data.players = [];
+                }
             }
+            
+            // Sync game state from server
+            if (data.players && data.players.length > 0) {
+                this.game.players = data.players.map(p => ({
+                    ...p,
+                    hand: p.hand || [],
+                    chips: p.chips || 1000,
+                    currentBet: p.currentBet || 0,
+                    totalBet: p.totalBet || 0,
+                    isFolded: p.isFolded || false,
+                    isAllIn: p.isAllIn || false
+                }));
+                console.log('🎴 Players synced:', this.game.players.length);
+            } else {
+                console.error('❌ No players to sync - players array is empty or undefined');
+                this.game.players = [];
+            }
+            
             if (data.communityCards) {
                 this.game.communityCards = data.communityCards;
             }
