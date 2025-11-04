@@ -2538,6 +2538,8 @@ function drawChipIndicators() {
         
         // Final check and adjustment against blind indicators (already handled in loop above, but double-check)
         if (blindPos) {
+            const isSidePlayer = absCosAngle > absSinAngle;
+            const minDistanceFromBlind = isSidePlayer ? 120 : 90; // Define the minimum distance
             const dx = chipIndicatorX - blindPos.x;
             const dy = chipIndicatorY - blindPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
