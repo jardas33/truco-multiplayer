@@ -5196,9 +5196,79 @@ function determineRoundWinner(playedCards, room) {
                 return; // Exit early for blackjack
             }
             
-            // Generic handler for other games (if not blackjack)
+            // Handle poker-specific actions
+            if (room.gameType === 'poker') {
+                console.log(`🎴 Poker player action received`);
+                const playerIndex = data.playerIndex;
+                const player = room.game?.players?.[playerIndex];
+                const action = data.action;
+                const amount = data.amount || 0;
+                
+                if (!player) {
+                    console.error(`❌ Invalid player index: ${playerIndex}`);
+                    socket.emit('error', 'Invalid player');
+                    return;
+                }
+                
+                // Verify it's the player's turn
+                if (room.game.currentPlayer !== playerIndex) {
+                    console.error(`❌ Not player's turn - current: ${room.game.currentPlayer}, player: ${playerIndex}`);
+                    socket.emit('error', 'Not your turn');
+                    return;
+                }
+                
+                console.log(`🎴 Processing poker action: ${action} by ${player.name} (amount: $${amount})`);
+                
+                // Process the action in the game state
+                switch (action) {
+                    case 'fold':
+                        player.isFolded = true;
+                        break;
+                    case 'call':
+                        const callAmount = Math.min(room.game.currentBet - player.currentBet, player.chips);
+                        player.chips -= callAmount;
+                        player.currentBet += callAmount;
+                        player.totalBet += callAmount;
+                        room.game.pot += callAmount;
+                        if (player.chips === 0) {
+                            player.isAllIn = true;
+                        }
+                        break;
+                    case 'raise':
+                    case 'bet':
+                        const raiseAmount = Math.min(amount, player.chips);
+                        player.chips -= raiseAmount;
+                        player.currentBet += raiseAmount;
+                        player.totalBet += raiseAmount;
+                        room.game.pot += raiseAmount;
+                        room.game.currentBet = player.currentBet;
+                        if (player.chips === 0) {
+                            player.isAllIn = true;
+                        }
+                        break;
+                }
+                
+                // Move to next player
+                do {
+                    room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                } while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn);
+                
+                // Emit updated game state
+                io.to(roomCode).emit('gameState', {
+                    players: room.game.players,
+                    pot: room.game.pot,
+                    currentBet: room.game.currentBet,
+                    currentPlayer: room.game.currentPlayer,
+                    gamePhase: room.game.gamePhase,
+                    communityCards: room.game.communityCards || []
+                });
+                
+                return; // Exit early for poker
+            }
+            
+            // Generic handler for other games (if not blackjack or poker)
             console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
-        if (room) {
+            if (room) {
                 io.to(data.roomId || data.roomCode).emit('playerAction', data);
             }
         } catch (error) {

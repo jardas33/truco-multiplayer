@@ -1021,37 +1021,121 @@ class PokerClient {
         }
     }
 
-    // Betting actions
+    // Betting actions - use the correct method that emits to server
     fold() {
-        console.log('Player folded');
-        this.playFoldSound();
-        this.socket.emit('playerAction', {
+        console.log('🎴 Player folded');
+        const socket = window.gameFramework?.socket;
+        if (!socket || !socket.connected) {
+            console.error('❌ Socket not connected');
+            return;
+        }
+        
+        socket.emit('playerAction', {
+            roomId: window.gameFramework.roomId,
+            playerIndex: this.localPlayerIndex,
             action: 'fold',
-            roomId: this.roomId
+            amount: 0
         });
+        
         this.hideBettingControls();
     }
 
     call() {
-        const callAmount = this.game.currentBet - (this.game.players[0]?.currentBet || 0);
-        console.log('Player called:', callAmount);
-        this.playBetSound();
-        this.socket.emit('playerAction', {
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (!localPlayer) {
+            console.error('❌ Local player not found');
+            return;
+        }
+        
+        const callAmount = Math.min(this.game.currentBet - localPlayer.currentBet, localPlayer.chips);
+        console.log('🎴 Player called:', callAmount);
+        
+        const socket = window.gameFramework?.socket;
+        if (!socket || !socket.connected) {
+            console.error('❌ Socket not connected');
+            return;
+        }
+        
+        socket.emit('playerAction', {
+            roomId: window.gameFramework.roomId,
+            playerIndex: this.localPlayerIndex,
             action: 'call',
-            amount: callAmount,
-            roomId: this.roomId
+            amount: callAmount
         });
+        
         this.hideBettingControls();
     }
 
     raise() {
-        const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
-        const minRaise = this.game.currentBet * 2;
-        const raiseAmount = Math.max(minRaise, betAmount);
+        const betAmountInput = document.getElementById('betAmount');
+        if (!betAmountInput) {
+            console.error('❌ Bet amount input not found');
+            return;
+        }
         
-        console.log('Player raised:', raiseAmount);
-        this.playBetSound();
-        this.socket.emit('playerAction', {
+        const betAmount = parseInt(betAmountInput.value) || 0;
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (!localPlayer) {
+            console.error('❌ Local player not found');
+            return;
+        }
+        
+        const minRaise = this.game.currentBet * 2;
+        const raiseAmount = Math.min(Math.max(minRaise, betAmount), localPlayer.chips);
+        
+        if (raiseAmount < minRaise) {
+            console.error('❌ Raise amount too small. Minimum:', minRaise);
+            if (typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage(`Minimum raise is $${minRaise}`, 'error');
+            } else {
+                alert(`Minimum raise is $${minRaise}`);
+            }
+            return;
+        }
+        
+        console.log('🎴 Player raised:', raiseAmount);
+        
+        const socket = window.gameFramework?.socket;
+        if (!socket || !socket.connected) {
+            console.error('❌ Socket not connected');
+            return;
+        }
+        
+        socket.emit('playerAction', {
+            roomId: window.gameFramework.roomId,
+            playerIndex: this.localPlayerIndex,
+            action: 'raise',
+            amount: raiseAmount
+        });
+        
+        this.hideBettingControls();
+    }
+    
+    allIn() {
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (!localPlayer) {
+            console.error('❌ Local player not found');
+            return;
+        }
+        
+        const allInAmount = localPlayer.chips;
+        console.log('🎴 Player all-in:', allInAmount);
+        
+        const socket = window.gameFramework?.socket;
+        if (!socket || !socket.connected) {
+            console.error('❌ Socket not connected');
+            return;
+        }
+        
+        socket.emit('playerAction', {
+            roomId: window.gameFramework.roomId,
+            playerIndex: this.localPlayerIndex,
+            action: 'raise',
+            amount: allInAmount
+        });
+        
+        this.hideBettingControls();
+    }
             action: 'raise',
             amount: raiseAmount,
             roomId: this.roomId
@@ -1590,41 +1674,65 @@ function drawPot() {
 function drawGameInfo() {
     push();
     
-    // Draw game phase with better styling
-    fill(0, 0, 0, 150);
-    stroke(255, 255, 255);
+    // Enhanced game info box with more details
+    const infoWidth = 240;
+    const infoHeight = window.game && window.game.players ? 140 : 80;
+    const infoX = 15;
+    const infoY = 15;
+    
+    // Background with better styling
+    fill(0, 0, 0, 180);
+    stroke(255, 215, 0); // Gold border
     strokeWeight(2);
-    rect(15, 15, 200, 60, 10);
+    rect(infoX, infoY, infoWidth, infoHeight, 10);
     
     textAlign(LEFT, TOP);
-    textSize(18); // Increased from 16
+    textSize(14);
     textStyle(BOLD);
     
-    // Draw phase with shadow and outline
-    fill(0, 0, 0, 200);
-    stroke(0, 0, 0, 200);
-    strokeWeight(2);
-    text('Phase: ' + (window.game.gamePhase || 'preflop'), 27, 27);
+    let yOffset = infoY + 20;
     
+    // Phase
     fill(255, 255, 255);
-    stroke(0, 0, 0, 100);
-    strokeWeight(1);
-    text('Phase: ' + (window.game.gamePhase || 'preflop'), 25, 25);
+    noStroke();
+    text('Phase: ' + (window.game?.gamePhase || 'waiting'), infoX + 15, yOffset);
+    yOffset += 20;
     
-    // Draw current bet
-    if (window.game.currentBet > 0) {
-        textSize(16); // Increased from 14
-        
-        // Shadow for bet text
-        fill(0, 0, 0, 200);
-        stroke(0, 0, 0, 200);
-        strokeWeight(2);
-        text('Current Bet: $' + window.game.currentBet, 27, 47);
-        
+    // Current bet
+    if (window.game && window.game.currentBet > 0) {
+        fill(255, 215, 0); // Gold
+        text('Current Bet: $' + window.game.currentBet, infoX + 15, yOffset);
+        yOffset += 20;
+    }
+    
+    // Total players
+    if (window.game && window.game.players) {
+        fill(200, 200, 255);
+        text('Players: ' + window.game.players.length, infoX + 15, yOffset);
+        yOffset += 20;
+    }
+    
+    // Local player chips
+    if (window.game && window.game.players && window.pokerClient && window.pokerClient.localPlayerIndex !== undefined) {
+        const localPlayer = window.game.players[window.pokerClient.localPlayerIndex];
+        if (localPlayer) {
+            fill(100, 255, 100);
+            text('Your Chips: $' + localPlayer.chips, infoX + 15, yOffset);
+            yOffset += 20;
+            
+            // Current bet for local player
+            if (localPlayer.currentBet > 0) {
+                fill(255, 200, 100);
+                text('Your Bet: $' + localPlayer.currentBet, infoX + 15, yOffset);
+                yOffset += 20;
+            }
+        }
+    }
+    
+    // Pot amount
+    if (window.game && window.game.pot > 0) {
         fill(255, 215, 0);
-        stroke(0, 0, 0, 100);
-        strokeWeight(1);
-        text('Current Bet: $' + window.game.currentBet, 25, 45);
+        text('Pot: $' + window.game.pot, infoX + 15, yOffset);
     }
     
     pop();
@@ -1649,26 +1757,37 @@ function drawGameInfo() {
 }
 
 function drawBlindIndicators() {
-    if (!window.game || !window.game.players || window.game.players.length < 2) return;
+    // ALWAYS draw blind indicators if game exists and has players
+    if (!window.game || !window.game.players || window.game.players.length < 2) {
+        // Even if game hasn't started, show indicators if we have player data
+        return;
+    }
     
     const centerX = width/2;
     const centerY = height/2;
     const radiusX = width * 0.35;
     const radiusY = height * 0.28;
     
-    const dealerPosition = window.game.dealerPosition || 0;
+    // Get dealer position - default to 0 if not set
+    const dealerPosition = window.game.dealerPosition !== undefined ? window.game.dealerPosition : 0;
     const smallBlindPos = (dealerPosition + 1) % window.game.players.length;
     const bigBlindPos = (dealerPosition + 2) % window.game.players.length;
     
+    // Get blind amounts
+    const smallBlindAmount = window.game.smallBlind || 10;
+    const bigBlindAmount = window.game.bigBlind || 20;
+    
     window.game.players.forEach((player, index) => {
+        if (!player || player.isFolded) return; // Skip folded players
+        
         const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
         const x = centerX + cos(angle) * radiusX;
         const y = centerY + sin(angle) * radiusY;
         
         push();
         
-        // Draw dealer button
-        if (index === dealerPosition) {
+        // Draw dealer button - always show if game is active
+        if (index === dealerPosition && window.game.gamePhase) {
             fill(255, 215, 0); // Gold
             stroke(255, 255, 255);
             strokeWeight(2);
@@ -1682,8 +1801,8 @@ function drawBlindIndicators() {
             text('D', x, y - 80);
         }
         
-        // Draw small blind indicator
-        if (index === smallBlindPos) {
+        // Draw small blind indicator - always show if game is active
+        if (index === smallBlindPos && window.game.gamePhase) {
             fill(100, 200, 255); // Light blue
             stroke(255, 255, 255);
             strokeWeight(2);
@@ -1695,10 +1814,15 @@ function drawBlindIndicators() {
             textStyle(BOLD);
             noStroke();
             text('SB', x, y - 80);
+            
+            // Show blind amount below indicator
+            textSize(9);
+            fill(255, 255, 255);
+            text('$' + smallBlindAmount, x, y - 60);
         }
         
-        // Draw big blind indicator
-        if (index === bigBlindPos) {
+        // Draw big blind indicator - always show if game is active
+        if (index === bigBlindPos && window.game.gamePhase) {
             fill(255, 100, 100); // Light red
             stroke(255, 255, 255);
             strokeWeight(2);
@@ -1710,6 +1834,11 @@ function drawBlindIndicators() {
             textStyle(BOLD);
             noStroke();
             text('BB', x, y - 80);
+            
+            // Show blind amount below indicator
+            textSize(9);
+            fill(255, 255, 255);
+            text('$' + bigBlindAmount, x, y - 60);
         }
         
         pop();
