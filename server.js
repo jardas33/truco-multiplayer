@@ -1836,26 +1836,41 @@ io.on('connection', (socket) => {
                 if (room.game.gamePhase === 'preflop') {
                     // If no raises (lastRaisePlayer is still -1 or equals bigBlind), action should return to big blind
                     if (room.game.lastRaisePlayer === -1 || room.game.lastRaisePlayer === bigBlindPos) {
-                        // No raises - action should return to big blind
-                        actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
+                        // No raises - action should return to big blind (if not folded/all-in)
+                        // If big blind is folded/all-in, find first active player after big blind
+                        let targetPlayer = bigBlindPos;
+                        if (room.game.players[bigBlindPos].isFolded || room.game.players[bigBlindPos].isAllIn) {
+                            // Big blind is inactive, find first active player after big blind
+                            targetPlayer = (bigBlindPos + 1) % room.game.players.length;
+                            let searchAttempts = 0;
+                            while ((room.game.players[targetPlayer].isFolded || room.game.players[targetPlayer].isAllIn) && searchAttempts < room.game.players.length) {
+                                targetPlayer = (targetPlayer + 1) % room.game.players.length;
+                                searchAttempts++;
+                            }
+                        }
+                        actionBackToLastRaiser = room.game.currentPlayer === targetPlayer;
                     } else {
                         // There was a raise - action should return to last raiser
                         actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
                     }
                 } else {
-                    // Post-flop: if no raises, action should return to first player after big blind (same as preflop)
+                    // Post-flop: if no raises, action should return to first active player after big blind
                     if (room.game.lastRaisePlayer === -1) {
-                        // No raises - action should return to first player after big blind
+                        // No raises - action should return to first active player after big blind
                         const bigBlindPosPostFlop = (room.game.dealerPosition + 2) % room.game.players.length;
                         let expectedPlayer = (bigBlindPosPostFlop + 1) % room.game.players.length;
-                        while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
+                        let searchAttempts = 0;
+                        while ((room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) && searchAttempts < room.game.players.length) {
                             expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                            searchAttempts++;
                             // Safety check to prevent infinite loop
-                            if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length) {
+                            if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length && searchAttempts > 0) {
                                 break;
                             }
                         }
-                        actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
+                        // If we're at the expected player OR if all remaining players are all-in (betting round should complete)
+                        actionBackToLastRaiser = (room.game.currentPlayer === expectedPlayer) || 
+                            (activePlayers.filter(p => !p.isAllIn).length <= 1 && allBetsMatched);
                     } else {
                         // There was a raise - action should return to last raiser
                         actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
@@ -6891,10 +6906,40 @@ function determineRoundWinner(playedCards, room) {
                     
                     // Handle bot actions
                     const currentPlayer = room.game.players[room.game.currentPlayer];
-                    if (currentPlayer && currentPlayer.isBot) {
+                    if (currentPlayer && currentPlayer.isBot && !currentPlayer.isFolded && !currentPlayer.isAllIn) {
+                        console.log(`🎴 Next player is bot ${currentPlayer.name} - will act in 1.5 seconds`);
                         setTimeout(() => {
                             handlePokerBotAction(roomCode, room, currentPlayer);
                         }, 1500);
+                    } else if (currentPlayer && (currentPlayer.isFolded || currentPlayer.isAllIn)) {
+                        console.error(`❌ Current player ${currentPlayer.name} is folded or all-in - game may be stuck!`);
+                        // This shouldn't happen, but if it does, try to advance again
+                        const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                        if (activePlayers.length <= 1) {
+                            handlePokerShowdown(roomCode, room);
+                        } else {
+                            // Try to find next active player
+                            const nextActive = activePlayers.find(p => 
+                                room.game.players.indexOf(p) > room.game.currentPlayer
+                            ) || activePlayers[0];
+                            room.game.currentPlayer = room.game.players.indexOf(nextActive);
+                            console.log(`🎴 Fixed stuck state - moved to active player ${nextActive.name}`);
+                            io.to(roomCode).emit('gameState', {
+                                players: room.game.players,
+                                pot: room.game.pot,
+                                currentBet: room.game.currentBet,
+                                currentPlayer: room.game.currentPlayer,
+                                gamePhase: room.game.gamePhase,
+                                communityCards: room.game.communityCards || []
+                            });
+                            // Try bot action again
+                            const fixedPlayer = room.game.players[room.game.currentPlayer];
+                            if (fixedPlayer && fixedPlayer.isBot) {
+                                setTimeout(() => {
+                                    handlePokerBotAction(roomCode, room, fixedPlayer);
+                                }, 1500);
+                            }
+                        }
                     }
                 }
                 
