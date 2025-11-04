@@ -2890,12 +2890,26 @@ function drawBetIndicators() {
             const isSidePlayer = absCosAngle > absSinAngle;
             
             if (isSidePlayer) {
-                // Side players: position bet indicator with horizontal offset to avoid blind indicators
+                // Side players: position bet indicator in a zone that doesn't conflict with blind indicators
                 // Determine if left or right side
                 const isRightSide = cos(angle) > 0;
-                // Position bet indicator on the side opposite to where blind indicators typically are
-                // Blind indicators are typically closer to center, so position bet indicator further out
-                finalIndicatorX = playerX + (isRightSide ? -50 : 50); // Larger offset away from center
+                
+                // Determine where blind indicator is positioned
+                let blindIsOnLeft = false;
+                if (blindPos) {
+                    blindIsOnLeft = blindPos.x < playerX;
+                }
+                
+                // Position bet indicator on OPPOSITE side from blind indicator
+                // If blind is on left (toward center), bet goes to right (away from center)
+                if (blindIsOnLeft) {
+                    // Blind on left, bet goes to right
+                    finalIndicatorX = playerX + (isRightSide ? -60 : 60); // Large offset
+                } else {
+                    // Blind on right or center, bet goes to left
+                    finalIndicatorX = playerX + (isRightSide ? 60 : -60); // Large offset
+                }
+                
                 finalIndicatorY = playerY + 80; // Position between player box and cards
             } else {
                 // Bottom player: position directly below player box
@@ -2922,32 +2936,35 @@ function drawBetIndicators() {
                 finalIndicatorY = centerY + sin(angleToPlayer) * (playerRadiusY * 0.3);
             }
             
-                   // Check if bet indicator overlaps with blind indicator
+                   // Check if bet indicator overlaps with blind indicator - AGGRESSIVE CHECK
                    if (blindPos) {
-                       // Use much larger minimum distance for side players
-                       const minDistance = isSidePlayer ? 100 : 75; // Much larger distance for side players
+                       // Use MUCH larger minimum distance for side players
+                       const minDistance = isSidePlayer ? 130 : 85; // Very large distance for side players
                        const distanceX = finalIndicatorX - blindPos.x;
                        const distanceY = finalIndicatorY - blindPos.y;
                        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
                        
                        if (distance < minDistance) {
-                           // Move bet indicator away from blind indicator
+                           // Force bet indicator to opposite side from blind with large separation
                            if (isSidePlayer) {
-                               // For side players, move horizontally away from blind indicator with large offset
-                               const horizontalOffset = minDistance - Math.abs(distanceX) + 30;
-                               if (distanceX > 0) {
-                                   // Bet is to the right of blind, move bet further right
-                                   finalIndicatorX = blindPos.x + minDistance + horizontalOffset;
+                               // For side players, ensure bet is on opposite side with massive separation
+                               const isRightSide = cos(angle) > 0;
+                               const blindIsOnLeft = blindPos.x < playerX;
+                               
+                               if (blindIsOnLeft) {
+                                   // Blind on left, force bet to right with large offset
+                                   finalIndicatorX = blindPos.x + minDistance + 40;
                                } else {
-                                   // Bet is to the left of blind, move bet further left
-                                   finalIndicatorX = blindPos.x - minDistance - horizontalOffset;
+                                   // Blind on right, force bet to left with large offset
+                                   finalIndicatorX = blindPos.x - minDistance - 40;
                                }
-                               // Also adjust Y to maintain separation
-                               if (Math.abs(distanceY) < 40) {
+                               
+                               // Also ensure vertical separation
+                               if (Math.abs(distanceY) < 50) {
                                    finalIndicatorY = blindPos.y + (distanceY >= 0 ? minDistance : -minDistance);
                                }
                            } else {
-                               // For non-side players, use angle-based movement
+                               // For non-side players, use angle-based movement with larger distance
                                const angleAway = atan2(finalIndicatorY - blindPos.y, finalIndicatorX - blindPos.x);
                                const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
                                const angleDiff = Math.abs(angleAway - angleToPlayer);
@@ -2958,30 +2975,30 @@ function drawBetIndicators() {
                                    adjustedAngle = angleToPlayer + PI / 2;
                                }
                                
-                               finalIndicatorX = blindPos.x + cos(adjustedAngle) * minDistance;
-                               finalIndicatorY = blindPos.y + sin(adjustedAngle) * minDistance;
+                               finalIndicatorX = blindPos.x + cos(adjustedAngle) * (minDistance + 10);
+                               finalIndicatorY = blindPos.y + sin(adjustedAngle) * (minDistance + 10);
                            }
                        }
                    }
                    
-                   // Check if bet indicator overlaps with chip indicator
+                   // Check if bet indicator overlaps with chip indicator - AGGRESSIVE CHECK
                    if (chipPos) {
-                       // Use much larger minimum distance for side players
-                       const minDistance = isSidePlayer ? 120 : 90; // Much larger distance for side players
+                       // Use MUCH larger minimum distance for side players
+                       const minDistance = isSidePlayer ? 140 : 100; // Very large distance for side players
                        const distanceX = finalIndicatorX - chipPos.x;
                        const distanceY = finalIndicatorY - chipPos.y;
                        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
                        
                        if (distance < minDistance) {
-                           // Move bet indicator away from chip indicator
+                           // Force bet indicator away from chip indicator with large separation
                            if (isSidePlayer) {
-                               // For side players, ensure horizontal AND vertical separation with large gaps
+                               // For side players, ensure horizontal AND vertical separation with massive gaps
                                const horizontalSep = Math.abs(distanceX);
                                const verticalSep = Math.abs(distanceY);
                                
-                               if (horizontalSep < 60) {
+                               if (horizontalSep < 80) {
                                    // Too close horizontally - move bet indicator much further horizontally
-                                   const horizontalOffset = minDistance - horizontalSep + 40;
+                                   const horizontalOffset = minDistance - horizontalSep + 50;
                                    if (distanceX > 0) {
                                        finalIndicatorX = chipPos.x + horizontalOffset;
                                    } else {
@@ -2989,21 +3006,21 @@ function drawBetIndicators() {
                                    }
                                }
                                
-                               if (verticalSep < 60) {
+                               if (verticalSep < 80) {
                                    // Too close vertically - move bet indicator much further vertically
                                    if (chipPos.y > finalIndicatorY) {
-                                       // Chip is below bet - move bet indicator up
-                                       finalIndicatorY = chipPos.y - minDistance;
+                                       // Chip is below bet - move bet indicator up with extra space
+                                       finalIndicatorY = chipPos.y - (minDistance + 20);
                                    } else {
-                                       // Chip is above bet - move bet indicator down
-                                       finalIndicatorY = chipPos.y + minDistance;
+                                       // Chip is above bet - move bet indicator down with extra space
+                                       finalIndicatorY = chipPos.y + (minDistance + 20);
                                    }
                                }
                            } else {
                                // For non-side players, move bet indicator up (toward player) to avoid chip indicator below
                                if (chipPos.y > finalIndicatorY) {
-                                   // Chip is below bet - move bet indicator up
-                                   finalIndicatorY = chipPos.y - minDistance;
+                                   // Chip is below bet - move bet indicator up with extra space
+                                   finalIndicatorY = chipPos.y - (minDistance + 10);
                                } else {
                                    // Chip is above or to side - use angle-based movement
                                    const angleAway = atan2(finalIndicatorY - chipPos.y, finalIndicatorX - chipPos.x);
@@ -3016,8 +3033,8 @@ function drawBetIndicators() {
                                        adjustedAngle = angleToPlayer + PI / 2;
                                    }
                                    
-                                   finalIndicatorX = chipPos.x + cos(adjustedAngle) * minDistance;
-                                   finalIndicatorY = chipPos.y + sin(adjustedAngle) * minDistance;
+                                   finalIndicatorX = chipPos.x + cos(adjustedAngle) * (minDistance + 10);
+                                   finalIndicatorY = chipPos.y + sin(adjustedAngle) * (minDistance + 10);
                                }
                            }
                        }
