@@ -2872,8 +2872,8 @@ function drawBetIndicators() {
                 if (blindPos) {
                     // Same X position as blind, but different Y (vertical stacking)
                     chipIndicatorX = blindPos.x;
-                    // Position chips button directly below blind indicator
-                    chipIndicatorY = blindPos.y + 30; // Close vertical spacing
+                    // Position chips button directly below blind indicator with more spacing
+                    chipIndicatorY = blindPos.y + 50; // Increased vertical spacing (was 30)
                 } else {
                     // No blind - position relative to player
                     const isRightSide = cos(angle) > 0;
@@ -3110,7 +3110,7 @@ function drawBetIndicators() {
                     
                     // Position bet button below chips (or blind if no chips)
                     const referenceY = chipPosForBet ? chipPosForBet.y : blindPosForBet.y;
-                    finalIndicatorY = referenceY + 30; // Close vertical spacing below chips/blind
+                    finalIndicatorY = referenceY + 50; // Increased vertical spacing (was 30)
                 } else {
                     // No blind or chips - position relative to player
                     const isRightSide = cos(angle) > 0;
