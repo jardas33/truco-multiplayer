@@ -1077,8 +1077,8 @@ class WarClient {
         this.hideActionControls();
         this.createWarEffect();
         
-        // Animate war cards flipping
-        setTimeout(() => {
+        // ✅ CRITICAL FIX: Animate war cards flipping with tracked timeout
+        this.safeSetTimeout(() => {
             this.animateWarCards();
         }, 500);
     }
