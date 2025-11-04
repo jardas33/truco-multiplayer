@@ -968,9 +968,9 @@ class WarClient {
                 }
                 this.statistics.cardsWonByPlayer[winnerName] += data.winner.cardsWon || 0;
                 
-                // Highlight winner card
+                // ✅ CRITICAL FIX: Highlight winner card with tracked timeout
                 if (data.winner.playerIndex !== undefined) {
-                    setTimeout(() => {
+                    this.safeSetTimeout(() => {
                         this.highlightWinnerCard(data.winner.playerIndex);
                     }, 300);
                 }
