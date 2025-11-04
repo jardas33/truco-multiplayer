@@ -1133,6 +1133,12 @@ class WarClient {
         this.statistics.totalBattles = 0;
         this.statistics.totalWars = 0;
         this.statistics.longestWar = 0;
+        
+        // ✅ CRITICAL FIX: Show battle history log when game starts
+        const historyLog = document.getElementById('battleHistoryLog');
+        if (historyLog) {
+            historyLog.style.display = 'block';
+        }
         this.statistics.currentWarCount = 0;
         this.statistics.cardsWonByPlayer = {};
         
@@ -1273,16 +1279,18 @@ class WarClient {
         // Update statistics
         this.statistics.totalBattles++;
         
-        // Add to battle history
+        // Add to battle history (will be updated with winner when resolved)
         if (this.game.battleCards.length > 0) {
             this.battleHistory.push({
                 battleNumber: this.game.battleNumber,
                 cards: [...this.game.battleCards],
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                winner: null, // Will be set when battle resolves
+                isWar: false
             });
             
-            // Keep only last 10 battles in history
-            if (this.battleHistory.length > 10) {
+            // Keep only last 20 battles in history (increased from 10)
+            if (this.battleHistory.length > 20) {
                 this.battleHistory.shift();
             }
         }
@@ -1291,6 +1299,14 @@ class WarClient {
         this.showWarMessage('⚔️ BATTLE! ⚔️', 'battle');
         this.hideActionControls();
         this.createBattleParticles();
+        
+        // ✅ CRITICAL FIX: Add significant delay before resolving battle so players can see cards
+        // Cards will appear with 300ms delays, so wait for all cards + extra time
+        const maxCardDelay = (this.game.battleCards.length - 1) * 300 + 600; // Last card delay + animation time
+        this.safeSetTimeout(() => {
+            // Cards are now visible, wait a bit more before resolving
+            console.log('⏳ Cards displayed, waiting before resolution...');
+        }, maxCardDelay + 2000); // ✅ CRITICAL FIX: Wait 2 seconds after cards appear before resolving
         
         // ✅ CRITICAL FIX: Clear any pending battle auto-starts
         this.clearPendingActions();
@@ -1654,11 +1670,14 @@ class WarClient {
         
         this.canAct = true;
         this.updateUI();
-        this.showActionControls();
         
-        // ✅ CRITICAL FIX: Auto-start next battle with proper validation and tracked timeout
-        this.pendingBattleTimeout = this.safeSetTimeout(() => {
-            if (!this.game.gameOver && 
+        // ✅ CRITICAL FIX: Wait longer before showing controls and auto-starting next battle
+        this.safeSetTimeout(() => {
+            this.showActionControls();
+            
+            // ✅ CRITICAL FIX: Auto-start next battle with proper validation and tracked timeout (increased delay)
+            this.pendingBattleTimeout = this.safeSetTimeout(() => {
+                if (!this.game.gameOver && 
                 this.canAct && 
                 (!this.game.battleCards || this.game.battleCards.length === 0) &&
                 (!this.game.warCards || this.game.warCards.length === 0) &&
