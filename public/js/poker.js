@@ -1236,6 +1236,11 @@ class PokerClient {
             if (data.currentPlayer !== undefined) {
                 this.game.currentPlayer = data.currentPlayer;
             }
+        } else if (data.action && data.playerIndex !== undefined) {
+            // Generic playerAction event (just echo from server) - ignore it
+            // The server should send gameState instead for poker
+            console.log('🎴 Received generic playerAction event - ignoring (should receive gameState instead)');
+            return;
         } else {
             console.warn('🎴 updatePlayerAction: Unknown data structure:', data);
             return;
