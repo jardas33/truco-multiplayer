@@ -1512,7 +1512,7 @@ function drawPlayers() {
     });
 }
 
-function drawPlayerCards(x, y, hand, isLocalPlayer) {
+function drawPlayerCards(x, y, hand, shouldShowCardImages) {
     const cardWidth = 60;   // Smaller cards for better layout
     const cardHeight = 84;  // Maintain aspect ratio
     const spacing = 8;      // Tighter spacing
@@ -1526,8 +1526,9 @@ function drawPlayerCards(x, y, hand, isLocalPlayer) {
         const floatOffset = sin(time + index * 0.3) * 1;
         const finalY = cardY + floatOffset;
         
-        // Use enhanced CardRenderer with options
-        CardRenderer.drawCard(cardX, finalY, cardWidth, cardHeight, card, isLocalPlayer || card.isRevealed, {
+        // STRICT: Only use the passed flag - don't check card.isRevealed
+        // The caller is responsible for determining visibility (local player or showdown)
+        CardRenderer.drawCard(cardX, finalY, cardWidth, cardHeight, card, shouldShowCardImages, {
             shadowOffset: 4,
             shadowOpacity: 120,
             borderWidth: 2,
