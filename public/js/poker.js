@@ -923,7 +923,7 @@ class PokerClient {
             console.log('🎴 Menu hidden during gameplay');
         }
         
-        // Show Back to Main Menu and Poker Menu buttons during gameplay
+        // Show Back to Main Menu and Poker Menu buttons during gameplay in center top
         const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
         const gameMenuBtn = document.getElementById('gameMenuBtn');
         
@@ -931,7 +931,9 @@ class PokerClient {
             backToMainMenuBtn.style.display = 'inline-block';
             backToMainMenuBtn.style.position = 'fixed';
             backToMainMenuBtn.style.top = '10px';
-            backToMainMenuBtn.style.right = '10px';
+            backToMainMenuBtn.style.left = '50%';
+            backToMainMenuBtn.style.transform = 'translateX(-50%)';
+            backToMainMenuBtn.style.marginRight = '10px';
             backToMainMenuBtn.style.zIndex = '1000';
             backToMainMenuBtn.style.background = '#6c757d';
             backToMainMenuBtn.style.color = 'white';
@@ -940,14 +942,16 @@ class PokerClient {
             backToMainMenuBtn.style.borderRadius = '4px';
             backToMainMenuBtn.style.cursor = 'pointer';
             backToMainMenuBtn.style.fontSize = '14px';
-            console.log('🎴 Back to Main Menu button shown during gameplay');
+            backToMainMenuBtn.style.fontWeight = 'bold';
+            console.log('🎴 Back to Main Menu button shown during gameplay (center top)');
         }
         
         if (gameMenuBtn) {
             gameMenuBtn.style.display = 'inline-block';
             gameMenuBtn.style.position = 'fixed';
             gameMenuBtn.style.top = '10px';
-            gameMenuBtn.style.right = '150px';
+            gameMenuBtn.style.left = '50%';
+            gameMenuBtn.style.transform = 'translateX(calc(-50% + 140px))'; // Offset to the right of center
             gameMenuBtn.style.zIndex = '1000';
             gameMenuBtn.style.background = '#2196F3';
             gameMenuBtn.style.color = 'white';
@@ -956,7 +960,8 @@ class PokerClient {
             gameMenuBtn.style.borderRadius = '4px';
             gameMenuBtn.style.cursor = 'pointer';
             gameMenuBtn.style.fontSize = '14px';
-            console.log('🎴 Poker Menu button shown during gameplay');
+            gameMenuBtn.style.fontWeight = 'bold';
+            console.log('🎴 Poker Menu button shown during gameplay (center top)');
         }
         
         // Set global game instance
@@ -2118,7 +2123,7 @@ function drawBlindIndicators() {
         
         // Calculate indicator position - closer to player boxes, especially for left/right and top positions
         // For left/right positions (angle near 0 or PI), position closer to player box
-        // For top position, position closer to player box (further from center)
+        // For top position, position much closer to player box (just below cards, not near center)
         // For bottom position, position between player and center
         const absCosAngle = Math.abs(cos(angle));
         const absSinAngle = Math.abs(sin(angle));
@@ -2131,9 +2136,10 @@ function drawBlindIndicators() {
             indicatorRadiusX = playerRadiusX * 0.75; // 75% of player radius = closer to player
             indicatorRadiusY = playerRadiusY * 0.75;
         } else if (sinAngle < -0.5) {
-            // Top position (angle near -PI/2) - position much closer to player box
-            indicatorRadiusX = playerRadiusX * 0.75; // 75% of player radius = closer to player
-            indicatorRadiusY = playerRadiusY * 0.75;
+            // Top position (angle near -PI/2) - position very close to player box (just below cards)
+            // Use 85% of player radius to position indicator very close to player's cards
+            indicatorRadiusX = playerRadiusX * 0.85; // 85% of player radius = very close to player
+            indicatorRadiusY = playerRadiusY * 0.85;
         } else {
             // Bottom position - position between player and center
             indicatorRadiusX = playerRadiusX * 0.5; // 50% of player radius
@@ -2141,7 +2147,16 @@ function drawBlindIndicators() {
         }
         
         const indicatorX = centerX + cos(angle) * indicatorRadiusX;
-        const indicatorY = centerY + sin(angle) * indicatorRadiusY;
+        let indicatorY = centerY + sin(angle) * indicatorRadiusY;
+        
+        // For top player, position indicator just below their cards (not near center)
+        if (sinAngle < -0.5) {
+            // Position indicator closer to player's card area (cards are at playerY + 50)
+            // Move indicator to be just below the cards, not halfway to center
+            const cardY = playerY + 50; // Cards are positioned here
+            const cardBottom = cardY + 84; // Card height is 84
+            indicatorY = cardBottom + 25; // Position 25px below cards
+        }
         
         // Ensure indicator doesn't overlap with player box
         // Player box extends from (playerX - 90, playerY - 65) to (playerX + 90, playerY + 65)
