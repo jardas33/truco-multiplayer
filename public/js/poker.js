@@ -608,7 +608,32 @@ class PokerClient {
         document.getElementById('joinRoomBtn').onclick = () => this.joinRoom();
         document.getElementById('addBotBtn').onclick = () => this.addBot();
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
-        document.getElementById('startGameBtn').onclick = () => this.startGame();
+        document.getElementById('startGameBtn').onclick = () => {
+            const roomId = window.gameFramework.roomId;
+            if (!roomId) {
+                console.error('🎴 No room ID available to start game');
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Please create or join a room first', 'error');
+                } else {
+                    alert('Please create or join a room first');
+                }
+                return;
+            }
+            
+            // Emit startGame event to server
+            const socket = window.gameFramework.socket;
+            if (socket) {
+                console.log('🎴 Emitting startGame to server with roomId:', roomId);
+                socket.emit('startGame', roomId);
+            } else {
+                console.error('🎴 No socket available');
+                if (typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage('Not connected to server', 'error');
+                } else {
+                    alert('Not connected to server');
+                }
+            }
+        };
         
         // Betting controls
         document.getElementById('foldBtn').onclick = () => this.playerAction('fold');
