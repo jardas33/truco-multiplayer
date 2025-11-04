@@ -634,13 +634,18 @@ class PokerClient {
         
         socket.on('roomJoined', (data) => {
             console.log('Room joined:', data);
-            this.localPlayerIndex = data.playerIndex;
+            this.localPlayerIndex = data.playerIndex || data.playerIndex === 0 ? data.playerIndex : 0;
+            console.log('Local player index set to:', this.localPlayerIndex);
             this.showPlayerCustomization();
             this.showGameControls();
         });
         
         socket.on('gameStarted', (data) => {
             console.log('Game started:', data);
+            if (data.localPlayerIndex !== undefined) {
+                this.localPlayerIndex = data.localPlayerIndex;
+                console.log('Local player index from gameStarted:', this.localPlayerIndex);
+            }
             this.startGame(data);
         });
         
@@ -1273,6 +1278,7 @@ function drawGameState() {
     drawPot();
     // Removed drawChips() - chips were overlapping with player boxes
     drawGameInfo();
+    drawBlindIndicators();
 }
 
 function drawPokerTable() {
@@ -1468,11 +1474,37 @@ function drawPlayers() {
     playerPositions.forEach(({ x, y, player, index }) => {
         if (player.hand && player.hand.length > 0 && !player.isFolded) {
             // Only show card faces for local player (or at showdown)
-            // Check if it's showdown phase
-            const isShowdown = window.game.gamePhase === 'showdown' || window.game.winners?.length > 0;
-            // Only show cards for local player, or at showdown
-            const isLocalPlayer = index === window.pokerClient?.localPlayerIndex;
-            const shouldShowCardImages = isLocalPlayer || isShowdown;
+            // Check if it's showdown phase - be more strict
+            const gamePhase = window.game?.gamePhase || '';
+            const isShowdown = gamePhase.toLowerCase() === 'showdown' || (window.game.winners && window.game.winners.length > 0);
+            
+            // Get local player index - check multiple sources
+            const localPlayerIndex = window.pokerClient?.localPlayerIndex;
+            const isLocalPlayer = index === localPlayerIndex;
+            
+            // STRICT: Only show cards for local player, NEVER for opponents unless showdown
+            // Always default to false (card back) unless explicitly local player
+            let shouldShowCardImages = false;
+            
+            if (isLocalPlayer) {
+                // Always show local player's cards
+                shouldShowCardImages = true;
+            } else if (isShowdown) {
+                // Only show at showdown
+                shouldShowCardImages = true;
+            }
+            
+            // Debug logging (less frequent)
+            if (frameCount % 600 === 0) {
+                console.log('Card visibility check:', {
+                    index,
+                    localPlayerIndex,
+                    isLocalPlayer,
+                    gamePhase,
+                    isShowdown,
+                    shouldShow: shouldShowCardImages
+                });
+            }
             
             const cardY = y + 50; // Position cards further below player info
             drawPlayerCards(x, cardY, player.hand, shouldShowCardImages);
@@ -1613,6 +1645,74 @@ function drawGameInfo() {
     strokeWeight(2);
     text('Hand Rankings', width - 110, 40);
     pop();
+}
+
+function drawBlindIndicators() {
+    if (!window.game || !window.game.players || window.game.players.length < 2) return;
+    
+    const centerX = width/2;
+    const centerY = height/2;
+    const radiusX = width * 0.35;
+    const radiusY = height * 0.28;
+    
+    const dealerPosition = window.game.dealerPosition || 0;
+    const smallBlindPos = (dealerPosition + 1) % window.game.players.length;
+    const bigBlindPos = (dealerPosition + 2) % window.game.players.length;
+    
+    window.game.players.forEach((player, index) => {
+        const angle = (TWO_PI / window.game.players.length) * index - HALF_PI;
+        const x = centerX + cos(angle) * radiusX;
+        const y = centerY + sin(angle) * radiusY;
+        
+        push();
+        
+        // Draw dealer button
+        if (index === dealerPosition) {
+            fill(255, 215, 0); // Gold
+            stroke(255, 255, 255);
+            strokeWeight(2);
+            ellipse(x, y - 80, 30, 30);
+            
+            fill(0, 0, 0);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            textStyle(BOLD);
+            noStroke();
+            text('D', x, y - 80);
+        }
+        
+        // Draw small blind indicator
+        if (index === smallBlindPos) {
+            fill(100, 200, 255); // Light blue
+            stroke(255, 255, 255);
+            strokeWeight(2);
+            ellipse(x, y - 80, 28, 28);
+            
+            fill(0, 0, 0);
+            textAlign(CENTER, CENTER);
+            textSize(10);
+            textStyle(BOLD);
+            noStroke();
+            text('SB', x, y - 80);
+        }
+        
+        // Draw big blind indicator
+        if (index === bigBlindPos) {
+            fill(255, 100, 100); // Light red
+            stroke(255, 255, 255);
+            strokeWeight(2);
+            ellipse(x, y - 80, 28, 28);
+            
+            fill(0, 0, 0);
+            textAlign(CENTER, CENTER);
+            textSize(10);
+            textStyle(BOLD);
+            noStroke();
+            text('BB', x, y - 80);
+        }
+        
+        pop();
+    });
 }
 
 function drawChips() {
