@@ -1388,7 +1388,7 @@ class WarClient {
                 if (data.winner.playerIndex !== undefined) {
                     this.safeSetTimeout(() => {
                         this.highlightWinnerCard(data.winner.playerIndex);
-                    }, 800); // ✅ CRITICAL FIX: Increased from 300ms to 800ms so players can see cards before highlight
+                    }, 1500); // ✅ CRITICAL FIX: Increased to 1500ms so players can see cards before highlight
                 }
             }
         }
