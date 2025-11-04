@@ -3335,8 +3335,34 @@ function drawBlindIndicators() {
             finalIndicatorX = cardRightEdge + 35; // Position 35px to the right of cards
             finalIndicatorY = cardY + 42; // Position at middle of cards (card height is 84, so middle is 42)
             
-            // For top player, skip overlap and boundary checks - we've explicitly positioned it
-            // The indicator is intentionally to the right of the cards, outside the player box
+            // For top player, check for overlap with chips/bet indicators
+            // Get chip and bet positions from global storage (set by drawBetIndicators)
+            const chipPos = window.chipIndicatorPositions?.get(index);
+            const betPos = window.betIndicatorPositions?.get(index);
+            
+            // Check overlap with chip indicator
+            if (chipPos) {
+                const dx = finalIndicatorX - chipPos.x;
+                const dy = finalIndicatorY - chipPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = 60; // Minimum distance from chip indicator
+                if (distance < minDistance) {
+                    // Move blind indicator further right to avoid chip
+                    finalIndicatorX = chipPos.x + minDistance + 20;
+                }
+            }
+            
+            // Check overlap with bet indicator
+            if (betPos) {
+                const dx = finalIndicatorX - betPos.x;
+                const dy = finalIndicatorY - betPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = 60; // Minimum distance from bet indicator
+                if (distance < minDistance) {
+                    // Move blind indicator further right to avoid bet
+                    finalIndicatorX = betPos.x + minDistance + 20;
+                }
+            }
         } else {
             // For other players, check for overlaps and table boundaries
             // First check for overlap with chips/bet indicators
