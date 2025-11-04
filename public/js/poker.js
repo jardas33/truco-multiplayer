@@ -924,16 +924,42 @@ class PokerClient {
         }
         
         // Show Back to Main Menu and Poker Menu buttons during gameplay in center top
-        const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
-        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        // Create or get buttons - they need to be outside the Menu div to be visible
+        let backToMainMenuBtn = document.getElementById('backToMainMenuBtnGame');
+        let gameMenuBtn = document.getElementById('gameMenuBtnGame');
         
+        // Create buttons if they don't exist
+        if (!backToMainMenuBtn) {
+            backToMainMenuBtn = document.createElement('button');
+            backToMainMenuBtn.id = 'backToMainMenuBtnGame';
+            backToMainMenuBtn.textContent = '← Back to Main Menu';
+            backToMainMenuBtn.onclick = () => {
+                console.log('🔙 Back to Main Menu clicked from game');
+                window.location.replace('/');
+            };
+            document.body.appendChild(backToMainMenuBtn);
+            console.log('🎴 Created Back to Main Menu button for gameplay');
+        }
+        
+        if (!gameMenuBtn) {
+            gameMenuBtn = document.createElement('button');
+            gameMenuBtn.id = 'gameMenuBtnGame';
+            gameMenuBtn.textContent = 'Poker Game Menu';
+            gameMenuBtn.onclick = () => {
+                console.log('🎴 Poker Menu clicked from game');
+                window.location.reload();
+            };
+            document.body.appendChild(gameMenuBtn);
+            console.log('🎴 Created Poker Menu button for gameplay');
+        }
+        
+        // Style and position the buttons in center top
         if (backToMainMenuBtn) {
             backToMainMenuBtn.style.display = 'inline-block';
             backToMainMenuBtn.style.position = 'fixed';
             backToMainMenuBtn.style.top = '10px';
             backToMainMenuBtn.style.left = '50%';
-            backToMainMenuBtn.style.transform = 'translateX(-50%)';
-            backToMainMenuBtn.style.marginRight = '10px';
+            backToMainMenuBtn.style.transform = 'translateX(calc(-50% - 80px))'; // Offset to the left of center
             backToMainMenuBtn.style.zIndex = '1000';
             backToMainMenuBtn.style.background = '#6c757d';
             backToMainMenuBtn.style.color = 'white';
@@ -943,6 +969,7 @@ class PokerClient {
             backToMainMenuBtn.style.cursor = 'pointer';
             backToMainMenuBtn.style.fontSize = '14px';
             backToMainMenuBtn.style.fontWeight = 'bold';
+            backToMainMenuBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
             console.log('🎴 Back to Main Menu button shown during gameplay (center top)');
         }
         
@@ -951,7 +978,7 @@ class PokerClient {
             gameMenuBtn.style.position = 'fixed';
             gameMenuBtn.style.top = '10px';
             gameMenuBtn.style.left = '50%';
-            gameMenuBtn.style.transform = 'translateX(calc(-50% + 140px))'; // Offset to the right of center
+            gameMenuBtn.style.transform = 'translateX(calc(-50% + 80px))'; // Offset to the right of center
             gameMenuBtn.style.zIndex = '1000';
             gameMenuBtn.style.background = '#2196F3';
             gameMenuBtn.style.color = 'white';
@@ -961,6 +988,7 @@ class PokerClient {
             gameMenuBtn.style.cursor = 'pointer';
             gameMenuBtn.style.fontSize = '14px';
             gameMenuBtn.style.fontWeight = 'bold';
+            gameMenuBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
             console.log('🎴 Poker Menu button shown during gameplay (center top)');
         }
         
