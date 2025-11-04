@@ -5449,23 +5449,33 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
     const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
     
     // For preflop: action must return to big blind (lastRaisePlayer) after everyone acts
-    // For post-flop: action must return to last raiser (or small blind if no raises)
+    // For post-flop: action must return to first player after big blind (same as preflop)
     let actionBackToLastRaiser;
     if (room.game.gamePhase === 'preflop') {
-        if (room.game.lastRaisePlayer === bigBlindPos) {
+        // If no raises (lastRaisePlayer is still -1 or equals bigBlind), action should return to big blind
+        if (room.game.lastRaisePlayer === -1 || room.game.lastRaisePlayer === bigBlindPos) {
+            // No raises - action should return to big blind
             actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
         } else {
+            // There was a raise - action should return to last raiser
             actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
         }
     } else {
+        // Post-flop: if no raises, action should return to first player after big blind (same as preflop)
         if (room.game.lastRaisePlayer === -1) {
-            const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
-            let expectedPlayer = smallBlindPos;
+            // No raises - action should return to first player after big blind
+            const bigBlindPosPostFlop = (room.game.dealerPosition + 2) % room.game.players.length;
+            let expectedPlayer = (bigBlindPosPostFlop + 1) % room.game.players.length;
             while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
                 expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                // Safety check to prevent infinite loop
+                if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length) {
+                    break;
+                }
             }
             actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
         } else {
+            // There was a raise - action should return to last raiser
             actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
         }
     }
@@ -6086,14 +6096,17 @@ function determineRoundWinner(playedCards, room) {
                         actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
                     }
                 } else {
-                    // Post-flop: action returns to last raiser (or small blind if no raises)
+                    // Post-flop: if no raises, action should return to first player after big blind (same as preflop)
                     if (room.game.lastRaisePlayer === -1) {
-                        // No raises in this round - action returns to small blind (first active player after dealer)
-                        const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
-                        let expectedPlayer = smallBlindPos;
-                        // Skip to first active player
+                        // No raises - action should return to first player after big blind
+                        const bigBlindPosPostFlop = (room.game.dealerPosition + 2) % room.game.players.length;
+                        let expectedPlayer = (bigBlindPosPostFlop + 1) % room.game.players.length;
                         while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
                             expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                            // Safety check to prevent infinite loop
+                            if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length) {
+                                break;
+                            }
                         }
                         actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
                     } else {
