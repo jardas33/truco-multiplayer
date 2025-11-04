@@ -2895,7 +2895,7 @@ function drawBetIndicators() {
                 const isRightSide = cos(angle) > 0;
                 // Position bet indicator on the side opposite to where blind indicators typically are
                 // Blind indicators are typically closer to center, so position bet indicator further out
-                finalIndicatorX = playerX + (isRightSide ? -30 : 30); // Offset away from center
+                finalIndicatorX = playerX + (isRightSide ? -50 : 50); // Larger offset away from center
                 finalIndicatorY = playerY + 80; // Position between player box and cards
             } else {
                 // Bottom player: position directly below player box
