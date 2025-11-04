@@ -2825,9 +2825,16 @@ io.on('connection', (socket) => {
                         console.log(`⚠️ No round winner found, defaulting to Player 1`);
                     }
                 } else {
-                    // This is the very first game - start with Player 1
-                    room.game.currentPlayer = 0;
-                    console.log(`🎯 Very first game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                    // This is the very first game
+                    // For poker, currentPlayer is already set correctly (after big blind)
+                    // For other games (Truco), start with Player 1
+                    if (room.gameType !== 'poker') {
+                        room.game.currentPlayer = 0;
+                        console.log(`🎯 Very first game starting with Player 1: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                    } else {
+                        // For poker, currentPlayer should already be set to the player after big blind
+                        console.log(`🎴 Poker first game - currentPlayer already set correctly: ${room.game.currentPlayer} (${room.players[room.game.currentPlayer]?.name})`);
+                    }
                     console.log(`🔍 DEBUG: First game currentPlayer set to: ${room.game.currentPlayer}`);
                     console.log(`🔍 DEBUG: Player at index 0: ${room.players[0]?.name} (${room.players[0]?.team})`);
                     room.isFirstGame = false; // Mark that we've had our first game

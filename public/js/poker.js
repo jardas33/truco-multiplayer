@@ -2337,34 +2337,70 @@ function drawBetIndicators() {
         let indicatorX = centerX + cos(angle) * indicatorRadiusX;
         let indicatorY = centerY + sin(angle) * indicatorRadiusY;
         
-        // For top player, position to the LEFT of cards (opposite from blind indicators)
+        // Calculate indicator position - ensure it doesn't overlap player box and stays inside table
         let finalIndicatorX = indicatorX;
         let finalIndicatorY = indicatorY;
         
+        // Player box boundaries
+        const playerBoxLeft = playerX - playerBoxOffsetX;
+        const playerBoxRight = playerX + playerBoxOffsetX;
+        const playerBoxTop = playerY - playerBoxOffsetY;
+        const playerBoxBottom = playerY + playerBoxOffsetY;
+        const cardBottom = playerY + cardOffsetY + 84; // Card height is 84
+        
+        // Indicator size (radius)
+        const indicatorSize = 28;
+        const textHeight = 20; // Space for text below indicator
+        const indicatorTotalHeight = indicatorSize + textHeight;
+        
         if (isTopPlayer) {
+            // Top player - position to the LEFT of cards, similar to blind indicators
             const cardY = playerY + 50;
             const cardWidth = 60;
             const cardSpacing = 8;
             const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
             const cardLeftEdge = playerX - (cardsTotalWidth / 2);
             finalIndicatorX = cardLeftEdge - 35; // Position 35px to the left of cards
-            finalIndicatorY = cardY + 42;
+            finalIndicatorY = cardY + 42; // Center vertically with cards
         } else {
-            // For other players, position below player box but above cards
-            // Position it slightly below the player box but above the cards
+            // For other players, position between player box and cards, but ensure no overlap
+            // Position it below the player box but above cards, and offset to avoid overlap
             finalIndicatorX = playerX;
             finalIndicatorY = playerY + 80; // Position between player box and cards
+            
+            // Check if indicator would overlap player box
+            const indicatorLeft = finalIndicatorX - indicatorSize / 2;
+            const indicatorRight = finalIndicatorX + indicatorSize / 2;
+            const indicatorTop = finalIndicatorY - indicatorSize / 2;
+            const indicatorBottom = finalIndicatorY + indicatorTotalHeight / 2;
+            
+            const overlapsBox = !(indicatorRight < playerBoxLeft || 
+                                 indicatorLeft > playerBoxRight || 
+                                 indicatorBottom < playerBoxTop || 
+                                 indicatorTop > playerBoxBottom);
+            
+            if (overlapsBox) {
+                // Move indicator further from player box
+                const angleToPlayer = atan2(playerY - centerY, playerX - centerX);
+                // Move indicator closer to center (away from player)
+                finalIndicatorX = centerX + cos(angleToPlayer) * (playerRadiusX * 0.3);
+                finalIndicatorY = centerY + sin(angleToPlayer) * (playerRadiusY * 0.3);
+            }
         }
         
-        // Ensure indicator is inside table
-        const dx = (finalIndicatorX - centerX) / tableRadiusX;
-        const dy = (finalIndicatorY - centerY) / tableRadiusY;
+        // Ensure indicator is inside the INNER table circle (not the outer rim)
+        // Use a smaller radius to ensure it stays well inside
+        const innerTableRadiusX = tableRadiusX * 0.85; // 85% of table radius = well inside
+        const innerTableRadiusY = tableRadiusY * 0.85;
+        const dx = (finalIndicatorX - centerX) / innerTableRadiusX;
+        const dy = (finalIndicatorY - centerY) / innerTableRadiusY;
         const isInsideTable = (dx * dx + dy * dy) <= 1;
         
-        if (!isInsideTable && !isTopPlayer) {
+        if (!isInsideTable) {
+            // Move indicator toward center to keep it well inside table
             const angleToCenter = atan2(finalIndicatorY - centerY, finalIndicatorX - centerX);
-            finalIndicatorX = centerX + cos(angleToCenter) * (tableRadiusX - 30);
-            finalIndicatorY = centerY + sin(angleToCenter) * (tableRadiusY - 30);
+            finalIndicatorX = centerX + cos(angleToCenter) * (innerTableRadiusX - 40);
+            finalIndicatorY = centerY + sin(angleToCenter) * (innerTableRadiusY - 40);
         }
         
         push();
