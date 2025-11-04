@@ -2981,11 +2981,11 @@ function drawBetIndicators() {
                 // Position bet indicator on OPPOSITE side from blind indicator
                 // If blind is on left (toward center), bet goes to right (away from center)
                 if (blindIsOnLeft) {
-                    // Blind on left, bet goes to right
-                    finalIndicatorX = playerX + (isRightSide ? -60 : 60); // Large offset
+                    // Blind on left, bet goes to right with very large offset
+                    finalIndicatorX = playerX + (isRightSide ? -80 : 80); // Much larger offset
                 } else {
-                    // Blind on right or center, bet goes to left
-                    finalIndicatorX = playerX + (isRightSide ? 60 : -60); // Large offset
+                    // Blind on right or center, bet goes to left with very large offset
+                    finalIndicatorX = playerX + (isRightSide ? 80 : -80); // Much larger offset
                 }
                 
                 finalIndicatorY = playerY + 80; // Position between player box and cards
