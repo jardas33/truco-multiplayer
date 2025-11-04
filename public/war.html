@@ -1062,8 +1062,19 @@
 
         /* Button hiding logic when room is created */
         .room-created #createRoomBtn,
-        .room-created #joinRoomBtn {
+        .room-created #joinRoomBtn,
+        .room-created #roomCodeInput {
             display: none !important;
+        }
+        
+        /* ✅ CRITICAL FIX: Room code input styling */
+        #roomCodeInput:focus {
+            outline: 2px solid #FFD700;
+            outline-offset: 2px;
+        }
+        
+        #roomCodeInput::placeholder {
+            color: #999;
         }
 
         /* AGGRESSIVE button color overrides - Maximum specificity */
