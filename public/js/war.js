@@ -485,30 +485,50 @@ class WarClient {
 
     // Initialize the client
     initialize() {
-        console.log('🎮 Initializing War client');
-        
-        // Check if dependencies are available
-        console.log('🔍 Checking dependencies:');
-        console.log('  - GameFramework:', typeof GameFramework);
-        console.log('  - CardUtils:', typeof CardUtils);
-        console.log('  - UIUtils:', typeof UIUtils);
-        console.log('  - window.gameFramework:', typeof window.gameFramework);
-        
-        // Initialize game framework
-        if (typeof GameFramework !== 'undefined') {
-            GameFramework.initialize('war');
-            console.log('✅ GameFramework initialized');
-        } else {
-            console.error('❌ GameFramework not available');
+        try {
+            console.log('🎮 Initializing War client');
+            
+            // ✅ CRITICAL FIX: Load card images as HTML images for war game
+            this.loadCardImages();
+            
+            // Check if dependencies are available
+            console.log('🔍 Checking dependencies:');
+            console.log('  - GameFramework:', typeof GameFramework);
+            console.log('  - CardUtils:', typeof CardUtils);
+            console.log('  - UIUtils:', typeof UIUtils);
+            console.log('  - window.gameFramework:', typeof window.gameFramework);
+            
+            // Initialize game framework
+            if (typeof GameFramework !== 'undefined') {
+                GameFramework.initialize('war');
+                console.log('✅ GameFramework initialized');
+            } else {
+                console.error('❌ GameFramework not available');
+                UIUtils.showGameMessage('Game framework not available. Please refresh the page.', 'error');
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Setup UI event listeners with error handling
+            try {
+                this.setupUI();
+            } catch (error) {
+                console.error('❌ Error setting up UI:', error);
+                UIUtils.showGameMessage('Error setting up UI. Some features may not work.', 'error');
+            }
+            
+            // ✅ CRITICAL FIX: Setup socket event listeners with error handling
+            try {
+                this.setupSocketListeners();
+            } catch (error) {
+                console.error('❌ Error setting up socket listeners:', error);
+                UIUtils.showGameMessage('Error setting up connection. Please refresh the page.', 'error');
+            }
+            
+            console.log('✅ War client initialized');
+        } catch (error) {
+            console.error('❌ Critical error initializing War client:', error);
+            UIUtils.showGameMessage('Failed to initialize game. Please refresh the page.', 'error');
         }
-        
-        // Setup UI event listeners
-        this.setupUI();
-        
-        // Setup socket event listeners
-        this.setupSocketListeners();
-        
-        console.log('✅ War client initialized');
     }
 
     // Setup UI event listeners
@@ -1763,7 +1783,25 @@ class WarClient {
     // Update statistics display
     updateStatistics() {
         const statsContainer = document.getElementById('statisticsContainer');
-        if (!statsContainer) return;
+        if (!statsContainer) {
+            // ✅ CRITICAL FIX: Create statistics container if it doesn't exist
+            const container = document.createElement('div');
+            container.id = 'statisticsContainer';
+            container.className = 'statistics-container';
+            container.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 20px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                font-size: 12px;
+                z-index: 1000;
+            `;
+            document.body.appendChild(container);
+            statsContainer = container;
+        }
         
         statsContainer.innerHTML = `
             <div class="stat-item">
@@ -1779,6 +1817,34 @@ class WarClient {
                 <span class="stat-value">${this.statistics.longestWar}</span>
             </div>
         `;
+    }
+    
+    // ✅ CRITICAL FIX: Update player areas (called by updateUI but was missing)
+    updatePlayerAreas() {
+        // Player areas are already displayed in the scores table
+        // This method is kept for consistency with other games
+        // Additional player visualization can be added here if needed
+        const playerAreasContainer = document.getElementById('playerAreas');
+        if (playerAreasContainer && this.game.players) {
+            playerAreasContainer.innerHTML = '';
+            
+            this.game.players.forEach((player, index) => {
+                if (!player) return;
+                
+                const playerArea = document.createElement('div');
+                playerArea.className = `player-area ${index === this.game.currentPlayer ? 'active' : ''}`;
+                playerArea.setAttribute('data-player-index', index);
+                
+                const cardCount = Array.isArray(player.hand) ? player.hand.length : 0;
+                playerArea.innerHTML = `
+                    <div class="player-name">${player.name || `Player ${index + 1}`}</div>
+                    <div class="player-cards-count">${cardCount} cards</div>
+                    ${player.isBot ? '<div class="bot-indicator">🤖 Bot</div>' : ''}
+                `;
+                
+                playerAreasContainer.appendChild(playerArea);
+            });
+        }
     }
 
     // Update battle area
