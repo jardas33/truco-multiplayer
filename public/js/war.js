@@ -1139,6 +1139,13 @@ class WarClient {
         if (historyLog) {
             historyLog.style.display = 'block';
         }
+        
+        // ✅ CRITICAL FIX: Show navigation buttons when game starts
+        const navButtons = document.querySelector('.game-navigation-buttons');
+        if (navButtons) {
+            navButtons.style.display = 'flex';
+        }
+        
         this.statistics.currentWarCount = 0;
         this.statistics.cardsWonByPlayer = {};
         
@@ -1662,7 +1669,7 @@ class WarClient {
         
         // ✅ CRITICAL FIX: Wait longer before showing controls and auto-starting next battle
         this.safeSetTimeout(() => {
-            this.showActionControls();
+        this.showActionControls();
             
             // ✅ CRITICAL FIX: Auto-start next battle with proper validation and tracked timeout (increased delay)
             this.pendingBattleTimeout = this.safeSetTimeout(() => {
@@ -2765,6 +2772,36 @@ class WarClient {
         if (gameMenuBtn) {
             gameMenuBtn.style.display = 'inline-block';
             console.log('✅ Game Menu button shown');
+        }
+    }
+
+    // ✅ CRITICAL FIX: Setup navigation buttons
+    setupNavigationButtons() {
+        const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
+        const backToWarMenuBtn = document.getElementById('backToWarMenuBtn');
+        
+        if (backToMainMenuBtn) {
+            backToMainMenuBtn.onclick = () => {
+                console.log('🔙 Back to Main Menu clicked');
+                // Navigate to main menu (home page)
+                window.location.href = '/';
+            };
+            backToMainMenuBtn.setAttribute('aria-label', 'Back to Main Menu');
+            console.log('✅ Back to Main Menu button setup');
+        } else {
+            console.warn('⚠️ Back to Main Menu button not found');
+        }
+        
+        if (backToWarMenuBtn) {
+            backToWarMenuBtn.onclick = () => {
+                console.log('⚔️ War Menu clicked');
+                // Navigate to War menu (reload page to show menu)
+                window.location.href = '/war.html';
+            };
+            backToWarMenuBtn.setAttribute('aria-label', 'War Menu');
+            console.log('✅ War Menu button setup');
+        } else {
+            console.warn('⚠️ War Menu button not found');
         }
     }
 
