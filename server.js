@@ -1821,7 +1821,11 @@ io.on('connection', (socket) => {
                 
                 // Check if betting round is complete
                 const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
-                const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
+                // All bets are matched if all active players have currentBet equal to currentBet
+                // OR if they're all-in (all-in players can't match the bet, but betting round should still complete)
+                const allBetsMatched = activePlayers.every(p => 
+                    p.currentBet === room.game.currentBet || p.isAllIn
+                ) || activePlayers.length === 0;
                 
                 // Get big blind position for preflop logic
                 const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
@@ -6161,7 +6165,11 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
     
     // Check if betting round is complete (using same logic as playerAction handler)
     const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
-    const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
+    // All bets are matched if all active players have currentBet equal to currentBet
+    // OR if they're all-in (all-in players can't match the bet, but betting round should still complete)
+    const allBetsMatched = activePlayers.every(p => 
+        p.currentBet === room.game.currentBet || p.isAllIn
+    ) || activePlayers.length === 0;
     
     // Get big blind position for preflop logic
     const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
