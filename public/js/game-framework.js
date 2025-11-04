@@ -390,7 +390,11 @@ class CardRenderer {
             rect(x, y, width, height, cornerRadius);
         }
         
-        if (isFaceUp && card.name) {
+        // Check if card name is 'back' or if we should show card back (face down)
+        const cardNameLower = card.name ? card.name.toLowerCase() : '';
+        const shouldDrawCardBack = !isFaceUp || cardNameLower === 'back';
+        
+        if (!shouldDrawCardBack && card.name) {
             // Try to draw actual card image with proper name mapping
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
             
@@ -413,11 +417,13 @@ class CardRenderer {
             }
         } else {
             // Draw card back image with enhanced styling
-            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && window.cardBackImage.width > 0) {
+            // Always try to draw card back, even if image hasn't loaded yet (will use fallback)
+            if (typeof window.cardBackImage !== 'undefined' && window.cardBackImage && 
+                window.cardBackImage.width !== undefined && window.cardBackImage.width > 0) {
                 imageMode(CORNER);
                 image(window.cardBackImage, x, y, width, height);
             } else {
-                // Enhanced fallback with pattern
+                // Enhanced fallback with pattern (always show something for card back)
                 fill(0, 0, 150);
                 stroke(255, 255, 255);
                 strokeWeight(1);
