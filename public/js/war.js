@@ -422,6 +422,65 @@ class WarClient {
         this.touchStartHandler = null; // ✅ CRITICAL FIX: Track touch handlers for cleanup
         this.touchEndHandler = null; // ✅ CRITICAL FIX: Track touch handlers for cleanup
         this.allTimeouts = []; // ✅ CRITICAL FIX: Track all timeouts for cleanup
+        this.htmlCardImages = {}; // ✅ CRITICAL FIX: Store HTML image elements for card images
+        this.htmlCardBackImage = null; // ✅ CRITICAL FIX: Store HTML image element for card back
+        this.imagesLoaded = false; // ✅ CRITICAL FIX: Track if images are loaded
+    }
+    
+    // ✅ CRITICAL FIX: Load card images as HTML images for war game
+    loadCardImages() {
+        if (this.imagesLoaded) return;
+        
+        const baseUrl = window.location.origin;
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+        
+        let loadedCount = 0;
+        const totalImages = suits.length * ranks.length + 1; // 52 cards + 1 card back
+        
+        // Load card back image
+        const cardBackImg = new Image();
+        cardBackImg.src = `${baseUrl}/Images/cardBack.jpg`;
+        cardBackImg.onload = () => {
+            this.htmlCardBackImage = cardBackImg;
+            loadedCount++;
+            console.log(`✅ Card back image loaded (${loadedCount}/${totalImages})`);
+            if (loadedCount === totalImages) {
+                this.imagesLoaded = true;
+                console.log('✅ All card images loaded for war game!');
+            }
+        };
+        cardBackImg.onerror = () => {
+            console.warn('⚠️ Card back image failed to load, using fallback');
+            loadedCount++;
+            if (loadedCount === totalImages) {
+                this.imagesLoaded = true;
+            }
+        };
+        
+        // Load all card images
+        suits.forEach(suit => {
+            ranks.forEach(rank => {
+                const imageName = `${rank}_of_${suit}`;
+                const img = new Image();
+                img.src = `${baseUrl}/Images/${imageName}.png`;
+                img.onload = () => {
+                    this.htmlCardImages[imageName] = img;
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        this.imagesLoaded = true;
+                        console.log('✅ All card images loaded for war game!');
+                    }
+                };
+                img.onerror = () => {
+                    console.warn(`⚠️ Card image failed to load: ${imageName}`);
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        this.imagesLoaded = true;
+                    }
+                };
+            });
+        });
     }
 
     // Initialize the client
@@ -1892,16 +1951,68 @@ class WarClient {
         // Card back
         const cardBack = document.createElement('div');
         cardBack.className = 'card-back';
-        cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
+        
+        // ✅ CRITICAL FIX: Use actual card back image if available
+        if (this.htmlCardBackImage && this.htmlCardBackImage.complete && this.htmlCardBackImage.naturalWidth > 0) {
+            const cardBackImg = document.createElement('img');
+            cardBackImg.src = this.htmlCardBackImage.src;
+            cardBackImg.alt = 'Card Back';
+            cardBackImg.className = 'card-back-image';
+            cardBackImg.onerror = () => {
+                // Fallback to pattern if image fails
+                cardBackImg.style.display = 'none';
+                cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
+            };
+            cardBack.appendChild(cardBackImg);
+        } else {
+            // Try to use window.cardBackImage (p5.js) or fallback to pattern
+            if (window.cardBackImage && window.cardBackImage.elt && window.cardBackImage.elt.src) {
+                const cardBackImg = document.createElement('img');
+                cardBackImg.src = window.cardBackImage.elt.src;
+                cardBackImg.alt = 'Card Back';
+                cardBackImg.className = 'card-back-image';
+                cardBackImg.onerror = () => {
+                    cardBackImg.style.display = 'none';
+                    cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
+                };
+                cardBack.appendChild(cardBackImg);
+            } else {
+                // Fallback to pattern if image not loaded
+                cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
+            }
+        }
         
         // ✅ CRITICAL FIX: Try to use card image if available with proper error handling and loading state
-        if (window.cardImages && card.name && faceUp) {
+        if (card.name && faceUp) {
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
-            const cardImage = window.cardImages[imageName];
+            let imageSrc = null;
             
-            if (cardImage && cardImage.width > 0) {
+            // ✅ CRITICAL FIX: Try HTML images first (faster, more reliable)
+            if (this.htmlCardImages[imageName] && this.htmlCardImages[imageName].complete && this.htmlCardImages[imageName].naturalWidth > 0) {
+                imageSrc = this.htmlCardImages[imageName].src;
+            }
+            // ✅ CRITICAL FIX: Try p5.js images as fallback
+            else if (window.cardImages && window.cardImages[imageName]) {
+                const cardImage = window.cardImages[imageName];
+                if (cardImage.elt && cardImage.elt.src) {
+                    // p5.js image with HTML element
+                    imageSrc = cardImage.elt.src;
+                } else if (cardImage.canvas) {
+                    // Convert canvas to data URL
+                    imageSrc = cardImage.canvas.toDataURL('image/png');
+                } else if (cardImage.width > 0) {
+                    // Construct path from image name
+                    imageSrc = `Images/${imageName}.png`;
+                }
+            }
+            // ✅ CRITICAL FIX: Direct path fallback
+            else {
+                imageSrc = `Images/${imageName}.png`;
+            }
+            
+            if (imageSrc) {
                 const img = document.createElement('img');
-                img.src = cardImage.src || `Images/Cards/${imageName}.png`;
+                img.src = imageSrc;
                 img.alt = card.name || 'Card';
                 img.className = 'card-image';
                 
