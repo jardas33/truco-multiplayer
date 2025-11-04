@@ -5051,7 +5051,9 @@ function advancePokerPhase(roomCode, room) {
                 }
             }
             room.game.gamePhase = 'flop';
-            room.game.currentPlayer = (room.game.dealerPosition + 1) % room.game.players.length;
+            // First to act post-flop should be the first active player after the big blind
+            const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
+            room.game.currentPlayer = (bigBlindPos + 1) % room.game.players.length;
             // Skip folded/all-in players
             while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
@@ -5066,7 +5068,9 @@ function advancePokerPhase(roomCode, room) {
                 room.game.communityCards.push(room.game.deck.pop());
             }
             room.game.gamePhase = 'turn';
-            room.game.currentPlayer = (room.game.dealerPosition + 1) % room.game.players.length;
+            // First to act post-turn should be the first active player after the big blind
+            const bigBlindPosTurn = (room.game.dealerPosition + 2) % room.game.players.length;
+            room.game.currentPlayer = (bigBlindPosTurn + 1) % room.game.players.length;
             while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
             }
@@ -5080,7 +5084,9 @@ function advancePokerPhase(roomCode, room) {
                 room.game.communityCards.push(room.game.deck.pop());
             }
             room.game.gamePhase = 'river';
-            room.game.currentPlayer = (room.game.dealerPosition + 1) % room.game.players.length;
+            // First to act post-river should be the first active player after the big blind
+            const bigBlindPosRiver = (room.game.dealerPosition + 2) % room.game.players.length;
+            room.game.currentPlayer = (bigBlindPosRiver + 1) % room.game.players.length;
             while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
             }
