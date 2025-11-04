@@ -1984,7 +1984,9 @@ io.on('connection', (socket) => {
         socket.emit('roomCreated', {
             roomId: roomCode,
             playerId: socket.id,
-            isHost: true
+            isHost: true,
+            isRoomCreator: true, // ✅ CRITICAL FIX: Explicitly mark room creator
+            players: rooms.get(roomCode).players // ✅ CRITICAL FIX: Include players list
         });
         io.to(roomCode).emit('playerJoined', {
             players: rooms.get(roomCode).players,

@@ -676,6 +676,13 @@ class WarClient {
             }
             const roomCode = data.roomId || data; // Handle both old and new formats
             
+            // ✅ CRITICAL FIX: Mark this client as room creator
+            window.isRoomCreator = true;
+            if (window.gameFramework) {
+                window.gameFramework.isRoomCreator = true;
+            }
+            console.log('✅ This client marked as room creator');
+            
             // ✅ CRITICAL FIX: Hide room code input after creating room
             const roomCodeInput = document.getElementById('roomCodeInput');
             if (roomCodeInput) {
@@ -690,12 +697,15 @@ class WarClient {
             
             this.showRoomCode(roomCode);
             this.showPlayerCustomization();
-            this.showGameControls();
+            this.showGameControls(data); // ✅ CRITICAL FIX: Pass data to showGameControls
             
             // ✅ CRITICAL FIX: Update player list if provided
             if (data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+            } else {
+                // If players not in data, show buttons anyway for room creator
+                console.log('⚠️ Players data not in roomCreated event, showing controls for room creator');
             }
         });
         
@@ -706,6 +716,13 @@ class WarClient {
                 console.error('❌ Invalid room joined data');
                 return;
             }
+            
+            // ✅ CRITICAL FIX: Mark as NOT room creator (we joined, didn't create)
+            window.isRoomCreator = false;
+            if (window.gameFramework) {
+                window.gameFramework.isRoomCreator = false;
+            }
+            console.log('✅ This client marked as room joiner (not creator)');
             
             // ✅ CRITICAL FIX: Hide room code input after joining room
             const roomCodeInput = document.getElementById('roomCodeInput');
@@ -721,7 +738,7 @@ class WarClient {
             
             this.localPlayerIndex = data.playerIndex !== undefined ? data.playerIndex : this.localPlayerIndex;
             this.showPlayerCustomization();
-            this.showGameControls();
+            this.showGameControls(data); // ✅ CRITICAL FIX: Pass data to showGameControls
             
             // ✅ CRITICAL FIX: Update player list if provided
             if (data.players) {
@@ -2541,13 +2558,23 @@ class WarClient {
     }
 
     // Show game controls
-    showGameControls() {
+    showGameControls(data = null) {
         const addBotBtn = document.getElementById('addBotBtn');
         const removeBotBtn = document.getElementById('removeBotBtn');
         const startGameBtn = document.getElementById('startGameBtn');
         
-        // ✅ CRITICAL FIX: Only show controls if we're the room creator
-        const isRoomCreator = window.isRoomCreator || window.gameFramework?.isRoomCreator || false;
+        // ✅ CRITICAL FIX: Check if we're the room creator - try multiple sources
+        const isRoomCreator = window.isRoomCreator || 
+                              window.gameFramework?.isRoomCreator || 
+                              (data?.isRoomCreator !== undefined ? data.isRoomCreator : false) ||
+                              false;
+        
+        console.log('🔍 showGameControls - isRoomCreator check:', {
+            'window.isRoomCreator': window.isRoomCreator,
+            'window.gameFramework?.isRoomCreator': window.gameFramework?.isRoomCreator,
+            'data?.isRoomCreator': data?.isRoomCreator,
+            'final': isRoomCreator
+        });
         
         if (addBotBtn) {
             addBotBtn.style.display = isRoomCreator ? 'inline-block' : 'none';
@@ -2556,7 +2583,11 @@ class WarClient {
                 addBotBtn.style.setProperty('color', 'white', 'important');
                 addBotBtn.style.setProperty('border', 'none', 'important');
                 console.log('✅ Add Bot button shown and styled green');
+            } else {
+                console.log('❌ Add Bot button hidden - not room creator');
             }
+        } else {
+            console.error('❌ addBotBtn element not found');
         }
         
         if (removeBotBtn) {
@@ -2566,7 +2597,11 @@ class WarClient {
                 removeBotBtn.style.setProperty('color', 'white', 'important');
                 removeBotBtn.style.setProperty('border', 'none', 'important');
                 console.log('✅ Remove Bot button shown and styled red');
+            } else {
+                console.log('❌ Remove Bot button hidden - not room creator');
             }
+        } else {
+            console.error('❌ removeBotBtn element not found');
         }
         
         if (startGameBtn) {
@@ -2575,9 +2610,13 @@ class WarClient {
                 startGameBtn.style.setProperty('background-color', '#FF9800', 'important');
                 startGameBtn.style.setProperty('color', 'white', 'important');
                 startGameBtn.style.setProperty('border', 'none', 'important');
-                startGameBtn.disabled = false;
+                // Button will be enabled/disabled by updateStartGameButton based on player count
                 console.log('✅ Start Game button shown and styled orange');
+            } else {
+                console.log('❌ Start Game button hidden - not room creator');
             }
+        } else {
+            console.error('❌ startGameBtn element not found');
         }
         
         // Show game menu button (always visible)
