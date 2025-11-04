@@ -1235,6 +1235,7 @@ class WarClient {
             return;
         }
         
+        console.log('🎮 Emitting startBattle event to server:', { roomId, playerIndex: this.localPlayerIndex });
         socket.emit('startBattle', {
             roomId: roomId,
             playerIndex: this.localPlayerIndex
@@ -1243,21 +1244,9 @@ class WarClient {
         this.canAct = false;
         this.hideActionControls();
         
-        // ✅ CRITICAL FIX: Reset flag and button state after a delay with tracked timeout
-        const resetTimeout = this.safeSetTimeout(() => {
-            this.isStartingBattle = false;
-            if (battleBtn) {
-                battleBtn.disabled = false;
-                battleBtn.textContent = battleBtn.dataset.originalText || '⚔️ BATTLE!';
-                battleBtn.style.opacity = '1';
-                battleBtn.style.cursor = 'pointer';
-            }
-        }, 1000);
-        
-        // Update pending battle timeout reference
-        if (!this.pendingBattleTimeout) {
-            this.pendingBattleTimeout = resetTimeout;
-        }
+        // ✅ CRITICAL FIX: Reset flag after server responds (don't reset immediately)
+        // The flag will be reset when battleStarted event is received
+        console.log('⏳ Waiting for server to start battle...');
     }
 
     // Update battle started
@@ -2120,6 +2109,54 @@ class WarClient {
                 <span class="stat-value">${this.statistics.longestWar}</span>
             </div>
         `;
+    }
+    
+    // ✅ CRITICAL FIX: Update battle history log display
+    updateBattleHistoryLog() {
+        const historyContent = document.getElementById('historyContent');
+        if (!historyContent) return;
+        
+        // Clear and rebuild history
+        historyContent.innerHTML = '';
+        
+        // Show last 10 entries (most recent first)
+        const recentHistory = [...this.battleHistory].reverse().slice(0, 10);
+        
+        recentHistory.forEach((entry, index) => {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = `history-entry ${entry.isWar ? 'war' : ''} ${entry.winner ? 'winner' : ''}`;
+            
+            let entryText = `<span class="battle-number">Battle ${entry.battleNumber}:</span> `;
+            
+            // Show cards played
+            if (entry.cards && entry.cards.length > 0) {
+                const cardTexts = entry.cards.map((bc, idx) => {
+                    const playerName = bc.player?.name || `Player ${bc.playerIndex + 1}`;
+                    const cardName = this.getCardDisplayValue(bc.card);
+                    return `<span class="player-name">${playerName}</span> played <span class="card-name">${cardName}</span>`;
+                }).join(', ');
+                entryText += cardTexts;
+            }
+            
+            // Show winner if resolved
+            if (entry.winner) {
+                entryText += ` → <span class="winner-text">🏆 ${entry.winner.name} wins!</span>`;
+                if (entry.winner.cardsWon > 0) {
+                    entryText += ` (+${entry.winner.cardsWon} cards)`;
+                }
+            }
+            
+            // Show if it was a war
+            if (entry.isWar) {
+                entryText = `<span class="war-text">⚔️ WAR!</span> ` + entryText;
+            }
+            
+            entryDiv.innerHTML = entryText;
+            historyContent.appendChild(entryDiv);
+        });
+        
+        // Auto-scroll to top (most recent)
+        historyContent.scrollTop = 0;
     }
     
     // ✅ CRITICAL FIX: Update player areas (called by updateUI but was missing)
