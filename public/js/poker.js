@@ -2778,12 +2778,44 @@ function drawBetIndicators() {
             
             if (isTopPlayer) {
                 // Top player: chip indicator goes to the far left, well below cards
+                // Check if community cards are displayed and adjust position to avoid overlap
                 const cardY = playerY + 50;
                 const cardWidth = 60;
                 const cardSpacing = 8;
                 const cardsTotalWidth = (cardWidth * 2) + cardSpacing;
                 const cardLeftEdge = playerX - (cardsTotalWidth / 2);
-                chipIndicatorX = cardLeftEdge - 80; // Much further left
+                
+                // Check if community cards exist and calculate their bounds
+                let needsLeftOffset = false;
+                if (window.game.communityCards && window.game.communityCards.length > 0) {
+                    const centerX = width/2;
+                    const centerY = height/2;
+                    const communityCardWidth = 80;
+                    const communityCardHeight = 112;
+                    const communitySpacing = 20;
+                    const totalCommunityWidth = (window.game.communityCards.length - 1) * (communityCardWidth + communitySpacing);
+                    const communityStartX = centerX - totalCommunityWidth / 2;
+                    const communityEndX = communityStartX + totalCommunityWidth + communityCardWidth;
+                    const communityTopY = centerY - communityCardHeight/2;
+                    const communityBottomY = centerY + communityCardHeight/2;
+                    
+                    // Check if chip position would overlap with community cards
+                    const chipX = cardLeftEdge - 80;
+                    const chipY = cardY + 42 + 90;
+                    const chipRadius = 14; // Half of chip indicator size (28px)
+                    
+                    // Check overlap: chip is to the left of community cards, but check vertical overlap
+                    if (chipX < communityEndX && chipY > communityTopY - chipRadius && chipY < communityBottomY + chipRadius) {
+                        needsLeftOffset = true;
+                    }
+                }
+                
+                if (needsLeftOffset) {
+                    // Move chip indicator further left to avoid community cards
+                    chipIndicatorX = cardLeftEdge - 150; // Much further left
+                } else {
+                    chipIndicatorX = cardLeftEdge - 80; // Normal position
+                }
                 chipIndicatorY = cardY + 42 + 90; // Much further below
             } else if (isSidePlayer) {
                 // Side players: chip indicator goes to OPPOSITE side from blind indicators
@@ -3345,7 +3377,8 @@ function drawBlindIndicators() {
         const indicatorsToDraw = [];
         
         // Check which indicators this player has
-        // Always show blind indicators if gamePhase exists (preflop, flop, turn, river, showdown)
+        // D button stays visible all the time (as long as game exists)
+        // SB and BB only show during active game phases
         const hasActiveGamePhase = window.game.gamePhase && window.game.gamePhase !== '';
         
         // Debug logging for first player
@@ -3353,10 +3386,12 @@ function drawBlindIndicators() {
             console.log('🎴 drawBlindIndicators: Player 0, dealerPosition:', dealerPosition, 'smallBlindPos:', smallBlindPos, 'bigBlindPos:', bigBlindPos, 'gamePhase:', window.game.gamePhase);
         }
         
-        if (index === dealerPosition && hasActiveGamePhase) {
+        // D button always shows (as long as game exists)
+        if (index === dealerPosition) {
             indicatorsToDraw.push({ type: 'D', color: [255, 215, 0], size: 30, text: 'D', amount: null });
             if (index === 0) console.log('🎴 Adding D indicator for player', index);
         }
+        // SB and BB only show during active phases
         if (index === smallBlindPos && hasActiveGamePhase) {
             indicatorsToDraw.push({ type: 'SB', color: [100, 200, 255], size: 28, text: 'SB', amount: null }); // Remove amount display
             if (index === 1) console.log('🎴 Adding SB indicator for player', index);
