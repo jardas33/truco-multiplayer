@@ -1821,7 +1821,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayersJoin = room.gameType === 'truco' ? 4 : (room.gameType === 'battleship' ? 2 : 6); // Truco needs 4, Battleship needs 2, other games can have up to 6
+        const maxPlayersJoin = room.gameType === 'truco' ? 4 : (room.gameType === 'battleship' ? 2 : (room.gameType === 'poker' ? 7 : 6)); // Truco needs 4, Battleship needs 2, Poker needs 7, other games can have up to 6
         
         // For battleship rooms, handle reconnection by replacing disconnected players
         if (room.gameType === 'battleship' && room.players.length >= maxPlayersJoin) {
@@ -2176,41 +2176,54 @@ io.on('connection', (socket) => {
 
     // ✅ Handle room leaving
     socket.on('leaveRoom', (roomCode) => {
-        console.log(`🚪 User ${socket.id} leaving room: ${roomCode}`);
+        // Handle both string and object formats
+        const actualRoomCode = typeof roomCode === 'object' && roomCode.roomId ? roomCode.roomId : roomCode;
         
-        const room = rooms.get(roomCode);
+        console.log(`🚪 User ${socket.id} leaving room: ${actualRoomCode}`);
+        
+        if (!actualRoomCode) {
+            console.log(`❌ Invalid room code provided`);
+            return;
+        }
+        
+        const room = rooms.get(actualRoomCode);
         if (!room) {
-            console.log(`❌ Room ${roomCode} not found for user leaving`);
+            console.log(`❌ Room ${actualRoomCode} not found for user leaving`);
             return;
         }
 
-        // Remove user from room
-        room.players = room.players.filter(p => p.id !== socket.id);
-        socket.leave(roomCode);
-        roomCode = null;
+        try {
+            // Remove user from room
+            room.players = room.players.filter(p => p.id !== socket.id);
+            socket.leave(actualRoomCode);
 
-        console.log(`✅ User ${socket.id} left room ${roomCode}. Total players: ${room.players.length}`);
+            console.log(`✅ User ${socket.id} left room ${actualRoomCode}. Total players: ${room.players.length}`);
 
-        // Emit player left event to remaining players
-        io.to(roomCode).emit('playerLeft', {
-            players: room.players,
-            count: room.players.length
-        });
-
-        // If room is empty, delete it
-        if (room.players.length === 0) {
-            console.log(`🔍 DEBUG: Room ${roomCode} is empty, checking if game is active before deletion`);
-            console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
-            console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
-            
-            // ✅ CRITICAL FIX: Don't delete room if game is active
-            if (room.game && room.game.started) {
-                console.log(`⚠️ WARNING: Attempting to delete room ${roomCode} during active game - PREVENTING DELETION`);
-                return;
+            // Emit player left event to remaining players (using actualRoomCode, not null)
+            if (room.players.length > 0) {
+                io.to(actualRoomCode).emit('playerLeft', {
+                    players: room.players,
+                    count: room.players.length
+                });
             }
-            
-            rooms.delete(roomCode);
-            console.log(`🗑️ Room ${roomCode} deleted (empty and no active game)`);
+
+            // If room is empty, delete it
+            if (room.players.length === 0) {
+                console.log(`🔍 DEBUG: Room ${actualRoomCode} is empty, checking if game is active before deletion`);
+                console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
+                console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
+                
+                // ✅ CRITICAL FIX: Don't delete room if game is active
+                if (room.game && room.game.started) {
+                    console.log(`⚠️ WARNING: Attempting to delete room ${actualRoomCode} during active game - PREVENTING DELETION`);
+                    return;
+                }
+                
+                rooms.delete(actualRoomCode);
+                console.log(`🗑️ Room ${actualRoomCode} deleted (empty and no active game)`);
+            }
+        } catch (error) {
+            console.error(`❌ Error handling leaveRoom for ${actualRoomCode}:`, error);
         }
     });
 
@@ -2227,7 +2240,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const maxPlayersAddBot = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        const maxPlayersAddBot = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
         if (room.players.length >= maxPlayersAddBot) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersAddBot}), cannot add bot`);
             socket.emit('error', 'Room is full');
@@ -2257,7 +2270,7 @@ io.on('connection', (socket) => {
         // Emit players updated event
         io.to(roomCode).emit('playersUpdated', room.players);
 
-        const maxPlayersFull = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        const maxPlayersFull = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
         if (room.players.length === maxPlayersFull) {
             console.log(`🎯 Room ${roomCode} is now full with ${room.players.length} players`);
             io.to(roomCode).emit('roomFull');
@@ -2297,7 +2310,7 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('playersUpdated', room.players);
 
         // If room is no longer full, emit roomNotFull event
-        const maxPlayersNotFull = room.gameType === 'truco' ? 4 : 6; // Truco needs 4, other games can have up to 6
+        const maxPlayersNotFull = room.gameType === 'truco' ? 4 : (room.gameType === 'poker' ? 7 : 6); // Truco needs 4, Poker needs 7, other games can have up to 6
         if (room.players.length < maxPlayersNotFull) {
             io.to(roomCode).emit('roomNotFull');
         }
