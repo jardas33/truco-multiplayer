@@ -5710,13 +5710,12 @@ function determineRoundWinner(playedCards, room) {
             communityCards: room.game.communityCards
         });
         
-        // Handle bot actions
-        const currentPlayer = room.game.players[room.game.currentPlayer];
-        if (currentPlayer && currentPlayer.isBot) {
-            setTimeout(() => {
-                handlePokerBotAction(roomCode, room, currentPlayer);
-            }, 1500);
-        }
+        console.log(`🎴 Phase advanced to ${room.game.gamePhase}, current player: ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name})`);
+        
+        // Handle bot actions after phase advancement
+        setTimeout(() => {
+            handlePokerBotActions(roomCode, room);
+        }, 2000);
     }
     
     function handlePokerShowdown(roomCode, room) {
@@ -5891,43 +5890,96 @@ function determineRoundWinner(playedCards, room) {
     }
     
     function handlePokerBotAction(roomCode, room, botPlayer) {
-        if (!botPlayer || !botPlayer.isBot) return;
+        if (!botPlayer || !botPlayer.isBot) {
+            console.log(`🎴 handlePokerBotAction: botPlayer is not a bot or is null`);
+            return;
+        }
         
-        const playerIndex = room.game.players.indexOf(botPlayer);
-        if (playerIndex === -1 || botPlayer.isFolded || botPlayer.isAllIn) return;
+        // CRITICAL: Use currentPlayer index instead of indexOf
+        const playerIndex = room.game.currentPlayer;
+        const currentPlayerObj = room.game.players[playerIndex];
         
-        console.log(`🎴 Bot ${botPlayer.name} making decision...`);
+        // Verify it's actually the bot's turn
+        if (playerIndex === -1 || !currentPlayerObj || currentPlayerObj.id !== botPlayer.id || currentPlayerObj.isFolded || currentPlayerObj.isAllIn) {
+            console.log(`🎴 handlePokerBotAction: Invalid bot turn - playerIndex: ${playerIndex}, bot: ${botPlayer.name}, currentPlayer: ${room.game.currentPlayer}`);
+            return;
+        }
         
-        // Simple bot logic: random decision based on hand strength
+        console.log(`🎴 Bot ${botPlayer.name} (index ${playerIndex}) making decision...`);
+        console.log(`🎴 Bot hand: ${botPlayer.hand.map(c => c.name).join(', ')}`);
+        console.log(`🎴 Current bet: $${room.game.currentBet}, Bot's bet: $${botPlayer.currentBet}, Bot's chips: $${botPlayer.chips}`);
+        
+        // Improved bot logic: evaluate hand strength including community cards
         const callAmount = room.game.currentBet - botPlayer.currentBet;
         const canRaise = botPlayer.chips > callAmount;
         
-        // Simple evaluation: count pairs and high cards
+        // Evaluate hand strength (simplified - can be improved with full hand evaluation)
+        const allCards = [...botPlayer.hand, ...(room.game.communityCards || [])];
         const handValues = botPlayer.hand.map(c => c.value);
         const hasPair = handValues[0] === handValues[1];
         const highCard = Math.max(...handValues);
+        const lowCard = Math.min(...handValues);
+        
+        // Count pairs in all cards (including community cards)
+        const valueCounts = {};
+        allCards.forEach(card => {
+            valueCounts[card.value] = (valueCounts[card.value] || 0) + 1;
+        });
+        const pairs = Object.values(valueCounts).filter(count => count >= 2).length;
+        const hasThreeOfAKind = Object.values(valueCounts).some(count => count >= 3);
         
         let action = 'fold';
         let amount = 0;
+        const handStrength = hasThreeOfAKind ? 3 : (hasPair ? 2 : (highCard >= 12 ? 1 : 0));
         
-        if (hasPair && highCard >= 10) {
-            // Strong pair - raise or call
-            action = canRaise && Math.random() > 0.3 ? 'raise' : 'call';
-            amount = canRaise ? Math.min(room.game.currentBet * 2, botPlayer.chips) : 0;
-        } else if (highCard >= 12 || (hasPair && highCard >= 7)) {
-            // Decent hand - call small bets
-            action = callAmount <= botPlayer.chips * 0.1 ? 'call' : 'fold';
+        // Decision logic based on hand strength and pot odds
+        if (handStrength >= 3 || (hasPair && highCard >= 10)) {
+            // Strong hand - aggressive
+            if (canRaise && Math.random() > 0.4) {
+                action = 'raise';
+                amount = Math.min(room.game.currentBet * 1.5 + Math.floor(Math.random() * room.game.currentBet), botPlayer.chips);
+            } else {
+                action = 'call';
+            }
+        } else if (handStrength >= 2 || highCard >= 12) {
+            // Decent hand - call reasonable bets
+            const betRatio = callAmount / botPlayer.chips;
+            if (callAmount === 0) {
+                action = 'call'; // Free check
+            } else if (betRatio <= 0.15) {
+                action = 'call';
+            } else if (betRatio <= 0.25 && Math.random() > 0.3) {
+                action = 'call';
+            } else {
+                action = 'fold';
+            }
         } else if (callAmount === 0) {
-            // Free check
+            // Free check - always take it
             action = 'call';
         } else {
-            // Weak hand - fold unless it's cheap
-            action = callAmount <= botPlayer.chips * 0.05 ? 'call' : 'fold';
+            // Weak hand - fold unless very cheap
+            const betRatio = callAmount / botPlayer.chips;
+            if (betRatio <= 0.05 && Math.random() > 0.5) {
+                action = 'call'; // Occasionally call very cheap bets
+            } else {
+                action = 'fold';
+            }
         }
         
-        console.log(`🎴 Bot ${botPlayer.name} decides to ${action} ${amount > 0 ? '$' + amount : ''}`);
+        console.log(`🎴 Bot ${botPlayer.name} decides to ${action} ${amount > 0 ? '$' + amount : ''} (hand strength: ${handStrength})`);
         
-        // Process the action directly (same logic as playerAction handler)
+        // Emit bot action to all clients (so they can see what bot did)
+        io.to(roomCode).emit('playerAction', {
+            playerIndex: playerIndex,
+            action: action,
+            amount: amount,
+            player: {
+                ...botPlayer,
+                name: botPlayer.name
+            }
+        });
+        
+        // Process the action (same logic as playerAction handler)
         switch (action) {
             case 'fold':
                 botPlayer.isFolded = true;
@@ -5957,26 +6009,67 @@ function determineRoundWinner(playedCards, room) {
                 break;
         }
         
-        // Move to next player and check betting round
+        // Move to next active player
         const startPlayer = room.game.currentPlayer;
+        let attempts = 0;
         do {
             room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+            attempts++;
+            
+            // Safety check to prevent infinite loop
+            if (attempts >= room.game.players.length) {
+                console.error(`❌ Could not find next active player after ${attempts} attempts`);
+                break;
+            }
         } while (
-            room.game.players[room.game.currentPlayer].isFolded || 
-            room.game.players[room.game.currentPlayer].isAllIn ||
-            room.game.currentPlayer === startPlayer
+            (room.game.players[room.game.currentPlayer].isFolded || 
+             room.game.players[room.game.currentPlayer].isAllIn) &&
+            room.game.currentPlayer !== startPlayer
         );
         
-        // Check if betting round is complete
+        console.log(`🎴 Bot turn advanced from ${startPlayer} to ${room.game.currentPlayer}`);
+        
+        // Check if betting round is complete (using same logic as playerAction handler)
         const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
         const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
-        const actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+        
+        // Get big blind position for preflop logic
+        const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
+        
+        // For preflop: action must return to big blind (lastRaisePlayer) after everyone acts
+        // For post-flop: action must return to last raiser (or small blind if no raises)
+        let actionBackToLastRaiser;
+        if (room.game.gamePhase === 'preflop') {
+            if (room.game.lastRaisePlayer === bigBlindPos) {
+                actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
+            } else {
+                actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+            }
+        } else {
+            if (room.game.lastRaisePlayer === -1) {
+                const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
+                let expectedPlayer = smallBlindPos;
+                while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
+                    expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
+                }
+                actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
+            } else {
+                actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
+            }
+        }
+        
+        console.log(`🎴 Bot betting round check: phase=${room.game.gamePhase}, allBetsMatched=${allBetsMatched}, actionBackToLastRaiser=${actionBackToLastRaiser}, activePlayers=${activePlayers.length}`);
         
         if (allBetsMatched && actionBackToLastRaiser && activePlayers.length > 1) {
+            // Betting round complete - advance to next phase
+            console.log(`🎴 Betting round complete after bot action`);
             advancePokerPhase(roomCode, room);
         } else if (activePlayers.length <= 1) {
+            // Only one player left - go to showdown
+            console.log(`🎴 Only one player left after bot action, going to showdown`);
             handlePokerShowdown(roomCode, room);
         } else {
+            // Continue betting round
             // Emit updated game state
             io.to(roomCode).emit('gameState', {
                 players: room.game.players,
