@@ -717,9 +717,12 @@ class WarClient {
             if (data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+                this.updateAddBotButtonState(data.players.length);
             } else {
                 // If players not in data, show buttons anyway for room creator
                 console.log('⚠️ Players data not in roomCreated event, showing controls for room creator');
+                // Initialize with 1 player (the creator)
+                this.updateAddBotButtonState(1);
             }
         });
         
@@ -758,6 +761,7 @@ class WarClient {
             if (data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+                this.updateAddBotButtonState(data.players.length);
             }
         });
         
@@ -767,6 +771,7 @@ class WarClient {
             if (data && data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+                this.updateAddBotButtonState(data.players.length);
             }
         });
         
@@ -775,6 +780,7 @@ class WarClient {
             if (data && data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+                this.updateAddBotButtonState(data.players.length);
             }
         });
         
@@ -783,6 +789,7 @@ class WarClient {
             if (data && data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+                this.updateAddBotButtonState(data.players.length);
             }
         });
         
@@ -791,6 +798,36 @@ class WarClient {
             if (data && data.players) {
                 this.updatePlayerList(data.players);
                 this.updateStartGameButton(data.players);
+                this.updateAddBotButtonState(data.players.length);
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle room full event
+        socket.on('roomFull', () => {
+            console.log('🏠 Room is full');
+            this.updateAddBotButtonState(4); // Max players reached
+            UIUtils.showGameMessage('Room is full. Maximum 4 players allowed.', 'info');
+        });
+        
+        // ✅ CRITICAL FIX: Handle room not full event
+        socket.on('roomNotFull', () => {
+            console.log('🏠 Room is not full');
+            // Update button state based on current player count
+            const playerList = document.getElementById('playerList');
+            if (playerList) {
+                const currentPlayers = playerList.querySelectorAll('.player-item').length;
+                this.updateAddBotButtonState(currentPlayers);
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle error events from server
+        socket.on('error', (errorMessage) => {
+            console.error('❌ Server error:', errorMessage);
+            UIUtils.showGameMessage(errorMessage || 'An error occurred. Please try again.', 'error');
+            // Re-enable buttons if error occurred
+            const addBotBtn = document.getElementById('addBotBtn');
+            if (addBotBtn && errorMessage.includes('full')) {
+                this.updateAddBotButtonState(4); // Assume max reached
             }
         });
         
