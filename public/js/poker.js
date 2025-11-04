@@ -916,6 +916,49 @@ class PokerClient {
             loop();
         }
         
+        // Hide menu and show game buttons during gameplay
+        const menuDiv = document.getElementById('Menu');
+        if (menuDiv) {
+            menuDiv.style.display = 'none';
+            console.log('🎴 Menu hidden during gameplay');
+        }
+        
+        // Show Back to Main Menu and Poker Menu buttons during gameplay
+        const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
+        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        
+        if (backToMainMenuBtn) {
+            backToMainMenuBtn.style.display = 'inline-block';
+            backToMainMenuBtn.style.position = 'fixed';
+            backToMainMenuBtn.style.top = '10px';
+            backToMainMenuBtn.style.right = '10px';
+            backToMainMenuBtn.style.zIndex = '1000';
+            backToMainMenuBtn.style.background = '#6c757d';
+            backToMainMenuBtn.style.color = 'white';
+            backToMainMenuBtn.style.border = 'none';
+            backToMainMenuBtn.style.padding = '8px 16px';
+            backToMainMenuBtn.style.borderRadius = '4px';
+            backToMainMenuBtn.style.cursor = 'pointer';
+            backToMainMenuBtn.style.fontSize = '14px';
+            console.log('🎴 Back to Main Menu button shown during gameplay');
+        }
+        
+        if (gameMenuBtn) {
+            gameMenuBtn.style.display = 'inline-block';
+            gameMenuBtn.style.position = 'fixed';
+            gameMenuBtn.style.top = '10px';
+            gameMenuBtn.style.right = '150px';
+            gameMenuBtn.style.zIndex = '1000';
+            gameMenuBtn.style.background = '#2196F3';
+            gameMenuBtn.style.color = 'white';
+            gameMenuBtn.style.border = 'none';
+            gameMenuBtn.style.padding = '8px 16px';
+            gameMenuBtn.style.borderRadius = '4px';
+            gameMenuBtn.style.cursor = 'pointer';
+            gameMenuBtn.style.fontSize = '14px';
+            console.log('🎴 Poker Menu button shown during gameplay');
+        }
+        
         // Set global game instance
         window.game = this.game;
         console.log('🎴 Global game instance set');
@@ -1541,17 +1584,15 @@ class PokerClient {
             console.log('SUCCESS: Start Game button shown and styled orange');
         }
         
+        // Hide Back to Main Menu and Poker Menu buttons during room creation (they'll be shown when game starts)
         const gameMenuBtn = document.getElementById('gameMenuBtn');
         if (gameMenuBtn) {
-            gameMenuBtn.style.display = 'inline-block';
-            console.log('SUCCESS: Game Menu button shown');
+            gameMenuBtn.style.display = 'none';
         }
         
-        // Show Back to Poker Menu button during game
         const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
         if (backToMainMenuBtn) {
-            backToMainMenuBtn.style.display = 'inline-block';
-            console.log('SUCCESS: Back to Poker Menu button shown');
+            backToMainMenuBtn.style.display = 'none';
         }
         
         // Force button colors with !important
