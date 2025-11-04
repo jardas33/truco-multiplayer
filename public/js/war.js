@@ -1678,15 +1678,16 @@ class WarClient {
             // ✅ CRITICAL FIX: Auto-start next battle with proper validation and tracked timeout (increased delay)
             this.pendingBattleTimeout = this.safeSetTimeout(() => {
                 if (!this.game.gameOver && 
-                this.canAct && 
-                (!this.game.battleCards || this.game.battleCards.length === 0) &&
-                (!this.game.warCards || this.game.warCards.length === 0) &&
-                activePlayers.length >= 2) {
-                console.log('⚔️ Auto-starting next battle');
-                this.startBattle();
-            }
-            this.pendingBattleTimeout = null;
-        }, 2000);
+                    this.canAct && 
+                    (!this.game.battleCards || this.game.battleCards.length === 0) &&
+                    (!this.game.warCards || this.game.warCards.length === 0) &&
+                    activePlayers.length >= 2) {
+                    console.log('⚔️ Auto-starting next battle');
+                    this.startBattle();
+                }
+                this.pendingBattleTimeout = null;
+            }, 5000); // ✅ CRITICAL FIX: Auto-start after 5 seconds (increased from 2)
+        }, 4000); // ✅ CRITICAL FIX: Wait 4 seconds before showing next battle controls (increased from 2)
     }
 
     // Show game over with celebration
