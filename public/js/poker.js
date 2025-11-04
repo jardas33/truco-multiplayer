@@ -3052,27 +3052,25 @@ function drawBetIndicators() {
             const isSidePlayer = absCosAngle > absSinAngle;
             
             if (isSidePlayer) {
-                // Side players: position bet indicator in a zone that doesn't conflict with blind indicators
-                // Determine if left or right side
-                const isRightSide = cos(angle) > 0;
+                // Side players: buttons at same width (X) but different heights (vertical layout)
+                // Position bet button at same X as blind/chips, but different Y
+                const blindPosForBet = blindIndicatorPositions.get(index);
+                const chipPosForBet = chipIndicatorPositions.get(index);
                 
-                // Determine where blind indicator is positioned
-                let blindIsOnLeft = false;
-                if (blindPos) {
-                    blindIsOnLeft = blindPos.x < playerX;
-                }
-                
-                // Position bet indicator on OPPOSITE side from blind indicator
-                // If blind is on left (toward center), bet goes to right (away from center)
-                if (blindIsOnLeft) {
-                    // Blind on left, bet goes to right with very large offset
-                    finalIndicatorX = playerX + (isRightSide ? -80 : 80); // Much larger offset
+                if (blindPosForBet || chipPosForBet) {
+                    // Use same X position as blind or chips
+                    const referenceX = blindPosForBet ? blindPosForBet.x : chipPosForBet.x;
+                    finalIndicatorX = referenceX;
+                    
+                    // Position bet button below chips (or blind if no chips)
+                    const referenceY = chipPosForBet ? chipPosForBet.y : blindPosForBet.y;
+                    finalIndicatorY = referenceY + 30; // Close vertical spacing below chips/blind
                 } else {
-                    // Blind on right or center, bet goes to left with very large offset
-                    finalIndicatorX = playerX + (isRightSide ? 80 : -80); // Much larger offset
+                    // No blind or chips - position relative to player
+                    const isRightSide = cos(angle) > 0;
+                    finalIndicatorX = playerX + (isRightSide ? -60 : 60);
+                    finalIndicatorY = playerY + 80;
                 }
-                
-                finalIndicatorY = playerY + 80; // Position between player box and cards
             } else {
                 // Bottom player: position side by side with blind and chips at same height
                 // Get blind and chip positions to align bet button with them
