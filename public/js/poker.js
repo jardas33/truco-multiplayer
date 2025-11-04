@@ -2800,21 +2800,28 @@ function drawBetIndicators() {
         
         // If player has both chips and current bet, position them side by side at same height
         if (hasCurrentBet && betPos) {
+            // For top player, always position BET on left, CHIPS on right (side by side)
             // For left side players (cos(angle) < 0), CHIPS on left, BET on right
             // For other players, BET on left, CHIPS on right
             const isLeftSidePlayer = cos(angle) < 0;
             const indicatorSpacing = 40; // Space between buttons (40px)
             
-            if (isLeftSidePlayer) {
+            if (isTopPlayer) {
+                // Top player: BET on left, CHIPS on right (side by side at same height)
+                // Use bet position Y exactly, and position chips to the right
+                chipIndicatorX = betPos.x + indicatorSpacing;
+                chipIndicatorY = betPos.y; // EXACTLY same height as BET
+            } else if (isLeftSidePlayer) {
                 // Left side: CHIPS on left, BET on right
                 // Position chip indicator to the LEFT of bet indicator
                 chipIndicatorX = betPos.x - indicatorSpacing;
+                chipIndicatorY = betPos.y; // Same height as BET
             } else {
                 // Other players: BET on left, CHIPS on right
                 // Position chip indicator to the RIGHT of bet indicator
                 chipIndicatorX = betPos.x + indicatorSpacing;
+                chipIndicatorY = betPos.y; // Same height as BET
             }
-            chipIndicatorY = betPos.y; // Same height as BET
             
             // Ensure we don't overlap with blind indicators
             if (blindPos) {
@@ -2874,7 +2881,8 @@ function drawBetIndicators() {
                     // Same X position as blind, but different Y (vertical stacking)
                     chipIndicatorX = blindPos.x;
                     // Position chips button directly below blind indicator with more spacing
-                    chipIndicatorY = blindPos.y + 50; // Increased vertical spacing (was 30)
+                    // Increased spacing to prevent buttons from being too close
+                    chipIndicatorY = blindPos.y + 70; // Increased vertical spacing (was 50, now 70)
                 } else {
                     // No blind - position relative to player
                     const isRightSide = cos(angle) > 0;
