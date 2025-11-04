@@ -1137,17 +1137,6 @@ class PokerClient {
         this.hideBettingControls();
     }
 
-    allIn() {
-        const allInAmount = this.game.players[0]?.chips || 0;
-        console.log('Player went all in:', allInAmount);
-        this.playWinSound();
-        this.socket.emit('playerAction', {
-            action: 'allIn',
-            amount: allInAmount,
-            roomId: this.roomId
-        });
-        this.hideBettingControls();
-    }
 
     updateBetAmount() {
         const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
