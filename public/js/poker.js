@@ -1698,8 +1698,50 @@ class PokerClient {
         });
         
         this.hideBettingControls();
+        this.addHistoryEntry(`${localPlayer.name || 'You'} went ALL IN with $${allInAmount}`, 'player-action');
     }
 
+    // Add entry to history log
+    addHistoryEntry(message, type = 'default') {
+        if (!this.historyLog) {
+            this.historyLog = [];
+        }
+        
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = {
+            message: message,
+            type: type,
+            timestamp: timestamp
+        };
+        
+        this.historyLog.push(entry);
+        
+        // Keep only last 50 entries
+        if (this.historyLog.length > 50) {
+            this.historyLog.shift();
+        }
+        
+        // Update UI
+        this.updateHistoryLog();
+    }
+    
+    // Update history log display
+    updateHistoryLog() {
+        const historyLogContent = document.getElementById('historyLogContent');
+        if (!historyLogContent) return;
+        
+        if (!this.historyLog || this.historyLog.length === 0) {
+            historyLogContent.innerHTML = '<div style="color: #888; font-style: italic;">No history yet...</div>';
+            return;
+        }
+        
+        // Display in reverse order (newest first)
+        const reversedHistory = [...this.historyLog].reverse();
+        historyLogContent.innerHTML = reversedHistory.map(entry => {
+            const className = `history-entry ${entry.type}`;
+            return `<div class="${className}"><strong>${entry.timestamp}</strong>: ${entry.message}</div>`;
+        }).join('');
+    }
 
     updateBetAmount() {
         const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
@@ -1935,9 +1977,10 @@ function drawGameState() {
     drawPot();
     // Removed drawChips() - chips were overlapping with player boxes
     drawGameInfo();
-    drawChipIndicators(); // Show each player's chip count
-    drawBetIndicators(); // Show each player's current bet amount
-    drawBlindIndicators();
+    // Calculate positions first, then draw (order matters!)
+    drawBetIndicators(); // Calculates and stores all positions (blind, bet, chip), then draws bet indicators
+    drawChipIndicators(); // Uses positions from drawBetIndicators, draws chip indicators
+    drawBlindIndicators(); // Uses positions from drawBetIndicators, draws blind indicators
 }
 
 function drawPokerTable() {
@@ -2478,9 +2521,9 @@ function drawChipIndicators() {
         const sinAngle = sin(angle);
         const isTopPlayer = sinAngle < -0.5;
         
-        // Get existing indicator positions
-        const blindPos = blindIndicatorPositions.get(index);
-        const betPos = betIndicatorPositions.get(index);
+        // Get existing indicator positions from global storage (set by drawBetIndicators)
+        const blindPos = window.blindIndicatorPositions?.get(index) || blindIndicatorPositions.get(index);
+        const betPos = window.betIndicatorPositions?.get(index) || betIndicatorPositions.get(index);
         
         // Use position from drawBetIndicators if available, otherwise calculate
         let chipIndicatorX, chipIndicatorY;
@@ -2958,9 +3001,10 @@ function drawBetIndicators() {
         chipIndicatorPositions.set(index, { x: chipIndicatorX, y: chipIndicatorY });
     });
     
-    // Store chip and bet positions globally so drawBlindIndicators can use them
+    // Store chip, bet, and blind positions globally so other functions can use them
     window.chipIndicatorPositions = chipIndicatorPositions;
     window.betIndicatorPositions = betIndicatorPositions;
+    window.blindIndicatorPositions = blindIndicatorPositions;
     
     // Third pass: Draw bet indicators, avoiding both blind and chip indicator positions
     window.game.players.forEach((player, index) => {

@@ -3152,17 +3152,24 @@ io.on('connection', (socket) => {
                 return;
             }
             
-            // ✅ CRITICAL FIX: Only play cards from active players
+            // ✅ CRITICAL FIX: Only play cards from active players with proper validation
             for (let i = 0; i < room.game.players.length; i++) {
                 const player = room.game.players[i];
-                if (player && player.hand && player.hand.length > 0) {
+                if (player && player.hand && Array.isArray(player.hand) && player.hand.length > 0) {
                     const card = player.hand.shift();
-                    if (card) {
+                    // ✅ CRITICAL FIX: Validate card has required properties
+                    if (card && card.value && card.name && typeof card.value === 'number') {
                         room.game.battleCards.push({
                             card: card,
                             player: player,
                             playerIndex: i
                         });
+                    } else {
+                        console.warn(`⚠️ Invalid card removed from player ${i}'s hand:`, card);
+                        // Try to restore if we can
+                        if (card) {
+                            player.hand.unshift(card);
+                        }
                     }
                 }
             }

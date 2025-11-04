@@ -330,6 +330,70 @@
             background-color: #1976D2 !important;
             background: #1976D2 !important;
         }
+
+        /* History Log */
+        #historyLog {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            font-size: 12px;
+            z-index: 1000;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        #historyLog h3 {
+            margin: 0 0 10px 0;
+            color: #FFD700;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+
+        #historyLogContent {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .history-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #4CAF50;
+            padding-left: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .history-entry.player-action {
+            border-left-color: #2196F3;
+        }
+
+        .history-entry.game-phase {
+            border-left-color: #FF9800;
+        }
+
+        .history-entry.winner {
+            border-left-color: #FFD700;
+        }
+
+        .all-in-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .all-in-button:disabled {
+            background: #666 !important;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -418,7 +482,14 @@
                 <div class="betting-controls-row">
                     <input type="number" id="betAmount" placeholder="Bet amount" style="padding: 10px; border: none; border-radius: 5px; width: 120px; background: white; color: #333;">
                     <button id="betBtn" class="bet-button">Bet</button>
+                    <button id="allInBtn" class="all-in-button" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: white; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">All In</button>
                 </div>
+            </div>
+
+            <!-- History Log -->
+            <div id="historyLog">
+                <h3>Game History</h3>
+                <div id="historyLogContent"></div>
             </div>
         </div>
     </div>

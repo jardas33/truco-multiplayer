@@ -978,7 +978,8 @@ class WarClient {
             particle.style.animationDelay = Math.random() * 0.5 + 's';
             battleArea.appendChild(particle);
             
-            setTimeout(() => {
+            // ✅ CRITICAL FIX: Track timeout for cleanup
+            this.safeSetTimeout(() => {
                 if (particle.parentNode) {
                     particle.remove();
                 }
