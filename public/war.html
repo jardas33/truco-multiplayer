@@ -743,23 +743,131 @@
             text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
         }
 
-        /* Responsive enhancements */
-        @media (max-width: 768px) {
+        /* ✅ CRITICAL FIX: Comprehensive responsive enhancements */
+        @media (max-width: 1200px) {
+            .game-info, .scores {
+                font-size: 14px;
+                padding: 12px;
+            }
+            
             .battle-card {
-                width: 60px;
-                height: 84px;
+                width: 70px;
+                height: 98px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2em;
+            }
+            
+            .battle-card {
+                width: 50px;
+                height: 70px;
+                font-size: 10px;
+            }
+            
+            .card-value-overlay {
+                font-size: 10px;
+                padding: 1px 4px;
+            }
+            
+            .card-name {
+                font-size: 7px;
+            }
+            
+            .card-value {
+                font-size: 12px;
             }
             
             .battle-area {
                 width: 95%;
-                padding: 15px;
+                padding: 10px;
+                gap: 8px;
+            }
+            
+            .game-info {
+                top: 10px;
+                left: 10px;
+                padding: 10px;
+                font-size: 12px;
+                min-width: 150px;
+            }
+            
+            .scores {
+                top: 10px;
+                right: 10px;
+                padding: 10px;
+                font-size: 12px;
+                min-width: 180px;
             }
             
             #statisticsContainer {
                 bottom: 60px;
                 left: 10px;
-                padding: 10px;
-                min-width: 150px;
+                padding: 8px;
+                min-width: 120px;
+                font-size: 11px;
+            }
+            
+            .war-message {
+                font-size: 24px;
+                padding: 15px 25px;
+                top: 25%;
+            }
+            
+            .action-controls {
+                bottom: 10px;
+                gap: 5px;
+            }
+            
+            .action-controls button {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            
+            .room-controls {
+                min-width: 90%;
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .battle-card {
+                width: 45px;
+                height: 63px;
+            }
+            
+            .game-info, .scores {
+                font-size: 11px;
+                padding: 8px;
+            }
+            
+            .war-message {
+                font-size: 20px;
+                padding: 12px 20px;
+            }
+            
+            .action-controls button {
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
+        
+        /* ✅ CRITICAL FIX: Touch-friendly interactions */
+        @media (hover: none) and (pointer: coarse) {
+            .action-controls button {
+                min-height: 44px; /* iOS recommended touch target */
+                min-width: 44px;
+            }
+            
+            .battle-card {
+                touch-action: manipulation; /* Prevent double-tap zoom */
+            }
+            
+            .room-controls button {
+                min-height: 44px;
+                padding: 12px 20px;
             }
         }
 
@@ -881,6 +989,32 @@
             background: #666;
             cursor: not-allowed;
             transform: none;
+            opacity: 0.6;
+        }
+        
+        /* ✅ CRITICAL FIX: Loading state for buttons */
+        .action-controls button.loading {
+            position: relative;
+            color: transparent;
+            pointer-events: none;
+        }
+        
+        .action-controls button.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: buttonSpin 0.8s linear infinite;
+        }
+        
+        @keyframes buttonSpin {
+            to { transform: rotate(360deg); }
         }
 
         .war-message {
@@ -1056,7 +1190,7 @@
             </div>
             
             <div class="action-controls" id="actionControls" style="display: none;">
-                <button id="battleBtn" class="battle-button">⚔️ BATTLE!</button>
+                <button id="battleBtn" class="battle-button" aria-label="Start battle" tabindex="0">⚔️ BATTLE!</button>
             </div>
         </div>
     </div>

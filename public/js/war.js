@@ -418,6 +418,7 @@ class WarClient {
         this.isAnimating = false;
         this.pendingBattleTimeout = null; // ✅ CRITICAL FIX: Track pending timeouts
         this.activeParticles = []; // ✅ CRITICAL FIX: Track particles for cleanup
+        this.updateUIScheduled = false; // ✅ CRITICAL FIX: Track UI update scheduling
     }
 
     // Initialize the client
@@ -451,17 +452,72 @@ class WarClient {
     // Setup UI event listeners
     setupUI() {
         // Room controls
-        document.getElementById('createRoomBtn').onclick = () => this.createRoom();
-        document.getElementById('joinRoomBtn').onclick = () => this.joinRoom();
-        document.getElementById('addBotBtn').onclick = () => this.addBot();
-        document.getElementById('removeBotBtn').onclick = () => this.removeBot();
-        document.getElementById('startGameBtn').onclick = () => this.startGame();
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const addBotBtn = document.getElementById('addBotBtn');
+        const removeBotBtn = document.getElementById('removeBotBtn');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const battleBtn = document.getElementById('battleBtn');
+        const copyRoomCodeBtn = document.getElementById('copyRoomCodeBtn');
+        
+        if (createRoomBtn) {
+            createRoomBtn.onclick = () => this.createRoom();
+            createRoomBtn.setAttribute('aria-label', 'Create a new game room');
+        }
+        
+        if (joinRoomBtn) {
+            joinRoomBtn.onclick = () => this.joinRoom();
+            joinRoomBtn.setAttribute('aria-label', 'Join an existing game room');
+        }
+        
+        if (addBotBtn) {
+            addBotBtn.onclick = () => this.addBot();
+            addBotBtn.setAttribute('aria-label', 'Add a bot player');
+        }
+        
+        if (removeBotBtn) {
+            removeBotBtn.onclick = () => this.removeBot();
+            removeBotBtn.setAttribute('aria-label', 'Remove a bot player');
+        }
+        
+        if (startGameBtn) {
+            startGameBtn.onclick = () => this.startGame();
+            startGameBtn.setAttribute('aria-label', 'Start the game');
+        }
         
         // Game controls
-        document.getElementById('battleBtn').onclick = () => this.startBattle();
+        if (battleBtn) {
+            battleBtn.onclick = () => this.startBattle();
+            battleBtn.setAttribute('aria-label', 'Start battle');
+            
+            // ✅ CRITICAL FIX: Add keyboard support
+            battleBtn.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.startBattle();
+                }
+            };
+            
+            // ✅ CRITICAL FIX: Add touch support for mobile
+            battleBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                battleBtn.style.transform = 'scale(0.95)';
+            }, { passive: false });
+            
+            battleBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                battleBtn.style.transform = '';
+                if (!battleBtn.disabled) {
+                    this.startBattle();
+                }
+            }, { passive: false });
+        }
         
         // Copy room code
-        document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
+        if (copyRoomCodeBtn) {
+            copyRoomCodeBtn.onclick = () => this.copyRoomCode();
+            copyRoomCodeBtn.setAttribute('aria-label', 'Copy room code to clipboard');
+        }
     }
 
     // Setup socket event listeners
@@ -723,10 +779,29 @@ class WarClient {
         
         this.isStartingBattle = true;
         
+        // ✅ CRITICAL FIX: Show loading state on button
+        const battleBtn = document.getElementById('battleBtn');
+        if (battleBtn) {
+            const originalText = battleBtn.textContent;
+            battleBtn.disabled = true;
+            battleBtn.textContent = '⏳ Starting...';
+            battleBtn.style.opacity = '0.7';
+            battleBtn.style.cursor = 'wait';
+            
+            // Store original text to restore later
+            battleBtn.dataset.originalText = originalText;
+        }
+        
         const socket = window.gameFramework.socket;
         if (!socket || !socket.connected) {
             console.error('❌ Socket not connected');
             this.isStartingBattle = false;
+            if (battleBtn) {
+                battleBtn.disabled = false;
+                battleBtn.textContent = battleBtn.dataset.originalText || '⚔️ BATTLE!';
+                battleBtn.style.opacity = '1';
+                battleBtn.style.cursor = 'pointer';
+            }
             return;
         }
         
@@ -737,6 +812,12 @@ class WarClient {
         if (!roomId) {
             console.error('❌ No room ID available');
             this.isStartingBattle = false;
+            if (battleBtn) {
+                battleBtn.disabled = false;
+                battleBtn.textContent = battleBtn.dataset.originalText || '⚔️ BATTLE!';
+                battleBtn.style.opacity = '1';
+                battleBtn.style.cursor = 'pointer';
+            }
             return;
         }
         
@@ -748,9 +829,15 @@ class WarClient {
         this.canAct = false;
         this.hideActionControls();
         
-        // ✅ CRITICAL FIX: Reset flag after a delay
+        // ✅ CRITICAL FIX: Reset flag and button state after a delay
         setTimeout(() => {
             this.isStartingBattle = false;
+            if (battleBtn) {
+                battleBtn.disabled = false;
+                battleBtn.textContent = battleBtn.dataset.originalText || '⚔️ BATTLE!';
+                battleBtn.style.opacity = '1';
+                battleBtn.style.cursor = 'pointer';
+            }
         }, 1000);
     }
 
@@ -1336,12 +1423,21 @@ class WarClient {
         }
     }
 
-    // Update UI
+    // Update UI with performance optimization
     updateUI() {
-        this.updateGameInfo();
-        this.updateScores();
-        this.updateBattleArea();
-        this.updatePlayerAreas();
+        // ✅ CRITICAL FIX: Use requestAnimationFrame for smooth updates
+        if (this.updateUIScheduled) {
+            return; // Already scheduled
+        }
+        
+        this.updateUIScheduled = true;
+        requestAnimationFrame(() => {
+            this.updateGameInfo();
+            this.updateScores();
+            this.updateBattleArea();
+            this.updatePlayerAreas();
+            this.updateUIScheduled = false;
+        });
     }
 
     // Update game info with animations
@@ -1628,6 +1724,7 @@ class WarClient {
             errorDiv.className = className || 'card';
             errorDiv.textContent = '?';
             errorDiv.style.background = '#ff0000';
+            errorDiv.setAttribute('aria-label', 'Invalid card');
             return errorDiv;
         }
         
@@ -1641,6 +1738,8 @@ class WarClient {
         
         const cardDiv = document.createElement('div');
         cardDiv.className = className || 'card';
+        cardDiv.setAttribute('role', 'img');
+        cardDiv.setAttribute('aria-label', faceUp ? `${card.name || 'Card'} (${this.getCardDisplayValue(card)})` : 'Face down card');
         
         // Add animation classes
         if (animate) {
@@ -1672,7 +1771,7 @@ class WarClient {
         cardBack.className = 'card-back';
         cardBack.innerHTML = '<div class="card-back-pattern">🂠</div>';
         
-        // ✅ CRITICAL FIX: Try to use card image if available with proper error handling
+        // ✅ CRITICAL FIX: Try to use card image if available with proper error handling and loading state
         if (window.cardImages && card.name && faceUp) {
             const imageName = card.name.toLowerCase().replace(/\s+/g, '_');
             const cardImage = window.cardImages[imageName];
@@ -1682,6 +1781,15 @@ class WarClient {
                 img.src = cardImage.src || `Images/Cards/${imageName}.png`;
                 img.alt = card.name || 'Card';
                 img.className = 'card-image';
+                
+                // ✅ CRITICAL FIX: Add loading state
+                img.style.opacity = '0';
+                img.style.transition = 'opacity 0.3s ease';
+                
+                img.onload = () => {
+                    img.style.opacity = '1';
+                };
+                
                 img.onerror = () => {
                     // ✅ CRITICAL FIX: Fallback if image fails to load
                     img.style.display = 'none';
@@ -1693,6 +1801,7 @@ class WarClient {
                     `;
                     cardFront.appendChild(fallback);
                 };
+                
                 cardFront.appendChild(img);
                 
                 // Add card value overlay
@@ -1901,6 +2010,15 @@ class WarClient {
         if (actionControls) {
             actionControls.style.display = 'flex';
             actionControls.style.opacity = '1';
+            
+            // ✅ CRITICAL FIX: Reset button state when showing controls
+            const battleBtn = document.getElementById('battleBtn');
+            if (battleBtn) {
+                battleBtn.disabled = !this.canAct || this.game.gameOver;
+                battleBtn.textContent = battleBtn.dataset.originalText || '⚔️ BATTLE!';
+                battleBtn.style.opacity = battleBtn.disabled ? '0.5' : '1';
+                battleBtn.style.cursor = battleBtn.disabled ? 'not-allowed' : 'pointer';
+            }
         }
     }
 

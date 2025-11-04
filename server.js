@@ -3435,9 +3435,14 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // Shuffle and add to winner's hand
+        // ✅ CRITICAL FIX: Use proper Fisher-Yates shuffle instead of biased sort
         if (allCards.length > 0) {
-            const shuffledCards = allCards.sort(() => Math.random() - 0.5);
+            const shuffledCards = [...allCards];
+            // Fisher-Yates shuffle algorithm
+            for (let i = shuffledCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+            }
             winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
         }
         
@@ -3507,7 +3512,12 @@ io.on('connection', (socket) => {
             .filter(c => c !== null && c !== undefined);
         
         if (allCards.length > 0) {
-            const shuffledCards = allCards.sort(() => Math.random() - 0.5);
+            // ✅ CRITICAL FIX: Use proper Fisher-Yates shuffle
+            const shuffledCards = [...allCards];
+            for (let i = shuffledCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+            }
             winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
         }
         
