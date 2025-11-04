@@ -1874,6 +1874,7 @@ function drawGameState() {
     drawPot();
     // Removed drawChips() - chips were overlapping with player boxes
     drawGameInfo();
+    drawBetIndicators(); // Show each player's current bet amount
     drawBlindIndicators();
 }
 
