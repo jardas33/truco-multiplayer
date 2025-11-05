@@ -1165,24 +1165,12 @@ class WarClient {
         UIUtils.showGame();
         this.updateUI();
         
-        // ✅ CRITICAL FIX: Auto-start first battle after a short delay with tracked timeout
-        const autoStartTimeout = this.safeSetTimeout(() => {
-            this.canAct = true;
+        // ✅ CRITICAL FIX: Show battle button and wait for user to click it (no auto-start - button is mandatory)
+        this.canAct = true;
+        this.safeSetTimeout(() => {
             this.showActionControls();
-            // Auto-start battle if it's a new game and no battle is in progress
-            if (this.game.battleNumber === 1 && 
-                (!this.game.battleCards || this.game.battleCards.length === 0) &&
-                (!this.game.warCards || this.game.warCards.length === 0) &&
-                !this.game.gameOver) {
-                console.log('⚔️ Auto-starting first battle');
-                this.startBattle();
-            }
+            console.log('✅ Battle button shown - waiting for user to click (battle button is mandatory)');
         }, 1500);
-        
-        // Store timeout for potential cleanup
-        if (!this.pendingBattleTimeout) {
-            this.pendingBattleTimeout = autoStartTimeout;
-        }
     }
 
     // Start battle
@@ -1673,23 +1661,11 @@ class WarClient {
         this.canAct = true;
         this.updateUI();
         
-        // ✅ CRITICAL FIX: Wait longer before showing controls and auto-starting next battle
+        // ✅ CRITICAL FIX: Show battle button and wait for user to click it (no auto-start - button is mandatory)
         this.safeSetTimeout(() => {
-        this.showActionControls();
-            
-            // ✅ CRITICAL FIX: Auto-start next battle with proper validation and tracked timeout (increased delay)
-            this.pendingBattleTimeout = this.safeSetTimeout(() => {
-                if (!this.game.gameOver && 
-                    this.canAct && 
-                    (!this.game.battleCards || this.game.battleCards.length === 0) &&
-                    (!this.game.warCards || this.game.warCards.length === 0) &&
-                    activePlayers.length >= 2) {
-                    console.log('⚔️ Auto-starting next battle');
-                    this.startBattle();
-                }
-                this.pendingBattleTimeout = null;
-            }, 5000); // ✅ CRITICAL FIX: Auto-start after 5 seconds (increased from 2)
-        }, 4000); // ✅ CRITICAL FIX: Wait 4 seconds before showing next battle controls (increased from 2)
+            this.showActionControls();
+            console.log('✅ Battle button shown - waiting for user to click (battle button is mandatory)');
+        }, 4000); // Wait 4 seconds before showing next battle controls
     }
 
     // Show game over with celebration
@@ -2813,31 +2789,43 @@ class WarClient {
         }
     }
 
-    // ✅ CRITICAL FIX: Setup navigation buttons
+    // ✅ CRITICAL FIX: Setup navigation buttons with proper event handlers
     setupNavigationButtons() {
         const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
         const backToWarMenuBtn = document.getElementById('backToWarMenuBtn');
         
         if (backToMainMenuBtn) {
-            backToMainMenuBtn.onclick = () => {
+            // ✅ CRITICAL FIX: Remove any existing handlers first, then add new one
+            backToMainMenuBtn.onclick = null;
+            backToMainMenuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('🔙 Back to Main Menu clicked');
                 // Navigate to main menu (home page)
                 window.location.href = '/';
-            };
+            }, { once: false });
             backToMainMenuBtn.setAttribute('aria-label', 'Back to Main Menu');
-            console.log('✅ Back to Main Menu button setup');
+            backToMainMenuBtn.style.pointerEvents = 'auto';
+            backToMainMenuBtn.style.cursor = 'pointer';
+            console.log('✅ Back to Main Menu button setup and functional');
         } else {
             console.warn('⚠️ Back to Main Menu button not found');
         }
         
         if (backToWarMenuBtn) {
-            backToWarMenuBtn.onclick = () => {
+            // ✅ CRITICAL FIX: Remove any existing handlers first, then add new one
+            backToWarMenuBtn.onclick = null;
+            backToWarMenuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('⚔️ War Menu clicked');
                 // Navigate to War menu (reload page to show menu)
                 window.location.href = '/war.html';
-            };
+            }, { once: false });
             backToWarMenuBtn.setAttribute('aria-label', 'War Menu');
-            console.log('✅ War Menu button setup');
+            backToWarMenuBtn.style.pointerEvents = 'auto';
+            backToWarMenuBtn.style.cursor = 'pointer';
+            console.log('✅ War Menu button setup and functional');
         } else {
             console.warn('⚠️ War Menu button not found');
         }
