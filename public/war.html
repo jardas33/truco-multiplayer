@@ -749,6 +749,113 @@
             font-weight: bold;
         }
 
+        /* Battle History Log - Bottom Right Corner */
+        .battle-history-log {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            width: 320px !important;
+            max-height: 400px !important;
+            background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(30,0,0,0.95) 100%) !important;
+            border: 2px solid rgba(255,215,0,0.5) !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            color: white !important;
+            font-size: 12px !important;
+            z-index: 2000 !important;
+            overflow-y: auto !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7) !important;
+            backdrop-filter: blur(10px) !important;
+            pointer-events: auto !important;
+        }
+
+        .battle-history-log h3 {
+            margin: 0 0 12px 0 !important;
+            color: #FFD700 !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            border-bottom: 2px solid rgba(255,215,0,0.3) !important;
+            padding-bottom: 8px !important;
+            text-align: center !important;
+        }
+
+        .history-content {
+            max-height: 320px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        .history-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-content::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 3px;
+        }
+
+        .history-content::-webkit-scrollbar-thumb {
+            background: rgba(255,215,0,0.5);
+            border-radius: 3px;
+        }
+
+        .history-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,215,0,0.7);
+        }
+
+        .history-entry {
+            margin: 8px 0 !important;
+            padding: 8px !important;
+            border-left: 3px solid #4CAF50 !important;
+            padding-left: 10px !important;
+            background: rgba(255,255,255,0.05) !important;
+            border-radius: 5px !important;
+            font-size: 11px !important;
+            line-height: 1.4 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .history-entry:hover {
+            background: rgba(255,255,255,0.1) !important;
+            transform: translateX(2px) !important;
+        }
+
+        .history-entry.war {
+            border-left-color: #f44336 !important;
+            background: rgba(244, 67, 54, 0.1) !important;
+        }
+
+        .history-entry.winner {
+            border-left-color: #FFD700 !important;
+            background: rgba(255, 215, 0, 0.1) !important;
+        }
+
+        .history-entry .battle-number {
+            font-weight: bold !important;
+            color: #FFD700 !important;
+        }
+
+        .history-entry .player-name {
+            color: #4ECDC4 !important;
+            font-weight: bold !important;
+        }
+
+        .history-entry .card-name {
+            color: #FFD700 !important;
+            font-style: italic !important;
+        }
+
+        .history-entry .winner-text {
+            color: #4CAF50 !important;
+            font-weight: bold !important;
+        }
+
+        .history-entry .war-text {
+            color: #f44336 !important;
+            font-weight: bold !important;
+            font-size: 12px !important;
+        }
+
         /* Enhanced War Message */
         .war-message {
             font-size: 32px;

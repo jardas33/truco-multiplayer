@@ -1394,9 +1394,21 @@ class WarClient {
         
         this.game.battleCards = [];
         
+        // ✅ CRITICAL FIX: Update battle history with winner information
+        if (data.winner && this.battleHistory.length > 0) {
+            const lastEntry = this.battleHistory[this.battleHistory.length - 1];
+            if (lastEntry && !lastEntry.winner) {
+                lastEntry.winner = {
+                    name: data.winner.name,
+                    cardsWon: data.winner.cardsWon || 0
+                };
+            }
+        }
+        
         this.updateUI();
         this.hideWarMessage();
         this.updateStatistics();
+        this.updateBattleHistoryLog(); // ✅ CRITICAL FIX: Update history log after battle resolves
         
         if (data.winner) {
             UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the battle and gets ${data.winner.cardsWon} cards!`, 'success');
@@ -1574,9 +1586,22 @@ class WarClient {
         this.game.isWar = false;
         this.game.gamePhase = 'playing';
         
+        // ✅ CRITICAL FIX: Update battle history with war winner information
+        if (data.winner && this.battleHistory.length > 0) {
+            const lastEntry = this.battleHistory[this.battleHistory.length - 1];
+            if (lastEntry && !lastEntry.winner) {
+                lastEntry.winner = {
+                    name: data.winner.name,
+                    cardsWon: data.winner.cardsWon || 0
+                };
+                lastEntry.isWar = true; // Mark as war
+            }
+        }
+        
         this.updateUI();
         this.hideWarMessage();
         this.updateStatistics();
+        this.updateBattleHistoryLog(); // ✅ CRITICAL FIX: Update history log after war resolves
         
         if (data.winner) {
             UIUtils.showGameMessage(`⚔️ ${data.winner.name} wins the war and gets ${data.winner.cardsWon} cards!`, 'success');
