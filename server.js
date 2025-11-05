@@ -3238,6 +3238,16 @@ io.on('connection', (socket) => {
                 return;
             }
             
+            // ✅ CRITICAL FIX: Prevent multiple simultaneous battle starts (multiplayer protection)
+            if (room.game.gamePhase === 'battle' || room.game.gamePhase === 'war') {
+                console.log(`⚠️ Battle or war already in progress - ignoring duplicate startBattle request from ${socket.id}`);
+                socket.emit('error', 'Battle already in progress');
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Set game phase to battle to prevent duplicate starts
+            room.game.gamePhase = 'battle';
+            
             // ✅ CRITICAL FIX: Start a battle - each player plays a card
             room.game.battleCards = [];
             
