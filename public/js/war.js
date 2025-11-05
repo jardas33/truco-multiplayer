@@ -1106,11 +1106,12 @@ class WarClient {
             return;
         }
         
-        // Initialize game with server data
+        // ✅ CRITICAL FIX: Initialize game with server data - proper multiplayer synchronization
         this.game.players = data.players.map((player, index) => ({
             ...player,
-            hand: Array.isArray(player.hand) ? player.hand : [],
-            position: index
+            hand: Array.isArray(player.hand) ? player.hand : [], // Hand length is shown for card count
+            position: index,
+            playerIndex: player.playerIndex !== undefined ? player.playerIndex : index
         }));
         this.localPlayerIndex = data.localPlayerIndex !== undefined ? data.localPlayerIndex : 0;
         this.game.battleNumber = data.battleNumber || 1;
