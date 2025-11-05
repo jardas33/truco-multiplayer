@@ -3754,11 +3754,15 @@ io.on('connection', (socket) => {
                 endWarGame(room, roomCode);
             }
         } else {
-            // Next battle
+            // ✅ CRITICAL FIX: Emit next battle to all players with proper synchronization
             setTimeout(() => {
                 io.to(roomCode).emit('nextBattle', {
                     battleNumber: room.game.battleNumber,
-                    players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+                    players: room.game.players.map((p, index) => ({
+                        name: p.name,
+                        hand: p.hand || [], // Show hand length for card count display
+                        playerIndex: index
+                    }))
                 });
             }, 1500);
         }
