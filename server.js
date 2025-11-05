@@ -6225,83 +6225,106 @@ function handlePokerShowdown(roomCode, room) {
             totalBet: (player.currentBet || 0) + (player.totalBet || 0)
         }));
         
-        // Sort by total bet amount (lowest first)
-        playerTotalBets.sort((a, b) => a.totalBet - b.totalBet);
+        // Check if we need side pots (only if players have different total bets)
+        const uniqueBetLevels = [...new Set(playerTotalBets.map(p => p.totalBet))].sort((a, b) => a - b);
+        const hasSidePots = uniqueBetLevels.length > 1;
         
-        // Calculate side pots
-        const sidePots = [];
-        let remainingPot = room.game.pot;
-        let previousBet = 0;
-        
-        for (let i = 0; i < playerTotalBets.length && remainingPot > 0; i++) {
-            const currentBetLevel = playerTotalBets[i].totalBet;
-            const playersInThisPot = playerTotalBets.filter(p => p.totalBet >= currentBetLevel);
-            const potSize = (currentBetLevel - previousBet) * playersInThisPot.length;
+        if (!hasSidePots) {
+            // Simple case: all players bet the same amount - split pot evenly among winners
+            const winners = validPlayers.filter(p => p.handRank === validPlayers[0].handRank);
+            const winAmount = Math.floor(room.game.pot / winners.length);
+            const remainder = room.game.pot % winners.length;
             
-            if (potSize > 0 && playersInThisPot.length > 0) {
-                sidePots.push({
-                    level: currentBetLevel,
-                    size: Math.min(potSize, remainingPot),
-                    eligiblePlayers: playersInThisPot.map(p => p.player)
-                });
-                remainingPot -= Math.min(potSize, remainingPot);
-                previousBet = currentBetLevel;
-            }
-        }
-        
-        // Distribute side pots to winners
-        const winners = validPlayers.filter(p => p.handRank === validPlayers[0].handRank);
-        const totalWinnings = {};
-        
-        // Initialize winnings
-        winners.forEach(winner => {
-            totalWinnings[winner.name] = 0;
-        });
-        
-        // Distribute each side pot
-        sidePots.forEach((sidePot, potIndex) => {
-            // Find eligible winners (players who contributed to this pot AND have the best hand)
-            const eligibleWinners = sidePot.eligiblePlayers.filter(p => 
-                winners.some(w => w.name === p.name)
-            );
+            room.game.winners = winners.map((player, index) => {
+                const amount = winAmount + (index < remainder ? 1 : 0);
+                player.chips += amount;
+                console.log(`🎴 Winner: ${player.name} wins $${amount} with ${player.bestHand.name}`);
+                return {
+                    player: player,
+                    amount: amount,
+                    hand: player.bestHand
+                };
+            });
+        } else {
+            // Complex case: players have different bet amounts - calculate side pots
+            // Sort by total bet amount (lowest first)
+            playerTotalBets.sort((a, b) => a.totalBet - b.totalBet);
             
-            if (eligibleWinners.length > 0) {
-                // Split this side pot among eligible winners
-                const winAmount = Math.floor(sidePot.size / eligibleWinners.length);
-                const remainder = sidePot.size % eligibleWinners.length;
+            // Calculate side pots
+            const sidePots = [];
+            let remainingPot = room.game.pot;
+            let previousBet = 0;
+            
+            for (let i = 0; i < playerTotalBets.length && remainingPot > 0; i++) {
+                const currentBetLevel = playerTotalBets[i].totalBet;
+                const playersInThisPot = playerTotalBets.filter(p => p.totalBet >= currentBetLevel);
+                const potSize = (currentBetLevel - previousBet) * playersInThisPot.length;
                 
-                eligibleWinners.forEach((winner, index) => {
+                if (potSize > 0 && playersInThisPot.length > 0) {
+                    sidePots.push({
+                        level: currentBetLevel,
+                        size: Math.min(potSize, remainingPot),
+                        eligiblePlayers: playersInThisPot.map(p => p.player)
+                    });
+                    remainingPot -= Math.min(potSize, remainingPot);
+                    previousBet = currentBetLevel;
+                }
+            }
+            
+            // Distribute side pots to winners
+            const winners = validPlayers.filter(p => p.handRank === validPlayers[0].handRank);
+            const totalWinnings = {};
+            
+            // Initialize winnings
+            winners.forEach(winner => {
+                totalWinnings[winner.name] = 0;
+            });
+            
+            // Distribute each side pot
+            sidePots.forEach((sidePot, potIndex) => {
+                // Find eligible winners (players who contributed to this pot AND have the best hand)
+                const eligibleWinners = sidePot.eligiblePlayers.filter(p => 
+                    winners.some(w => w.name === p.name)
+                );
+                
+                if (eligibleWinners.length > 0) {
+                    // Split this side pot among eligible winners
+                    const winAmount = Math.floor(sidePot.size / eligibleWinners.length);
+                    const remainder = sidePot.size % eligibleWinners.length;
+                    
+                    eligibleWinners.forEach((winner, index) => {
+                        const amount = winAmount + (index < remainder ? 1 : 0);
+                        totalWinnings[winner.name] = (totalWinnings[winner.name] || 0) + amount;
+                        console.log(`🎴 Side pot ${potIndex + 1}: ${winner.name} wins $${amount} (total: $${totalWinnings[winner.name]})`);
+                    });
+                } else {
+                    // No eligible winners in this pot - this shouldn't happen, but handle it
+                    console.warn(`⚠️ Side pot ${potIndex + 1} has no eligible winners - pot size: $${sidePot.size}`);
+                }
+            });
+            
+            // If there's any remaining pot (shouldn't happen, but safety check)
+            if (remainingPot > 0 && winners.length > 0) {
+                const winAmount = Math.floor(remainingPot / winners.length);
+                const remainder = remainingPot % winners.length;
+                winners.forEach((winner, index) => {
                     const amount = winAmount + (index < remainder ? 1 : 0);
                     totalWinnings[winner.name] = (totalWinnings[winner.name] || 0) + amount;
-                    console.log(`🎴 Side pot ${potIndex + 1}: ${winner.name} wins $${amount} (total: $${totalWinnings[winner.name]})`);
                 });
-            } else {
-                // No eligible winners in this pot - this shouldn't happen, but handle it
-                console.warn(`⚠️ Side pot ${potIndex + 1} has no eligible winners - pot size: $${sidePot.size}`);
             }
-        });
-        
-        // If there's any remaining pot (shouldn't happen, but safety check)
-        if (remainingPot > 0 && winners.length > 0) {
-            const winAmount = Math.floor(remainingPot / winners.length);
-            const remainder = remainingPot % winners.length;
-            winners.forEach((winner, index) => {
-                const amount = winAmount + (index < remainder ? 1 : 0);
-                totalWinnings[winner.name] = (totalWinnings[winner.name] || 0) + amount;
+            
+            // Apply winnings and create winner objects
+            room.game.winners = winners.map(winner => {
+                const amount = totalWinnings[winner.name] || 0;
+                winner.chips += amount;
+                console.log(`🎴 Winner: ${winner.name} wins $${amount} total with ${winner.bestHand.name}`);
+                return {
+                    player: winner,
+                    amount: amount,
+                    hand: winner.bestHand
+                };
             });
         }
-        
-        // Apply winnings and create winner objects
-        room.game.winners = winners.map(winner => {
-            const amount = totalWinnings[winner.name] || 0;
-            winner.chips += amount;
-            console.log(`🎴 Winner: ${winner.name} wins $${amount} total with ${winner.bestHand.name}`);
-            return {
-                player: winner,
-                amount: amount,
-                hand: winner.bestHand
-            };
-        });
     }
     
     // Emit showdown
