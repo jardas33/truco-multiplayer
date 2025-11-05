@@ -2825,11 +2825,15 @@ function drawBetIndicators() {
                     // Blind is at blindPos.y (top)
                     // Position chips below blind with spacing
                     chipIndicatorY = blindPos.y + minVerticalSpacing;
-                    // Bet will be positioned below chips (at chipPos.y + minVerticalSpacing)
+                    // Bet will be positioned below chips (bet positioning uses chipPos.y + minVerticalSpacing)
                 } else {
                     // No blind - position chips above bet
+                    // Ensure chips is positioned above bet with proper spacing
                     chipIndicatorY = betPos.y - minVerticalSpacing; // Above bet
                 }
+                
+                // Ensure bet is positioned correctly below chips (this will be handled in drawBetIndicators)
+                // Store chip position so bet can reference it
             } else if (isBottomPlayer) {
                 // Bottom player: side by side horizontally (same Y, different X)
                 // BET on left, CHIPS on right

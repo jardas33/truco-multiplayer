@@ -5788,11 +5788,15 @@ function advancePokerPhase(roomCode, room) {
     switch (room.game.gamePhase) {
         case 'preflop':
             // Deal flop
-            room.game.deck.pop(); // Burn card
+            if (room.game.deck.length > 0) {
+                room.game.deck.pop(); // Burn card
+            }
             room.game.communityCards = [];
             for (let i = 0; i < 3; i++) {
                 if (room.game.deck.length > 0) {
                     room.game.communityCards.push(room.game.deck.pop());
+                } else {
+                    console.error(`❌ Deck empty when dealing flop - card ${i}`);
                 }
             }
             room.game.gamePhase = 'flop';
@@ -5808,9 +5812,13 @@ function advancePokerPhase(roomCode, room) {
             
         case 'flop':
             // Deal turn
-            room.game.deck.pop(); // Burn card
+            if (room.game.deck.length > 0) {
+                room.game.deck.pop(); // Burn card
+            }
             if (room.game.deck.length > 0) {
                 room.game.communityCards.push(room.game.deck.pop());
+            } else {
+                console.error(`❌ Deck empty when dealing turn`);
             }
             room.game.gamePhase = 'turn';
             // First to act post-turn should be the first active player after the big blind
@@ -5824,9 +5832,13 @@ function advancePokerPhase(roomCode, room) {
             
         case 'turn':
             // Deal river
-            room.game.deck.pop(); // Burn card
+            if (room.game.deck.length > 0) {
+                room.game.deck.pop(); // Burn card
+            }
             if (room.game.deck.length > 0) {
                 room.game.communityCards.push(room.game.deck.pop());
+            } else {
+                console.error(`❌ Deck empty when dealing river`);
             }
             room.game.gamePhase = 'river';
             // First to act post-river should be the first active player after the big blind
@@ -5862,6 +5874,117 @@ function advancePokerPhase(roomCode, room) {
     }, 2000);
 }
 
+// Helper function to evaluate poker hand (5 cards)
+function evaluatePokerHand(cards) {
+    if (cards.length < 5) return { rank: 0, name: 'High Card', cards: [] };
+    
+    const values = cards.map(c => c.value).sort((a, b) => b - a);
+    const suits = cards.map(c => c.suit);
+    
+    const isFlush = suits.every(suit => suit === suits[0]);
+    const isStraight = isPokerStraight(values);
+    
+    if (isStraight && isFlush) {
+        if (values[0] === 14 && values[4] === 10) {
+            return { rank: 9, name: 'Royal Flush', cards: cards };
+        }
+        return { rank: 8, name: 'Straight Flush', cards: cards };
+    }
+    
+    const counts = getCardCounts(values);
+    const countsArray = Object.values(counts).sort((a, b) => b - a);
+    
+    if (countsArray[0] === 4) {
+        return { rank: 7, name: 'Four of a Kind', cards: cards };
+    }
+    
+    if (countsArray[0] === 3 && countsArray[1] === 2) {
+        return { rank: 6, name: 'Full House', cards: cards };
+    }
+    
+    if (isFlush) {
+        return { rank: 5, name: 'Flush', cards: cards };
+    }
+    
+    if (isStraight) {
+        return { rank: 4, name: 'Straight', cards: cards };
+    }
+    
+    if (countsArray[0] === 3) {
+        return { rank: 3, name: 'Three of a Kind', cards: cards };
+    }
+    
+    if (countsArray[0] === 2 && countsArray[1] === 2) {
+        return { rank: 2, name: 'Two Pair', cards: cards };
+    }
+    
+    if (countsArray[0] === 2) {
+        return { rank: 1, name: 'One Pair', cards: cards };
+    }
+    
+    return { rank: 0, name: 'High Card', cards: cards };
+}
+
+function isPokerStraight(values) {
+    const uniqueValues = [...new Set(values)].sort((a, b) => b - a);
+    if (uniqueValues.length !== 5) return false;
+    
+    // Check for regular straight
+    for (let i = 0; i < 4; i++) {
+        if (uniqueValues[i] - uniqueValues[i + 1] !== 1) {
+            // Check for A-2-3-4-5 straight (wheel)
+            if (uniqueValues[0] === 14 && uniqueValues[1] === 5 && uniqueValues[2] === 4 && uniqueValues[3] === 3 && uniqueValues[4] === 2) {
+                return true;
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+function getCardCounts(values) {
+    const counts = {};
+    values.forEach(value => {
+        counts[value] = (counts[value] || 0) + 1;
+    });
+    return counts;
+}
+
+// Get best 5-card hand from 7 cards (hole + community)
+function getBestPokerHand(holeCards, communityCards) {
+    const allCards = [...holeCards, ...communityCards];
+    if (allCards.length < 5) return { rank: 0, name: 'High Card', cards: [] };
+    
+    // Generate all combinations of 5 cards from 7
+    const combinations = getCombinations(allCards, 5);
+    let bestHand = { rank: 0, name: 'High Card', cards: [] };
+    
+    combinations.forEach(combo => {
+        const hand = evaluatePokerHand(combo);
+        if (hand.rank > bestHand.rank) {
+            bestHand = hand;
+        }
+    });
+    
+    return bestHand;
+}
+
+// Generate combinations of r elements from array
+function getCombinations(arr, r) {
+    if (r === 1) return arr.map(x => [x]);
+    if (r === arr.length) return [arr];
+    
+    const combinations = [];
+    for (let i = 0; i <= arr.length - r; i++) {
+        const head = arr[i];
+        const tailCombos = getCombinations(arr.slice(i + 1), r - 1);
+        tailCombos.forEach(tail => {
+            combinations.push([head, ...tail]);
+        });
+    }
+    return combinations;
+}
+
 function handlePokerShowdown(roomCode, room) {
     console.log(`🎴 Showdown!`);
     room.game.gamePhase = 'showdown';
@@ -5878,18 +6001,42 @@ function handlePokerShowdown(roomCode, room) {
             hand: null
         }];
     } else {
-        // Evaluate hands (simplified - would need full hand evaluation)
-        // For now, just split pot evenly
-        const winAmount = Math.floor(room.game.pot / activePlayers.length);
-        const remainder = room.game.pot % activePlayers.length;
+        // Evaluate hands for all active players
+        console.log(`🎴 Evaluating hands for ${activePlayers.length} players`);
+        activePlayers.forEach(player => {
+            const bestHand = getBestPokerHand(player.hand, room.game.communityCards || []);
+            player.bestHand = bestHand;
+            player.handRank = bestHand.rank;
+            console.log(`🎴 ${player.name}: ${bestHand.name} (rank: ${bestHand.rank})`);
+        });
         
-        room.game.winners = activePlayers.map((player, index) => {
+        // Sort players by hand strength (best first)
+        activePlayers.sort((a, b) => {
+            if (b.handRank !== a.handRank) {
+                return b.handRank - a.handRank;
+            }
+            // If same rank, compare high cards (simplified - full comparison would need kicker logic)
+            const aHigh = Math.max(...a.hand.map(c => c.value));
+            const bHigh = Math.max(...b.hand.map(c => c.value));
+            return bHigh - aHigh;
+        });
+        
+        // Determine winners (players with best hand)
+        const bestRank = activePlayers[0].handRank;
+        const winners = activePlayers.filter(p => p.handRank === bestRank);
+        
+        // Split pot among winners
+        const winAmount = Math.floor(room.game.pot / winners.length);
+        const remainder = room.game.pot % winners.length;
+        
+        room.game.winners = winners.map((player, index) => {
             const amount = winAmount + (index < remainder ? 1 : 0);
             player.chips += amount;
+            console.log(`🎴 Winner: ${player.name} wins $${amount} with ${player.bestHand.name}`);
             return {
                 player: player,
                 amount: amount,
-                hand: null
+                hand: player.bestHand
             };
         });
     }
