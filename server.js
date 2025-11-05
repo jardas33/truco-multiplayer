@@ -1819,7 +1819,9 @@ io.on('connection', (socket) => {
                                 break;
                             }
                             console.error(`❌ Raise too small: ${totalBetDesired2} < minimum ${minRaiseTotal}`);
-                            return; // Invalid raise
+                            // ✅ CRITICAL FIX: Send error only to requesting player, not broadcast
+                            socket.emit('error', `Minimum raise is $${minRaiseTotal - currentPlayerBet2} (current bet: $${room.game.currentBet} + big blind: $${room.game.bigBlind})`);
+                            return; // Invalid raise - don't broadcast to all players
                         }
                         
                         player.chips -= raiseIncrement2;
