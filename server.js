@@ -1803,6 +1803,25 @@ io.on('connection', (socket) => {
                             return; // Invalid raise
                         }
                         
+                        // ✅ CRITICAL FIX: Validate minimum raise amount (must be at least big blind)
+                        const minRaiseTotal = room.game.currentBet + room.game.bigBlind;
+                        if (totalBetDesired2 < minRaiseTotal && totalBetDesired2 < currentPlayerBet2 + player.chips) {
+                            // If player can't meet minimum raise, check if they're going all-in
+                            if (player.chips === raiseIncrement2) {
+                                // All-in is valid even if below minimum raise
+                                player.chips = 0;
+                                player.currentBet = totalBetDesired2;
+                                player.totalBet += raiseIncrement2;
+                                room.game.pot += raiseIncrement2;
+                                room.game.currentBet = Math.max(room.game.currentBet, totalBetDesired2);
+                                player.isAllIn = true;
+                                console.log(`🎴 Player all-in processed: player bet ${totalBetDesired2} (added ${raiseIncrement2}), new currentBet: ${room.game.currentBet}`);
+                                break;
+                            }
+                            console.error(`❌ Raise too small: ${totalBetDesired2} < minimum ${minRaiseTotal}`);
+                            return; // Invalid raise
+                        }
+                        
                         player.chips -= raiseIncrement2;
                         player.currentBet = totalBetDesired2;
                         player.totalBet += raiseIncrement2;
