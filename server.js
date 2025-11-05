@@ -7015,7 +7015,12 @@ function determineRoundWinner(playedCards, room) {
                         break;
                     case 'call':
                         const callAmount = Math.min(room.game.currentBet - player.currentBet, player.chips);
-                        player.chips -= callAmount;
+                        if (callAmount < 0) {
+                            console.error(`❌ Invalid call amount: ${callAmount} (currentBet: ${room.game.currentBet}, player.currentBet: ${player.currentBet})`);
+                            socket.emit('error', 'Invalid call amount');
+                            return;
+                        }
+                        player.chips = Math.max(0, player.chips - callAmount); // Ensure chips never go negative
                         player.currentBet += callAmount;
                         player.totalBet += callAmount;
                         room.game.pot += callAmount;
@@ -7033,10 +7038,11 @@ function determineRoundWinner(playedCards, room) {
                         
                         if (raiseIncrement2 <= 0) {
                             console.error(`❌ Invalid raise: totalBetDesired (${totalBetDesired2}) <= currentPlayerBet (${currentPlayerBet2})`);
+                            socket.emit('error', 'Invalid raise amount');
                             return; // Invalid raise
                         }
                         
-                        player.chips -= raiseIncrement2;
+                        player.chips = Math.max(0, player.chips - raiseIncrement2); // Ensure chips never go negative
                         player.currentBet = totalBetDesired2;
                         player.totalBet += raiseIncrement2;
                         room.game.pot += raiseIncrement2;
