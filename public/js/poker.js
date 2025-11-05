@@ -2229,11 +2229,21 @@ function drawPlayers() {
 }
 
 function drawPlayerCards(x, y, hand, shouldShowCardImages) {
+    // Safety check: ensure hand is valid array
+    if (!hand || !Array.isArray(hand) || hand.length === 0) {
+        return; // Don't draw anything if hand is invalid
+    }
+    
     const cardWidth = 60;   // Smaller cards for better layout
     const cardHeight = 84;  // Maintain aspect ratio
     const spacing = 8;      // Tighter spacing
     
     hand.forEach((card, index) => {
+        // Safety check: ensure card is valid
+        if (!card) {
+            return; // Skip invalid cards
+        }
+        
         const cardX = x - (hand.length - 1) * (cardWidth + spacing) / 2 + index * (cardWidth + spacing);
         const cardY = y;
         
