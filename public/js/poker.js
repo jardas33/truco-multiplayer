@@ -1480,10 +1480,14 @@ class PokerClient {
             const localPlayer = this.game.players[this.localPlayerIndex];
             if (localPlayer) {
                 const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+                // Safety check: ensure all values are valid
+                const displayCurrentBet = (this.game.currentBet !== undefined && this.game.currentBet !== null) ? Math.max(0, this.game.currentBet) : 0;
+                const displayCallAmount = Math.max(0, callAmount);
+                const displayLocalChips = (localPlayer.chips !== undefined && localPlayer.chips !== null) ? Math.max(0, localPlayer.chips) : 0;
                 currentBetInfo.innerHTML = `
-                    <div>Current Bet: $${this.game.currentBet || 0}</div>
-                    <div>To Call: $${Math.max(0, callAmount)}</div>
-                    <div>Your Chips: $${localPlayer.chips || 0}</div>
+                    <div>Current Bet: $${displayCurrentBet}</div>
+                    <div>To Call: $${displayCallAmount}</div>
+                    <div>Your Chips: $${displayLocalChips}</div>
                 `;
             }
         }
@@ -2385,7 +2389,9 @@ function drawGameInfo() {
         const localPlayer = window.game.players[window.pokerClient.localPlayerIndex];
         if (localPlayer) {
             fill(100, 255, 100);
-            text('Your Chips: $' + localPlayer.chips, infoX + 15, yOffset);
+            // Safety check: ensure chips is valid
+            const localChipsDisplay = (localPlayer.chips !== undefined && localPlayer.chips !== null) ? Math.max(0, localPlayer.chips) : 0;
+            text('Your Chips: $' + localChipsDisplay, infoX + 15, yOffset);
             yOffset += 20;
             
             // Current bet for local player

@@ -6342,10 +6342,13 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
             break;
         case 'call':
             const callAmt = Math.min(room.game.currentBet - botPlayer.currentBet, botPlayer.chips);
-            botPlayer.chips -= callAmt;
+            if (callAmt < 0) {
+                console.error(`❌ Invalid bot call amount: ${callAmt}`);
+                return;
+            }
+            botPlayer.chips = Math.max(0, botPlayer.chips - callAmt); // Ensure chips never go negative
             botPlayer.currentBet += callAmt;
-            // totalBet will be updated when phase advances (currentBet added to totalBet)
-            botPlayer.totalBet += callAmt; // Keep this for now, but we'll adjust logic
+            botPlayer.totalBet += callAmt;
             room.game.pot += callAmt;
             if (botPlayer.chips === 0) {
                 botPlayer.isAllIn = true;
