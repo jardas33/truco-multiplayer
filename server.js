@@ -2342,8 +2342,8 @@ io.on('connection', (socket) => {
     
     socket.on('battleshipShipPlaced', (data) => {
         console.log(`🚢 Ship placed in room ${data.roomId}:`, data);
-        // Broadcast ship placement to other players
-        socket.to(data.roomId).emit('battleshipShipPlaced', data);
+        // ✅ CRITICAL FIX: Broadcast ship placement to all players for multiplayer synchronization
+        io.to(data.roomId).emit('battleshipShipPlaced', data);
     });
     
     socket.on('battleshipAttack', (data) => {
@@ -2387,8 +2387,8 @@ io.on('connection', (socket) => {
         // For now, we'll use a simple approach - the defending player will process the hit/miss
         // and send back the result
         
-        // Broadcast attack to other players (defending player)
-        socket.to(data.roomId).emit('battleshipAttack', data);
+        // ✅ CRITICAL FIX: Broadcast attack to all players (including attacker) for multiplayer synchronization
+        io.to(data.roomId).emit('battleshipAttack', data);
         
         // The defending player will process the attack and send back the result
         // We'll handle the result in a separate event
@@ -2403,8 +2403,8 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // Broadcast the attack result to the attacking player
-        socket.to(data.roomId).emit('battleshipAttackResult', data);
+        // ✅ CRITICAL FIX: Broadcast attack result to all players for multiplayer synchronization
+        io.to(data.roomId).emit('battleshipAttackResult', data);
         
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
         // Only change turns when you miss
