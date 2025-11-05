@@ -822,6 +822,43 @@ class PokerClient {
             console.error('Socket error:', error);
             UIUtils.showGameMessage('Error: ' + error, 'error');
         });
+        
+        // ✅ CRITICAL FIX: Handle disconnection
+        socket.on('disconnect', (reason) => {
+            console.log('❌ Disconnected from server:', reason);
+            UIUtils.showGameMessage('Disconnected from server. Attempting to reconnect...', 'error');
+            this.hideBettingControls(); // Hide controls when disconnected
+        });
+        
+        // ✅ CRITICAL FIX: Handle reconnection
+        socket.on('reconnect', () => {
+            console.log('✅ Reconnected to server');
+            UIUtils.showGameMessage('Reconnected to server!', 'success');
+            
+            // Try to rejoin room if we were in one
+            if (window.gameFramework && window.gameFramework.roomId) {
+                const roomId = typeof window.gameFramework.roomId === 'object' ? 
+                              window.gameFramework.roomId.roomId : 
+                              window.gameFramework.roomId;
+                if (roomId) {
+                    console.log('🔄 Attempting to rejoin room:', roomId);
+                    socket.emit('joinRoom', { roomCode: roomId });
+                }
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle connection errors
+        socket.on('connect_error', (error) => {
+            console.error('❌ Connection error:', error);
+            UIUtils.showGameMessage('Connection error. Please check your internet connection.', 'error');
+        });
+        
+        // ✅ CRITICAL FIX: Handle game over
+        socket.on('gameOver', (data) => {
+            console.log('🎴 Game over:', data);
+            UIUtils.showGameMessage(data.message || 'Game over!', 'info');
+            this.hideBettingControls();
+        });
     }
     
     // Update player list display
@@ -1755,8 +1792,19 @@ class PokerClient {
 
     updateBetAmount() {
         const betAmount = parseInt(document.getElementById('betAmount').value) || 0;
-        const minRaise = this.game.currentBet * 2;
-        const maxBet = this.game.players[0]?.chips || 0;
+        
+        // ✅ CRITICAL FIX: Minimum raise = current bet + minimum raise increment (big blind)
+        // NOT currentBet * 2 (that's incorrect)
+        const bigBlind = this.game.bigBlind || 20;
+        const currentPlayerBet = this.localPlayerIndex !== undefined && this.game.players[this.localPlayerIndex] 
+            ? (this.game.players[this.localPlayerIndex].currentBet || 0) 
+            : 0;
+        const minRaiseTotal = this.game.currentBet + bigBlind; // Minimum total bet after raise
+        const minRaiseAmount = minRaiseTotal - currentPlayerBet; // Minimum additional amount to raise
+        
+        const maxBet = this.localPlayerIndex !== undefined && this.game.players[this.localPlayerIndex]
+            ? (this.game.players[this.localPlayerIndex].chips || 0) + currentPlayerBet
+            : 0;
         
         // Update button states based on bet amount
         const callBtn = document.getElementById('callBtn');
@@ -1771,7 +1819,10 @@ class PokerClient {
         }
         
         if (raiseBtn) {
-            raiseBtn.textContent = betAmount >= minRaise ? `📈 Raise $${betAmount}` : `📈 Raise $${minRaise}`;
+            // Validate bet amount is within valid range
+            const totalBetDesired = currentPlayerBet + betAmount;
+            const isValidRaise = betAmount >= minRaiseAmount && totalBetDesired <= maxBet;
+            raiseBtn.textContent = isValidRaise ? `📈 Raise $${betAmount}` : `📈 Raise $${minRaiseAmount} (min)`;
         }
     }
 
