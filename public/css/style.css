@@ -189,11 +189,17 @@ canvas {
 /* ✅ CRITICAL FIX: Ensure buttons are always above canvas and clickable */
 #Game button,
 #Game .nav-button,
-#Game .action-controls,
 #Game .action-controls button {
     pointer-events: auto !important;
     z-index: 3000 !important;
     position: relative !important;
+}
+
+/* ✅ CRITICAL FIX: Action controls container must be fixed for bottom center positioning */
+#Game .action-controls {
+    pointer-events: auto !important;
+    z-index: 3000 !important;
+    position: fixed !important; /* Override relative positioning for bottom center */
 }
 
 .close-button {
