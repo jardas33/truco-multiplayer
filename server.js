@@ -4703,42 +4703,71 @@ io.on('connection', (socket) => {
             }
             
             // ✅ CRITICAL FIX: Check draw resolution logic regardless of current round winner
+            // ✅ CRITICAL FIX: Draw resolution rules:
+            // - If draw in Round 1: winner determined by Round 2 or Round 3 (if Round 2 also draw)
+            // - If draw in Round 2 or 3: whoever won Round 1 wins the game
             if (!gameWinner && currentRound === 2 && room.game.roundResults.length >= 2) {
-                // Handle special case - Round 1 was draw, Round 2 has winner
+                // Handle Round 2 completion scenarios
                 const firstRound = room.game.roundResults[0];
                 const secondRound = room.game.roundResults[1];
                 
+                console.log(`🔍 Draw resolution check for Round 2:`, {
+                    firstRound: { isDraw: firstRound.isDraw, winner: firstRound.winner },
+                    secondRound: { isDraw: secondRound.isDraw, winner: secondRound.winner }
+                });
+                
                 if (firstRound.isDraw && secondRound.winner) {
-                    // Round 1 was draw, Round 2 has winner → Game ends immediately
+                    // ✅ RULE: Round 1 was draw, Round 2 has winner → Round 2 winner wins the game immediately
                     gameWinner = secondRound.winner;
-                    console.log(`🎮 Game ends due to draw resolution: Round 1 was draw, Round 2 winner (${secondRound.winner}) wins the game!`);
+                    console.log(`🎮✅ Game ends: Round 1 was draw, Round 2 winner (${secondRound.winner}) wins the game!`);
                 } else if (!firstRound.isDraw && secondRound.isDraw) {
-                    // Round 1 had winner, Round 2 is draw → Round 1 winner wins the game
+                    // ✅ RULE: Round 1 had winner, Round 2 is draw → Round 1 winner wins the game immediately
                     gameWinner = firstRound.winner;
-                    console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins due to Round 2 draw!`);
+                    console.log(`🎮✅ Game ends: Round 1 winner (${firstRound.winner}) wins due to Round 2 draw!`);
+                } else if (firstRound.isDraw && secondRound.isDraw) {
+                    // ✅ RULE: Both Round 1 and Round 2 are draws → Continue to Round 3, Round 3 winner wins
+                    console.log(`🤝 Both Round 1 and Round 2 are draws - continuing to Round 3, Round 3 winner will win`);
+                    // Don't set gameWinner yet - wait for Round 3
                 }
             } else if (!gameWinner && currentRound === 3 && room.game.roundResults.length >= 3) {
-                // ✅ CRITICAL FIX: Handle Round 3 draw resolution
+                // ✅ CRITICAL FIX: Handle Round 3 draw resolution with correct rules
                 const firstRound = room.game.roundResults[0];
                 const secondRound = room.game.roundResults[1];
                 const thirdRound = room.game.roundResults[2];
                 
+                console.log(`🔍 Draw resolution check for Round 3:`, {
+                    firstRound: { isDraw: firstRound.isDraw, winner: firstRound.winner },
+                    secondRound: { isDraw: secondRound.isDraw, winner: secondRound.winner },
+                    thirdRound: { isDraw: thirdRound.isDraw, winner: thirdRound.winner }
+                });
+                
                 if (firstRound.isDraw && secondRound.isDraw && thirdRound.winner) {
-                    // Both Round 1 and 2 were draws, Round 3 has winner → Round 3 winner wins
+                    // ✅ RULE: Both Round 1 and 2 were draws, Round 3 has winner → Round 3 winner wins
                     gameWinner = thirdRound.winner;
-                    console.log(`🎮 Game ends due to draw resolution: Round 3 winner (${thirdRound.winner}) wins after Rounds 1&2 draws!`);
+                    console.log(`🎮✅ Game ends: Round 3 winner (${thirdRound.winner}) wins after Rounds 1&2 draws!`);
                 } else if (firstRound.isDraw && !secondRound.isDraw && thirdRound.isDraw) {
-                    // Round 1 draw, Round 2 had winner, Round 3 draw → Round 2 winner wins
+                    // ✅ RULE: Round 1 draw, Round 2 had winner, Round 3 draw → Round 2 winner wins
                     gameWinner = secondRound.winner;
-                    console.log(`🎮 Game ends due to draw resolution: Round 2 winner (${secondRound.winner}) wins after Round 3 draw!`);
+                    console.log(`🎮✅ Game ends: Round 2 winner (${secondRound.winner}) wins after Round 3 draw!`);
                 } else if (!firstRound.isDraw && !secondRound.isDraw && thirdRound.isDraw) {
-                    // Round 1 had winner, Round 2 had winner, Round 3 draw → Round 1 winner wins
+                    // ✅ RULE: Round 1 had winner, Round 2 had winner, Round 3 draw → Round 1 winner wins
                     gameWinner = firstRound.winner;
-                    console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins after Round 3 draw!`);
+                    console.log(`🎮✅ Game ends: Round 1 winner (${firstRound.winner}) wins after Round 3 draw!`);
                 } else if (!firstRound.isDraw && secondRound.isDraw && thirdRound.isDraw) {
-                    // Round 1 had winner, Rounds 2&3 draws → Round 1 winner wins
+                    // ✅ RULE: Round 1 had winner, Rounds 2&3 draws → Round 1 winner wins
                     gameWinner = firstRound.winner;
-                    console.log(`🎮 Game ends due to draw resolution: Round 1 winner (${firstRound.winner}) wins after Rounds 2&3 draws!`);
+                    console.log(`🎮✅ Game ends: Round 1 winner (${firstRound.winner}) wins after Rounds 2&3 draws!`);
+                } else if (firstRound.isDraw && !secondRound.isDraw && thirdRound.winner) {
+                    // ✅ RULE: Round 1 draw, Round 2 had winner, Round 3 has winner → Check if Round 3 winner matches Round 2
+                    // If Round 3 winner is same as Round 2, they win. Otherwise, Round 2 winner wins (they won first).
+                    if (thirdRound.winner === secondRound.winner) {
+                        gameWinner = thirdRound.winner;
+                        console.log(`🎮✅ Game ends: Round 2 & 3 winner (${thirdRound.winner}) wins after Round 1 draw!`);
+                    } else {
+                        // Different teams won Round 2 and Round 3 - Round 2 winner wins (they won first)
+                        gameWinner = secondRound.winner;
+                        console.log(`🎮✅ Game ends: Round 2 winner (${secondRound.winner}) wins after Round 1 draw (Round 3 had different winner)!`);
+                    }
                 }
             }
             
