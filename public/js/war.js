@@ -2645,20 +2645,23 @@ class WarClient {
     showActionControls() {
         const actionControls = document.getElementById('actionControls');
         if (actionControls) {
-            // ✅ CRITICAL FIX: Force all positioning styles to ensure bottom center placement
-            actionControls.style.display = 'flex';
-            actionControls.style.opacity = '1';
-            actionControls.style.zIndex = '3000';
-            actionControls.style.pointerEvents = 'auto';
-            actionControls.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning for bottom center
-            actionControls.style.bottom = '30px'; // ✅ CRITICAL FIX: Position at bottom center
-            actionControls.style.top = 'auto'; // ✅ CRITICAL FIX: Ensure top is not set
-            actionControls.style.left = '50%'; // ✅ CRITICAL FIX: Center horizontally
-            actionControls.style.right = 'auto'; // ✅ CRITICAL FIX: Ensure right is not set
-            actionControls.style.transform = 'translateX(-50%)'; // ✅ CRITICAL FIX: Center horizontally
-            actionControls.style.width = 'auto';
-            actionControls.style.margin = '0'; // ✅ CRITICAL FIX: Remove any margins
-            console.log('✅ Action controls shown at bottom center (fixed position)');
+            // ✅ CRITICAL FIX: Force all positioning styles to ensure bottom center placement with maximum specificity
+            actionControls.style.cssText = `
+                display: flex !important;
+                opacity: 1 !important;
+                z-index: 3000 !important;
+                pointer-events: auto !important;
+                position: fixed !important;
+                bottom: 30px !important;
+                top: auto !important;
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%) !important;
+                width: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            `;
+            console.log('✅ Action controls shown at bottom center (fixed position with forced CSS)');
             
             // ✅ CRITICAL FIX: Reset button state when showing controls and ensure proper positioning
             const battleBtn = document.getElementById('battleBtn');
