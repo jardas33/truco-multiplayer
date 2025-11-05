@@ -2652,7 +2652,7 @@ class WarClient {
                 z-index: 3000 !important;
                 pointer-events: auto !important;
                 position: fixed !important;
-                bottom: 30px !important;
+                bottom: 60px !important;
                 top: auto !important;
                 left: 50% !important;
                 right: auto !important;
