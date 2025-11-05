@@ -5788,13 +5788,23 @@ function advancePokerPhase(roomCode, room) {
     switch (room.game.gamePhase) {
         case 'preflop':
             // Deal flop
+            // Validate deck has enough cards (need 1 burn + 3 flop cards = 4 cards)
+            if (room.game.deck.length < 4) {
+                console.error(`❌ Deck has insufficient cards for flop: ${room.game.deck.length} cards available, need 4`);
+                // Try to continue with what we have, but log error
+            }
             if (room.game.deck.length > 0) {
                 room.game.deck.pop(); // Burn card
             }
             room.game.communityCards = [];
             for (let i = 0; i < 3; i++) {
                 if (room.game.deck.length > 0) {
-                    room.game.communityCards.push(room.game.deck.pop());
+                    const card = room.game.deck.pop();
+                    if (card && card.name) {
+                        room.game.communityCards.push(card);
+                    } else {
+                        console.error(`❌ Invalid card dealt for flop - card ${i}`);
+                    }
                 } else {
                     console.error(`❌ Deck empty when dealing flop - card ${i}`);
                 }
@@ -5803,20 +5813,38 @@ function advancePokerPhase(roomCode, room) {
             // First to act post-flop should be the first active player after the big blind
             const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
             room.game.currentPlayer = (bigBlindPos + 1) % room.game.players.length;
-            // Skip folded/all-in players
-            while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
+            // Skip folded/all-in players with safety check
+            let searchAttempts = 0;
+            while ((room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) && searchAttempts < room.game.players.length) {
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                searchAttempts++;
             }
-            console.log(`🎴 Flop dealt: ${room.game.communityCards.map(c => c.name).join(', ')}`);
+            // Safety check: if all players are folded/all-in, go to showdown
+            if (searchAttempts >= room.game.players.length) {
+                console.error(`❌ All players are folded/all-in after flop - going to showdown`);
+                handlePokerShowdown(roomCode, room);
+                return;
+            }
+            const flopCards = room.game.communityCards.filter(c => c && c.name).map(c => c.name);
+            console.log(`🎴 Flop dealt: ${flopCards.join(', ')}`);
             break;
             
         case 'flop':
             // Deal turn
+            // Validate deck has enough cards (need 1 burn + 1 turn card = 2 cards)
+            if (room.game.deck.length < 2) {
+                console.error(`❌ Deck has insufficient cards for turn: ${room.game.deck.length} cards available, need 2`);
+            }
             if (room.game.deck.length > 0) {
                 room.game.deck.pop(); // Burn card
             }
             if (room.game.deck.length > 0) {
-                room.game.communityCards.push(room.game.deck.pop());
+                const card = room.game.deck.pop();
+                if (card && card.name) {
+                    room.game.communityCards.push(card);
+                } else {
+                    console.error(`❌ Invalid card dealt for turn`);
+                }
             } else {
                 console.error(`❌ Deck empty when dealing turn`);
             }
@@ -5824,19 +5852,37 @@ function advancePokerPhase(roomCode, room) {
             // First to act post-turn should be the first active player after the big blind
             const bigBlindPosTurn = (room.game.dealerPosition + 2) % room.game.players.length;
             room.game.currentPlayer = (bigBlindPosTurn + 1) % room.game.players.length;
-            while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
+            let searchAttemptsTurn = 0;
+            while ((room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) && searchAttemptsTurn < room.game.players.length) {
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                searchAttemptsTurn++;
             }
-            console.log(`🎴 Turn dealt: ${room.game.communityCards[3]?.name}`);
+            // Safety check: if all players are folded/all-in, go to showdown
+            if (searchAttemptsTurn >= room.game.players.length) {
+                console.error(`❌ All players are folded/all-in after turn - going to showdown`);
+                handlePokerShowdown(roomCode, room);
+                return;
+            }
+            const turnCard = room.game.communityCards[3];
+            console.log(`🎴 Turn dealt: ${turnCard ? turnCard.name : 'ERROR - card missing'}`);
             break;
             
         case 'turn':
             // Deal river
+            // Validate deck has enough cards (need 1 burn + 1 river card = 2 cards)
+            if (room.game.deck.length < 2) {
+                console.error(`❌ Deck has insufficient cards for river: ${room.game.deck.length} cards available, need 2`);
+            }
             if (room.game.deck.length > 0) {
                 room.game.deck.pop(); // Burn card
             }
             if (room.game.deck.length > 0) {
-                room.game.communityCards.push(room.game.deck.pop());
+                const card = room.game.deck.pop();
+                if (card && card.name) {
+                    room.game.communityCards.push(card);
+                } else {
+                    console.error(`❌ Invalid card dealt for river`);
+                }
             } else {
                 console.error(`❌ Deck empty when dealing river`);
             }
@@ -5844,10 +5890,19 @@ function advancePokerPhase(roomCode, room) {
             // First to act post-river should be the first active player after the big blind
             const bigBlindPosRiver = (room.game.dealerPosition + 2) % room.game.players.length;
             room.game.currentPlayer = (bigBlindPosRiver + 1) % room.game.players.length;
-            while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
+            let searchAttemptsRiver = 0;
+            while ((room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) && searchAttemptsRiver < room.game.players.length) {
                 room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                searchAttemptsRiver++;
             }
-            console.log(`🎴 River dealt: ${room.game.communityCards[4]?.name}`);
+            // Safety check: if all players are folded/all-in, go to showdown
+            if (searchAttemptsRiver >= room.game.players.length) {
+                console.error(`❌ All players are folded/all-in after river - going to showdown`);
+                handlePokerShowdown(roomCode, room);
+                return;
+            }
+            const riverCard = room.game.communityCards[4];
+            console.log(`🎴 River dealt: ${riverCard ? riverCard.name : 'ERROR - card missing'}`);
             break;
             
         case 'river':

@@ -2035,7 +2035,14 @@ function drawPokerTable() {
 }
 
 function drawCommunityCards() {
-    if (!window.game.communityCards || window.game.communityCards.length === 0) {
+    // Safety check: ensure game and community cards exist
+    if (!window.game || !window.game.communityCards || !Array.isArray(window.game.communityCards) || window.game.communityCards.length === 0) {
+        return;
+    }
+    
+    // Filter out invalid cards
+    const validCards = window.game.communityCards.filter(card => card && card.name);
+    if (validCards.length === 0) {
         return;
     }
     
@@ -2046,10 +2053,15 @@ function drawCommunityCards() {
     const spacing = 20;     // Better spacing
     
     // Draw community cards in the center with better styling
-    const totalWidth = (window.game.communityCards.length - 1) * (cardWidth + spacing);
+    const totalWidth = (validCards.length - 1) * (cardWidth + spacing);
     const startX = centerX - totalWidth / 2;
     
-    window.game.communityCards.forEach((card, index) => {
+    validCards.forEach((card, index) => {
+        // Additional safety check for each card
+        if (!card || !card.name) {
+            return; // Skip invalid cards
+        }
+        
         const x = startX + index * (cardWidth + spacing);
         const y = centerY - cardHeight/2;
         
@@ -2070,7 +2082,10 @@ function drawCommunityCards() {
 }
 
 function drawPlayers() {
-    if (!window.game.players) return;
+    // Safety check: ensure game and players exist
+    if (!window.game || !window.game.players || !Array.isArray(window.game.players) || window.game.players.length === 0) {
+        return;
+    }
     
     const centerX = width/2;
     const centerY = height/2;
