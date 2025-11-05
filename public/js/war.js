@@ -1477,10 +1477,14 @@ class WarClient {
         this.hideActionControls();
         this.createWarEffect();
         
-        // ✅ CRITICAL FIX: Animate war cards flipping with tracked timeout (increased delay to allow war message to be visible)
+        // ✅ CRITICAL FIX: Animate war cards flipping with tracked timeout - wait for all cards to appear first
+        // Calculate max delay: with 4 players, each with 4 cards (3 face-down + 1 face-up), that's 16 cards max
+        // At 2400ms between groups and 1200ms between cards, last card appears at ~(3*2400) + (3*1200) = 10800ms
+        // Wait an additional 2000ms for war message visibility, then start flipping
+        const maxCardDelay = (this.game.players.length * 2400) + (4 * 1200); // Rough estimate
         this.safeSetTimeout(() => {
             this.animateWarCards();
-        }, 2000); // ✅ CRITICAL FIX: Increased from 500ms to 2000ms to allow players to see the war message
+        }, maxCardDelay + 2000); // ✅ CRITICAL FIX: Wait for all cards to appear before starting flip animations
     }
     
     // Create war effect (intense visual)

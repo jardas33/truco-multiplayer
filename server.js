@@ -3502,10 +3502,14 @@ io.on('connection', (socket) => {
             players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
         });
         
-        // Resolve war after delay
+        // ✅ CRITICAL FIX: Resolve war after delay - match battle timing (10000ms) plus extra time for war cards to appear and flip
+        // War has more cards (3 face-down + 1 face-up per player = 4 cards per player)
+        // With 4 players, that's up to 16 cards. At 1200ms per card, that's ~19 seconds just for cards to appear
+        // Plus 2000ms for war message, plus time for face-down cards to flip
+        // Total: ~25 seconds minimum to ensure all cards are visible
         setTimeout(() => {
             resolveWar(room, roomCode);
-        }, 2000);
+        }, 25000); // ✅ CRITICAL FIX: Increased from 2000ms to 25000ms to match battle pace and allow all war cards to appear and flip
     }
     
     // ✅ CRITICAL FIX: Helper function to end war game properly
