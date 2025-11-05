@@ -1418,10 +1418,13 @@ class PokerClient {
                     playerDiv.classList.add('active');
                 }
                 
+                // Safety check: ensure chips and currentBet are valid
+                const displayChips = (player.chips !== undefined && player.chips !== null) ? Math.max(0, player.chips) : 0;
+                const displayBet = (player.currentBet !== undefined && player.currentBet !== null) ? Math.max(0, player.currentBet) : 0;
                 playerDiv.innerHTML = `
                     <div class="player-name">${player.name}</div>
-                    <div class="player-chips">$${player.chips}</div>
-                    <div class="player-bet">Bet: $${player.currentBet}</div>
+                    <div class="player-chips">$${displayChips}</div>
+                    <div class="player-bet">Bet: $${displayBet}</div>
                 `;
                 
                 playerList.appendChild(playerDiv);
