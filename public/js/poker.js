@@ -2141,7 +2141,9 @@ function drawPlayers() {
         fill(255, 215, 0);
         stroke(0, 0, 0);
         strokeWeight(1);
-        text('$' + player.chips, x, y - 2);
+        // Safety check: ensure chips is a valid number
+        const chipsDisplay = (player.chips !== undefined && player.chips !== null) ? Math.max(0, player.chips) : 0;
+        text('$' + chipsDisplay, x, y - 2);
         
         // Draw FOLDED text below chip value (if folded) to avoid overlap
         if (player.isFolded) {

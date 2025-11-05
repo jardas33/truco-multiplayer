@@ -6162,11 +6162,19 @@ function startNewPokerHand(roomCode, room) {
     const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
     const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
     
-    room.game.players[smallBlindPos].chips -= room.game.smallBlind;
+    // Safety check: ensure players exist and have enough chips
+    if (!room.game.players[smallBlindPos] || !room.game.players[bigBlindPos]) {
+        console.error(`❌ Cannot post blinds - players not found at positions ${smallBlindPos} and ${bigBlindPos}`);
+        return;
+    }
+    
+    // Post small blind (ensure chips don't go negative)
+    room.game.players[smallBlindPos].chips = Math.max(0, room.game.players[smallBlindPos].chips - room.game.smallBlind);
     room.game.players[smallBlindPos].currentBet = room.game.smallBlind;
     room.game.players[smallBlindPos].totalBet = room.game.smallBlind;
     
-    room.game.players[bigBlindPos].chips -= room.game.bigBlind;
+    // Post big blind (ensure chips don't go negative)
+    room.game.players[bigBlindPos].chips = Math.max(0, room.game.players[bigBlindPos].chips - room.game.bigBlind);
     room.game.players[bigBlindPos].currentBet = room.game.bigBlind;
     room.game.players[bigBlindPos].totalBet = room.game.bigBlind;
     
