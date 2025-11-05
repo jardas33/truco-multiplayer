@@ -6085,32 +6085,32 @@ function startNewPokerHand(roomCode, room) {
     room.game.gamePhase = 'preflop';
     room.game.winners = [];
     
-    // Reshuffle deck if needed
-    if (room.game.deck.length < 20) {
-        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
-        const deck = [];
-        
-        for (let suit of suits) {
-            for (let rank of ranks) {
-                let value;
-                if (rank === 'ace') value = 14;
-                else if (rank === 'king') value = 13;
-                else if (rank === 'queen') value = 12;
-                else if (rank === 'jack') value = 11;
-                else value = parseInt(rank);
-                
-                deck.push({ name: `${rank} of ${suit}`, suit: suit, rank: rank, value: value });
-            }
+    // Always reshuffle deck to ensure fresh deck each hand
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+    const deck = [];
+    
+    for (let suit of suits) {
+        for (let rank of ranks) {
+            let value;
+            if (rank === 'ace') value = 14;
+            else if (rank === 'king') value = 13;
+            else if (rank === 'queen') value = 12;
+            else if (rank === 'jack') value = 11;
+            else value = parseInt(rank);
+            
+            deck.push({ name: `${rank} of ${suit}`, suit: suit, rank: rank, value: value });
         }
-        
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-        
-        room.game.deck = deck;
     }
+    
+    // Shuffle deck using Fisher-Yates algorithm
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    
+    room.game.deck = deck;
+    console.log(`🎴 Deck reshuffled - ${deck.length} cards`);
     
     // Post blinds
     const smallBlindPos = (room.game.dealerPosition + 1) % room.game.players.length;
