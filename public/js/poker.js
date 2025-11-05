@@ -2260,19 +2260,21 @@ function drawPlayers() {
             const localPlayerIndex = window.pokerClient?.localPlayerIndex;
             const isLocalPlayer = index === localPlayerIndex;
             
+            // ✅ CRITICAL FIX: Only show opponent cards at showdown (end of game)
             // Check if it's showdown phase - be more strict
             const gamePhase = window.game?.gamePhase || '';
             const isShowdown = gamePhase.toLowerCase() === 'showdown' || (window.game.winners && window.game.winners.length > 0);
             
             // STRICT: Only show cards for local player, NEVER for opponents unless showdown
-            // Always default to false (card back) unless explicitly local player
+            // Always default to false (card back) unless explicitly local player OR showdown
             let shouldShowCardImages = false;
             
             if (isLocalPlayer) {
                 // Always show local player's cards
                 shouldShowCardImages = true;
             } else if (isShowdown) {
-                // Only show at showdown
+                // ✅ ONLY show opponent cards at showdown (end of game)
+                // NOT when both are all-in - only at the very end
                 shouldShowCardImages = true;
             }
             
@@ -2280,12 +2282,15 @@ function drawPlayers() {
             // For local player, show actual cards if available
             let cardsToShow = [];
             if (isLocalPlayer && player.hand && player.hand.length > 0) {
+                // Local player - show actual cards
                 cardsToShow = player.hand;
             } else if (!isLocalPlayer) {
-                // Opponent - show 2 card backs (create placeholder cards if needed)
-                if (player.hand && player.hand.length > 0 && isShowdown) {
-                    cardsToShow = player.hand; // Show actual cards at showdown
+                // Opponent - show cards ONLY at showdown, otherwise show card backs
+                if (isShowdown && player.hand && player.hand.length > 0) {
+                    // ✅ ONLY at showdown - show actual cards
+                    cardsToShow = player.hand;
                 } else {
+                    // ✅ During game - always show card backs, even if both are all-in
                     // Show 2 card backs for opponents (always show, even if hand is empty or not dealt yet)
                     // Create card objects with proper structure for CardRenderer
                     cardsToShow = [
