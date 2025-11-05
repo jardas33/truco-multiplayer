@@ -2794,43 +2794,93 @@ class WarClient {
 
     // ✅ CRITICAL FIX: Setup navigation buttons with proper event handlers
     setupNavigationButtons() {
-        const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
-        const backToWarMenuBtn = document.getElementById('backToWarMenuBtn');
+        // ✅ CRITICAL FIX: Get buttons from Game section specifically (not Menu section)
+        const gameSection = document.getElementById('Game');
+        const backToMainMenuBtn = gameSection ? gameSection.querySelector('#backToMainMenuBtn') : document.getElementById('backToMainMenuBtn');
+        const backToWarMenuBtn = gameSection ? gameSection.querySelector('#backToWarMenuBtn') : document.getElementById('backToWarMenuBtn');
         
         if (backToMainMenuBtn) {
-            // ✅ CRITICAL FIX: Remove any existing handlers first, then add new one
+            // ✅ CRITICAL FIX: Remove ALL existing handlers first (both onclick and addEventListener)
             backToMainMenuBtn.onclick = null;
-            backToMainMenuBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🔙 Back to Main Menu clicked');
-                // Navigate to main menu (home page)
-                window.location.href = '/';
-            }, { once: false });
-            backToMainMenuBtn.setAttribute('aria-label', 'Back to Main Menu');
-            backToMainMenuBtn.style.pointerEvents = 'auto';
-            backToMainMenuBtn.style.cursor = 'pointer';
-            console.log('✅ Back to Main Menu button setup and functional');
+            // Remove all event listeners by cloning the node
+            const newBtn = backToMainMenuBtn.cloneNode(true);
+            const parent = backToMainMenuBtn.parentNode;
+            parent.replaceChild(newBtn, backToMainMenuBtn);
+            const btn = parent.querySelector('#backToMainMenuBtn');
+            
+            if (btn) {
+                // ✅ CRITICAL FIX: Add event handler with maximum priority
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('🔙 Back to Main Menu clicked - navigating to /');
+                    // Navigate to main menu (home page) immediately
+                    window.location.href = '/';
+                }, true); // Use capture phase for maximum priority
+                
+                // Also set onclick as backup
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔙 Back to Main Menu clicked (onclick) - navigating to /');
+                    window.location.href = '/';
+                };
+                
+                btn.setAttribute('aria-label', 'Back to Main Menu');
+                btn.style.cssText = `
+                    pointer-events: auto !important;
+                    cursor: pointer !important;
+                    z-index: 3001 !important;
+                    position: relative !important;
+                `;
+                console.log('✅ Back to Main Menu button setup and functional', btn);
+            } else {
+                console.error('❌ Failed to find button after cloning');
+            }
         } else {
-            console.warn('⚠️ Back to Main Menu button not found');
+            console.error('❌ Back to Main Menu button not found in Game section');
         }
         
         if (backToWarMenuBtn) {
-            // ✅ CRITICAL FIX: Remove any existing handlers first, then add new one
+            // ✅ CRITICAL FIX: Remove ALL existing handlers first
             backToWarMenuBtn.onclick = null;
-            backToWarMenuBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('⚔️ War Menu clicked');
-                // Navigate to War menu (reload page to show menu)
-                window.location.href = '/war.html';
-            }, { once: false });
-            backToWarMenuBtn.setAttribute('aria-label', 'War Menu');
-            backToWarMenuBtn.style.pointerEvents = 'auto';
-            backToWarMenuBtn.style.cursor = 'pointer';
-            console.log('✅ War Menu button setup and functional');
+            const newBtn = backToWarMenuBtn.cloneNode(true);
+            const parent = backToWarMenuBtn.parentNode;
+            parent.replaceChild(newBtn, backToWarMenuBtn);
+            const btn = parent.querySelector('#backToWarMenuBtn');
+            
+            if (btn) {
+                // ✅ CRITICAL FIX: Add event handler with maximum priority
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('⚔️ War Menu clicked - navigating to /war.html');
+                    window.location.href = '/war.html';
+                }, true); // Use capture phase for maximum priority
+                
+                // Also set onclick as backup
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('⚔️ War Menu clicked (onclick) - navigating to /war.html');
+                    window.location.href = '/war.html';
+                };
+                
+                btn.setAttribute('aria-label', 'War Menu');
+                btn.style.cssText = `
+                    pointer-events: auto !important;
+                    cursor: pointer !important;
+                    z-index: 3001 !important;
+                    position: relative !important;
+                `;
+                console.log('✅ War Menu button setup and functional', btn);
+            } else {
+                console.error('❌ Failed to find button after cloning');
+            }
         } else {
-            console.warn('⚠️ War Menu button not found');
+            console.error('❌ War Menu button not found in Game section');
         }
     }
 
