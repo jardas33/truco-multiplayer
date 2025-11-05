@@ -5952,10 +5952,22 @@ function getCardCounts(values) {
 
 // Get best 5-card hand from 7 cards (hole + community)
 function getBestPokerHand(holeCards, communityCards) {
-    const allCards = [...holeCards, ...communityCards];
-    if (allCards.length < 5) return { rank: 0, name: 'High Card', cards: [] };
+    // Validate inputs
+    if (!holeCards || !Array.isArray(holeCards) || holeCards.length < 2) {
+        console.error(`❌ Invalid hole cards:`, holeCards);
+        return { rank: 0, name: 'Invalid Hand', cards: [] };
+    }
+    if (!communityCards || !Array.isArray(communityCards)) {
+        communityCards = [];
+    }
     
-    // Generate all combinations of 5 cards from 7
+    const allCards = [...holeCards, ...communityCards].filter(c => c && c.value); // Filter out invalid cards
+    if (allCards.length < 5) {
+        console.warn(`⚠️ Not enough cards for evaluation: ${allCards.length} cards available`);
+        return { rank: 0, name: 'Incomplete Hand', cards: allCards };
+    }
+    
+    // Generate all combinations of 5 cards from available cards
     const combinations = getCombinations(allCards, 5);
     let bestHand = { rank: 0, name: 'High Card', cards: [] };
     
@@ -6004,6 +6016,14 @@ function handlePokerShowdown(roomCode, room) {
         // Evaluate hands for all active players
         console.log(`🎴 Evaluating hands for ${activePlayers.length} players`);
         activePlayers.forEach(player => {
+            // Validate player has valid hand
+            if (!player.hand || player.hand.length < 2) {
+                console.error(`❌ Player ${player.name} has invalid hand:`, player.hand);
+                player.bestHand = { rank: -1, name: 'Invalid Hand', cards: [] };
+                player.handRank = -1;
+                return;
+            }
+            
             const bestHand = getBestPokerHand(player.hand, room.game.communityCards || []);
             player.bestHand = bestHand;
             player.handRank = bestHand.rank;
@@ -6011,19 +6031,45 @@ function handlePokerShowdown(roomCode, room) {
         });
         
         // Sort players by hand strength (best first)
-        activePlayers.sort((a, b) => {
+        // Filter out invalid hands first
+        const validPlayers = activePlayers.filter(p => p.handRank >= 0);
+        if (validPlayers.length === 0) {
+            console.error(`❌ No valid hands found - splitting pot evenly`);
+            const winAmount = Math.floor(room.game.pot / activePlayers.length);
+            const remainder = room.game.pot % activePlayers.length;
+            room.game.winners = activePlayers.map((player, index) => {
+                const amount = winAmount + (index < remainder ? 1 : 0);
+                player.chips += amount;
+                return {
+                    player: player,
+                    amount: amount,
+                    hand: null
+                };
+            });
+            return;
+        }
+        
+        validPlayers.sort((a, b) => {
             if (b.handRank !== a.handRank) {
                 return b.handRank - a.handRank;
             }
-            // If same rank, compare high cards (simplified - full comparison would need kicker logic)
-            const aHigh = Math.max(...a.hand.map(c => c.value));
-            const bHigh = Math.max(...b.hand.map(c => c.value));
-            return bHigh - aHigh;
+            // If same rank, compare best hand cards (better tie-breaker)
+            // Compare all 5 cards in descending order
+            const aCards = a.bestHand.cards.map(c => c.value).sort((x, y) => y - x);
+            const bCards = b.bestHand.cards.map(c => c.value).sort((x, y) => y - x);
+            
+            for (let i = 0; i < Math.min(aCards.length, bCards.length); i++) {
+                if (bCards[i] !== aCards[i]) {
+                    return bCards[i] - aCards[i];
+                }
+            }
+            // If all cards match, it's a true tie
+            return 0;
         });
         
         // Determine winners (players with best hand)
-        const bestRank = activePlayers[0].handRank;
-        const winners = activePlayers.filter(p => p.handRank === bestRank);
+        const bestRank = validPlayers[0].handRank;
+        const winners = validPlayers.filter(p => p.handRank === bestRank);
         
         // Split pot among winners
         const winAmount = Math.floor(room.game.pot / winners.length);
@@ -6143,8 +6189,16 @@ function startNewPokerHand(roomCode, room) {
     
     // Set current player
     room.game.currentPlayer = (bigBlindPos + 1) % room.game.players.length;
-    while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) {
+    let attempts = 0;
+    while ((room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn) && attempts < room.game.players.length) {
         room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+        attempts++;
+    }
+    // Safety check: if all players are folded/all-in, go to showdown
+    if (attempts >= room.game.players.length) {
+        console.error(`❌ All players are folded/all-in - going to showdown immediately`);
+        handlePokerShowdown(roomCode, room);
+        return;
     }
     
     // Emit new hand started
@@ -6302,10 +6356,9 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
                 return; // Invalid raise
             }
             
-            botPlayer.chips -= raiseIncrementBot;
+            botPlayer.chips = Math.max(0, botPlayer.chips - raiseIncrementBot); // Ensure chips never go negative
             botPlayer.currentBet = totalBetDesiredBot;
-            // totalBet will be updated when phase advances (currentBet added to totalBet)
-            botPlayer.totalBet += raiseIncrementBot; // Keep this for now, but we'll adjust logic
+            botPlayer.totalBet += raiseIncrementBot;
             room.game.pot += raiseIncrementBot;
             room.game.currentBet = botPlayer.currentBet;
             room.game.lastRaisePlayer = playerIndex;

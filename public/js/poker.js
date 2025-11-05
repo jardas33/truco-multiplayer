@@ -1683,8 +1683,9 @@ class PokerClient {
             return;
         }
         
-        const allInAmount = localPlayer.chips;
-        console.log('🎴 Player all-in:', allInAmount);
+        // All-in amount = current bet + remaining chips (total bet amount)
+        const allInAmount = (localPlayer.currentBet || 0) + localPlayer.chips;
+        console.log('🎴 Player all-in:', allInAmount, '(currentBet:', localPlayer.currentBet, '+ chips:', localPlayer.chips, ')');
         
         const socket = window.gameFramework?.socket;
         if (!socket || !socket.connected) {
@@ -1700,7 +1701,7 @@ class PokerClient {
         });
         
         this.hideBettingControls();
-        this.addHistoryEntry(`${localPlayer.name || 'You'} went ALL IN with $${allInAmount}`, 'player-action');
+        this.addHistoryEntry(`${localPlayer.name || 'You'} went ALL IN with $${localPlayer.chips}`, 'player-action');
     }
 
     // Add entry to history log
