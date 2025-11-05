@@ -1023,14 +1023,17 @@
         }
 
         .action-controls {
-            position: fixed; /* ✅ CRITICAL FIX: Use fixed positioning for bottom center */
-            bottom: 30px; /* ✅ CRITICAL FIX: Position at bottom center */
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
+            position: fixed !important; /* ✅ CRITICAL FIX: Use fixed positioning for bottom center, force override */
+            bottom: 30px !important; /* ✅ CRITICAL FIX: Position at bottom center, force override */
+            left: 50% !important; /* ✅ CRITICAL FIX: Center horizontally, force override */
+            transform: translateX(-50%) !important; /* ✅ CRITICAL FIX: Center horizontally, force override */
+            display: flex !important;
             gap: 10px;
-            z-index: 3000;
+            z-index: 3000 !important;
             pointer-events: auto !important;
+            top: auto !important; /* ✅ CRITICAL FIX: Ensure top is not set */
+            right: auto !important; /* ✅ CRITICAL FIX: Ensure right is not set */
+            margin: 0 !important; /* ✅ CRITICAL FIX: Remove any margins */
         }
 
         .action-controls button {
@@ -1121,7 +1124,7 @@
 
         .war-message {
             position: fixed; /* ✅ CRITICAL FIX: Use fixed positioning for proper centering */
-            top: 35%; /* ✅ CRITICAL FIX: Position above battle-area (which is at 50%) */
+            top: 25%; /* ✅ CRITICAL FIX: Position well above battle-area (which is at 50%) to avoid overlap */
             left: 50%; /* Center horizontally */
             transform: translate(-50%, -50%); /* ✅ CRITICAL FIX: Center both axes */
             background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(30,0,0,0.95) 100%);

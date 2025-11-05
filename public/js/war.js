@@ -2644,16 +2644,16 @@ class WarClient {
         warMessage.className = `war-message ${type || 'battle'}`;
         warMessage.style.display = 'block';
         
-        // ✅ CRITICAL FIX: Position message above the battle-area box, centered horizontally
-        // Battle-area is at top: 50%, left: 50%, so we position above it
+        // ✅ CRITICAL FIX: Position message above the battle-area box, centered horizontally, no overlap
+        // Battle-area is at top: 50%, left: 50%, so we position well above it
         warMessage.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning
-        warMessage.style.top = '35%'; // ✅ CRITICAL FIX: Position above battle-area (which is at 50%)
+        warMessage.style.top = '25%'; // ✅ CRITICAL FIX: Position well above battle-area (which is at 50%) to avoid overlap
         warMessage.style.left = '50%'; // Center horizontally
         warMessage.style.transform = 'translate(-50%, -50%)'; // ✅ CRITICAL FIX: Center both axes
         warMessage.style.zIndex = '2500'; // ✅ CRITICAL FIX: Ensure it's above canvas but below buttons
         warMessage.style.opacity = '1';
         warMessage.style.visibility = 'visible';
-        console.log('✅ War message shown above battle-area, centered');
+        console.log('✅ War message shown above battle-area, no overlap');
     }
 
     // Hide war message
@@ -2669,15 +2669,19 @@ class WarClient {
     showActionControls() {
         const actionControls = document.getElementById('actionControls');
         if (actionControls) {
+            // ✅ CRITICAL FIX: Force all positioning styles to ensure bottom center placement
             actionControls.style.display = 'flex';
             actionControls.style.opacity = '1';
             actionControls.style.zIndex = '3000';
             actionControls.style.pointerEvents = 'auto';
             actionControls.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning for bottom center
             actionControls.style.bottom = '30px'; // ✅ CRITICAL FIX: Position at bottom center
-            actionControls.style.left = '50%';
-            actionControls.style.transform = 'translateX(-50%)';
+            actionControls.style.top = 'auto'; // ✅ CRITICAL FIX: Ensure top is not set
+            actionControls.style.left = '50%'; // ✅ CRITICAL FIX: Center horizontally
+            actionControls.style.right = 'auto'; // ✅ CRITICAL FIX: Ensure right is not set
+            actionControls.style.transform = 'translateX(-50%)'; // ✅ CRITICAL FIX: Center horizontally
             actionControls.style.width = 'auto';
+            actionControls.style.margin = '0'; // ✅ CRITICAL FIX: Remove any margins
             console.log('✅ Action controls shown at bottom center (fixed position)');
             
             // ✅ CRITICAL FIX: Reset button state when showing controls and ensure proper positioning
@@ -2690,6 +2694,11 @@ class WarClient {
                 battleBtn.style.pointerEvents = 'auto';
                 battleBtn.style.zIndex = '3001';
                 battleBtn.style.position = 'relative'; // Ensure button is positioned correctly within action-controls
+                battleBtn.style.margin = '0'; // ✅ CRITICAL FIX: Remove any margins
+                battleBtn.style.top = 'auto'; // ✅ CRITICAL FIX: Ensure top is not set
+                battleBtn.style.left = 'auto'; // ✅ CRITICAL FIX: Ensure left is not set
+                battleBtn.style.right = 'auto'; // ✅ CRITICAL FIX: Ensure right is not set
+                battleBtn.style.bottom = 'auto'; // ✅ CRITICAL FIX: Ensure bottom is not set (let parent control)
                 console.log('✅ Battle button reset and made clickable at bottom center');
             } else {
                 console.warn('⚠️ Battle button not found');
