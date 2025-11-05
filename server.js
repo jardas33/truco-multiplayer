@@ -651,14 +651,70 @@ io.on('connection', (socket) => {
     socket.on('disconnect', (reason) => {
         console.log(`👤 User disconnected: ${socket.id}, reason: ${reason}`);
         
-        // For battleship rooms, mark player as disconnected but don't remove them immediately
-        // This allows for reconnection when navigating from menu to game
         if (socket.roomCode) {
             const room = rooms.get(socket.roomCode);
-            if (room && room.gameType === 'battleship') {
-                console.log(`🚢 Battleship player ${socket.id} disconnected from room ${socket.roomCode}`);
-                // Don't remove the player immediately - let the reconnection logic handle it
-                // The player will be replaced when they reconnect
+            if (room) {
+                if (room.gameType === 'battleship') {
+                    // For battleship rooms, mark player as disconnected but don't remove them immediately
+                    console.log(`🚢 Battleship player ${socket.id} disconnected from room ${socket.roomCode}`);
+                    // Don't remove the player immediately - let the reconnection logic handle it
+                } else if (room.gameType === 'poker') {
+                    // ✅ CRITICAL FIX: For poker, if game is active, auto-fold the disconnected player
+                    if (room.game && room.game.gamePhase && room.game.gamePhase !== 'waiting' && room.game.gamePhase !== 'finished') {
+                        const playerIndex = room.players.findIndex(p => p.id === socket.id);
+                        if (playerIndex !== -1 && room.game.players[playerIndex]) {
+                            const player = room.game.players[playerIndex];
+                            if (!player.isFolded && !player.isAllIn) {
+                                console.log(`🎴 Auto-folding disconnected player ${player.name} (${socket.id})`);
+                                player.isFolded = true;
+                                
+                                // Notify other players
+                                io.to(socket.roomCode).emit('gameState', {
+                                    players: room.game.players,
+                                    pot: room.game.pot,
+                                    currentBet: room.game.currentBet,
+                                    currentPlayer: room.game.currentPlayer,
+                                    gamePhase: room.game.gamePhase,
+                                    communityCards: room.game.communityCards || []
+                                });
+                                
+                                // Check if betting round should continue
+                                const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                                if (activePlayers.length <= 1) {
+                                    console.log(`🎴 Only one active player left after disconnect, going to showdown`);
+                                    handlePokerShowdown(socket.roomCode, room);
+                                } else if (room.game.currentPlayer === playerIndex) {
+                                    // If it was the disconnected player's turn, advance to next player
+                                    const startPlayer = room.game.currentPlayer;
+                                    let attempts = 0;
+                                    do {
+                                        room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                                        attempts++;
+                                        if (attempts >= room.game.players.length) break;
+                                    } while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn);
+                                    
+                                    // Emit updated game state
+                                    io.to(socket.roomCode).emit('gameState', {
+                                        players: room.game.players,
+                                        pot: room.game.pot,
+                                        currentBet: room.game.currentBet,
+                                        currentPlayer: room.game.currentPlayer,
+                                        gamePhase: room.game.gamePhase,
+                                        communityCards: room.game.communityCards || []
+                                    });
+                                    
+                                    // Handle bot actions if needed
+                                    const nextPlayer = room.game.players[room.game.currentPlayer];
+                                    if (nextPlayer && nextPlayer.isBot) {
+                                        setTimeout(() => {
+                                            handlePokerBotAction(socket.roomCode, room, nextPlayer);
+                                        }, 1500);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     });
