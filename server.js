@@ -7339,6 +7339,26 @@ function determineRoundWinner(playedCards, room) {
                             return; // Invalid raise
                         }
                         
+                        // ✅ CRITICAL FIX: Validate minimum raise amount (must be at least big blind)
+                        const minRaiseTotal = room.game.currentBet + room.game.bigBlind;
+                        if (totalBetDesired2 < minRaiseTotal && totalBetDesired2 < currentPlayerBet2 + player.chips) {
+                            // If player can't meet minimum raise, check if they're going all-in
+                            if (player.chips === raiseIncrement2) {
+                                // All-in is valid even if below minimum raise
+                                player.chips = 0;
+                                player.currentBet = totalBetDesired2;
+                                player.totalBet += raiseIncrement2;
+                                room.game.pot += raiseIncrement2;
+                                room.game.currentBet = Math.max(room.game.currentBet, totalBetDesired2);
+                                player.isAllIn = true;
+                                console.log(`🎴 Player all-in processed: player bet ${totalBetDesired2} (added ${raiseIncrement2}), new currentBet: ${room.game.currentBet}`);
+                                break;
+                            }
+                            console.error(`❌ Raise too small: ${totalBetDesired2} < minimum ${minRaiseTotal}`);
+                            socket.emit('error', `Minimum raise is $${minRaiseTotal - currentPlayerBet2} (current bet: $${room.game.currentBet} + big blind: $${room.game.bigBlind})`);
+                            return; // Invalid raise
+                        }
+                        
                         player.chips = Math.max(0, player.chips - raiseIncrement2); // Ensure chips never go negative
                         player.currentBet = totalBetDesired2;
                         player.totalBet += raiseIncrement2;
