@@ -1489,10 +1489,10 @@ class WarClient {
         this.hideActionControls();
         this.createWarEffect();
         
-        // ✅ CRITICAL FIX: Animate war cards flipping with tracked timeout
+        // ✅ CRITICAL FIX: Animate war cards flipping with tracked timeout (increased delay to allow war message to be visible)
         this.safeSetTimeout(() => {
             this.animateWarCards();
-        }, 500);
+        }, 2000); // ✅ CRITICAL FIX: Increased from 500ms to 2000ms to allow players to see the war message
     }
     
     // Create war effect (intense visual)
@@ -2278,7 +2278,7 @@ class WarClient {
                             'battle-card war-card',
                             {
                                 animate: true,
-                                delay: (groupIndex * 1500) + (cardIndex * 600), // ✅ CRITICAL FIX: Increased delays for war cards (1500ms between groups, 600ms between cards)
+                                delay: (groupIndex * 3000) + (cardIndex * 1000), // ✅ CRITICAL FIX: Significantly increased delays for war cards (3000ms = 3 seconds between groups, 1000ms = 1 second between cards) for much better visibility
                                 isWar: true,
                                 faceUp: warCard.faceUp !== false // Default to face up if not specified
                             }
@@ -2644,9 +2644,15 @@ class WarClient {
         warMessage.className = `war-message ${type || 'battle'}`;
         warMessage.style.display = 'block';
         
-        // ✅ CRITICAL FIX: Ensure message is visible and animated
+        // ✅ CRITICAL FIX: Ensure message is centered both horizontally and vertically
+        warMessage.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning
+        warMessage.style.top = '50%'; // ✅ CRITICAL FIX: Center vertically
+        warMessage.style.left = '50%'; // Already centered horizontally
+        warMessage.style.transform = 'translate(-50%, -50%)'; // ✅ CRITICAL FIX: Center both axes
+        warMessage.style.zIndex = '2500'; // ✅ CRITICAL FIX: Ensure it's above canvas but below buttons
         warMessage.style.opacity = '1';
         warMessage.style.visibility = 'visible';
+        console.log('✅ War message shown and centered');
     }
 
     // Hide war message
@@ -2666,11 +2672,12 @@ class WarClient {
             actionControls.style.opacity = '1';
             actionControls.style.zIndex = '3000';
             actionControls.style.pointerEvents = 'auto';
-            actionControls.style.position = 'absolute';
-            actionControls.style.bottom = '20px';
+            actionControls.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning for bottom center
+            actionControls.style.bottom = '30px'; // ✅ CRITICAL FIX: Position at bottom center
             actionControls.style.left = '50%';
             actionControls.style.transform = 'translateX(-50%)';
-            console.log('✅ Action controls shown at bottom center');
+            actionControls.style.width = 'auto';
+            console.log('✅ Action controls shown at bottom center (fixed position)');
             
             // ✅ CRITICAL FIX: Reset button state when showing controls
             const battleBtn = document.getElementById('battleBtn');
