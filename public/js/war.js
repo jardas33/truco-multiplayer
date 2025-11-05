@@ -1135,10 +1135,24 @@ class WarClient {
         this.statistics.longestWar = 0;
         
         // ✅ CRITICAL FIX: Show battle history log when game starts
+        // ✅ CRITICAL FIX: Show and position battle history log in bottom right corner
         const historyLog = document.getElementById('battleHistoryLog');
         if (historyLog) {
-            historyLog.style.display = 'block';
+            historyLog.style.cssText = `
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important;
+                width: 320px !important;
+                max-height: 400px !important;
+                display: block !important;
+                z-index: 2000 !important;
+                pointer-events: auto !important;
+            `;
+            console.log('✅ Battle history log shown in bottom right corner');
         }
+        
+        // Initialize history log
+        this.updateBattleHistoryLog();
         
         // ✅ CRITICAL FIX: Show navigation buttons when game starts and ensure they're clickable
         const navButtons = document.querySelector('.game-navigation-buttons');
@@ -1944,6 +1958,7 @@ class WarClient {
         this.updateScores();
         this.updateBattleArea();
         this.updatePlayerAreas();
+        this.updateBattleHistoryLog(); // ✅ CRITICAL FIX: Update history log on every UI update
             this.updateUIScheduled = false;
         });
     }
