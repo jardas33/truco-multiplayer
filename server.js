@@ -3304,11 +3304,16 @@ io.on('connection', (socket) => {
                 return;
             }
             
-            // Emit battle started
+            // ✅ CRITICAL FIX: Emit battle started to all players with proper hand visibility
+            // For War game, all players see card counts but not actual cards (cards are only visible in battle area)
             io.to(roomCode).emit('battleStarted', {
                 battleCards: room.game.battleCards,
                 battleNumber: room.game.battleNumber,
-                players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+                players: room.game.players.map((p, index) => ({
+                    name: p.name,
+                    hand: p.hand || [], // Show hand length for card count display
+                    playerIndex: index
+                }))
             });
             
             // Resolve battle after delay
@@ -3482,10 +3487,15 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // ✅ CRITICAL FIX: Emit war started to all players with proper synchronization
         io.to(roomCode).emit('warStarted', {
             warCards: room.game.warCards,
             warPlayers: validWarPlayers.map(p => p.player.name),
-            players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+            players: room.game.players.map((p, index) => ({
+                name: p.name,
+                hand: p.hand || [], // Show hand length for card count display
+                playerIndex: index
+            }))
         });
         
         // ✅ CRITICAL FIX: Resolve war after delay - match battle timing (10000ms) plus extra time for war cards to appear and flip
@@ -3625,13 +3635,18 @@ io.on('connection', (socket) => {
         
         console.log(`⚔️ ${winner.player.name} wins the war and gets ${allCards.length} cards!`);
         
+        // ✅ CRITICAL FIX: Emit war resolved to all players with proper synchronization
         io.to(roomCode).emit('warResolved', {
             winner: {
                 name: winner.player.name,
                 playerIndex: winner.playerIndex,
                 cardsWon: allCards.length
             },
-            players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+            players: room.game.players.map((p, index) => ({
+                name: p.name,
+                hand: p.hand || [], // Show hand length for card count display
+                playerIndex: index
+            }))
         });
         
         // Reset for next battle
@@ -3698,13 +3713,18 @@ io.on('connection', (socket) => {
             winner.player.hand = [...(winner.player.hand || []), ...shuffledCards];
         }
         
+        // ✅ CRITICAL FIX: Emit battle resolved to all players with proper synchronization
         io.to(roomCode).emit('battleResolved', {
             winner: {
                 name: winner.player.name,
                 playerIndex: winner.playerIndex,
                 cardsWon: allCards.length
             },
-            players: room.game.players.map(p => ({ name: p.name, hand: p.hand || [] }))
+            players: room.game.players.map((p, index) => ({
+                name: p.name,
+                hand: p.hand || [], // Show hand length for card count display
+                playerIndex: index
+            }))
         });
         
         // Reset for next battle

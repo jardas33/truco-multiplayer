@@ -1377,10 +1377,12 @@ class WarClient {
             return;
         }
         
+        // ✅ CRITICAL FIX: Update players with proper playerIndex synchronization for multiplayer
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: Array.isArray(p.hand) ? p.hand : [],
-            position: index
+            hand: Array.isArray(p.hand) ? p.hand : [], // Hand length is shown for card count
+            position: index,
+            playerIndex: p.playerIndex !== undefined ? p.playerIndex : index
         }));
         
         // Update statistics
@@ -1479,10 +1481,12 @@ class WarClient {
         }
         
         this.game.warCards = (data.warCards || []).filter(wc => wc && wc.card);
+        // ✅ CRITICAL FIX: Update players with proper playerIndex synchronization for multiplayer
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: Array.isArray(p.hand) ? p.hand : [],
-            position: index
+            hand: Array.isArray(p.hand) ? p.hand : [], // Hand length is shown for card count
+            position: index,
+            playerIndex: p.playerIndex !== undefined ? p.playerIndex : index
         }));
         this.game.isWar = true;
         this.game.gamePhase = 'war';
@@ -1568,10 +1572,12 @@ class WarClient {
             return;
         }
         
+        // ✅ CRITICAL FIX: Update players with proper playerIndex synchronization for multiplayer
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
-            hand: Array.isArray(p.hand) ? p.hand : [],
-            position: index
+            hand: Array.isArray(p.hand) ? p.hand : [], // Hand length is shown for card count
+            position: index,
+            playerIndex: p.playerIndex !== undefined ? p.playerIndex : index
         }));
         
         // Reset war count
