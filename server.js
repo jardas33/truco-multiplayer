@@ -3737,9 +3737,10 @@ io.on('connection', (socket) => {
             }))
         });
         
-        // Reset for next battle
+        // ✅ CRITICAL FIX: Reset for next battle and set phase back to playing
         room.game.battleCards = [];
         room.game.battleNumber++;
+        room.game.gamePhase = 'playing'; // ✅ CRITICAL FIX: Reset game phase to allow next battle
         
         // ✅ CRITICAL FIX: Check for game over with proper validation
         const playersWithCards = room.game.players.filter(p => p && p.hand && p.hand.length > 0);
