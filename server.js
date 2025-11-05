@@ -5818,22 +5818,22 @@ io.on('connection', (socket) => {
 // ✅ CRITICAL FIX: Helper function to emit gameState with filtered opponent hands
 function emitPokerGameState(roomCode, room) {
     // Send gameState to each player individually with filtered hands
-    // Only show opponent hands at showdown OR when both players are all-in (2 players)
+    // Only show opponent hands at showdown OR when all active players are all-in
     const isShowdown = room.game.gamePhase === 'showdown';
     
-    // Check if both players are all-in (only for 2-player games)
+    // Check if all active players are all-in (any number of players)
     const activePlayers = room.game.players.filter(p => !p.isFolded);
-    const allActivePlayersAllIn = activePlayers.length === 2 && 
+    const allActivePlayersAllIn = activePlayers.length > 0 && 
                                  activePlayers.every(p => p.isAllIn);
     
     room.players.forEach((player, playerIndex) => {
         if (!player.isBot) {
-            // Filter hands: show own hand, or all hands at showdown OR when both all-in (2 players)
+            // Filter hands: show own hand, or all hands at showdown OR when all active players all-in
             const filteredPlayers = room.game.players.map((p, index) => ({
                 ...p,
                 hand: (isShowdown || index === playerIndex || (allActivePlayersAllIn && activePlayers.includes(p))) 
                     ? p.hand 
-                    : [] // Hide opponent hands except at showdown or when both all-in
+                    : [] // Hide opponent hands except at showdown or when all active players all-in
             }));
             
             io.to(player.id).emit('gameState', {

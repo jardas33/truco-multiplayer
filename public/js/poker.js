@@ -2260,18 +2260,18 @@ function drawPlayers() {
             const localPlayerIndex = window.pokerClient?.localPlayerIndex;
             const isLocalPlayer = index === localPlayerIndex;
             
-            // ✅ CRITICAL FIX: Show opponent cards ONLY at showdown OR when both players are all-in
+            // ✅ CRITICAL FIX: Show opponent cards ONLY at showdown OR when all active players are all-in
             // Check if it's showdown phase
             const gamePhase = window.game?.gamePhase || '';
             const isShowdown = gamePhase.toLowerCase() === 'showdown' || (window.game.winners && window.game.winners.length > 0);
             
-            // Check if both players are all-in (only for 2-player games)
+            // Check if all active players are all-in (any number of players)
             const activePlayers = window.game?.players?.filter(p => !p.isFolded) || [];
-            const allActivePlayersAllIn = activePlayers.length === 2 && 
+            const allActivePlayersAllIn = activePlayers.length > 0 && 
                                          activePlayers.every(p => p.isAllIn);
             
-            // STRICT: Only show cards for local player, NEVER for opponents unless showdown OR both all-in
-            // Always default to false (card back) unless explicitly local player OR showdown OR both all-in
+            // STRICT: Only show cards for local player, NEVER for opponents unless showdown OR all active players all-in
+            // Always default to false (card back) unless explicitly local player OR showdown OR all active players all-in
             let shouldShowCardImages = false;
             
             if (isLocalPlayer) {
@@ -2281,7 +2281,7 @@ function drawPlayers() {
                 // ✅ Show opponent cards at showdown (end of game)
                 shouldShowCardImages = true;
             } else if (allActivePlayersAllIn && !isLocalPlayer) {
-                // ✅ SPECIAL CASE: If 2 players and both all-in, show opponent cards
+                // ✅ SPECIAL CASE: If all active players are all-in, show opponent cards
                 shouldShowCardImages = true;
             }
             
@@ -2292,12 +2292,12 @@ function drawPlayers() {
                 // Local player - show actual cards
                 cardsToShow = player.hand;
             } else if (!isLocalPlayer) {
-                // Opponent - show cards at showdown OR if both all-in (2 players), otherwise show card backs
+                // Opponent - show cards at showdown OR if all active players all-in, otherwise show card backs
                 if ((isShowdown || allActivePlayersAllIn) && player.hand && player.hand.length > 0) {
-                    // ✅ Show actual cards at showdown OR when both all-in (2 players)
+                    // ✅ Show actual cards at showdown OR when all active players are all-in
                     cardsToShow = player.hand;
                 } else {
-                    // ✅ During game - show card backs (unless both all-in)
+                    // ✅ During game - show card backs (unless all active players all-in)
                     // Show 2 card backs for opponents (always show, even if hand is empty or not dealt yet)
                     // Create card objects with proper structure for CardRenderer
                     cardsToShow = [
