@@ -2620,16 +2620,16 @@ class WarClient {
         warMessage.className = `war-message ${type || 'battle'}`;
         warMessage.style.display = 'block';
         
-        // ✅ CRITICAL FIX: Position message above the battle-area box, centered horizontally, no overlap
-        // Battle-area is at top: 50%, left: 50%, so we position well above it
+        // ✅ CRITICAL FIX: Position message above the battle-area box, shifted left but still centered over game box
+        // Battle-area is at top: 50%, left: 50%, so we position well above it and slightly to the left
         warMessage.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning
         warMessage.style.top = '25%'; // ✅ CRITICAL FIX: Position well above battle-area (which is at 50%) to avoid overlap
-        warMessage.style.left = '50%'; // Center horizontally
+        warMessage.style.left = '45%'; // ✅ CRITICAL FIX: Position more to the left, but still over the game box
         warMessage.style.transform = 'translate(-50%, -50%)'; // ✅ CRITICAL FIX: Center both axes
         warMessage.style.zIndex = '2500'; // ✅ CRITICAL FIX: Ensure it's above canvas but below buttons
         warMessage.style.opacity = '1';
         warMessage.style.visibility = 'visible';
-        console.log('✅ War message shown above battle-area, no overlap');
+        console.log('✅ War message shown above battle-area, shifted left, no overlap');
     }
 
     // Hide war message
