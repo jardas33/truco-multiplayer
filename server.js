@@ -6163,8 +6163,31 @@ function handlePokerShowdown(roomCode, room) {
 function startNewPokerHand(roomCode, room) {
     console.log(`🎴 Starting new poker hand`);
     
+    // Filter out eliminated players (0 chips) before resetting
+    const playersBeforeElimination = room.game.players.length;
+    room.game.players = room.game.players.filter(player => {
+        // Keep players with chips or allow them to continue if they have chips
+        if (player.chips <= 0) {
+            console.log(`🎴 Player ${player.name} eliminated (0 chips)`);
+            return false; // Remove eliminated player
+        }
+        return true;
+    });
+    
+    // If less than 2 players remain, cannot continue
+    if (room.game.players.length < 2) {
+        console.error(`❌ Not enough players to continue (${room.game.players.length} remaining, started with ${playersBeforeElimination})`);
+        // Emit game over
+        io.to(roomCode).emit('gameOver', { message: 'Not enough players to continue' });
+        return;
+    }
+    
     // Move dealer button clockwise (rotates to next player)
     // SB and BB positions automatically rotate because they're calculated from dealerPosition
+    // Adjust dealer position if players were eliminated
+    if (room.game.dealerPosition >= room.game.players.length) {
+        room.game.dealerPosition = room.game.dealerPosition % room.game.players.length;
+    }
     room.game.dealerPosition = (room.game.dealerPosition + 1) % room.game.players.length;
     console.log(`🎴 Dealer button moved to position ${room.game.dealerPosition} (${room.game.players[room.game.dealerPosition]?.name})`);
     
