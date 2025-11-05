@@ -668,15 +668,8 @@ io.on('connection', (socket) => {
                                 console.log(`🎴 Auto-folding disconnected player ${player.name} (${socket.id})`);
                                 player.isFolded = true;
                                 
-                                // Notify other players
-                                io.to(socket.roomCode).emit('gameState', {
-                                    players: room.game.players,
-                                    pot: room.game.pot,
-                                    currentBet: room.game.currentBet,
-                                    currentPlayer: room.game.currentPlayer,
-                                    gamePhase: room.game.gamePhase,
-                                    communityCards: room.game.communityCards || []
-                                });
+                                // Notify other players with filtered hands
+                                emitPokerGameState(socket.roomCode, room);
                                 
                                 // Check if betting round should continue
                                 const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
@@ -693,15 +686,8 @@ io.on('connection', (socket) => {
                                         if (attempts >= room.game.players.length) break;
                                     } while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn);
                                     
-                                    // Emit updated game state
-                                    io.to(socket.roomCode).emit('gameState', {
-                                        players: room.game.players,
-                                        pot: room.game.pot,
-                                        currentBet: room.game.currentBet,
-                                        currentPlayer: room.game.currentPlayer,
-                                        gamePhase: room.game.gamePhase,
-                                        communityCards: room.game.communityCards || []
-                                    });
+                                    // Emit updated game state with filtered hands
+                                    emitPokerGameState(socket.roomCode, room);
                                     
                                     // Handle bot actions if needed
                                     const nextPlayer = room.game.players[room.game.currentPlayer];
@@ -5829,6 +5815,39 @@ io.on('connection', (socket) => {
     });
 });
 
+// ✅ CRITICAL FIX: Helper function to emit gameState with filtered opponent hands
+function emitPokerGameState(roomCode, room) {
+    // Send gameState to each player individually with filtered hands
+    // Only show opponent hands at showdown OR when both players are all-in (2 players)
+    const isShowdown = room.game.gamePhase === 'showdown';
+    
+    // Check if both players are all-in (only for 2-player games)
+    const activePlayers = room.game.players.filter(p => !p.isFolded);
+    const allActivePlayersAllIn = activePlayers.length === 2 && 
+                                 activePlayers.every(p => p.isAllIn);
+    
+    room.players.forEach((player, playerIndex) => {
+        if (!player.isBot) {
+            // Filter hands: show own hand, or all hands at showdown OR when both all-in (2 players)
+            const filteredPlayers = room.game.players.map((p, index) => ({
+                ...p,
+                hand: (isShowdown || index === playerIndex || (allActivePlayersAllIn && activePlayers.includes(p))) 
+                    ? p.hand 
+                    : [] // Hide opponent hands except at showdown or when both all-in
+            }));
+            
+            io.to(player.id).emit('gameState', {
+                players: filteredPlayers,
+                pot: room.game.pot,
+                currentBet: room.game.currentBet,
+                currentPlayer: room.game.currentPlayer,
+                gamePhase: room.game.gamePhase,
+                communityCards: room.game.communityCards || []
+            });
+        }
+    });
+}
+
 // Poker helper functions (defined in global scope for availability)
 function advancePokerPhase(roomCode, room) {
     console.log(`🎴 Advancing poker phase from ${room.game.gamePhase}`);
@@ -5971,15 +5990,8 @@ function advancePokerPhase(roomCode, room) {
             return;
     }
     
-    // Emit phase change
-    io.to(roomCode).emit('gameState', {
-        players: room.game.players,
-        pot: room.game.pot,
-        currentBet: 0, // Reset for new betting round
-        currentPlayer: room.game.currentPlayer,
-        gamePhase: room.game.gamePhase,
-        communityCards: room.game.communityCards
-    });
+    // Emit phase change with filtered hands
+    emitPokerGameState(roomCode, room);
     
     console.log(`🎴 Phase advanced to ${room.game.gamePhase}, current player: ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name})`);
     
@@ -6629,15 +6641,8 @@ function handlePokerBotAction(roomCode, room, botPlayer) {
         handlePokerShowdown(roomCode, room);
     } else {
         // Continue betting round
-        // Emit updated game state
-        io.to(roomCode).emit('gameState', {
-            players: room.game.players,
-            pot: room.game.pot,
-            currentBet: room.game.currentBet,
-            currentPlayer: room.game.currentPlayer,
-            gamePhase: room.game.gamePhase,
-            communityCards: room.game.communityCards || []
-        });
+        // Emit updated game state with filtered hands
+        emitPokerGameState(roomCode, room);
         
         // Continue with next bot or player
         const nextPlayer = room.game.players[room.game.currentPlayer];
@@ -7311,14 +7316,7 @@ function determineRoundWinner(playedCards, room) {
                             ) || activePlayers[0];
                             room.game.currentPlayer = room.game.players.indexOf(nextActive);
                             console.log(`🎴 Fixed stuck state - moved to active player ${nextActive.name}`);
-                            io.to(roomCode).emit('gameState', {
-                                players: room.game.players,
-                                pot: room.game.pot,
-                                currentBet: room.game.currentBet,
-                                currentPlayer: room.game.currentPlayer,
-                                gamePhase: room.game.gamePhase,
-                                communityCards: room.game.communityCards || []
-                            });
+                            emitPokerGameState(roomCode, room);
                             // Try bot action again
                             const fixedPlayer = room.game.players[room.game.currentPlayer];
                             if (fixedPlayer && fixedPlayer.isBot) {
