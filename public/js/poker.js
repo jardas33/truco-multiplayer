@@ -2265,8 +2265,13 @@ function drawPlayerCards(x, y, hand, shouldShowCardImages) {
 }
 
 function drawPot() {
+    // Safety check: ensure game exists
+    if (!window.game) {
+        return;
+    }
+    
     // Pot position: center when no community cards, move left when community cards appear
-    const hasCommunityCards = window.game && window.game.communityCards && window.game.communityCards.length > 0;
+    const hasCommunityCards = window.game.communityCards && Array.isArray(window.game.communityCards) && window.game.communityCards.length > 0;
     
     // Calculate how far left to move based on community card width
     let potOffsetX = 0;
