@@ -1121,8 +1121,8 @@
 
         .war-message {
             position: fixed; /* ✅ CRITICAL FIX: Use fixed positioning for proper centering */
-            top: 50%; /* ✅ CRITICAL FIX: Center vertically */
-            left: 50%; /* Already centered horizontally */
+            top: 35%; /* ✅ CRITICAL FIX: Position above battle-area (which is at 50%) */
+            left: 50%; /* Center horizontally */
             transform: translate(-50%, -50%); /* ✅ CRITICAL FIX: Center both axes */
             background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(30,0,0,0.95) 100%);
             color: white;

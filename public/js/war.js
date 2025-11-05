@@ -2644,15 +2644,16 @@ class WarClient {
         warMessage.className = `war-message ${type || 'battle'}`;
         warMessage.style.display = 'block';
         
-        // ✅ CRITICAL FIX: Ensure message is centered both horizontally and vertically
+        // ✅ CRITICAL FIX: Position message above the battle-area box, centered horizontally
+        // Battle-area is at top: 50%, left: 50%, so we position above it
         warMessage.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed positioning
-        warMessage.style.top = '50%'; // ✅ CRITICAL FIX: Center vertically
-        warMessage.style.left = '50%'; // Already centered horizontally
+        warMessage.style.top = '35%'; // ✅ CRITICAL FIX: Position above battle-area (which is at 50%)
+        warMessage.style.left = '50%'; // Center horizontally
         warMessage.style.transform = 'translate(-50%, -50%)'; // ✅ CRITICAL FIX: Center both axes
         warMessage.style.zIndex = '2500'; // ✅ CRITICAL FIX: Ensure it's above canvas but below buttons
         warMessage.style.opacity = '1';
         warMessage.style.visibility = 'visible';
-        console.log('✅ War message shown and centered');
+        console.log('✅ War message shown above battle-area, centered');
     }
 
     // Hide war message
@@ -2679,7 +2680,7 @@ class WarClient {
             actionControls.style.width = 'auto';
             console.log('✅ Action controls shown at bottom center (fixed position)');
             
-            // ✅ CRITICAL FIX: Reset button state when showing controls
+            // ✅ CRITICAL FIX: Reset button state when showing controls and ensure proper positioning
             const battleBtn = document.getElementById('battleBtn');
             if (battleBtn) {
                 battleBtn.disabled = !this.canAct || this.game.gameOver;
@@ -2688,7 +2689,8 @@ class WarClient {
                 battleBtn.style.cursor = battleBtn.disabled ? 'not-allowed' : 'pointer';
                 battleBtn.style.pointerEvents = 'auto';
                 battleBtn.style.zIndex = '3001';
-                console.log('✅ Battle button reset and made clickable');
+                battleBtn.style.position = 'relative'; // Ensure button is positioned correctly within action-controls
+                console.log('✅ Battle button reset and made clickable at bottom center');
             } else {
                 console.warn('⚠️ Battle button not found');
             }
