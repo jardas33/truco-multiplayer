@@ -1520,13 +1520,13 @@ class WarClient {
         
         const faceDownCards = battleArea.querySelectorAll('.face-down');
         faceDownCards.forEach((card, index) => {
-            // ✅ CRITICAL FIX: Track timeouts for cleanup
+            // ✅ CRITICAL FIX: Match battle card pace - use 1200ms delay between cards (same as battles)
             this.safeSetTimeout(() => {
                 card.classList.add('flipping');
                 this.safeSetTimeout(() => {
                     card.classList.remove('flipping');
                 }, 600);
-            }, index * 100);
+            }, index * 1200); // ✅ CRITICAL FIX: Changed from 100ms to 1200ms to match battle card pace
         });
     }
 
@@ -2254,7 +2254,7 @@ class WarClient {
                             'battle-card war-card',
                             {
                                 animate: true,
-                                delay: (groupIndex * 3000) + (cardIndex * 1000), // ✅ CRITICAL FIX: Significantly increased delays for war cards (3000ms = 3 seconds between groups, 1000ms = 1 second between cards) for much better visibility
+                                delay: (groupIndex * 1200 * 2) + (cardIndex * 1200), // ✅ CRITICAL FIX: Match battle card pace - 1200ms between cards (same as battles), 2400ms between groups
                                 isWar: true,
                                 faceUp: warCard.faceUp !== false // Default to face up if not specified
                             }
