@@ -2220,21 +2220,17 @@ function showGameButtons() {
         gameBackToMainMenuBtn.style.display = 'block';
     }
     if (gameCardValuesBtn) {
-        // ✅ CRITICAL FIX: Ensure parent Game div has position relative for absolute positioning to work
-        const gameDiv = document.getElementById('Game');
-        if (gameDiv) {
-            const computedStyle = window.getComputedStyle(gameDiv);
-            if (computedStyle.position === 'static') {
-                gameDiv.style.position = 'relative';
-                console.log('✅ Set Game div position to relative for button positioning');
-            }
-        }
-        
+        // ✅ CRITICAL FIX: Set explicit positioning to prevent buttons from appearing at top of screen
         gameCardValuesBtn.style.display = 'block';
         gameCardValuesBtn.style.visibility = 'visible';
         gameCardValuesBtn.style.opacity = '1';
-        gameCardValuesBtn.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed instead of absolute for viewport-relative positioning
-        console.log('✅ Card Values button shown with fixed positioning');
+        gameCardValuesBtn.style.position = 'fixed';
+        gameCardValuesBtn.style.bottom = '80px'; // ✅ CRITICAL FIX: Explicitly set bottom position
+        gameCardValuesBtn.style.left = '50%';
+        gameCardValuesBtn.style.transform = 'translateX(50px)';
+        gameCardValuesBtn.style.top = 'auto'; // ✅ CRITICAL FIX: Explicitly remove any top positioning
+        gameCardValuesBtn.style.zIndex = '3000';
+        console.log('✅ Card Values button shown with fixed positioning at bottom');
         
         // ✅ CRITICAL FIX: Log button position for debugging
         console.log('🔍 DEBUG: Card Values button position:', {
@@ -2253,12 +2249,17 @@ function showGameButtons() {
         console.error('❌ gameCardValuesBtn element not found!');
     }
     if (roundHistoryBtn) {
-        // ✅ CRITICAL FIX: Use fixed instead of absolute for viewport-relative positioning
+        // ✅ CRITICAL FIX: Set explicit positioning to prevent buttons from appearing at top of screen
         roundHistoryBtn.style.display = 'block';
         roundHistoryBtn.style.visibility = 'visible';
         roundHistoryBtn.style.opacity = '1';
-        roundHistoryBtn.style.position = 'fixed'; // ✅ CRITICAL FIX: Use fixed instead of absolute for viewport-relative positioning
-        console.log('✅ Round History button shown with fixed positioning');
+        roundHistoryBtn.style.position = 'fixed';
+        roundHistoryBtn.style.bottom = '80px'; // ✅ CRITICAL FIX: Explicitly set bottom position
+        roundHistoryBtn.style.left = '50%';
+        roundHistoryBtn.style.transform = 'translateX(-150px)';
+        roundHistoryBtn.style.top = 'auto'; // ✅ CRITICAL FIX: Explicitly remove any top positioning
+        roundHistoryBtn.style.zIndex = '3000';
+        console.log('✅ Round History button shown with fixed positioning at bottom');
         
         // ✅ CRITICAL FIX: Log button position for debugging
         console.log('🔍 DEBUG: Round History button position:', {
