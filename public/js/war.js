@@ -1266,7 +1266,6 @@ class WarClient {
         this.hideActionControls();
         
         // ✅ CRITICAL FIX: Reset cursor immediately after battle is sent (battleStarted will handle the rest)
-        const battleBtn = document.getElementById('battleBtn');
         if (battleBtn) {
             battleBtn.style.cursor = 'default'; // Reset cursor immediately
         }

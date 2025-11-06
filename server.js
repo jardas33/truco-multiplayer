@@ -3830,20 +3830,16 @@ io.on('connection', (socket) => {
                 endWarGame(room, roomCode);
             }
         } else {
-            // ✅ CRITICAL FIX: Emit next battle faster - reduce delay for quicker cleanup
-            // Card collection animation completes quickly (max ~1 second for 2 players, ~1.5 seconds for 4 players)
-            const playerCount = room.game.players.filter(p => p && p.hand && p.hand.length > 0).length;
-            const nextBattleDelay = playerCount <= 2 ? 1000 : 1500; // Faster for 2 players (1s) vs more players (1.5s)
-            setTimeout(() => {
-                io.to(roomCode).emit('nextBattle', {
-                    battleNumber: room.game.battleNumber,
-                    players: room.game.players.map((p, index) => ({
-                        name: p.name,
-                        hand: p.hand || [], // Show hand length for card count display
-                        playerIndex: index
-                    }))
-                });
-            }, nextBattleDelay); // ✅ CRITICAL FIX: Reduced delay for faster cleanup
+            // ✅ CRITICAL FIX: Emit next battle immediately - card collection animation completes quickly
+            // Client-side will handle showing button immediately after cleanup
+            io.to(roomCode).emit('nextBattle', {
+                battleNumber: room.game.battleNumber,
+                players: room.game.players.map((p, index) => ({
+                    name: p.name,
+                    hand: p.hand || [], // Show hand length for card count display
+                    playerIndex: index
+                }))
+            });
         }
     }
 
