@@ -129,26 +129,23 @@ function createCanvasSafely() {
     }
 
     // Create p5.js buttons with proper z-index and identical styling
-    // Check current path before creating button
-    const currentPath = window.location.pathname;
-    
-    // Only create instructions button for games that don't have their own HTML button
-    // Battleship and War have their own HTML buttons, so skip p5.js button creation
-    if (currentPath !== '/battleship' && currentPath !== '/war') {
-        instructionsButton = createButton("Instructions");
-        instructionsButton.id('instructionsButton'); // Add ID for CSS targeting
-        instructionsButton.position(20, 20);
-        instructionsButton.mousePressed(() => {
-            console.log('📖 Instructions button clicked');
-            // Call the correct showInstructions function from functions.js
-            if (typeof window.showInstructions === 'function') {
-                window.showInstructions();
-            } else if (typeof showInstructions === 'function') {
-                showInstructions();
-            } else {
-                console.error('showInstructions function not found');
-            }
-        });
+    instructionsButton = createButton("Instructions");
+    instructionsButton.id('instructionsButton'); // Add ID for CSS targeting
+    instructionsButton.position(20, 20);
+    instructionsButton.mousePressed(() => {
+        console.log('📖 Instructions button clicked');
+        // Call the correct showInstructions function from functions.js
+        if (typeof window.showInstructions === 'function') {
+            window.showInstructions();
+        } else if (typeof showInstructions === 'function') {
+            showInstructions();
+        } else {
+            console.error('showInstructions function not found');
+        }
+    });
+    // Only hide instructions button for Battleship (it has its own HTML button)
+    // War keeps both buttons - p5.js button and HTML button both work
+    if (currentPath !== '/battleship') {
         instructionsButton.parent('Menu');
         instructionsButton.style('z-index', '100'); // Higher z-index
         instructionsButton.style('position', 'absolute'); // Force absolute positioning
@@ -165,8 +162,8 @@ function createCanvasSafely() {
         instructionsButton.style('height', 'auto !important'); // Ensure auto height
         instructionsButton.show();
     } else {
-        // Don't create p5.js button for Battleship and War (they have their own HTML buttons)
-        console.log('📖 Skipping p5.js instructions button creation - game has HTML button');
+        // Hide instructions button for Battleship (it has its own HTML button)
+        instructionsButton.hide();
     }
 
     // Only show Card Values button for Truco game
