@@ -2959,6 +2959,9 @@ function startMultiplayerGame(data) {
             showTrucoButton();
         }
         
+        // ✅ CRITICAL FIX: Show game buttons (Round History and Card Values) when game starts
+        showGameButtons();
+        
         // ✅ DEBUG: Log complete game state for troubleshooting
         logMultiplayerGameState();
         
