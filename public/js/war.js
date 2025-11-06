@@ -1610,7 +1610,7 @@ class WarClient {
         this.game.isWar = false;
         this.game.gamePhase = 'playing';
         
-        // ✅ CRITICAL FIX: Update battle history with war winner information
+        // ✅ CRITICAL FIX: Update battle history with war winner information and war cards
         if (data.winner && this.battleHistory.length > 0) {
             const lastEntry = this.battleHistory[this.battleHistory.length - 1];
             if (lastEntry && !lastEntry.winner) {
@@ -1619,6 +1619,13 @@ class WarClient {
                     cardsWon: data.winner.cardsWon || 0
                 };
                 lastEntry.isWar = true; // Mark as war
+                // ✅ CRITICAL FIX: Store war cards (especially face-up cards) for history display
+                // Store a copy of war cards before clearing them
+                const warCardsCopy = [...(this.game.warCards || [])].map(wc => ({
+                    ...wc,
+                    card: wc.card ? { ...wc.card } : null
+                }));
+                lastEntry.warCards = warCardsCopy; // Store war cards for detailed history display
             }
         }
         
@@ -2157,7 +2164,7 @@ class WarClient {
         `;
     }
     
-    // ✅ CRITICAL FIX: Update battle history log display
+    // ✅ CRITICAL FIX: Update battle history log display with detailed winner explanations
     updateBattleHistoryLog() {
         const historyContent = document.getElementById('historyContent');
         if (!historyContent) return;
@@ -2179,16 +2186,88 @@ class WarClient {
                 const cardTexts = entry.cards.map((bc, idx) => {
                     const playerName = bc.player?.name || `Player ${bc.playerIndex + 1}`;
                     const cardName = this.getCardDisplayValue(bc.card);
+                    const cardValue = bc.card?.value || 0;
                     return `<span class="player-name">${playerName}</span> played <span class="card-name">${cardName}</span>`;
                 }).join(', ');
                 entryText += cardTexts;
             }
             
-            // Show winner if resolved
+            // Show winner if resolved with detailed explanation
             if (entry.winner) {
-                entryText += ` → <span class="winner-text">🏆 ${entry.winner.name} wins!</span>`;
+                let winnerExplanation = '';
+                
+                // For wars, compare face-up war cards instead of battle cards
+                if (entry.isWar && entry.warCards && entry.warCards.length > 0) {
+                    // Get only face-up war cards (these determine the winner)
+                    const faceUpWarCards = entry.warCards.filter(wc => wc && wc.faceUp && wc.card);
+                    
+                    if (faceUpWarCards.length > 0) {
+                        // Get all face-up card values for comparison
+                        const warCardComparisons = faceUpWarCards.map(wc => ({
+                            playerName: wc.player?.name || `Player ${wc.playerIndex + 1}`,
+                            cardName: this.getCardDisplayValue(wc.card),
+                            cardValue: wc.card?.value || 0
+                        }));
+                        
+                        // Sort by value to find highest
+                        const sortedWarCards = [...warCardComparisons].sort((a, b) => b.cardValue - a.cardValue);
+                        const winnerCardInfo = warCardComparisons.find(c => c.playerName === entry.winner.name);
+                        
+                        if (winnerCardInfo && sortedWarCards[0].playerName === entry.winner.name) {
+                            // Winner has the highest face-up card - show comparison
+                            const otherWarCards = warCardComparisons.filter(c => c.playerName !== entry.winner.name);
+                            if (otherWarCards.length > 0) {
+                                const highestOther = otherWarCards.reduce((max, c) => c.cardValue > max.cardValue ? c : max, otherWarCards[0]);
+                                winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins WAR with face-up ${winnerCardInfo.cardName} (${winnerCardInfo.cardValue}) vs ${highestOther.playerName}'s ${highestOther.cardName} (${highestOther.cardValue})</span>`;
+                            } else {
+                                winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins WAR with face-up ${winnerCardInfo.cardName} (${winnerCardInfo.cardValue})</span>`;
+                            }
+                        } else {
+                            winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins WAR!</span>`;
+                        }
+                    } else {
+                        winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins WAR!</span>`;
+                    }
+                } else {
+                    // Regular battle - compare battle cards
+                    const winnerCard = entry.cards?.find(bc => {
+                        const playerName = bc.player?.name || `Player ${bc.playerIndex + 1}`;
+                        return playerName === entry.winner.name;
+                    });
+                    
+                    if (winnerCard && entry.cards && entry.cards.length > 1) {
+                        // Get all card values for comparison
+                        const cardComparisons = entry.cards.map(bc => ({
+                            playerName: bc.player?.name || `Player ${bc.playerIndex + 1}`,
+                            cardName: this.getCardDisplayValue(bc.card),
+                            cardValue: bc.card?.value || 0
+                        }));
+                        
+                        // Sort by value to find highest
+                        const sortedCards = [...cardComparisons].sort((a, b) => b.cardValue - a.cardValue);
+                        const winnerCardInfo = cardComparisons.find(c => c.playerName === entry.winner.name);
+                        
+                        if (winnerCardInfo && sortedCards[0].playerName === entry.winner.name) {
+                            // Winner has the highest card - show comparison
+                            const otherCards = cardComparisons.filter(c => c.playerName !== entry.winner.name);
+                            if (otherCards.length > 0) {
+                                const highestOther = otherCards.reduce((max, c) => c.cardValue > max.cardValue ? c : max, otherCards[0]);
+                                winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins with ${winnerCardInfo.cardName} (${winnerCardInfo.cardValue}) vs ${highestOther.playerName}'s ${highestOther.cardName} (${highestOther.cardValue})</span>`;
+                            } else {
+                                winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins with ${winnerCardInfo.cardName} (${winnerCardInfo.cardValue})</span>`;
+                            }
+                        } else {
+                            winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins!</span>`;
+                        }
+                    } else {
+                        winnerExplanation = `<span class="winner-text">🏆 ${entry.winner.name} wins!</span>`;
+                    }
+                }
+                
+                entryText += ` → ${winnerExplanation}`;
+                
                 if (entry.winner.cardsWon > 0) {
-                    entryText += ` (+${entry.winner.cardsWon} cards)`;
+                    entryText += ` <span class="cards-won">(+${entry.winner.cardsWon} cards)</span>`;
                 }
             }
             
