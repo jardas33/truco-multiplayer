@@ -3155,22 +3155,35 @@ class WarClient {
             const btn = parent.querySelector('#backToMainMenuBtn');
             
             if (btn) {
-                // ✅ CRITICAL FIX: Add event handler with maximum priority
+                // ✅ CRITICAL FIX: Add event handler with maximum priority and confirmation dialog
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    console.log('🔙 Back to Main Menu clicked - navigating to /');
-                    // Navigate to main menu (home page) immediately
-                    window.location.href = '/';
+                    console.log('🔙 Back to Main Menu clicked - showing confirmation');
+                    // ✅ CRITICAL FIX: Show warning before navigating away
+                    const confirmed = confirm('⚠️ Are you sure you want to leave the game? This will disconnect you from the current game and you will lose your progress.');
+                    if (confirmed) {
+                        console.log('🔙 User confirmed - navigating to main menu');
+                        window.location.href = '/';
+                    } else {
+                        console.log('🔙 User cancelled - staying in game');
+                    }
                 }, true); // Use capture phase for maximum priority
                 
                 // Also set onclick as backup
                 btn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🔙 Back to Main Menu clicked (onclick) - navigating to /');
-                    window.location.href = '/';
+                    console.log('🔙 Back to Main Menu clicked (onclick) - showing confirmation');
+                    // ✅ CRITICAL FIX: Show warning before navigating away
+                    const confirmed = confirm('⚠️ Are you sure you want to leave the game? This will disconnect you from the current game and you will lose your progress.');
+                    if (confirmed) {
+                        console.log('🔙 User confirmed (onclick) - navigating to main menu');
+                        window.location.href = '/';
+                    } else {
+                        console.log('🔙 User cancelled (onclick) - staying in game');
+                    }
                 };
                 
                 btn.setAttribute('aria-label', 'Back to Main Menu');
@@ -3197,21 +3210,35 @@ class WarClient {
             const btn = parent.querySelector('#backToWarMenuBtn');
             
             if (btn) {
-                // ✅ CRITICAL FIX: Add event handler with maximum priority
+                // ✅ CRITICAL FIX: Add event handler with maximum priority and confirmation dialog
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    console.log('⚔️ War Menu clicked - navigating to /war.html');
-                    window.location.href = '/war.html';
+                    console.log('⚔️ War Menu clicked - showing confirmation');
+                    // ✅ CRITICAL FIX: Show warning before navigating away
+                    const confirmed = confirm('⚠️ Are you sure you want to leave the game? This will disconnect you from the current game and you will lose your progress.');
+                    if (confirmed) {
+                        console.log('⚔️ User confirmed - navigating to War Menu');
+                        window.location.href = '/war.html';
+                    } else {
+                        console.log('⚔️ User cancelled - staying in game');
+                    }
                 }, true); // Use capture phase for maximum priority
                 
                 // Also set onclick as backup
                 btn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('⚔️ War Menu clicked (onclick) - navigating to /war.html');
-                    window.location.href = '/war.html';
+                    console.log('⚔️ War Menu clicked (onclick) - showing confirmation');
+                    // ✅ CRITICAL FIX: Show warning before navigating away
+                    const confirmed = confirm('⚠️ Are you sure you want to leave the game? This will disconnect you from the current game and you will lose your progress.');
+                    if (confirmed) {
+                        console.log('⚔️ User confirmed (onclick) - navigating to War Menu');
+                        window.location.href = '/war.html';
+                    } else {
+                        console.log('⚔️ User cancelled (onclick) - staying in game');
+                    }
                 };
                 
                 btn.setAttribute('aria-label', 'War Menu');
