@@ -926,6 +926,10 @@ class BlackjackClient {
         console.log('🃏 Create Room button clicked');
         console.trace('Stack trace:');
         
+        // ✅ CRITICAL FIX: Clear player nickname when creating new room to reset to default names
+        localStorage.removeItem('blackjackPlayerNickname');
+        console.log('🃏 Cleared blackjackPlayerNickname - names will reset to default');
+        
         // Check if socket is ready
         const checkAndCreateRoom = () => {
             if (typeof GameFramework === 'undefined' || !GameFramework.createRoom) {

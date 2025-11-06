@@ -994,6 +994,10 @@ class WarClient {
     createRoom() {
         console.log('🎮 Create Room button clicked');
         
+        // ✅ CRITICAL FIX: Clear player nickname when creating new room to reset to default names
+        localStorage.removeItem('warPlayerNickname');
+        console.log('⚔️ Cleared warPlayerNickname - names will reset to default');
+        
         // Try to create room immediately first
         if (typeof GameFramework !== 'undefined' && GameFramework.createRoom) {
             console.log('✅ GameFramework available, creating room immediately');
