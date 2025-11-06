@@ -3534,14 +3534,19 @@ io.on('connection', (socket) => {
             }))
         });
         
-        // ✅ CRITICAL FIX: Resolve war after delay - match battle timing (10000ms) plus extra time for war cards to appear and flip
-        // War has more cards (3 face-down + 1 face-up per player = 4 cards per player)
-        // With 4 players, that's up to 16 cards. At 1200ms per card, that's ~19 seconds just for cards to appear
-        // Plus 2000ms for war message, plus time for face-down cards to flip
-        // Total: ~25 seconds minimum to ensure all cards are visible
+        // ✅ CRITICAL FIX: Resolve war after delay - slightly longer than battle but still fast
+        // War has more cards (3 face-down + 1 face-up per war player = 4 cards per war player)
+        // Calculate based on war players (not all players) and card count
+        // Battle: max 3.5 seconds, War: max 5 seconds (slightly longer as requested)
+        const warPlayerCount = validWarPlayers.length;
+        const warCardsPerPlayer = 4; // 3 face-down + 1 face-up
+        const totalWarCards = warPlayerCount * warCardsPerPlayer;
+        // War cards appear faster now (similar timing to battle cards)
+        const warCardAppearanceDelay = totalWarCards * 300; // 300ms per card (faster than battle's 1200ms since war has more cards)
+        const warResolutionDelay = Math.min(warCardAppearanceDelay + 1000, 5000); // Max 5 seconds (slightly longer than battle's 3.5s)
         setTimeout(() => {
             resolveWar(room, roomCode);
-        }, 25000); // ✅ CRITICAL FIX: Increased from 2000ms to 25000ms to match battle pace and allow all war cards to appear and flip
+        }, warResolutionDelay); // ✅ CRITICAL FIX: Dynamic delay based on war player count, max 5 seconds (slightly longer than battle)
     }
     
     // ✅ CRITICAL FIX: Helper function to end war game properly
