@@ -786,7 +786,11 @@ io.on('connection', (socket) => {
                         message: `⚠️ ${leavingPlayerName} left the game and was replaced with a bot.`
                     };
                     // ✅ CRITICAL FIX: Include currentPlayer in event data for games that use it
-                    if (room.game && room.game.currentPlayer !== undefined) {
+                    if (room.gameType === 'battleship') {
+                        // Battleship uses room.currentPlayer, not room.game.currentPlayer
+                        replacementData.currentPlayer = room.currentPlayer !== undefined ? room.currentPlayer : 0;
+                        replacementData.roomId = roomCode;
+                    } else if (room.game && room.game.currentPlayer !== undefined) {
                         replacementData.currentPlayer = room.game.currentPlayer;
                     }
                     io.to(roomCode).emit('playerReplacedWithBot', replacementData);
@@ -856,14 +860,21 @@ io.on('connection', (socket) => {
                             gamePhase: 'playing'
                         });
                         console.log(`✅ Truco gameState and turnChanged events emitted`);
-                    } else if (room.gameType === 'battleship' && room.game) {
+                    } else if (room.gameType === 'battleship') {
                         // Emit updated game state for Battleship
+                        // ✅ CRITICAL FIX: Battleship uses room.currentPlayer, not room.game.currentPlayer
                         console.log(`📢 Emitting gameState for Battleship to room ${roomCode}`);
+                        console.log(`🔍 DEBUG: Battleship room.currentPlayer: ${room.currentPlayer}, room.players.length: ${room.players.length}`);
                         io.to(roomCode).emit('battleshipGameState', {
-                            players: room.game.players,
-                            currentPlayer: room.game.currentPlayer
+                            players: room.players,
+                            currentPlayer: room.currentPlayer !== undefined ? room.currentPlayer : 0
                         });
-                        console.log(`✅ Battleship gameState emitted`);
+                        // ✅ CRITICAL FIX: Also emit turn change to ensure UI updates properly
+                        io.to(roomCode).emit('battleshipTurnChange', {
+                            roomId: roomCode,
+                            currentPlayer: room.currentPlayer !== undefined ? room.currentPlayer : 0
+                        });
+                        console.log(`✅ Battleship gameState and turnChange emitted`);
                     } else if (room.gameType === 'go-fish' && room.game) {
                         // Emit updated game state for Go Fish
                         console.log(`📢 Emitting gameState for Go Fish to room ${roomCode}`);
@@ -973,8 +984,18 @@ io.on('connection', (socket) => {
                             }
                         }
                     } else if (room.gameType === 'battleship') {
-                        // For battleship, let the existing reconnection logic handle it
-                        console.log(`🚢 Battleship player replaced with bot - existing logic will handle`);
+                        // ✅ CRITICAL FIX: For Battleship, ensure currentPlayer is updated if needed
+                        // If the leaving player was the current player, keep them as current (they're now a bot)
+                        // The bot will play automatically when it's their turn
+                        console.log(`🚢 Battleship player replaced with bot - playerIndex: ${playerIndex}, currentPlayer: ${room.currentPlayer}`);
+                        if (room.currentPlayer === playerIndex) {
+                            // The leaving player was the current player - they're now a bot, so keep them as current
+                            // The bot will play when it's their turn
+                            console.log(`🚢 Leaving player was current player - keeping them as current (now a bot)`);
+                        } else {
+                            // The leaving player was not the current player - no turn change needed
+                            console.log(`🚢 Leaving player was not current player - no turn change needed`);
+                        }
                     }
                     // For War, bots will participate in battles when they are started
                     // The game will continue normally with the bot participating

@@ -285,11 +285,90 @@ class BattleshipGame {
                         }
                     });
                     
+                    // ✅ CRITICAL FIX: Update currentPlayer if provided and trigger turn change
+                    if (data.currentPlayer !== undefined) {
+                        console.log(`🚢 Bot replacement: Updating currentPlayer to ${data.currentPlayer}`);
+                        const turnChangeData = {
+                            currentPlayer: data.currentPlayer,
+                            roomId: data.roomId
+                        };
+                        this.handleTurnChange(turnChangeData);
+                        
+                        // ✅ CRITICAL FIX: Check if it's a bot's turn and trigger bot attack
+                        const gameInstance = window.battleshipGame || this.game;
+                        if (gameInstance && gameInstance.isMultiplayer && !gameInstance.isPlayerTurn && data.currentPlayer !== undefined) {
+                            // Check if the current player (based on server index) is a bot
+                            // The currentPlayer from server is the index in the players array
+                            const currentPlayerIndex = data.currentPlayer;
+                            const currentPlayer = gameInstance.players && gameInstance.players[currentPlayerIndex];
+                            const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true;
+                            
+                            // If the current player is a bot and it's their turn, trigger bot attack
+                            if (isCurrentPlayerBot) {
+                                console.log(`🚢 Bot replacement: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack`);
+                                setTimeout(() => {
+                                    this.handleBotAttack();
+                                }, 2000);
+                            }
+                        }
+                    }
+                    
                     // Update UI
                     if (typeof this.updateUI === 'function') {
                         this.updateUI();
                     }
+                    
+                    // Force a redraw to show the updated turn state
+                    if (window.battleshipClient) {
+                        window.battleshipClient.staticRender();
+                    }
                 }
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle battleshipGameState events (emitted after bot replacement)
+        this.socket.on('battleshipGameState', (data) => {
+            console.log('🚢 Battleship game state received:', data);
+            const gameInstance = window.battleshipGame || this.game;
+            if (!gameInstance) {
+                console.log('🚢 No game instance available for game state update');
+                return;
+            }
+            
+            // Update players array if provided
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach((player, index) => {
+                    if (gameInstance.players && gameInstance.players[index]) {
+                        gameInstance.players[index].isBot = player.isBot || false;
+                        if (player.name) {
+                            gameInstance.players[index].name = player.name;
+                        }
+                        if (player.nickname) {
+                            gameInstance.players[index].nickname = player.nickname;
+                        }
+                    }
+                });
+            }
+            
+            // ✅ CRITICAL FIX: Update currentPlayer and trigger turn change
+            // handleTurnChange already handles bot attack triggering, so no need to duplicate here
+            if (data.currentPlayer !== undefined) {
+                console.log(`🚢 Game state update: currentPlayer=${data.currentPlayer}`);
+                const turnChangeData = {
+                    currentPlayer: data.currentPlayer,
+                    roomId: data.roomId
+                };
+                this.handleTurnChange(turnChangeData);
+            }
+            
+            // Update UI
+            if (typeof this.updateUI === 'function') {
+                this.updateUI();
+            }
+            
+            // Force a redraw
+            if (window.battleshipClient) {
+                window.battleshipClient.staticRender();
             }
         });
         
@@ -591,6 +670,73 @@ class BattleshipGame {
         if (window.battleshipClient) {
             window.battleshipClient.staticRender();
         }
+        
+        // ✅ CRITICAL FIX: Check if it's a bot's turn and trigger bot attack
+        if (gameInstance.isMultiplayer && !gameInstance.isPlayerTurn && data.currentPlayer !== undefined) {
+            // Check if the current player (based on server index) is a bot
+            // The currentPlayer from server is the index in the players array
+            const currentPlayerIndex = data.currentPlayer;
+            const currentPlayer = gameInstance.players && gameInstance.players[currentPlayerIndex];
+            const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true;
+            
+            // If the current player is a bot and it's their turn, trigger bot attack
+            if (isCurrentPlayerBot) {
+                console.log(`🚢 Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack`);
+                setTimeout(() => {
+                    this.handleBotAttack();
+                }, 2000);
+            }
+        }
+    }
+    
+    // ✅ CRITICAL FIX: Handle bot attacks in multiplayer mode
+    handleBotAttack() {
+        const gameInstance = window.battleshipGame || this.game;
+        if (!gameInstance || !gameInstance.isMultiplayer) {
+            console.log('🚢 handleBotAttack: Not in multiplayer mode or no game instance');
+            return;
+        }
+        
+        // Only proceed if it's not the player's turn
+        if (gameInstance.isPlayerTurn) {
+            console.log('🚢 handleBotAttack: It\'s the player\'s turn, not bot\'s turn');
+            return;
+        }
+        
+        // Check if game is still in playing phase
+        if (gameInstance.gamePhase !== 'playing' || gameInstance.gameOver) {
+            console.log(`🚢 handleBotAttack: Game not in playing phase (phase: ${gameInstance.gamePhase}, gameOver: ${gameInstance.gameOver})`);
+            return;
+        }
+        
+        console.log('🚢 Bot attack triggered - selecting target...');
+        
+        // Find an un-attacked position on the player's grid (grid 0)
+        const attackGrid = gameInstance.attackGrids[0]; // Player 0's view of opponent's grid
+        const availablePositions = [];
+        
+        for (let y = 0; y < gameInstance.gridSize; y++) {
+            for (let x = 0; x < gameInstance.gridSize; x++) {
+                if (!attackGrid[y][x].hit && !attackGrid[y][x].miss) {
+                    availablePositions.push({ x, y });
+                }
+            }
+        }
+        
+        if (availablePositions.length === 0) {
+            console.log('🚢 Bot attack: No available positions to attack');
+            return;
+        }
+        
+        // Select a random position (simple bot strategy - can be improved later)
+        const target = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        
+        console.log(`🚢 Bot attacking ${letters[target.y]}${target.x + 1}`);
+        gameInstance.addToHistory(`🤖 Bot attacks ${letters[target.y]}${target.x + 1}`, 'info');
+        
+        // Emit the attack to the server
+        gameInstance.emitAttack(target.x, target.y);
     }
     
     handleOpponentShipPlaced(data) {
