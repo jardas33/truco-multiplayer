@@ -2147,8 +2147,15 @@ function showGameButtons() {
     const gameCardValuesBtn = document.getElementById('gameCardValuesBtn');
     const roundHistoryBtn = document.getElementById('roundHistoryBtn');
     
+    console.log('🔍 DEBUG: showGameButtons() called');
+    console.log('🔍 DEBUG: gameCardValuesBtn found:', !!gameCardValuesBtn);
+    console.log('🔍 DEBUG: roundHistoryBtn found:', !!roundHistoryBtn);
+    
     if (gameNavigationButtons) {
         gameNavigationButtons.style.display = 'flex';
+        console.log('✅ Game navigation buttons shown');
+    } else {
+        console.warn('⚠️ gameNavigationButtons element not found');
     }
     if (gameBackToMenuBtn) {
         gameBackToMenuBtn.style.display = 'block';
@@ -2158,9 +2165,19 @@ function showGameButtons() {
     }
     if (gameCardValuesBtn) {
         gameCardValuesBtn.style.display = 'block';
+        gameCardValuesBtn.style.visibility = 'visible';
+        gameCardValuesBtn.style.opacity = '1';
+        console.log('✅ Card Values button shown');
+    } else {
+        console.error('❌ gameCardValuesBtn element not found!');
     }
     if (roundHistoryBtn) {
         roundHistoryBtn.style.display = 'block';
+        roundHistoryBtn.style.visibility = 'visible';
+        roundHistoryBtn.style.opacity = '1';
+        console.log('✅ Round History button shown');
+    } else {
+        console.error('❌ roundHistoryBtn element not found!');
     }
     
     console.log('✅ Game buttons shown');
