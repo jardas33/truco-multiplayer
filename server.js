@@ -990,7 +990,6 @@ io.on('connection', (socket) => {
         } else {
             console.log(`⚠️ Room ${roomCode} not found for disconnected socket ${socket.id}`);
         }
-    }
     });
     
     // ✅ DEBUG: Log all incoming events to see if startGame is received
