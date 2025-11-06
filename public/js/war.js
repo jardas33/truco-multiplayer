@@ -1265,6 +1265,12 @@ class WarClient {
         this.canAct = false;
         this.hideActionControls();
         
+        // ✅ CRITICAL FIX: Reset cursor immediately after battle is sent (battleStarted will handle the rest)
+        const battleBtn = document.getElementById('battleBtn');
+        if (battleBtn) {
+            battleBtn.style.cursor = 'default'; // Reset cursor immediately
+        }
+        
         // ✅ CRITICAL FIX: Reset flag after server responds (don't reset immediately)
         // The flag will be reset when battleStarted event is received
         console.log('⏳ Waiting for server to start battle...');
@@ -1752,10 +1758,17 @@ class WarClient {
         this.canAct = true;
         this.updateUI();
         
-            // ✅ CRITICAL FIX: Show battle button immediately after cleanup completes
-            // Card collection animation completes quickly, so show button right away
-            this.showActionControls();
-            console.log('✅ Battle button shown immediately after cleanup');
+        // ✅ CRITICAL FIX: Show battle button immediately after cleanup completes
+        // Card collection animation completes quickly, so show button right away
+        this.showActionControls();
+        
+        // ✅ CRITICAL FIX: Ensure cursor is reset to pointer when button is available
+        const battleBtn = document.getElementById('battleBtn');
+        if (battleBtn) {
+            battleBtn.style.cursor = 'pointer';
+        }
+        
+        console.log('✅ Battle button shown immediately after cleanup');
     }
 
     // Show game over with celebration
