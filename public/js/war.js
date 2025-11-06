@@ -1754,7 +1754,7 @@ class WarClient {
             const playerCount = this.game.players.length;
             const buttonDelay = playerCount <= 2 ? 1500 : 2000; // Faster for 2 players (1.5s) vs more players (2s)
             this.safeSetTimeout(() => {
-                this.showActionControls();
+        this.showActionControls();
                 console.log('✅ Battle button shown - waiting for user to click (battle button is mandatory)');
             }, buttonDelay); // ✅ CRITICAL FIX: Reduced delay for faster cleanup (was 4000ms)
     }
@@ -2352,12 +2352,15 @@ class WarClient {
         
         // Show battle cards with proper card images and animations
         if (this.game.battleCards && this.game.battleCards.length > 0) {
+            console.log(`⚔️ updateBattleArea: Rendering ${this.game.battleCards.length} battle cards`);
             this.game.battleCards.forEach((battleCard, index) => {
                 // ✅ CRITICAL FIX: Validate battle card data
                 if (!battleCard || !battleCard.card) {
-                    console.warn(`⚠️ Invalid battle card at index ${index}`);
+                    console.warn(`⚠️ Invalid battle card at index ${index}:`, battleCard);
                     return;
                 }
+                
+                console.log(`⚔️ Creating card element for index ${index}: ${battleCard.card.name} (player ${battleCard.playerIndex || index})`);
                 
                 const cardDiv = this.createCardElement(
                     battleCard.card, 
@@ -2369,13 +2372,21 @@ class WarClient {
                         faceUp: true
                     }
                 );
+                
+                if (!cardDiv) {
+                    console.error(`❌ Failed to create card element for index ${index}`);
+                    return;
+                }
+                
                 cardDiv.setAttribute('data-card-id', `battle-${index}`);
-                cardDiv.setAttribute('data-player-index', battleCard.playerIndex || index);
+                cardDiv.setAttribute('data-player-index', battleCard.playerIndex !== undefined ? battleCard.playerIndex : index);
                 if (battleCard.playerIndex === this.localPlayerIndex) {
                     cardDiv.classList.add('my-card');
                 }
             battleArea.appendChild(cardDiv);
-        });
+                console.log(`✅ Card element ${index} appended to battle area`);
+            });
+            console.log(`⚔️ updateBattleArea: Total cards in battle area: ${battleArea.children.length}`);
         }
         
         // Show war cards with flip animations
