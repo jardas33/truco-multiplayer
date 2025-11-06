@@ -3298,6 +3298,11 @@ io.on('connection', (socket) => {
             }
             
             // ✅ CRITICAL FIX: Only play cards from active players with proper validation
+            // Count players BEFORE removing cards to ensure accurate timing calculation
+            const initialActivePlayers = room.game.players.filter(p => p && p.hand && p.hand.length > 0);
+            const initialPlayerCount = initialActivePlayers.length;
+            console.log(`⚔️ Starting battle with ${initialPlayerCount} active players`);
+            
             for (let i = 0; i < room.game.players.length; i++) {
                 const player = room.game.players[i];
                 if (player && player.hand && Array.isArray(player.hand) && player.hand.length > 0) {
@@ -3309,6 +3314,7 @@ io.on('connection', (socket) => {
                             player: player,
                             playerIndex: i
                         });
+                        console.log(`⚔️ Player ${i} (${player.name}) played card: ${card.name} (value: ${card.value})`);
                     } else {
                         console.warn(`⚠️ Invalid card removed from player ${i}'s hand:`, card);
                         // Try to restore if we can
@@ -3316,8 +3322,12 @@ io.on('connection', (socket) => {
                             player.hand.unshift(card);
                         }
                     }
+                } else {
+                    console.log(`⚠️ Player ${i} (${player?.name || 'unknown'}) skipped - no cards or invalid hand`);
                 }
             }
+            
+            console.log(`⚔️ Total battle cards collected: ${room.game.battleCards.length} out of ${initialPlayerCount} players`);
             
             // ✅ CRITICAL FIX: Check if we have enough cards for battle
             if (room.game.battleCards.length < 2) {
@@ -3328,7 +3338,12 @@ io.on('connection', (socket) => {
             }
             
             // ✅ CRITICAL FIX: Validate all battle cards have valid card data
-            room.game.battleCards = room.game.battleCards.filter(bc => bc && bc.card && bc.player);
+            const validBattleCards = room.game.battleCards.filter(bc => bc && bc.card && bc.player);
+            if (validBattleCards.length !== room.game.battleCards.length) {
+                console.warn(`⚠️ Filtered out ${room.game.battleCards.length - validBattleCards.length} invalid battle cards`);
+            }
+            room.game.battleCards = validBattleCards;
+            
             if (room.game.battleCards.length < 2) {
                 console.log('⚠️ Invalid battle cards - ending game');
                 endWarGame(room, roomCode);
@@ -3347,12 +3362,14 @@ io.on('connection', (socket) => {
                 }))
             });
             
-            // ✅ CRITICAL FIX: Resolve battle after cards appear - calculate based on player count
+            // ✅ CRITICAL FIX: Resolve battle after cards appear - calculate based on ACTUAL battle cards count
+            // Use battleCards.length instead of player count after cards removed
             // For 2 players: 2 cards * 1200ms = 2400ms + 500ms buffer = ~3000ms
             // For 4 players: 4 cards * 1200ms = 4800ms + 500ms buffer = ~5300ms
-            const playerCount = room.game.players.filter(p => p && p.hand && p.hand.length > 0).length;
-            const cardAppearanceDelay = playerCount * 1200; // 1200ms per card appearance
+            const actualBattleCardCount = room.game.battleCards.length;
+            const cardAppearanceDelay = actualBattleCardCount * 1200; // 1200ms per card appearance
             const battleResolutionDelay = Math.min(cardAppearanceDelay + 500, 3500); // Max 3.5 seconds total
+            console.log(`⚔️ Battle resolution delay: ${battleResolutionDelay}ms (${actualBattleCardCount} cards)`);
             setTimeout(() => {
                 resolveWarBattle(room, roomCode);
             }, battleResolutionDelay); // ✅ CRITICAL FIX: Dynamic delay based on player count, max 3.5 seconds
