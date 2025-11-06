@@ -2381,6 +2381,14 @@ class WarClient {
                     return;
                 }
                 
+                // ✅ CRITICAL FIX: Ensure card is visible - card-enter class might hide it initially
+                // Make sure card is visible even if animation hasn't started yet
+                if (cardDiv.classList.contains('card-enter')) {
+                    // Card will animate in, but ensure it's not hidden
+                    cardDiv.style.opacity = '1';
+                    cardDiv.style.visibility = 'visible';
+                }
+                
                 cardDiv.setAttribute('data-card-id', `battle-${index}`);
                 cardDiv.setAttribute('data-player-index', battleCard.playerIndex !== undefined ? battleCard.playerIndex : index);
                 if (battleCard.playerIndex === this.localPlayerIndex) {
