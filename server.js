@@ -2684,30 +2684,55 @@ io.on('connection', (socket) => {
         }
         
         // ✅ CRITICAL FIX: Validate it's the attacker's turn
+        // Find the player sending the attack (could be human player or bot)
         const attackingPlayer = room.players.find(p => p.id === socket.id);
-        if (!attackingPlayer) {
-            console.log(`❌ Attacking player not found in room`);
-            socket.emit('battleshipAttackError', { message: 'Player not found in room' });
-            return;
+        
+        // ✅ CRITICAL FIX: For bot attacks, the human player's client sends the attack
+        // Check if the current player is a bot - if so, allow any player in the room to attack on behalf of the bot
+        const currentPlayerIndex = room.currentPlayer !== undefined ? room.currentPlayer : 0;
+        const currentPlayer = room.players[currentPlayerIndex];
+        const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true;
+        
+        let attackingPlayerIndex = -1;
+        let actualAttackingPlayerId = null;
+        
+        if (isCurrentPlayerBot) {
+            // It's a bot's turn - allow any player in the room to send the attack on behalf of the bot
+            // Use the bot's ID as the attacking player ID
+            attackingPlayerIndex = currentPlayerIndex;
+            actualAttackingPlayerId = currentPlayer.id;
+            console.log(`🚢 Bot attack detected - currentPlayer is bot at index ${attackingPlayerIndex}, allowing any player in room to send attack`);
+        } else {
+            // It's a human player's turn - validate it's actually their turn
+            if (!attackingPlayer) {
+                console.log(`❌ Attacking player not found in room`);
+                socket.emit('battleshipAttackError', { message: 'Player not found in room' });
+                return;
+            }
+            
+            attackingPlayerIndex = room.players.findIndex(p => p.id === socket.id);
+            
+            // Validate turn: only allow attack if it's this player's turn
+            if (room.currentPlayer !== attackingPlayerIndex) {
+                console.log(`❌ Attack rejected - not attacker's turn. Current: ${room.currentPlayer}, Attacker: ${attackingPlayerIndex}`);
+                socket.emit('battleshipAttackError', { message: 'Not your turn!' });
+                return;
+            }
+            
+            actualAttackingPlayerId = socket.id;
         }
         
-        const attackingPlayerIndex = room.players.findIndex(p => p.id === socket.id);
-        
-        // Validate turn: only allow attack if it's this player's turn
-        if (room.currentPlayer !== attackingPlayerIndex) {
-            console.log(`❌ Attack rejected - not attacker's turn. Current: ${room.currentPlayer}, Attacker: ${attackingPlayerIndex}`);
-            socket.emit('battleshipAttackError', { message: 'Not your turn!' });
-            return;
-        }
-        
-        // Add the attacking player ID to the data
-        data.attackingPlayerId = socket.id;
+        // Add the attacking player ID to the data (use bot's ID if it's a bot attack, otherwise use socket.id)
+        data.attackingPlayerId = actualAttackingPlayerId;
         
         // ✅ CRITICAL FIX: Process attack logic on server side
-        // Find the defending player (not the attacker)
-        const defendingPlayer = room.players.find(p => p.id !== socket.id);
+        // Find the defending player (the opponent of the attacker)
+        // If it's a bot attack, the defending player is the one who sent the attack (human player)
+        // If it's a human attack, the defending player is the one who didn't send it (opponent)
+        const defendingPlayerIndex = 1 - attackingPlayerIndex;
+        const defendingPlayer = room.players[defendingPlayerIndex];
         if (!defendingPlayer) {
-            console.log(`❌ No defending player found for attack`);
+            console.log(`❌ No defending player found for attack at index ${defendingPlayerIndex}`);
             return;
         }
         

@@ -270,17 +270,36 @@ class BattleshipGame {
                     // Update players array
                     data.players.forEach((player, index) => {
                         if (this.game.players[index]) {
-                            this.game.players[index].isBot = player.isBot || false;
-                            // ✅ CRITICAL FIX: Update both name and nickname
-                            if (player.nickname) {
-                                this.game.players[index].nickname = player.nickname;
-                                this.game.players[index].name = `${player.nickname} (Bot)`;
+                            const wasBot = this.game.players[index].isBot || false;
+                            const isNowBot = player.isBot || false;
+                            
+                            // ✅ CRITICAL FIX: Only update isBot status
+                            this.game.players[index].isBot = isNowBot;
+                            
+                            // ✅ CRITICAL FIX: Only update name/nickname if the player is actually a bot
+                            // Don't add "(Bot)" to non-bot players
+                            if (isNowBot) {
+                                // This player is now a bot - update name to include (Bot)
+                                if (player.nickname && !player.nickname.includes('(Bot)')) {
+                                    this.game.players[index].nickname = player.nickname;
+                                    this.game.players[index].name = `${player.nickname} (Bot)`;
+                                } else if (player.name && !player.name.includes('(Bot)')) {
+                                    this.game.players[index].name = `${player.name} (Bot)`;
+                                } else if (player.name) {
+                                    this.game.players[index].name = player.name;
+                                }
                             } else {
-                                this.game.players[index].name = player.name || this.game.players[index].name;
-                            }
-                            // Ensure (Bot) suffix is present if it's a bot
-                            if (player.isBot && !this.game.players[index].name.includes('(Bot)')) {
-                                this.game.players[index].name = `${this.game.players[index].name} (Bot)`;
+                                // This player is NOT a bot - remove (Bot) suffix if present and restore original name
+                                if (player.nickname) {
+                                    this.game.players[index].nickname = player.nickname;
+                                    // Remove (Bot) from nickname if present
+                                    const cleanNickname = player.nickname.replace(/\s*\(Bot\)\s*/g, '');
+                                    this.game.players[index].name = cleanNickname;
+                                } else if (player.name) {
+                                    // Remove (Bot) from name if present
+                                    const cleanName = player.name.replace(/\s*\(Bot\)\s*/g, '');
+                                    this.game.players[index].name = cleanName;
+                                }
                             }
                         }
                     });
@@ -296,19 +315,26 @@ class BattleshipGame {
                         
                         // ✅ CRITICAL FIX: Check if it's a bot's turn and trigger bot attack
                         const gameInstance = window.battleshipGame || this.game;
-                        if (gameInstance && gameInstance.isMultiplayer && !gameInstance.isPlayerTurn && data.currentPlayer !== undefined) {
+                        if (gameInstance && gameInstance.isMultiplayer && data.currentPlayer !== undefined) {
                             // Check if the current player (based on server index) is a bot
                             // The currentPlayer from server is the index in the players array
                             const currentPlayerIndex = data.currentPlayer;
                             const currentPlayer = gameInstance.players && gameInstance.players[currentPlayerIndex];
                             const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true;
                             
-                            // If the current player is a bot and it's their turn, trigger bot attack
-                            if (isCurrentPlayerBot) {
-                                console.log(`🚢 Bot replacement: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack`);
+                            console.log(`🚢 Bot replacement: Checking bot attack trigger - currentPlayerIndex=${currentPlayerIndex}, isCurrentPlayerBot=${isCurrentPlayerBot}, isPlayerTurn=${gameInstance.isPlayerTurn}`);
+                            console.log(`🚢 Bot replacement: Current player data:`, currentPlayer ? { name: currentPlayer.name, isBot: currentPlayer.isBot } : 'not found');
+                            console.log(`🚢 Bot replacement: All players:`, gameInstance.players ? gameInstance.players.map((p, i) => ({ index: i, name: p.name, isBot: p.isBot })) : 'not found');
+                            
+                            // If the current player is a bot and it's their turn (not our turn), trigger bot attack
+                            if (isCurrentPlayerBot && !gameInstance.isPlayerTurn) {
+                                console.log(`🚢 Bot replacement: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack in 2 seconds`);
                                 setTimeout(() => {
+                                    console.log(`🚢 Bot replacement: Executing bot attack now...`);
                                     this.handleBotAttack();
                                 }, 2000);
+                            } else {
+                                console.log(`🚢 Bot replacement: Not triggering bot attack - isCurrentPlayerBot=${isCurrentPlayerBot}, isPlayerTurn=${gameInstance.isPlayerTurn}`);
                             }
                         }
                     }
@@ -339,7 +365,11 @@ class BattleshipGame {
             if (data.players && Array.isArray(data.players)) {
                 data.players.forEach((player, index) => {
                     if (gameInstance.players && gameInstance.players[index]) {
-                        gameInstance.players[index].isBot = player.isBot || false;
+                        const isNowBot = player.isBot || false;
+                        gameInstance.players[index].isBot = isNowBot;
+                        
+                        // ✅ CRITICAL FIX: Only update name/nickname, preserve structure
+                        // Don't add (Bot) to non-bot players
                         if (player.name) {
                             gameInstance.players[index].name = player.name;
                         }
@@ -692,12 +722,18 @@ class BattleshipGame {
             const currentPlayer = gameInstance.players && gameInstance.players[currentPlayerIndex];
             const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true;
             
+            console.log(`🚢 handleTurnChange: Checking bot attack trigger - currentPlayerIndex=${currentPlayerIndex}, isCurrentPlayerBot=${isCurrentPlayerBot}, isPlayerTurn=${gameInstance.isPlayerTurn}`);
+            console.log(`🚢 handleTurnChange: Current player data:`, currentPlayer ? { name: currentPlayer.name, isBot: currentPlayer.isBot } : 'not found');
+            
             // If the current player is a bot and it's their turn, trigger bot attack
             if (isCurrentPlayerBot) {
-                console.log(`🚢 Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack`);
+                console.log(`🚢 handleTurnChange: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack in 2 seconds`);
                 setTimeout(() => {
+                    console.log(`🚢 handleTurnChange: Executing bot attack now...`);
                     this.handleBotAttack();
                 }, 2000);
+            } else {
+                console.log(`🚢 handleTurnChange: Not triggering bot attack - isCurrentPlayerBot=${isCurrentPlayerBot}`);
             }
         }
     }
