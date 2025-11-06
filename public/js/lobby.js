@@ -607,12 +607,32 @@ function setupSocketListeners() {
                 data.players.forEach((player, index) => {
                     if (window.game.players[index]) {
                         window.game.players[index].isBot = player.isBot || false;
-                        window.game.players[index].name = player.name || player.nickname || window.game.players[index].name;
-                        if (player.nickname && !window.game.players[index].name.includes(player.nickname)) {
+                        // ✅ CRITICAL FIX: Update both name and nickname
+                        if (player.nickname) {
+                            window.game.players[index].nickname = player.nickname;
                             window.game.players[index].name = `${player.nickname} (Bot)`;
+                        } else {
+                            window.game.players[index].name = player.name || window.game.players[index].name;
+                        }
+                        // Ensure (Bot) suffix is present if it's a bot
+                        if (player.isBot && !window.game.players[index].name.includes('(Bot)')) {
+                            window.game.players[index].name = `${window.game.players[index].name} (Bot)`;
                         }
                     }
                 });
+                
+                // ✅ CRITICAL FIX: Trigger bot play if it's the bot's turn (for Truco)
+                if (window.game.currentPlayerIndex !== undefined) {
+                    const currentPlayerIndex = window.game.currentPlayerIndex;
+                    if (window.game.players[currentPlayerIndex] && window.game.players[currentPlayerIndex].isBot) {
+                        console.log(`🤖 Triggering bot play for replaced player at index ${currentPlayerIndex}`);
+                        setTimeout(() => {
+                            if (typeof triggerBotPlay === 'function') {
+                                triggerBotPlay(currentPlayerIndex);
+                            }
+                        }, 1000);
+                    }
+                }
                 
                 // Update UI
                 updatePlayerList(data.players);

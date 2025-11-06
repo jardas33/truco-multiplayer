@@ -699,6 +699,10 @@ io.on('connection', (socket) => {
                             const gamePlayer = room.game.players[playerIndex];
                             gamePlayer.isBot = true;
                             gamePlayer.id = leavingPlayer.id;
+                            // ✅ CRITICAL FIX: Preserve nickname if it exists
+                            if (leavingPlayer.nickname) {
+                                gamePlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
+                            }
                             if (!gamePlayer.name.includes('(Bot)') && !gamePlayer.name.includes('Bot')) {
                                 gamePlayer.name = `${gamePlayer.name || leavingPlayerName} (Bot)`;
                             }
@@ -799,9 +803,35 @@ io.on('connection', (socket) => {
                         } else if (room.gameType === 'battleship') {
                             // For battleship, let the existing reconnection logic handle it
                             console.log(`🚢 Battleship player replaced with bot - existing logic will handle`);
+                        } else if (room.gameType === 'blackjack' && room.game) {
+                            // For Blackjack, trigger bot action if it's the bot's turn
+                            if (room.game.currentPlayer === playerIndex && room.game.gamePhase === 'playing') {
+                                const botPlayer = room.game.players[playerIndex];
+                                if (botPlayer && botPlayer.isBot) {
+                                    console.log(`🃏 Triggering Blackjack bot action for replaced player ${botPlayer.name}`);
+                                    setTimeout(() => {
+                                        if (typeof handleBlackjackBotTurn === 'function') {
+                                            handleBlackjackBotTurn(socket.roomCode, room);
+                                        }
+                                    }, 1500);
+                                }
+                            }
+                        } else if (room.gameType === 'truco' && room.game) {
+                            // For Truco, trigger bot action if it's the bot's turn
+                            if (room.game.currentPlayer === playerIndex) {
+                                const botPlayer = room.game.players[playerIndex];
+                                if (botPlayer && botPlayer.isBot) {
+                                    console.log(`🎯 Triggering Truco bot action for replaced player ${botPlayer.name}`);
+                                    // Emit turnChanged event to trigger client-side bot logic
+                                    io.to(socket.roomCode).emit('turnChanged', {
+                                        currentPlayer: room.game.currentPlayer,
+                                        gamePhase: room.game.gamePhase || 'playing'
+                                    });
+                                }
+                            }
                         }
-                        // For other games (War, Truco, Blackjack), bots will automatically take actions
-                        // based on their existing bot logic
+                        // For War, bots will participate in battles when they are started
+                        // The game will continue normally with the bot participating
                     } else {
                         console.log(`⚠️ Player ${socket.id} disconnected but not found in room players`);
                     }

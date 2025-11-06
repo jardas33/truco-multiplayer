@@ -804,9 +804,16 @@ class WarClient {
                     data.players.forEach((player, index) => {
                         if (this.game.players[index]) {
                             this.game.players[index].isBot = player.isBot || false;
-                            this.game.players[index].name = player.name || player.nickname || this.game.players[index].name;
-                            if (player.nickname && !this.game.players[index].name.includes(player.nickname)) {
+                            // ✅ CRITICAL FIX: Update both name and nickname
+                            if (player.nickname) {
+                                this.game.players[index].nickname = player.nickname;
                                 this.game.players[index].name = `${player.nickname} (Bot)`;
+                            } else {
+                                this.game.players[index].name = player.name || this.game.players[index].name;
+                            }
+                            // Ensure (Bot) suffix is present if it's a bot
+                            if (player.isBot && !this.game.players[index].name.includes('(Bot)')) {
+                                this.game.players[index].name = `${this.game.players[index].name} (Bot)`;
                             }
                         }
                     });
