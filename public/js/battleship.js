@@ -374,7 +374,20 @@ class BattleshipGame {
         
         // Handle attack events
         this.socket.on('battleshipAttack', (data) => {
-            console.log('🚢 Received attack from opponent:', data);
+            console.log('🚢 Received attack broadcast:', data);
+            // ✅ CRITICAL FIX: Only process attacks from opponent, not our own
+            // The server broadcasts attacks to all players, but we should only process opponent attacks
+            const gameInstance = window.battleshipGame || this.game;
+            if (gameInstance && gameInstance.isMultiplayer && data.attackingPlayerId) {
+                const socketId = this.socket ? this.socket.id : null;
+                const currentPlayerId = this.playerId || window.battleshipPlayerId || socketId;
+                if (data.attackingPlayerId === currentPlayerId) {
+                    // This is our own attack - we already know about it, ignore the broadcast
+                    console.log('🚢 Ignoring own attack broadcast');
+                    return;
+                }
+            }
+            console.log('🚢 Processing opponent attack:', data);
             this.handleOpponentAttack(data);
         });
         
@@ -735,8 +748,8 @@ class BattleshipGame {
         console.log(`🚢 Bot attacking ${letters[target.y]}${target.x + 1}`);
         gameInstance.addToHistory(`🤖 Bot attacks ${letters[target.y]}${target.x + 1}`, 'info');
         
-        // Emit the attack to the server
-        gameInstance.emitAttack(target.x, target.y);
+        // Emit the attack to the server (bypass turn check since bot attacks when it's their turn)
+        gameInstance.emitAttack(target.x, target.y, null, null, true);
     }
     
     handleOpponentShipPlaced(data) {
@@ -1093,8 +1106,25 @@ class BattleshipGame {
         }
     }
     
-    emitAttack(x, y, hit = null, shipSunk = null) {
+    emitAttack(x, y, hit = null, shipSunk = null, bypassTurnCheck = false) {
         if (this.isMultiplayer && this.socket && this.roomCode) {
+            // ✅ CRITICAL FIX: Prevent sending attacks when it's not the player's turn
+            // This is a final safeguard to prevent "not your turn" errors
+            // Allow bypassing for bot attacks (bypassTurnCheck = true)
+            if (!bypassTurnCheck && !this.isPlayerTurn) {
+                console.log(`🚢 emitAttack blocked - not player's turn: isPlayerTurn=${this.isPlayerTurn}`);
+                this.addToHistory('❌ Not your turn!', 'error');
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Additional check using currentPlayer (only for human player attacks)
+            if (!bypassTurnCheck && this.currentPlayer !== 0) {
+                console.log(`🚢 emitAttack blocked - wrong currentPlayer: currentPlayer=${this.currentPlayer}`);
+                this.addToHistory('❌ Not your turn! Wait for your opponent.', 'error');
+                return;
+            }
+            
+            console.log(`🚢 Emitting attack: x=${x}, y=${y}, isPlayerTurn=${this.isPlayerTurn}, currentPlayer=${this.currentPlayer}, bypassTurnCheck=${bypassTurnCheck}`);
             this.socket.emit('battleshipAttack', {
                 roomId: this.roomCode,
                 x: x,
