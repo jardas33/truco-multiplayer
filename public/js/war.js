@@ -2571,23 +2571,27 @@ class WarClient {
         // ✅ CRITICAL FIX: Filter out null/undefined cards
         const validCards = cards.filter(c => c);
         
+        // ✅ CRITICAL FIX: Reduce delay based on number of players - fewer players = faster animation
+        const playerCount = this.game.players.length;
+        const delayPerCard = playerCount <= 2 ? 25 : 35; // Faster for 2 players (25ms) vs more players (35ms)
+        
         validCards.forEach((card, index) => {
             // ✅ CRITICAL FIX: Use battle card index if available
             const cardId = card.id || `battle-${index}` || `war-${index}`;
             const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
             if (cardElement) {
-                // ✅ CRITICAL FIX: Track timeout for cleanup
+                // ✅ CRITICAL FIX: Track timeout for cleanup - reduced delay for faster card collection
                 this.safeSetTimeout(() => {
                     cardElement.classList.add('collecting');
                     // Create flying card
-                    this.createFlyingCard(cardElement, winnerIndex);
-                }, index * 50);
+                    this.createFlyingCard(cardElement, winnerIndex, playerCount);
+                }, index * delayPerCard);
             }
         });
     }
     
     // Create flying card animation
-    createFlyingCard(sourceElement, targetIndex) {
+    createFlyingCard(sourceElement, targetIndex, playerCount = 4) {
         // ✅ CRITICAL FIX: Validate source element
         if (!sourceElement || !sourceElement.parentNode) {
             return;
@@ -2615,10 +2619,14 @@ class WarClient {
                 top: window.innerHeight / 2 
             };
             
+            // ✅ CRITICAL FIX: Faster animation for fewer players - reduce duration and cleanup time
+            const animationDuration = playerCount <= 2 ? '0.5s' : '0.6s'; // Faster for 2 players (0.5s) vs more players (0.6s)
+            const cleanupDelay = playerCount <= 2 ? 500 : 600; // Faster cleanup for 2 players (500ms) vs more players (600ms)
+            
             // ✅ CRITICAL FIX: Animate with tracked timeouts
             this.safeSetTimeout(() => {
                 if (flyingCard.parentNode) {
-                    flyingCard.style.transition = 'all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                    flyingCard.style.transition = `all ${animationDuration} cubic-bezier(0.68, -0.55, 0.265, 1.55)`;
                     flyingCard.style.left = targetRect.left + 'px';
                     flyingCard.style.top = targetRect.top + 'px';
                     flyingCard.style.transform = 'scale(0.3) rotate(360deg)';
@@ -2628,7 +2636,7 @@ class WarClient {
                         if (flyingCard.parentNode) {
                             flyingCard.remove();
                         }
-                    }, 800);
+                    }, cleanupDelay);
                 }
             }, 10);
         } catch (error) {
