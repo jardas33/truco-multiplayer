@@ -2381,13 +2381,9 @@ class WarClient {
                     return;
                 }
                 
-                // ✅ CRITICAL FIX: Ensure card is visible - card-enter class might hide it initially
-                // Make sure card is visible even if animation hasn't started yet
-                if (cardDiv.classList.contains('card-enter')) {
-                    // Card will animate in, but ensure it's not hidden
-                    cardDiv.style.opacity = '1';
-                    cardDiv.style.visibility = 'visible';
-                }
+                // ✅ CRITICAL FIX: Don't override animation - the card-enter animation will handle visibility
+                // The card will be visible once the animation starts (after the delay)
+                // We just need to ensure it's in the DOM so it can animate
                 
                 cardDiv.setAttribute('data-card-id', `battle-${index}`);
                 cardDiv.setAttribute('data-player-index', battleCard.playerIndex !== undefined ? battleCard.playerIndex : index);

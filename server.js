@@ -3362,17 +3362,20 @@ io.on('connection', (socket) => {
                 }))
             });
             
-            // ✅ CRITICAL FIX: Resolve battle after cards appear - calculate based on ACTUAL battle cards count
+            // ✅ CRITICAL FIX: Resolve battle after ALL cards appear - calculate based on ACTUAL battle cards count
             // Use battleCards.length instead of player count after cards removed
-            // For 2 players: 2 cards * 1200ms = 2400ms + 500ms buffer = ~3000ms
-            // For 4 players: 4 cards * 1200ms = 4800ms + 500ms buffer = ~5300ms
+            // For 2 players: 2 cards * 1200ms = 2400ms + 600ms animation + 500ms buffer = ~3500ms
+            // For 4 players: 4 cards * 1200ms = 4800ms + 600ms animation + 500ms buffer = ~5900ms
+            // Last card appears at (count-1) * 1200ms, then needs 600ms to animate, plus buffer
             const actualBattleCardCount = room.game.battleCards.length;
-            const cardAppearanceDelay = actualBattleCardCount * 1200; // 1200ms per card appearance
-            const battleResolutionDelay = Math.min(cardAppearanceDelay + 500, 3500); // Max 3.5 seconds total
-            console.log(`⚔️ Battle resolution delay: ${battleResolutionDelay}ms (${actualBattleCardCount} cards)`);
+            const lastCardAppearanceDelay = (actualBattleCardCount - 1) * 1200; // When last card starts appearing
+            const animationDuration = 600; // Card animation takes 600ms
+            const buffer = 500; // Extra buffer to ensure animation completes
+            const battleResolutionDelay = lastCardAppearanceDelay + animationDuration + buffer;
+            console.log(`⚔️ Battle resolution delay: ${battleResolutionDelay}ms (${actualBattleCardCount} cards, last card at ${lastCardAppearanceDelay}ms + ${animationDuration}ms animation + ${buffer}ms buffer)`);
             setTimeout(() => {
                 resolveWarBattle(room, roomCode);
-            }, battleResolutionDelay); // ✅ CRITICAL FIX: Dynamic delay based on player count, max 3.5 seconds
+            }, battleResolutionDelay); // ✅ CRITICAL FIX: Wait for all cards to appear AND animate before resolving
             
         } catch (error) {
             console.error(`❌ Error in startBattle handler:`, error);
