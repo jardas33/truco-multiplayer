@@ -317,6 +317,10 @@
             localStorage.setItem('battleshipPlayerCount', '2');
             localStorage.setItem('battleshipGameMode', 'multiplayer');
             
+            // ✅ CRITICAL FIX: Clear player nickname when creating new room to reset to default names
+            localStorage.removeItem('battleshipPlayerNickname');
+            console.log('🚢 Cleared battleshipPlayerNickname - names will reset to default (Player 1, Player 2)');
+            
             // Hide create/join buttons
             document.body.classList.add('room-created');
             
