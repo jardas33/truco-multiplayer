@@ -652,7 +652,8 @@ class GameFramework {
 // Export for use in other files
 window.CardUtils = CardUtils;
 // 🎮 MISSING FUNCTIONS FOR NEW GAMES
-function showInstructions() {
+// Make showInstructions globally available
+window.showInstructions = function showInstructions() {
     console.log('📖 Instructions button clicked');
     
     const currentGame = window.location.pathname;

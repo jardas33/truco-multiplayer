@@ -143,8 +143,9 @@ function createCanvasSafely() {
             console.error('showInstructions function not found');
         }
     });
-    // Only create instructions button for non-Battleship games
-    if (currentPath !== '/battleship') {
+    // Only create instructions button for non-Battleship and non-War games
+    // War has its own HTML button, so hide the p5.js button
+    if (currentPath !== '/battleship' && currentPath !== '/war') {
         instructionsButton.parent('Menu');
         instructionsButton.style('z-index', '100'); // Higher z-index
         instructionsButton.style('position', 'absolute'); // Force absolute positioning
@@ -161,7 +162,7 @@ function createCanvasSafely() {
         instructionsButton.style('height', 'auto !important'); // Ensure auto height
         instructionsButton.show();
     } else {
-        // Hide instructions button for Battleship (it has its own)
+        // Hide instructions button for Battleship and War (they have their own HTML buttons)
         instructionsButton.hide();
     }
 
