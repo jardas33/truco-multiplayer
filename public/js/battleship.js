@@ -3123,6 +3123,17 @@ class BattleshipClient {
         // Clear the canvas first to ensure clean drawing
         clear();
         
+        // ✅ CRITICAL FIX: Draw background image if available
+        push();
+        imageMode(CORNER);
+        if (window.backgroundImage && window.backgroundImage.width > 0) {
+            image(window.backgroundImage, 0, 0, width, height);
+        } else {
+            // Fallback background if image not loaded
+            background(0, 50, 100); // Dark blue ocean
+        }
+        pop();
+        
         // Draw unhit ships first (green colors)
         this.drawShips(gameInstance);
         // Draw grids with hit symbols on top
