@@ -195,6 +195,24 @@ canvas {
     position: relative !important;
 }
 
+/* ✅ CRITICAL FIX: Exception for Card Values and Round History buttons - they must be fixed at bottom */
+#gameCardValuesBtn,
+#roundHistoryBtn {
+    position: fixed !important;
+    bottom: 80px !important;
+    top: auto !important;
+    left: 50% !important;
+    z-index: 3000 !important;
+}
+
+#gameCardValuesBtn {
+    transform: translateX(50px) !important;
+}
+
+#roundHistoryBtn {
+    transform: translateX(-150px) !important;
+}
+
 /* ✅ CRITICAL FIX: Action controls container must be fixed for bottom center positioning */
 #Game .action-controls {
     pointer-events: auto !important;

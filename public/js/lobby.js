@@ -2237,15 +2237,16 @@ function showGameButtons() {
     }
     if (gameCardValuesBtn) {
         // ✅ CRITICAL FIX: Set explicit positioning to prevent buttons from appearing at top of screen
-        gameCardValuesBtn.style.display = 'block';
-        gameCardValuesBtn.style.visibility = 'visible';
-        gameCardValuesBtn.style.opacity = '1';
-        gameCardValuesBtn.style.position = 'fixed';
-        gameCardValuesBtn.style.bottom = '80px'; // ✅ CRITICAL FIX: Explicitly set bottom position
-        gameCardValuesBtn.style.left = '50%';
-        gameCardValuesBtn.style.transform = 'translateX(50px)';
-        gameCardValuesBtn.style.top = 'auto'; // ✅ CRITICAL FIX: Explicitly remove any top positioning
-        gameCardValuesBtn.style.zIndex = '3000';
+        // Use setProperty with !important to override CSS rules
+        gameCardValuesBtn.style.setProperty('display', 'block', 'important');
+        gameCardValuesBtn.style.setProperty('visibility', 'visible', 'important');
+        gameCardValuesBtn.style.setProperty('opacity', '1', 'important');
+        gameCardValuesBtn.style.setProperty('position', 'fixed', 'important');
+        gameCardValuesBtn.style.setProperty('bottom', '80px', 'important');
+        gameCardValuesBtn.style.setProperty('left', '50%', 'important');
+        gameCardValuesBtn.style.setProperty('transform', 'translateX(50px)', 'important');
+        gameCardValuesBtn.style.setProperty('top', 'auto', 'important');
+        gameCardValuesBtn.style.setProperty('z-index', '3000', 'important');
         console.log('✅ Card Values button shown with fixed positioning at bottom');
         
         // ✅ CRITICAL FIX: Log button position for debugging
@@ -2266,15 +2267,16 @@ function showGameButtons() {
     }
     if (roundHistoryBtn) {
         // ✅ CRITICAL FIX: Set explicit positioning to prevent buttons from appearing at top of screen
-        roundHistoryBtn.style.display = 'block';
-        roundHistoryBtn.style.visibility = 'visible';
-        roundHistoryBtn.style.opacity = '1';
-        roundHistoryBtn.style.position = 'fixed';
-        roundHistoryBtn.style.bottom = '80px'; // ✅ CRITICAL FIX: Explicitly set bottom position
-        roundHistoryBtn.style.left = '50%';
-        roundHistoryBtn.style.transform = 'translateX(-150px)';
-        roundHistoryBtn.style.top = 'auto'; // ✅ CRITICAL FIX: Explicitly remove any top positioning
-        roundHistoryBtn.style.zIndex = '3000';
+        // Use setProperty with !important to override CSS rules
+        roundHistoryBtn.style.setProperty('display', 'block', 'important');
+        roundHistoryBtn.style.setProperty('visibility', 'visible', 'important');
+        roundHistoryBtn.style.setProperty('opacity', '1', 'important');
+        roundHistoryBtn.style.setProperty('position', 'fixed', 'important');
+        roundHistoryBtn.style.setProperty('bottom', '80px', 'important');
+        roundHistoryBtn.style.setProperty('left', '50%', 'important');
+        roundHistoryBtn.style.setProperty('transform', 'translateX(-150px)', 'important');
+        roundHistoryBtn.style.setProperty('top', 'auto', 'important');
+        roundHistoryBtn.style.setProperty('z-index', '3000', 'important');
         console.log('✅ Round History button shown with fixed positioning at bottom');
         
         // ✅ CRITICAL FIX: Log button position for debugging
