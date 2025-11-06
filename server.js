@@ -676,323 +676,321 @@ io.on('connection', (socket) => {
         }
         
         if (room && roomCode) {
-                // ✅ CRITICAL FIX: Skip Prince of Persia (no bot replacement)
-                if (room.gameType === 'prince') {
-                    console.log(`👑 Prince of Persia player ${socket.id} disconnected - skipping bot replacement`);
-                    return;
-                }
+            // ✅ CRITICAL FIX: Skip Prince of Persia (no bot replacement)
+            if (room.gameType === 'prince') {
+                console.log(`👑 Prince of Persia player ${socket.id} disconnected - skipping bot replacement`);
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Check if game is active (different logic per game type)
+            let isGameActive = false;
+            if (room.game) {
+                console.log(`🔍 DEBUG: Checking if game is active - gameType: ${room.gameType}, game exists: ${!!room.game}, started: ${room.game.started}, gamePhase: ${room.game.gamePhase}`);
                 
-                // ✅ CRITICAL FIX: Check if game is active (different logic per game type)
-                let isGameActive = false;
-                if (room.game) {
-                    console.log(`🔍 DEBUG: Checking if game is active - gameType: ${room.gameType}, game exists: ${!!room.game}, started: ${room.game.started}, gamePhase: ${room.game.gamePhase}`);
-                    
-                    if (room.gameType === 'poker' || room.gameType === 'blackjack') {
-                        // Poker and Blackjack use gamePhase
-                        isGameActive = room.game.gamePhase && 
-                                     room.game.gamePhase !== 'waiting' && 
-                                     room.game.gamePhase !== 'finished';
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (gamePhase: ${room.game.gamePhase})`);
-                    } else if (room.gameType === 'go-fish') {
-                        // ✅ CRITICAL FIX: Go Fish uses game state
-                        isGameActive = room.game.state === 'playing' || 
-                                     (room.game.players && room.game.players.length > 0 && 
-                                      room.game.players.some(p => p.hand && Array.isArray(p.hand) && p.hand.length > 0));
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (state: ${room.game.state}, players: ${room.game.players?.length})`);
-                    } else if (room.gameType === 'truco') {
-                        // Truco uses room.game.hands, not room.game.players
-                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
-                                     room.game.hands && 
-                                     Array.isArray(room.game.hands) &&
-                                     room.game.hands.length > 0 &&
-                                     room.game.hands.some(hand => Array.isArray(hand) && hand.length > 0);
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, hands: ${room.game.hands?.length})`);
-                    } else if (room.gameType === 'war') {
-                        // War uses room.game.players with hands
-                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
-                                     room.game.players && 
-                                     Array.isArray(room.game.players) &&
-                                     room.game.players.length > 0 &&
-                                     (room.game.hands || room.game.players.some(p => p.hand && Array.isArray(p.hand) && p.hand.length > 0));
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasHands: ${!!room.game.hands})`);
-                    } else if (room.gameType === 'battleship') {
-                        // Battleship uses room.game.players (no hands, just board state)
-                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
-                                     room.game.players && 
-                                     Array.isArray(room.game.players) &&
-                                     room.game.players.length > 0;
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length})`);
-                    } else {
-                        // Default case: check if game has started flag
-                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started);
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check (default): ${isGameActive} (started: ${room.game.started})`);
-                    }
+                if (room.gameType === 'poker' || room.gameType === 'blackjack') {
+                    // Poker and Blackjack use gamePhase
+                    isGameActive = room.game.gamePhase && 
+                                 room.game.gamePhase !== 'waiting' && 
+                                 room.game.gamePhase !== 'finished';
+                    console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (gamePhase: ${room.game.gamePhase})`);
+                } else if (room.gameType === 'go-fish') {
+                    // ✅ CRITICAL FIX: Go Fish uses game state
+                    isGameActive = room.game.state === 'playing' || 
+                                 (room.game.players && room.game.players.length > 0 && 
+                                  room.game.players.some(p => p.hand && Array.isArray(p.hand) && p.hand.length > 0));
+                    console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (state: ${room.game.state}, players: ${room.game.players?.length})`);
+                } else if (room.gameType === 'truco') {
+                    // Truco uses room.game.hands, not room.game.players
+                    isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                 room.game.hands && 
+                                 Array.isArray(room.game.hands) &&
+                                 room.game.hands.length > 0 &&
+                                 room.game.hands.some(hand => Array.isArray(hand) && hand.length > 0);
+                    console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, hands: ${room.game.hands?.length})`);
+                } else if (room.gameType === 'war') {
+                    // War uses room.game.players with hands
+                    isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                 room.game.players && 
+                                 Array.isArray(room.game.players) &&
+                                 room.game.players.length > 0 &&
+                                 (room.game.hands || room.game.players.some(p => p.hand && Array.isArray(p.hand) && p.hand.length > 0));
+                    console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasHands: ${!!room.game.hands})`);
+                } else if (room.gameType === 'battleship') {
+                    // Battleship uses room.game.players (no hands, just board state)
+                    isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                 room.game.players && 
+                                 Array.isArray(room.game.players) &&
+                                 room.game.players.length > 0;
+                    console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length})`);
                 } else {
-                    console.log(`🔍 DEBUG: No game object found in room ${roomCode}`);
+                    // Default case: check if game has started flag
+                    isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started);
+                    console.log(`🔍 DEBUG: ${room.gameType} game active check (default): ${isGameActive} (started: ${room.game.started})`);
                 }
-                
-                if (isGameActive) {
-                    // Find the leaving player
-                    const playerIndex = room.players.findIndex(p => p.id === socket.id);
-                    console.log(`🔍 DEBUG: Player search - socket.id: ${socket.id}, playerIndex: ${playerIndex}, total players: ${room.players.length}`);
-                    if (playerIndex !== -1) {
-                        const leavingPlayer = room.players[playerIndex];
-                        const leavingPlayerName = leavingPlayer.name || leavingPlayer.nickname || `Player ${playerIndex + 1}`;
-                        
-                        console.log(`⚠️ Player ${leavingPlayerName} (${socket.id}) left during active game in room ${roomCode}`);
-                        
-                        // ✅ CRITICAL FIX: Replace player with bot (keep existing data but mark as bot)
-                        leavingPlayer.id = `bot-${Math.random().toString(36).substring(7)}`;
-                        leavingPlayer.isBot = true;
-                        // Update name to show it's a bot (preserve original name if it exists)
-                        if (!leavingPlayer.name.includes('(Bot)') && !leavingPlayer.name.includes('Bot')) {
-                            leavingPlayer.name = `${leavingPlayerName} (Bot)`;
-                            if (leavingPlayer.nickname && !leavingPlayer.nickname.includes('(Bot)')) {
-                                leavingPlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
-                            }
+            } else {
+                console.log(`🔍 DEBUG: No game object found in room ${roomCode}`);
+            }
+            
+            if (isGameActive) {
+                // Find the leaving player
+                const playerIndex = room.players.findIndex(p => p.id === socket.id);
+                console.log(`🔍 DEBUG: Player search - socket.id: ${socket.id}, playerIndex: ${playerIndex}, total players: ${room.players.length}`);
+                if (playerIndex !== -1) {
+                    const leavingPlayer = room.players[playerIndex];
+                    const leavingPlayerName = leavingPlayer.name || leavingPlayer.nickname || `Player ${playerIndex + 1}`;
+                    
+                    console.log(`⚠️ Player ${leavingPlayerName} (${socket.id}) left during active game in room ${roomCode}`);
+                    
+                    // ✅ CRITICAL FIX: Replace player with bot (keep existing data but mark as bot)
+                    leavingPlayer.id = `bot-${Math.random().toString(36).substring(7)}`;
+                    leavingPlayer.isBot = true;
+                    // Update name to show it's a bot (preserve original name if it exists)
+                    if (!leavingPlayer.name.includes('(Bot)') && !leavingPlayer.name.includes('Bot')) {
+                        leavingPlayer.name = `${leavingPlayerName} (Bot)`;
+                        if (leavingPlayer.nickname && !leavingPlayer.nickname.includes('(Bot)')) {
+                            leavingPlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
                         }
-                        
-                        // ✅ CRITICAL FIX: Update game players array if it exists (Truco doesn't have room.game.players)
-                        if (room.gameType === 'truco') {
-                            // For Truco, we don't have room.game.players, so we just update room.players
-                            // The client uses room.players data, not room.game.players
-                            console.log(`🎯 Truco: Updated room.players[${playerIndex}] to bot status`);
-                        } else if (room.game && room.game.players && Array.isArray(room.game.players) && room.game.players[playerIndex]) {
-                            // For other games (War, Poker, Blackjack, Go Fish, etc.) that have room.game.players
-                            const gamePlayer = room.game.players[playerIndex];
-                            gamePlayer.isBot = true;
-                            gamePlayer.id = leavingPlayer.id;
-                            // ✅ CRITICAL FIX: Preserve nickname if it exists
-                            if (leavingPlayer.nickname) {
-                                gamePlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
-                            }
-                            if (!gamePlayer.name.includes('(Bot)') && !gamePlayer.name.includes('Bot')) {
-                                gamePlayer.name = `${gamePlayer.name || leavingPlayerName} (Bot)`;
-                            }
-                            console.log(`✅ Updated room.game.players[${playerIndex}] to bot status for ${room.gameType}`);
+                    }
+                    
+                    // ✅ CRITICAL FIX: Update game players array if it exists (Truco doesn't have room.game.players)
+                    if (room.gameType === 'truco') {
+                        // For Truco, we don't have room.game.players, so we just update room.players
+                        // The client uses room.players data, not room.game.players
+                        console.log(`🎯 Truco: Updated room.players[${playerIndex}] to bot status`);
+                    } else if (room.game && room.game.players && Array.isArray(room.game.players) && room.game.players[playerIndex]) {
+                        // For other games (War, Poker, Blackjack, Go Fish, etc.) that have room.game.players
+                        const gamePlayer = room.game.players[playerIndex];
+                        gamePlayer.isBot = true;
+                        gamePlayer.id = leavingPlayer.id;
+                        // ✅ CRITICAL FIX: Preserve nickname if it exists
+                        if (leavingPlayer.nickname) {
+                            gamePlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
+                        }
+                        if (!gamePlayer.name.includes('(Bot)') && !gamePlayer.name.includes('Bot')) {
+                            gamePlayer.name = `${gamePlayer.name || leavingPlayerName} (Bot)`;
+                        }
+                        console.log(`✅ Updated room.game.players[${playerIndex}] to bot status for ${room.gameType}`);
+                    } else {
+                        console.log(`⚠️ Could not update room.game.players[${playerIndex}] - game: ${!!room.game}, players: ${!!room.game?.players}, isArray: ${Array.isArray(room.game?.players)}, index exists: ${room.game?.players?.[playerIndex] !== undefined}`);
+                    }
+                    
+                    console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${roomCode}`);
+                    
+                    // ✅ CRITICAL FIX: Emit warning to remaining players
+                    console.log(`📢 Emitting playerReplacedWithBot to room ${roomCode} with ${room.players.length} players`);
+                    const replacementData = {
+                        playerIndex: playerIndex,
+                        playerName: leavingPlayerName,
+                        newBotName: leavingPlayer.name,
+                        players: room.players,
+                        message: `⚠️ ${leavingPlayerName} left the game and was replaced with a bot.`
+                    };
+                    // ✅ CRITICAL FIX: Include currentPlayer in event data for games that use it
+                    if (room.game && room.game.currentPlayer !== undefined) {
+                        replacementData.currentPlayer = room.game.currentPlayer;
+                    }
+                    io.to(roomCode).emit('playerReplacedWithBot', replacementData);
+                    console.log(`✅ playerReplacedWithBot event emitted successfully to room ${roomCode} with data:`, replacementData);
+                    console.log(`🔍 DEBUG: Room ${roomCode} has ${room.players.length} players, socket.roomCode was: ${socket.roomCode}`);
+                    
+                    // ✅ CRITICAL FIX: Emit updated game state for all games
+                    if (room.gameType === 'poker' && room.game) {
+                        // Emit updated game state for Poker
+                        console.log(`📢 Emitting gameState for Poker to room ${roomCode}`);
+                        if (typeof emitPokerGameState === 'function') {
+                            emitPokerGameState(roomCode, room);
                         } else {
-                            console.log(`⚠️ Could not update room.game.players[${playerIndex}] - game: ${!!room.game}, players: ${!!room.game?.players}, isArray: ${Array.isArray(room.game?.players)}, index exists: ${room.game?.players?.[playerIndex] !== undefined}`);
-                        }
-                        
-                        console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${roomCode}`);
-                        
-                        // ✅ CRITICAL FIX: Emit warning to remaining players
-                        console.log(`📢 Emitting playerReplacedWithBot to room ${roomCode} with ${room.players.length} players`);
-                        const replacementData = {
-                            playerIndex: playerIndex,
-                            playerName: leavingPlayerName,
-                            newBotName: leavingPlayer.name,
-                            players: room.players,
-                            message: `⚠️ ${leavingPlayerName} left the game and was replaced with a bot.`
-                        };
-                        // ✅ CRITICAL FIX: Include currentPlayer in event data for games that use it
-                        if (room.game && room.game.currentPlayer !== undefined) {
-                            replacementData.currentPlayer = room.game.currentPlayer;
-                        }
-                        io.to(roomCode).emit('playerReplacedWithBot', replacementData);
-                        console.log(`✅ playerReplacedWithBot event emitted successfully to room ${roomCode} with data:`, replacementData);
-                        console.log(`🔍 DEBUG: Room ${roomCode} has ${room.players.length} players, socket.roomCode was: ${socket.roomCode}`);
-                        
-                        // ✅ CRITICAL FIX: Emit updated game state for all games
-                        if (room.gameType === 'poker' && room.game) {
-                            // Emit updated game state for Poker
-                            console.log(`📢 Emitting gameState for Poker to room ${roomCode}`);
-                            if (typeof emitPokerGameState === 'function') {
-                                emitPokerGameState(roomCode, room);
-                            } else {
-                                // Fallback: emit basic gameState
-                                io.to(roomCode).emit('gameState', {
-                                    players: room.game.players,
-                                    gamePhase: room.game.gamePhase,
-                                    currentPlayer: room.game.currentPlayer,
-                                    pot: room.game.pot,
-                                    currentBet: room.game.currentBet
-                                });
-                            }
-                            console.log(`✅ Poker gameState emitted`);
-                        } else if (room.gameType === 'blackjack' && room.game) {
-                            // Emit updated game state for Blackjack
-                            console.log(`📢 Emitting gameState for Blackjack to room ${roomCode}`);
+                            // Fallback: emit basic gameState
                             io.to(roomCode).emit('gameState', {
                                 players: room.game.players,
                                 gamePhase: room.game.gamePhase,
                                 currentPlayer: room.game.currentPlayer,
-                                dealer: room.game.dealer
+                                pot: room.game.pot,
+                                currentBet: room.game.currentBet
                             });
-                            console.log(`✅ Blackjack gameState emitted`);
-                        } else if (room.gameType === 'war' && room.game) {
-                            // Emit updated game state for War
-                            console.log(`📢 Emitting gameState for War to room ${roomCode}`);
-                            io.to(roomCode).emit('gameState', {
-                                players: room.game.players.map((p, idx) => ({
-                                    name: p.name,
-                                    hand: Array.isArray(p.hand) ? p.hand.length : 0,
-                                    playerIndex: idx,
-                                    isBot: p.isBot || false
-                                })),
-                                battleNumber: room.game.battleNumber,
-                                gameOver: room.game.gameOver
-                            });
-                            console.log(`✅ War gameState emitted`);
-                        } else if (room.gameType === 'truco' && room.game) {
-                            // Emit updated game state for Truco
-                            // ✅ CRITICAL FIX: Truco doesn't have room.game.players, use room.players instead
-                            console.log(`📢 Emitting gameState for Truco to room ${roomCode}`);
-                            console.log(`🔍 DEBUG: Truco room.players:`, room.players.map(p => ({ name: p.name, isBot: p.isBot, id: p.id })));
-                            io.to(roomCode).emit('gameState', {
-                                players: room.players.map((p, idx) => ({
-                                    name: p.name,
-                                    nickname: p.nickname,
-                                    isBot: p.isBot || false,
-                                    team: p.team,
-                                    id: p.id
-                                })),
-                                currentPlayer: room.game.currentPlayer,
-                                hands: room.game.hands
-                            });
-                            // Also emit turnChanged to ensure UI updates
-                            io.to(roomCode).emit('turnChanged', {
-                                currentPlayer: room.game.currentPlayer,
-                                gamePhase: 'playing'
-                            });
-                            console.log(`✅ Truco gameState and turnChanged events emitted`);
-                        } else if (room.gameType === 'battleship' && room.game) {
-                            // Emit updated game state for Battleship
-                            console.log(`📢 Emitting gameState for Battleship to room ${roomCode}`);
-                            io.to(roomCode).emit('battleshipGameState', {
-                                players: room.game.players,
-                                currentPlayer: room.game.currentPlayer
-                            });
-                            console.log(`✅ Battleship gameState emitted`);
-                        } else if (room.gameType === 'go-fish' && room.game) {
-                            // Emit updated game state for Go Fish
-                            console.log(`📢 Emitting gameState for Go Fish to room ${roomCode}`);
-                            io.to(roomCode).emit('gameState', {
-                                players: room.game.players.map((p, idx) => ({
-                                    name: p.name,
-                                    hand: p.hand || [],
-                                    pairs: p.pairs || 0,
-                                    isBot: p.isBot || false
-                                })),
-                                pond: room.game.pond || [],
-                                currentPlayer: room.game.currentPlayer
-                            });
-                            console.log(`✅ Go Fish gameState emitted`);
                         }
-                        
-                        // ✅ CRITICAL FIX: Game-specific handling after bot replacement
-                        if (room.gameType === 'poker' && room.game) {
-                            // For poker, auto-fold the bot if not already folded/all-in
-                            if (room.game.players && room.game.players[playerIndex]) {
-                                const botPlayer = room.game.players[playerIndex];
-                                if (!botPlayer.isFolded && !botPlayer.isAllIn) {
-                                    console.log(`🎴 Auto-folding bot ${botPlayer.name} (replaced player)`);
-                                    botPlayer.isFolded = true;
+                        console.log(`✅ Poker gameState emitted`);
+                    } else if (room.gameType === 'blackjack' && room.game) {
+                        // Emit updated game state for Blackjack
+                        console.log(`📢 Emitting gameState for Blackjack to room ${roomCode}`);
+                        io.to(roomCode).emit('gameState', {
+                            players: room.game.players,
+                            gamePhase: room.game.gamePhase,
+                            currentPlayer: room.game.currentPlayer,
+                            dealer: room.game.dealer
+                        });
+                        console.log(`✅ Blackjack gameState emitted`);
+                    } else if (room.gameType === 'war' && room.game) {
+                        // Emit updated game state for War
+                        console.log(`📢 Emitting gameState for War to room ${roomCode}`);
+                        io.to(roomCode).emit('gameState', {
+                            players: room.game.players.map((p, idx) => ({
+                                name: p.name,
+                                hand: Array.isArray(p.hand) ? p.hand.length : 0,
+                                playerIndex: idx,
+                                isBot: p.isBot || false
+                            })),
+                            battleNumber: room.game.battleNumber,
+                            gameOver: room.game.gameOver
+                        });
+                        console.log(`✅ War gameState emitted`);
+                    } else if (room.gameType === 'truco' && room.game) {
+                        // Emit updated game state for Truco
+                        // ✅ CRITICAL FIX: Truco doesn't have room.game.players, use room.players instead
+                        console.log(`📢 Emitting gameState for Truco to room ${roomCode}`);
+                        console.log(`🔍 DEBUG: Truco room.players:`, room.players.map(p => ({ name: p.name, isBot: p.isBot, id: p.id })));
+                        io.to(roomCode).emit('gameState', {
+                            players: room.players.map((p, idx) => ({
+                                name: p.name,
+                                nickname: p.nickname,
+                                isBot: p.isBot || false,
+                                team: p.team,
+                                id: p.id
+                            })),
+                            currentPlayer: room.game.currentPlayer,
+                            hands: room.game.hands
+                        });
+                        // Also emit turnChanged to ensure UI updates
+                        io.to(roomCode).emit('turnChanged', {
+                            currentPlayer: room.game.currentPlayer,
+                            gamePhase: 'playing'
+                        });
+                        console.log(`✅ Truco gameState and turnChanged events emitted`);
+                    } else if (room.gameType === 'battleship' && room.game) {
+                        // Emit updated game state for Battleship
+                        console.log(`📢 Emitting gameState for Battleship to room ${roomCode}`);
+                        io.to(roomCode).emit('battleshipGameState', {
+                            players: room.game.players,
+                            currentPlayer: room.game.currentPlayer
+                        });
+                        console.log(`✅ Battleship gameState emitted`);
+                    } else if (room.gameType === 'go-fish' && room.game) {
+                        // Emit updated game state for Go Fish
+                        console.log(`📢 Emitting gameState for Go Fish to room ${roomCode}`);
+                        io.to(roomCode).emit('gameState', {
+                            players: room.game.players.map((p, idx) => ({
+                                name: p.name,
+                                hand: p.hand || [],
+                                pairs: p.pairs || 0,
+                                isBot: p.isBot || false
+                            })),
+                            pond: room.game.pond || [],
+                            currentPlayer: room.game.currentPlayer
+                        });
+                        console.log(`✅ Go Fish gameState emitted`);
+                    }
+                    
+                    // ✅ CRITICAL FIX: Game-specific handling after bot replacement
+                    if (room.gameType === 'poker' && room.game) {
+                        // For poker, auto-fold the bot if not already folded/all-in
+                        if (room.game.players && room.game.players[playerIndex]) {
+                            const botPlayer = room.game.players[playerIndex];
+                            if (!botPlayer.isFolded && !botPlayer.isAllIn) {
+                                console.log(`🎴 Auto-folding bot ${botPlayer.name} (replaced player)`);
+                                botPlayer.isFolded = true;
+                                
+                                // Notify other players with filtered hands
+                                if (typeof emitPokerGameState === 'function') {
+                                    emitPokerGameState(roomCode, room);
+                                }
+                                
+                                // Check if betting round should continue
+                                const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
+                                if (activePlayers.length <= 1) {
+                                    console.log(`🎴 Only one active player left after bot replacement, going to showdown`);
+                                    if (typeof handlePokerShowdown === 'function') {
+                                        handlePokerShowdown(roomCode, room);
+                                    }
+                                } else if (room.game.currentPlayer === playerIndex) {
+                                    // If it was the bot's turn, advance to next player
+                                    let attempts = 0;
+                                    do {
+                                        room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
+                                        attempts++;
+                                        if (attempts >= room.game.players.length) break;
+                                    } while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn);
                                     
-                                    // Notify other players with filtered hands
+                                    // Emit updated game state
                                     if (typeof emitPokerGameState === 'function') {
                                         emitPokerGameState(roomCode, room);
                                     }
                                     
-                                    // Check if betting round should continue
-                                    const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
-                                    if (activePlayers.length <= 1) {
-                                        console.log(`🎴 Only one active player left after bot replacement, going to showdown`);
-                                        if (typeof handlePokerShowdown === 'function') {
-                                            handlePokerShowdown(roomCode, room);
-                                        }
-                                    } else if (room.game.currentPlayer === playerIndex) {
-                                        // If it was the bot's turn, advance to next player
-                                        let attempts = 0;
-                                        do {
-                                            room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
-                                            attempts++;
-                                            if (attempts >= room.game.players.length) break;
-                                        } while (room.game.players[room.game.currentPlayer].isFolded || room.game.players[room.game.currentPlayer].isAllIn);
-                                        
-                                        // Emit updated game state
-                                        if (typeof emitPokerGameState === 'function') {
-                                            emitPokerGameState(roomCode, room);
-                                        }
-                                        
-                                        // Handle bot actions if needed
-                                        const nextPlayer = room.game.players[room.game.currentPlayer];
-                                        if (nextPlayer && nextPlayer.isBot) {
-                                            setTimeout(() => {
-                                                if (typeof handlePokerBotAction === 'function') {
-                                                    handlePokerBotAction(roomCode, room, nextPlayer);
-                                                }
-                                            }, 1500);
-                                        }
+                                    // Handle bot actions if needed
+                                    const nextPlayer = room.game.players[room.game.currentPlayer];
+                                    if (nextPlayer && nextPlayer.isBot) {
+                                        setTimeout(() => {
+                                            if (typeof handlePokerBotAction === 'function') {
+                                                handlePokerBotAction(roomCode, room, nextPlayer);
+                                            }
+                                        }, 1500);
                                     }
                                 }
                             }
-                        } else if (room.gameType === 'blackjack' && room.game) {
-                            // For Blackjack, trigger bot action if it's the bot's turn
-                            if (room.game.currentPlayer === playerIndex && room.game.gamePhase === 'playing') {
-                                const botPlayer = room.game.players[playerIndex];
-                                if (botPlayer && botPlayer.isBot) {
-                                    console.log(`🃏 Triggering Blackjack bot action for replaced player ${botPlayer.name}`);
-                                    setTimeout(() => {
-                                        if (typeof handleBlackjackBotTurn === 'function') {
-                                            handleBlackjackBotTurn(roomCode, room);
-                                        }
-                                    }, 1500);
-                                }
-                            }
-                        } else if (room.gameType === 'truco' && room.game) {
-                            // For Truco, trigger bot action if it's the bot's turn
-                            // ✅ CRITICAL FIX: Truco uses room.players, not room.game.players
-                            if (room.game.currentPlayer === playerIndex) {
-                                const botPlayer = room.players[playerIndex];
-                                if (botPlayer && botPlayer.isBot) {
-                                    console.log(`🎯 Triggering Truco bot action for replaced player ${botPlayer.name}`);
-                                    // Emit turnChanged event to trigger client-side bot logic
-                                    io.to(roomCode).emit('turnChanged', {
-                                        currentPlayer: room.game.currentPlayer,
-                                        gamePhase: room.game.gamePhase || 'playing'
-                                    });
-                                    console.log(`✅ Truco turnChanged event emitted to trigger bot action`);
-                                } else {
-                                    console.log(`⚠️ Truco: Player at index ${playerIndex} is not a bot or doesn't exist`);
-                                }
-                            } else {
-                                console.log(`⏭️ Truco: Not the replaced player's turn (currentPlayer: ${room.game.currentPlayer}, playerIndex: ${playerIndex})`);
-                            }
-                        } else if (room.gameType === 'go-fish' && room.game) {
-                            // For Go Fish, trigger bot action if it's the bot's turn
-                            if (room.game.currentPlayer === playerIndex) {
-                                const botPlayer = room.game.players[playerIndex];
-                                if (botPlayer && botPlayer.isBot) {
-                                    console.log(`🐟 Triggering Go Fish bot action for replaced player ${botPlayer.name}`);
-                                    // Emit turnChanged or similar event to trigger bot logic
-                                    io.to(roomCode).emit('turnChanged', {
-                                        currentPlayer: room.game.currentPlayer
-                                    });
-                                    console.log(`✅ Go Fish turnChanged event emitted to trigger bot action`);
-                                }
-                            }
-                        } else if (room.gameType === 'battleship') {
-                            // For battleship, let the existing reconnection logic handle it
-                            console.log(`🚢 Battleship player replaced with bot - existing logic will handle`);
                         }
-                        // For War, bots will participate in battles when they are started
-                        // The game will continue normally with the bot participating
-                    } else {
-                        console.log(`⚠️ Player ${socket.id} disconnected but not found in room players`);
-                        console.log(`🔍 DEBUG: Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
+                    } else if (room.gameType === 'blackjack' && room.game) {
+                        // For Blackjack, trigger bot action if it's the bot's turn
+                        if (room.game.currentPlayer === playerIndex && room.game.gamePhase === 'playing') {
+                            const botPlayer = room.game.players[playerIndex];
+                            if (botPlayer && botPlayer.isBot) {
+                                console.log(`🃏 Triggering Blackjack bot action for replaced player ${botPlayer.name}`);
+                                setTimeout(() => {
+                                    if (typeof handleBlackjackBotTurn === 'function') {
+                                        handleBlackjackBotTurn(roomCode, room);
+                                    }
+                                }, 1500);
+                            }
+                        }
+                    } else if (room.gameType === 'truco' && room.game) {
+                        // For Truco, trigger bot action if it's the bot's turn
+                        // ✅ CRITICAL FIX: Truco uses room.players, not room.game.players
+                        if (room.game.currentPlayer === playerIndex) {
+                            const botPlayer = room.players[playerIndex];
+                            if (botPlayer && botPlayer.isBot) {
+                                console.log(`🎯 Triggering Truco bot action for replaced player ${botPlayer.name}`);
+                                // Emit turnChanged event to trigger client-side bot logic
+                                io.to(roomCode).emit('turnChanged', {
+                                    currentPlayer: room.game.currentPlayer,
+                                    gamePhase: room.game.gamePhase || 'playing'
+                                });
+                                console.log(`✅ Truco turnChanged event emitted to trigger bot action`);
+                            } else {
+                                console.log(`⚠️ Truco: Player at index ${playerIndex} is not a bot or doesn't exist`);
+                            }
+                        } else {
+                            console.log(`⏭️ Truco: Not the replaced player's turn (currentPlayer: ${room.game.currentPlayer}, playerIndex: ${playerIndex})`);
+                        }
+                    } else if (room.gameType === 'go-fish' && room.game) {
+                        // For Go Fish, trigger bot action if it's the bot's turn
+                        if (room.game.currentPlayer === playerIndex) {
+                            const botPlayer = room.game.players[playerIndex];
+                            if (botPlayer && botPlayer.isBot) {
+                                console.log(`🐟 Triggering Go Fish bot action for replaced player ${botPlayer.name}`);
+                                // Emit turnChanged or similar event to trigger bot logic
+                                io.to(roomCode).emit('turnChanged', {
+                                    currentPlayer: room.game.currentPlayer
+                                });
+                                console.log(`✅ Go Fish turnChanged event emitted to trigger bot action`);
+                            }
+                        }
+                    } else if (room.gameType === 'battleship') {
+                        // For battleship, let the existing reconnection logic handle it
+                        console.log(`🚢 Battleship player replaced with bot - existing logic will handle`);
                     }
+                    // For War, bots will participate in battles when they are started
+                    // The game will continue normally with the bot participating
                 } else {
-                    // Game not active, just remove player normally
-                    console.log(`👤 Player ${socket.id} disconnected from inactive game in room ${roomCode}`);
-                    console.log(`🔍 DEBUG: Game active check result: ${isGameActive}`);
+                    console.log(`⚠️ Player ${socket.id} disconnected but not found in room players`);
+                    console.log(`🔍 DEBUG: Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
                 }
             } else {
-                console.log(`⚠️ Room ${roomCode} not found for disconnected socket ${socket.id}`);
+                // Game not active, just remove player normally
+                console.log(`👤 Player ${socket.id} disconnected from inactive game in room ${roomCode}`);
+                console.log(`🔍 DEBUG: Game active check result: ${isGameActive}`);
             }
         } else {
-            console.log(`⚠️ Socket ${socket.id} disconnected but no roomCode found and not found in any room`);
+            console.log(`⚠️ Room ${roomCode} not found for disconnected socket ${socket.id}`);
         }
+    }
     });
     
     // ✅ DEBUG: Log all incoming events to see if startGame is received
