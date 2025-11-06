@@ -738,6 +738,45 @@ class GoFishClient {
             
             this.startGame(data);
         });
+        
+        // ✅ CRITICAL FIX: Handle player replaced with bot during gameplay (for Go Fish)
+        socket.on('playerReplacedWithBot', (data) => {
+            console.log('⚠️ Player replaced with bot:', data);
+            if (data) {
+                // Show warning message to user
+                if (data.message && typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage(data.message, 'warning');
+                } else if (data.message) {
+                    alert(data.message);
+                }
+                
+                // Update game state with new player data
+                if (data.players && this.game && this.game.players) {
+                    // Update players array
+                    data.players.forEach((player, index) => {
+                        if (this.game.players[index]) {
+                            this.game.players[index].isBot = player.isBot || false;
+                            // ✅ CRITICAL FIX: Update both name and nickname
+                            if (player.nickname) {
+                                this.game.players[index].nickname = player.nickname;
+                                this.game.players[index].name = `${player.nickname} (Bot)`;
+                            } else {
+                                this.game.players[index].name = player.name || this.game.players[index].name;
+                            }
+                            // Ensure (Bot) suffix is present if it's a bot
+                            if (player.isBot && !this.game.players[index].name.includes('(Bot)')) {
+                                this.game.players[index].name = `${this.game.players[index].name} (Bot)`;
+                            }
+                        }
+                    });
+                    
+                    // Update UI
+                    if (typeof this.updateUI === 'function') {
+                        this.updateUI();
+                    }
+                }
+            }
+        });
 
         // Backup event listener for gameStarted
         socket.on('gameStarted_backup', (data) => {

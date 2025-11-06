@@ -664,31 +664,38 @@ io.on('connection', (socket) => {
                 let isGameActive = false;
                 if (room.game) {
                     console.log(`🔍 DEBUG: Checking if game is active - gameType: ${room.gameType}, game exists: ${!!room.game}, started: ${room.game.started}, gamePhase: ${room.game.gamePhase}`);
+                    
                     if (room.gameType === 'poker' || room.gameType === 'blackjack') {
                         // Poker and Blackjack use gamePhase
                         isGameActive = room.game.gamePhase && 
                                      room.game.gamePhase !== 'waiting' && 
                                      room.game.gamePhase !== 'finished';
                         console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (gamePhase: ${room.game.gamePhase})`);
-                    } else if (room.gameType === 'war' || room.gameType === 'truco' || room.gameType === 'battleship') {
-                        // War, Truco, and Battleship use game.started
-                        // ✅ CRITICAL FIX: For Truco, check hands instead of players array (Truco doesn't have room.game.players)
-                        if (room.gameType === 'truco') {
-                            // Truco uses room.game.hands, not room.game.players
-                            isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
-                                         room.game.hands && 
-                                         Array.isArray(room.game.hands) &&
-                                         room.game.hands.length > 0 &&
-                                         room.game.hands.some(hand => Array.isArray(hand) && hand.length > 0);
-                            console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, hands: ${room.game.hands?.length}, hasCards: ${room.game.hands?.some(h => h && h.length > 0)})`);
-                        } else {
-                            // War and Battleship use room.game.players
-                            isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
-                                         room.game.players && 
-                                         room.game.players.length > 0 &&
-                                         (room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0));
-                            console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasCards: ${room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0)})`);
-                        }
+                    } else if (room.gameType === 'go-fish') {
+                        // ✅ CRITICAL FIX: Go Fish uses game state
+                        isGameActive = room.game.state === 'playing' || 
+                                     (room.game.players && room.game.players.length > 0 && 
+                                      room.game.players.some(p => p.hand && Array.isArray(p.hand) && p.hand.length > 0));
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (state: ${room.game.state}, players: ${room.game.players?.length})`);
+                    } else if (room.gameType === 'truco') {
+                        // Truco uses room.game.hands, not room.game.players
+                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                     room.game.hands && 
+                                     Array.isArray(room.game.hands) &&
+                                     room.game.hands.length > 0 &&
+                                     room.game.hands.some(hand => Array.isArray(hand) && hand.length > 0);
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, hands: ${room.game.hands?.length})`);
+                    } else if (room.gameType === 'war' || room.gameType === 'battleship') {
+                        // War and Battleship use room.game.players
+                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                     room.game.players && 
+                                     room.game.players.length > 0 &&
+                                     (room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0));
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length})`);
+                    } else {
+                        // Default case: check if game has started flag
+                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started);
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check (default): ${isGameActive} (started: ${room.game.started})`);
                     }
                 } else {
                     console.log(`🔍 DEBUG: No game object found in room ${socket.roomCode}`);
@@ -754,8 +761,35 @@ io.on('connection', (socket) => {
                         console.log(`✅ playerReplacedWithBot event emitted successfully with data:`, replacementData);
                         
                         // ✅ CRITICAL FIX: Emit updated game state for all games
-                        if (room.gameType === 'war' && room.game) {
+                        if (room.gameType === 'poker' && room.game) {
+                            // Emit updated game state for Poker
+                            console.log(`📢 Emitting gameState for Poker to room ${socket.roomCode}`);
+                            if (typeof emitPokerGameState === 'function') {
+                                emitPokerGameState(socket.roomCode, room);
+                            } else {
+                                // Fallback: emit basic gameState
+                                io.to(socket.roomCode).emit('gameState', {
+                                    players: room.game.players,
+                                    gamePhase: room.game.gamePhase,
+                                    currentPlayer: room.game.currentPlayer,
+                                    pot: room.game.pot,
+                                    currentBet: room.game.currentBet
+                                });
+                            }
+                            console.log(`✅ Poker gameState emitted`);
+                        } else if (room.gameType === 'blackjack' && room.game) {
+                            // Emit updated game state for Blackjack
+                            console.log(`📢 Emitting gameState for Blackjack to room ${socket.roomCode}`);
+                            io.to(socket.roomCode).emit('gameState', {
+                                players: room.game.players,
+                                gamePhase: room.game.gamePhase,
+                                currentPlayer: room.game.currentPlayer,
+                                dealer: room.game.dealer
+                            });
+                            console.log(`✅ Blackjack gameState emitted`);
+                        } else if (room.gameType === 'war' && room.game) {
                             // Emit updated game state for War
+                            console.log(`📢 Emitting gameState for War to room ${socket.roomCode}`);
                             io.to(socket.roomCode).emit('gameState', {
                                 players: room.game.players.map((p, idx) => ({
                                     name: p.name,
@@ -766,13 +800,7 @@ io.on('connection', (socket) => {
                                 battleNumber: room.game.battleNumber,
                                 gameOver: room.game.gameOver
                             });
-                        } else if (room.gameType === 'blackjack' && room.game) {
-                            // Emit updated game state for Blackjack
-                            io.to(socket.roomCode).emit('gameState', {
-                                players: room.game.players,
-                                gamePhase: room.game.gamePhase,
-                                currentPlayer: room.game.currentPlayer
-                            });
+                            console.log(`✅ War gameState emitted`);
                         } else if (room.gameType === 'truco' && room.game) {
                             // Emit updated game state for Truco
                             // ✅ CRITICAL FIX: Truco doesn't have room.game.players, use room.players instead
@@ -797,14 +825,30 @@ io.on('connection', (socket) => {
                             console.log(`✅ Truco gameState and turnChanged events emitted`);
                         } else if (room.gameType === 'battleship' && room.game) {
                             // Emit updated game state for Battleship
+                            console.log(`📢 Emitting gameState for Battleship to room ${socket.roomCode}`);
                             io.to(socket.roomCode).emit('battleshipGameState', {
                                 players: room.game.players,
                                 currentPlayer: room.game.currentPlayer
                             });
+                            console.log(`✅ Battleship gameState emitted`);
+                        } else if (room.gameType === 'go-fish' && room.game) {
+                            // Emit updated game state for Go Fish
+                            console.log(`📢 Emitting gameState for Go Fish to room ${socket.roomCode}`);
+                            io.to(socket.roomCode).emit('gameState', {
+                                players: room.game.players.map((p, idx) => ({
+                                    name: p.name,
+                                    hand: p.hand || [],
+                                    pairs: p.pairs || 0,
+                                    isBot: p.isBot || false
+                                })),
+                                pond: room.game.pond || [],
+                                currentPlayer: room.game.currentPlayer
+                            });
+                            console.log(`✅ Go Fish gameState emitted`);
                         }
                         
                         // ✅ CRITICAL FIX: Game-specific handling after bot replacement
-                        if (room.gameType === 'poker') {
+                        if (room.gameType === 'poker' && room.game) {
                             // For poker, auto-fold the bot if not already folded/all-in
                             if (room.game.players && room.game.players[playerIndex]) {
                                 const botPlayer = room.game.players[playerIndex];
@@ -850,9 +894,6 @@ io.on('connection', (socket) => {
                                     }
                                 }
                             }
-                        } else if (room.gameType === 'battleship') {
-                            // For battleship, let the existing reconnection logic handle it
-                            console.log(`🚢 Battleship player replaced with bot - existing logic will handle`);
                         } else if (room.gameType === 'blackjack' && room.game) {
                             // For Blackjack, trigger bot action if it's the bot's turn
                             if (room.game.currentPlayer === playerIndex && room.game.gamePhase === 'playing') {
@@ -885,6 +926,22 @@ io.on('connection', (socket) => {
                             } else {
                                 console.log(`⏭️ Truco: Not the replaced player's turn (currentPlayer: ${room.game.currentPlayer}, playerIndex: ${playerIndex})`);
                             }
+                        } else if (room.gameType === 'go-fish' && room.game) {
+                            // For Go Fish, trigger bot action if it's the bot's turn
+                            if (room.game.currentPlayer === playerIndex) {
+                                const botPlayer = room.game.players[playerIndex];
+                                if (botPlayer && botPlayer.isBot) {
+                                    console.log(`🐟 Triggering Go Fish bot action for replaced player ${botPlayer.name}`);
+                                    // Emit turnChanged or similar event to trigger bot logic
+                                    io.to(socket.roomCode).emit('turnChanged', {
+                                        currentPlayer: room.game.currentPlayer
+                                    });
+                                    console.log(`✅ Go Fish turnChanged event emitted to trigger bot action`);
+                                }
+                            }
+                        } else if (room.gameType === 'battleship') {
+                            // For battleship, let the existing reconnection logic handle it
+                            console.log(`🚢 Battleship player replaced with bot - existing logic will handle`);
                         }
                         // For War, bots will participate in battles when they are started
                         // The game will continue normally with the bot participating
@@ -2233,7 +2290,9 @@ io.on('connection', (socket) => {
         });
 
         socket.join(roomCode);
-        roomCode = roomCode;
+        // ✅ CRITICAL FIX: Set socket.roomCode so disconnect handler can find the room
+        socket.roomCode = roomCode;
+        socket.roomId = roomCode; // Also set roomId for compatibility
 
         console.log(`🔍 Socket joined room: ${roomCode}`);
         console.log(`🔍 Socket room code set to: ${roomCode}`);
@@ -2342,6 +2401,9 @@ io.on('connection', (socket) => {
         }
         
         socket.join(roomCode);
+        // ✅ CRITICAL FIX: Set socket.roomCode so disconnect handler can find the room
+        socket.roomCode = roomCode;
+        socket.roomId = roomCode; // Also set roomId for compatibility
 
         console.log(`✅ User ${socket.id} joined room ${roomCode}. Total players: ${room.players.length}`);
         console.log(`🔍 Socket joined room: ${roomCode}`);
