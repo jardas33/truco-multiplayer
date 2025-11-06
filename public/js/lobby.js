@@ -1000,6 +1000,9 @@ function setupSocketListeners() {
         // ✅ CRITICAL FIX: Game winner is now handled separately in gameComplete event
         // RoundComplete events no longer include gameWinner data
         
+        // ✅ CRITICAL FIX: Ensure game buttons are visible after round completes
+        showGameButtons();
+        
         // ✅ Update current player for next round
         if (data.currentPlayer !== undefined) {
             window.game.currentPlayerIndex = data.currentPlayer;
