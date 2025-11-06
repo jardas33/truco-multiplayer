@@ -328,7 +328,8 @@ class BattleshipGame {
                             
                             // ✅ CRITICAL FIX: If the current player is a bot, trigger bot attack regardless of isPlayerTurn
                             // The isPlayerTurn might not be updated correctly yet, so we check the server's currentPlayer index
-                            if (isCurrentPlayerBot) {
+                            // Only trigger if bot attack is not already in progress
+                            if (isCurrentPlayerBot && !gameInstance.botAttackInProgress) {
                                 console.log(`🚢 Bot replacement: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack in 2 seconds`);
                                 // Force update isPlayerTurn to false since it's the bot's turn
                                 gameInstance.isPlayerTurn = false;
@@ -338,7 +339,11 @@ class BattleshipGame {
                                     this.handleBotAttack();
                                 }, 2000);
                             } else {
-                                console.log(`🚢 Bot replacement: Not triggering bot attack - isCurrentPlayerBot=${isCurrentPlayerBot}, isPlayerTurn=${gameInstance.isPlayerTurn}`);
+                                if (gameInstance.botAttackInProgress) {
+                                    console.log(`🚢 Bot replacement: Bot attack already in progress, skipping duplicate trigger`);
+                                } else {
+                                    console.log(`🚢 Bot replacement: Not triggering bot attack - isCurrentPlayerBot=${isCurrentPlayerBot}, isPlayerTurn=${gameInstance.isPlayerTurn}`);
+                                }
                             }
                         }
                     }
@@ -729,15 +734,20 @@ class BattleshipGame {
             console.log(`🚢 handleTurnChange: Checking bot attack trigger - currentPlayerIndex=${currentPlayerIndex}, isCurrentPlayerBot=${isCurrentPlayerBot}, isPlayerTurn=${gameInstance.isPlayerTurn}`);
             console.log(`🚢 handleTurnChange: Current player data:`, currentPlayer ? { name: currentPlayer.name, isBot: currentPlayer.isBot } : 'not found');
             
-            // If the current player is a bot and it's their turn, trigger bot attack
-            if (isCurrentPlayerBot) {
+            // ✅ CRITICAL FIX: If the current player is a bot and it's their turn, trigger bot attack
+            // Only trigger if bot attack is not already in progress
+            if (isCurrentPlayerBot && !gameInstance.botAttackInProgress) {
                 console.log(`🚢 handleTurnChange: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack in 2 seconds`);
                 setTimeout(() => {
                     console.log(`🚢 handleTurnChange: Executing bot attack now...`);
                     this.handleBotAttack();
                 }, 2000);
             } else {
-                console.log(`🚢 handleTurnChange: Not triggering bot attack - isCurrentPlayerBot=${isCurrentPlayerBot}`);
+                if (gameInstance.botAttackInProgress) {
+                    console.log(`🚢 handleTurnChange: Bot attack already in progress, skipping duplicate trigger`);
+                } else {
+                    console.log(`🚢 handleTurnChange: Not triggering bot attack - isCurrentPlayerBot=${isCurrentPlayerBot}`);
+                }
             }
         }
     }
