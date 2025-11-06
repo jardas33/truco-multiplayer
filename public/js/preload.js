@@ -13,7 +13,7 @@ function loadGameImages() {
         console.log('Initialized cardImages object');
     }
     
-    // Load background image
+    // Load background image for most games
     try {
         backgroundImage = loadImage(`${baseUrl}/Images/background.jpg`, 
             () => console.log('SUCCESS: Background image loaded'),
@@ -21,6 +21,16 @@ function loadGameImages() {
         );
     } catch (error) {
         console.error('ERROR: Error loading background image:', error);
+    }
+    
+    // ✅ CRITICAL FIX: Load battleships.png for Battleship game
+    try {
+        window.battleshipBackgroundImage = loadImage(`${baseUrl}/Images/battleships.png`, 
+            () => console.log('SUCCESS: Battleship background image loaded'),
+            () => console.error('ERROR: Failed to load battleship background image')
+        );
+    } catch (error) {
+        console.error('ERROR: Error loading battleship background image:', error);
     }
     
     // Load card back image

@@ -3123,13 +3123,16 @@ class BattleshipClient {
         // Clear the canvas first to ensure clean drawing
         clear();
         
-        // ✅ CRITICAL FIX: Draw background image if available
+        // ✅ CRITICAL FIX: Draw battleship background image (battleships.png) if available
         push();
         imageMode(CORNER);
-        if (window.backgroundImage && window.backgroundImage.width > 0) {
+        if (window.battleshipBackgroundImage && window.battleshipBackgroundImage.width > 0) {
+            image(window.battleshipBackgroundImage, 0, 0, width, height);
+        } else if (window.backgroundImage && window.backgroundImage.width > 0) {
+            // Fallback to generic background if battleship image not loaded
             image(window.backgroundImage, 0, 0, width, height);
         } else {
-            // Fallback background if image not loaded
+            // Final fallback background if no image loaded
             background(0, 50, 100); // Dark blue ocean
         }
         pop();
