@@ -727,8 +727,8 @@ io.on('connection', (socket) => {
                             // For Truco, we don't have room.game.players, so we just update room.players
                             // The client uses room.players data, not room.game.players
                             console.log(`🎯 Truco: Updated room.players[${playerIndex}] to bot status`);
-                        } else if (room.game && room.game.players && room.game.players[playerIndex]) {
-                            // For other games (War, Poker, Blackjack, etc.) that have room.game.players
+                        } else if (room.game && room.game.players && Array.isArray(room.game.players) && room.game.players[playerIndex]) {
+                            // For other games (War, Poker, Blackjack, Go Fish, etc.) that have room.game.players
                             const gamePlayer = room.game.players[playerIndex];
                             gamePlayer.isBot = true;
                             gamePlayer.id = leavingPlayer.id;
@@ -739,7 +739,9 @@ io.on('connection', (socket) => {
                             if (!gamePlayer.name.includes('(Bot)') && !gamePlayer.name.includes('Bot')) {
                                 gamePlayer.name = `${gamePlayer.name || leavingPlayerName} (Bot)`;
                             }
-                            console.log(`✅ Updated room.game.players[${playerIndex}] to bot status`);
+                            console.log(`✅ Updated room.game.players[${playerIndex}] to bot status for ${room.gameType}`);
+                        } else {
+                            console.log(`⚠️ Could not update room.game.players[${playerIndex}] - game: ${!!room.game}, players: ${!!room.game?.players}, isArray: ${Array.isArray(room.game?.players)}, index exists: ${room.game?.players?.[playerIndex] !== undefined}`);
                         }
                         
                         console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${socket.roomCode}`);
