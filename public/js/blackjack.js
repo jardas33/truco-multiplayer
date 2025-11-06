@@ -1990,6 +1990,20 @@ class BlackjackClient {
             bettingArea.style.display = shouldShow ? 'flex' : 'none';
             console.log('🃏 Betting area display:', shouldShow ? 'flex (visible)' : 'none (hidden)');
             
+            // ✅ CRITICAL FIX: Adjust player boxes position based on betting area visibility
+            const playerAreasContainer = document.getElementById('playerAreasContainer');
+            if (playerAreasContainer) {
+                if (shouldShow) {
+                    // Move player boxes up when betting area is visible to prevent overlap
+                    playerAreasContainer.style.bottom = '200px';
+                    console.log('🃏 Player boxes moved up to 200px (betting area visible)');
+                } else {
+                    // Move player boxes back to original position when betting area is hidden
+                    playerAreasContainer.style.bottom = '120px';
+                    console.log('🃏 Player boxes moved back to 120px (betting area hidden)');
+                }
+            }
+            
             // Ensure place bet button is enabled if betting area is visible
             if (shouldShow && placeBetBtn) {
                 placeBetBtn.disabled = this.isActing || false;
