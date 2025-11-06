@@ -672,12 +672,23 @@ io.on('connection', (socket) => {
                         console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (gamePhase: ${room.game.gamePhase})`);
                     } else if (room.gameType === 'war' || room.gameType === 'truco' || room.gameType === 'battleship') {
                         // War, Truco, and Battleship use game.started
-                        // ✅ CRITICAL FIX: Check both strict true and truthy value, plus check if players have cards
-                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
-                                     room.game.players && 
-                                     room.game.players.length > 0 &&
-                                     (room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0));
-                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasCards: ${room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0)})`);
+                        // ✅ CRITICAL FIX: For Truco, check hands instead of players array (Truco doesn't have room.game.players)
+                        if (room.gameType === 'truco') {
+                            // Truco uses room.game.hands, not room.game.players
+                            isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                         room.game.hands && 
+                                         Array.isArray(room.game.hands) &&
+                                         room.game.hands.length > 0 &&
+                                         room.game.hands.some(hand => Array.isArray(hand) && hand.length > 0);
+                            console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, hands: ${room.game.hands?.length}, hasCards: ${room.game.hands?.some(h => h && h.length > 0)})`);
+                        } else {
+                            // War and Battleship use room.game.players
+                            isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                         room.game.players && 
+                                         room.game.players.length > 0 &&
+                                         (room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0));
+                            console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasCards: ${room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0)})`);
+                        }
                     }
                 } else {
                     console.log(`🔍 DEBUG: No game object found in room ${socket.roomCode}`);
@@ -704,8 +715,13 @@ io.on('connection', (socket) => {
                             }
                         }
                         
-                        // ✅ CRITICAL FIX: Update game players array if it exists
-                        if (room.game && room.game.players && room.game.players[playerIndex]) {
+                        // ✅ CRITICAL FIX: Update game players array if it exists (Truco doesn't have room.game.players)
+                        if (room.gameType === 'truco') {
+                            // For Truco, we don't have room.game.players, so we just update room.players
+                            // The client uses room.players data, not room.game.players
+                            console.log(`🎯 Truco: Updated room.players[${playerIndex}] to bot status`);
+                        } else if (room.game && room.game.players && room.game.players[playerIndex]) {
+                            // For other games (War, Poker, Blackjack, etc.) that have room.game.players
                             const gamePlayer = room.game.players[playerIndex];
                             gamePlayer.isBot = true;
                             gamePlayer.id = leavingPlayer.id;
@@ -716,6 +732,7 @@ io.on('connection', (socket) => {
                             if (!gamePlayer.name.includes('(Bot)') && !gamePlayer.name.includes('Bot')) {
                                 gamePlayer.name = `${gamePlayer.name || leavingPlayerName} (Bot)`;
                             }
+                            console.log(`✅ Updated room.game.players[${playerIndex}] to bot status`);
                         }
                         
                         console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${socket.roomCode}`);
@@ -758,9 +775,17 @@ io.on('connection', (socket) => {
                             });
                         } else if (room.gameType === 'truco' && room.game) {
                             // Emit updated game state for Truco
+                            // ✅ CRITICAL FIX: Truco doesn't have room.game.players, use room.players instead
                             console.log(`📢 Emitting gameState for Truco to room ${socket.roomCode}`);
+                            console.log(`🔍 DEBUG: Truco room.players:`, room.players.map(p => ({ name: p.name, isBot: p.isBot, id: p.id })));
                             io.to(socket.roomCode).emit('gameState', {
-                                players: room.game.players,
+                                players: room.players.map((p, idx) => ({
+                                    name: p.name,
+                                    nickname: p.nickname,
+                                    isBot: p.isBot || false,
+                                    team: p.team,
+                                    id: p.id
+                                })),
                                 currentPlayer: room.game.currentPlayer,
                                 hands: room.game.hands
                             });
@@ -769,7 +794,6 @@ io.on('connection', (socket) => {
                                 currentPlayer: room.game.currentPlayer,
                                 gamePhase: 'playing'
                             });
-                            // ✅ CRITICAL FIX: Include currentPlayer in playerReplacedWithBot event data
                             console.log(`✅ Truco gameState and turnChanged events emitted`);
                         } else if (room.gameType === 'battleship' && room.game) {
                             // Emit updated game state for Battleship
@@ -844,8 +868,9 @@ io.on('connection', (socket) => {
                             }
                         } else if (room.gameType === 'truco' && room.game) {
                             // For Truco, trigger bot action if it's the bot's turn
+                            // ✅ CRITICAL FIX: Truco uses room.players, not room.game.players
                             if (room.game.currentPlayer === playerIndex) {
-                                const botPlayer = room.game.players[playerIndex];
+                                const botPlayer = room.players[playerIndex];
                                 if (botPlayer && botPlayer.isBot) {
                                     console.log(`🎯 Triggering Truco bot action for replaced player ${botPlayer.name}`);
                                     // Emit turnChanged event to trigger client-side bot logic
@@ -853,7 +878,12 @@ io.on('connection', (socket) => {
                                         currentPlayer: room.game.currentPlayer,
                                         gamePhase: room.game.gamePhase || 'playing'
                                     });
+                                    console.log(`✅ Truco turnChanged event emitted to trigger bot action`);
+                                } else {
+                                    console.log(`⚠️ Truco: Player at index ${playerIndex} is not a bot or doesn't exist`);
                                 }
+                            } else {
+                                console.log(`⏭️ Truco: Not the replaced player's turn (currentPlayer: ${room.game.currentPlayer}, playerIndex: ${playerIndex})`);
                             }
                         }
                         // For War, bots will participate in battles when they are started

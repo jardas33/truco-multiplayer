@@ -603,25 +603,50 @@ function setupSocketListeners() {
             
             // ✅ CRITICAL FIX: Update game state with new player data
             if (data.players) {
-                // Update window.game.players if it exists
-                if (window.game && window.game.players) {
-                    console.log(`🔄 Updating ${window.game.players.length} players in window.game`);
+                console.log(`🔄 Updating player data from server:`, data.players.map(p => ({ name: p.name, isBot: p.isBot })));
+                
+                // ✅ CRITICAL FIX: Update window.players (used by Truco)
+                if (window.players && Array.isArray(window.players)) {
+                    console.log(`🔄 Updating ${window.players.length} players in window.players`);
+                    data.players.forEach((player, index) => {
+                        if (window.players[index]) {
+                            window.players[index].isBot = player.isBot || false;
+                            const oldName = window.players[index].name;
+                            if (player.nickname) {
+                                window.players[index].nickname = player.nickname;
+                                window.players[index].name = `${player.nickname} (Bot)`;
+                            } else {
+                                window.players[index].name = player.name || oldName;
+                            }
+                            // Ensure (Bot) suffix is present if it's a bot
+                            if (player.isBot && !window.players[index].name.includes('(Bot)')) {
+                                window.players[index].name = `${window.players[index].name} (Bot)`;
+                            }
+                            console.log(`✅ Updated window.players[${index}]: ${oldName} → ${window.players[index].name} (isBot: ${window.players[index].isBot})`);
+                        }
+                    });
+                }
+                
+                // ✅ CRITICAL FIX: Update window.game.players if it exists (used by all games)
+                if (window.game && window.game.players && Array.isArray(window.game.players)) {
+                    console.log(`🔄 Updating ${window.game.players.length} players in window.game.players`);
                     // Update players array
                     data.players.forEach((player, index) => {
                         if (window.game.players[index]) {
                             window.game.players[index].isBot = player.isBot || false;
+                            const oldName = window.game.players[index].name;
                             // ✅ CRITICAL FIX: Update both name and nickname
                             if (player.nickname) {
                                 window.game.players[index].nickname = player.nickname;
                                 window.game.players[index].name = `${player.nickname} (Bot)`;
                             } else {
-                                window.game.players[index].name = player.name || window.game.players[index].name;
+                                window.game.players[index].name = player.name || oldName;
                             }
                             // Ensure (Bot) suffix is present if it's a bot
                             if (player.isBot && !window.game.players[index].name.includes('(Bot)')) {
                                 window.game.players[index].name = `${window.game.players[index].name} (Bot)`;
                             }
-                            console.log(`✅ Updated player ${index}: ${window.game.players[index].name} (isBot: ${window.game.players[index].isBot})`);
+                            console.log(`✅ Updated window.game.players[${index}]: ${oldName} → ${window.game.players[index].name} (isBot: ${window.game.players[index].isBot})`);
                         }
                     });
                     
@@ -632,7 +657,7 @@ function setupSocketListeners() {
                         console.log(`🔄 Updated currentPlayerIndex to ${data.currentPlayer} from server`);
                     }
                     
-                    // ✅ CRITICAL FIX: Trigger bot play if it's the bot's turn (for Truco)
+                    // ✅ CRITICAL FIX: Trigger bot play if it's the bot's turn (for Truco and other games)
                     const currentPlayerIndex = window.game.currentPlayerIndex !== undefined ? window.game.currentPlayerIndex : (window.currentPlayer !== undefined ? window.currentPlayer : -1);
                     if (currentPlayerIndex >= 0 && window.game.players[currentPlayerIndex] && window.game.players[currentPlayerIndex].isBot) {
                         console.log(`🤖 Triggering bot play for replaced player at index ${currentPlayerIndex}`);
@@ -654,6 +679,8 @@ function setupSocketListeners() {
                     updateGameState();
                 } else if (typeof redrawGame === 'function') {
                     redrawGame();
+                } else if (typeof drawGameState === 'function') {
+                    drawGameState();
                 }
             }
         }
