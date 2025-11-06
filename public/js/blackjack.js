@@ -814,6 +814,39 @@ class BlackjackClient {
             alert(`Nickname change failed: ${errorMessage}`);
         });
         
+        // ✅ CRITICAL FIX: Handle player replaced with bot during gameplay
+        socket.on('playerReplacedWithBot', (data) => {
+            console.log('⚠️ Player replaced with bot:', data);
+            if (data) {
+                // Show warning message to user
+                if (data.message && typeof UIUtils !== 'undefined') {
+                    UIUtils.showGameMessage(data.message, 'warning');
+                } else if (data.message) {
+                    alert(data.message);
+                }
+                
+                // Update game state with new player data
+                if (data.players && this.game && this.game.players) {
+                    // Update players array
+                    data.players.forEach((player, index) => {
+                        if (this.game.players[index]) {
+                            this.game.players[index].isBot = player.isBot || false;
+                            this.game.players[index].name = player.name || player.nickname || this.game.players[index].name;
+                            if (player.nickname && !this.game.players[index].name.includes(player.nickname)) {
+                                this.game.players[index].name = `${player.nickname} (Bot)`;
+                            }
+                        }
+                    });
+                    
+                    // Update UI
+                    this.updatePlayerAreas();
+                    if (typeof this.updateUI === 'function') {
+                        this.updateUI();
+                    }
+                }
+            }
+        });
+        
         socket.on('gameStarted', (data) => {
             console.log('🃏 gameStarted event received:', data);
             // Transition to game view

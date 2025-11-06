@@ -589,6 +589,39 @@ function setupSocketListeners() {
             }
         }
     });
+    
+    // ✅ CRITICAL FIX: Handle player replaced with bot during gameplay (for Truco)
+    socket.on('playerReplacedWithBot', (data) => {
+        console.log('⚠️ Player replaced with bot:', data);
+        if (data) {
+            // Show warning message to user
+            if (data.message && typeof UIUtils !== 'undefined') {
+                UIUtils.showGameMessage(data.message, 'warning');
+            } else if (data.message) {
+                alert(data.message);
+            }
+            
+            // Update game state with new player data
+            if (data.players && window.game && window.game.players) {
+                // Update players array
+                data.players.forEach((player, index) => {
+                    if (window.game.players[index]) {
+                        window.game.players[index].isBot = player.isBot || false;
+                        window.game.players[index].name = player.name || player.nickname || window.game.players[index].name;
+                        if (player.nickname && !window.game.players[index].name.includes(player.nickname)) {
+                            window.game.players[index].name = `${player.nickname} (Bot)`;
+                        }
+                    }
+                });
+                
+                // Update UI
+                updatePlayerList(data.players);
+                if (typeof updateGameState === 'function') {
+                    updateGameState();
+                }
+            }
+        }
+    });
 
     // ✅ Handle synchronized card playing with improved error handling
     socket.on('cardPlayed', (data) => {
