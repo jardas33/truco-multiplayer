@@ -1275,7 +1275,35 @@ class WarClient {
             return;
         }
         
+        console.log('⚔️ Battle started - received data:', {
+            battleCardsCount: data.battleCards?.length || 0,
+            battleNumber: data.battleNumber,
+            playersCount: data.players?.length || 0
+        });
+        
+        // Log all received battle cards
+        if (data.battleCards && Array.isArray(data.battleCards)) {
+            console.log('⚔️ Received battle cards:', data.battleCards.map((bc, idx) => ({
+                index: idx,
+                hasCard: !!bc?.card,
+                hasPlayer: !!bc?.player,
+                playerIndex: bc?.playerIndex,
+                playerName: bc?.player?.name,
+                cardName: bc?.card?.name,
+                cardValue: bc?.card?.value
+            })));
+        }
+        
+        const unfilteredCount = (data.battleCards || []).length;
         this.game.battleCards = (data.battleCards || []).filter(bc => bc && bc.card);
+        const filteredCount = this.game.battleCards.length;
+        
+        if (unfilteredCount !== filteredCount) {
+            console.warn(`⚠️ Filtered out ${unfilteredCount - filteredCount} invalid battle cards`);
+            console.warn('⚠️ Invalid cards:', (data.battleCards || []).filter(bc => !bc || !bc.card));
+        }
+        
+        console.log(`⚔️ Battle cards after filtering: ${filteredCount} cards`);
         this.game.battleNumber = data.battleNumber || this.game.battleNumber;
         this.game.players = (data.players || []).map((p, index) => ({
             ...p,
