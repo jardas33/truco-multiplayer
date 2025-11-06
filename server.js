@@ -722,14 +722,19 @@ io.on('connection', (socket) => {
                         
                         // ✅ CRITICAL FIX: Emit warning to remaining players
                         console.log(`📢 Emitting playerReplacedWithBot to room ${socket.roomCode} with ${room.players.length} players`);
-                        io.to(socket.roomCode).emit('playerReplacedWithBot', {
+                        const replacementData = {
                             playerIndex: playerIndex,
                             playerName: leavingPlayerName,
                             newBotName: leavingPlayer.name,
                             players: room.players,
                             message: `⚠️ ${leavingPlayerName} left the game and was replaced with a bot.`
-                        });
-                        console.log(`✅ playerReplacedWithBot event emitted successfully`);
+                        };
+                        // ✅ CRITICAL FIX: Include currentPlayer in event data for games that use it
+                        if (room.game && room.game.currentPlayer !== undefined) {
+                            replacementData.currentPlayer = room.game.currentPlayer;
+                        }
+                        io.to(socket.roomCode).emit('playerReplacedWithBot', replacementData);
+                        console.log(`✅ playerReplacedWithBot event emitted successfully with data:`, replacementData);
                         
                         // ✅ CRITICAL FIX: Emit updated game state for all games
                         if (room.gameType === 'war' && room.game) {
@@ -764,6 +769,7 @@ io.on('connection', (socket) => {
                                 currentPlayer: room.game.currentPlayer,
                                 gamePhase: 'playing'
                             });
+                            // ✅ CRITICAL FIX: Include currentPlayer in playerReplacedWithBot event data
                             console.log(`✅ Truco gameState and turnChanged events emitted`);
                         } else if (room.gameType === 'battleship' && room.game) {
                             // Emit updated game state for Battleship
