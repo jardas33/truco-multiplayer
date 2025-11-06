@@ -2345,8 +2345,11 @@ class WarClient {
         const battleArea = document.getElementById('battleArea');
         if (!battleArea) return;
         
-        // ✅ CRITICAL FIX: Clear existing content but preserve particles
+        // ✅ CRITICAL FIX: Clear existing battle cards and war cards but preserve particles
         const particles = battleArea.querySelectorAll('.battle-particle, .war-particle');
+        const oldBattleCards = battleArea.querySelectorAll('.battle-card');
+        console.log(`⚔️ Clearing ${oldBattleCards.length} old battle cards from battle area`);
+        oldBattleCards.forEach(card => card.remove());
         battleArea.innerHTML = '';
         particles.forEach(p => battleArea.appendChild(p));
         
@@ -2386,7 +2389,8 @@ class WarClient {
             battleArea.appendChild(cardDiv);
                 console.log(`✅ Card element ${index} appended to battle area`);
             });
-            console.log(`⚔️ updateBattleArea: Total cards in battle area: ${battleArea.children.length}`);
+            const actualBattleCards = battleArea.querySelectorAll('.battle-card');
+            console.log(`⚔️ updateBattleArea: Total elements in battle area: ${battleArea.children.length}, actual battle cards: ${actualBattleCards.length}`);
         }
         
         // Show war cards with flip animations
