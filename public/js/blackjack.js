@@ -1767,8 +1767,10 @@ class BlackjackClient {
                         
                     }).join('') : '';
                 
+                // ✅ CRITICAL FIX: Show nickname with "(you)" for local player, or just name for others
+                const displayName = isLocalPlayer ? `${player.name || 'You'} (you)` : (player.name || `Player ${index + 1}`);
                 playerDiv.innerHTML = `
-                    <div class="player-name" style="font-weight: bold; margin-bottom: 8px; font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${isLocalPlayer ? 'You' : player.name}${player.isBot ? ' (Bot)' : ''}</div>
+                    <div class="player-name" style="font-weight: bold; margin-bottom: 8px; font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${displayName}${player.isBot ? ' (Bot)' : ''}</div>
                     <div style="font-size: 13px; margin-bottom: 4px; color: #FFD700; font-weight: bold;">💰 Chips: $${player.chips}</div>
                     <div style="font-size: 13px; margin-bottom: 4px; color: #4CAF50; font-weight: bold;">🎲 Bet: $${player.bet}</div>
                     ${player.hand && player.hand.length > 0 ? `
@@ -2251,7 +2253,10 @@ function drawPlayerAreas() {
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(14);
-        text(player.name, playerX + playerWidth/2, playerY - 30);
+        // ✅ CRITICAL FIX: Show nickname with "(you)" for local player
+        const isLocalPlayer = index === (window.blackjackClient?.localPlayerIndex ?? -1);
+        const displayName = isLocalPlayer ? `${player.name || 'You'} (you)` : (player.name || `Player ${index + 1}`);
+        text(displayName, playerX + playerWidth/2, playerY - 30);
         
         // Draw player chips
         textSize(12);
