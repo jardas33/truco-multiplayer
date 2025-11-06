@@ -657,6 +657,7 @@ window.showInstructions = function showInstructions() {
     console.log('📖 Instructions button clicked');
     
     const currentGame = window.location.pathname;
+    console.log('📖 Current game path:', currentGame);
     let instructions = '';
     
     switch(currentGame) {
@@ -817,9 +818,53 @@ window.showInstructions = function showInstructions() {
             break;
             
         default:
-            instructions = 'Instructions for this game are not available yet.';
+            console.log('📖 No match found for path:', currentGame);
+            // Try to match /war.html or /war
+            if (currentGame.includes('war') || currentGame.includes('War')) {
+                instructions = `WAR CARD GAME RULES:
+
+🎯 OBJECTIVE: Win all the cards in the deck by winning battles
+
+🃏 CARD VALUES (High to Low):
+• Ace (14) - Highest value
+• King (13), Queen (12), Jack (11)
+• 10, 9, 8, 7, 6, 5, 4, 3, 2 (2 = Lowest)
+
+⚔️ GAMEPLAY:
+• 2-4 players supported
+• Deck is shuffled and divided equally among players
+• Each player starts with their portion of the deck
+• Players take turns clicking "⚔️ BATTLE!" to start a battle
+
+⚔️ BATTLE RULES:
+• Each player plays their top card face up
+• Player with the highest card wins the battle
+• Winner collects all cards from the battle
+• Winner shuffles their collected cards and adds them to the bottom of their deck
+• Cards are played in order with animations for visibility
+
+⚔️ WAR RULES (When Cards Tie):
+• When multiple players tie with the same card value, WAR begins!
+• Each tied player places 3 cards face down
+• Then each tied player flips 1 card face up
+• Player with the highest face-up card wins ALL the war cards
+• If there's still a tie, another WAR begins with the tied players
+• War continues until one player has the highest card
+
+📊 BATTLE HISTORY:
+• View detailed battle history in the bottom-right corner
+• See which cards were played and why each player won
+• Battle history shows card values and comparisons
+
+🏆 WINNING:
+• First player to collect all cards in the deck wins the game
+• Game ends when one player has all cards or others run out`;
+            } else {
+                instructions = 'Instructions for this game are not available yet.';
+            }
     }
     
+    console.log('📖 Showing instructions popup with', instructions.length, 'characters');
     showCustomInstructionsPopup(instructions);
 }
 
