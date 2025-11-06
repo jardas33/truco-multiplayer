@@ -707,12 +707,20 @@ io.on('connection', (socket) => {
                                      room.game.hands.length > 0 &&
                                      room.game.hands.some(hand => Array.isArray(hand) && hand.length > 0);
                         console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, hands: ${room.game.hands?.length})`);
-                    } else if (room.gameType === 'war' || room.gameType === 'battleship') {
-                        // War and Battleship use room.game.players
+                    } else if (room.gameType === 'war') {
+                        // War uses room.game.players with hands
                         isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
                                      room.game.players && 
+                                     Array.isArray(room.game.players) &&
                                      room.game.players.length > 0 &&
-                                     (room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0));
+                                     (room.game.hands || room.game.players.some(p => p.hand && Array.isArray(p.hand) && p.hand.length > 0));
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasHands: ${!!room.game.hands})`);
+                    } else if (room.gameType === 'battleship') {
+                        // Battleship uses room.game.players (no hands, just board state)
+                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                     room.game.players && 
+                                     Array.isArray(room.game.players) &&
+                                     room.game.players.length > 0;
                         console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length})`);
                     } else {
                         // Default case: check if game has started flag
@@ -2604,6 +2612,21 @@ io.on('connection', (socket) => {
         console.log(`🚢 Room players:`, room?.players?.length);
         
         if (room && room.gameType === 'battleship') {
+            // ✅ CRITICAL FIX: Initialize battleship game state when starting
+            if (!room.game) {
+                console.log(`🚢 Initializing Battleship game state for room ${data.roomId}`);
+                room.game = {
+                    started: true,
+                    gameType: 'battleship',
+                    players: room.players.map((p, idx) => ({
+                        ...p,
+                        playerIndex: idx
+                    })),
+                    currentPlayer: 0
+                };
+                console.log(`✅ Battleship game state initialized`);
+            }
+            
             console.log(`🚢 Broadcasting battleshipGameStart to room ${data.roomId}`);
             io.to(data.roomId).emit('battleshipGameStart', {
                 roomId: data.roomId,
