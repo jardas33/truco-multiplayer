@@ -737,19 +737,21 @@ io.on('connection', (socket) => {
                 console.log(`🔍 DEBUG: Player search - socket.id: ${socket.id}, playerIndex: ${playerIndex}, total players: ${room.players.length}`);
                 if (playerIndex !== -1) {
                     const leavingPlayer = room.players[playerIndex];
-                    const leavingPlayerName = leavingPlayer.name || leavingPlayer.nickname || `Player ${playerIndex + 1}`;
+                    // ✅ CRITICAL FIX: Get original name BEFORE modifying (remove any existing (Bot) suffix)
+                    const originalName = (leavingPlayer.name || leavingPlayer.nickname || `Player ${playerIndex + 1}`).replace(/\s*\(Bot\)\s*/g, '').trim();
+                    const originalNickname = leavingPlayer.nickname ? leavingPlayer.nickname.replace(/\s*\(Bot\)\s*/g, '').trim() : null;
                     
-                    console.log(`⚠️ Player ${leavingPlayerName} (${socket.id}) left during active game in room ${roomCode}`);
+                    console.log(`⚠️ Player ${originalName} (${socket.id}) left during active game in room ${roomCode}`);
                     
                     // ✅ CRITICAL FIX: Replace player with bot (keep existing data but mark as bot)
                     leavingPlayer.id = `bot-${Math.random().toString(36).substring(7)}`;
                     leavingPlayer.isBot = true;
-                    // Update name to show it's a bot (preserve original name if it exists)
-                    if (!leavingPlayer.name.includes('(Bot)') && !leavingPlayer.name.includes('Bot')) {
-                        leavingPlayer.name = `${leavingPlayerName} (Bot)`;
-                        if (leavingPlayer.nickname && !leavingPlayer.nickname.includes('(Bot)')) {
-                            leavingPlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
-                        }
+                    // ✅ CRITICAL FIX: Always add (Bot) to the original name (after removing any existing (Bot) suffix)
+                    leavingPlayer.name = `${originalName} (Bot)`;
+                    if (originalNickname) {
+                        leavingPlayer.nickname = `${originalNickname} (Bot)`;
+                    } else if (leavingPlayer.nickname) {
+                        leavingPlayer.nickname = `${originalName} (Bot)`;
                     }
                     
                     // ✅ CRITICAL FIX: Update game players array if it exists (Truco doesn't have room.game.players)

@@ -750,6 +750,12 @@ class BattleshipGame {
             return;
         }
         
+        // ✅ CRITICAL FIX: Prevent multiple bot attacks from queuing
+        if (gameInstance.botAttackInProgress) {
+            console.log('🚢 handleBotAttack: Bot attack already in progress, ignoring duplicate call');
+            return;
+        }
+        
         // Only proceed if it's not the player's turn
         if (gameInstance.isPlayerTurn) {
             console.log('🚢 handleBotAttack: It\'s the player\'s turn, not bot\'s turn');
@@ -762,6 +768,8 @@ class BattleshipGame {
             return;
         }
         
+        // ✅ CRITICAL FIX: Set flag to prevent multiple attacks
+        gameInstance.botAttackInProgress = true;
         console.log('🚢 Bot attack triggered - selecting target...');
         
         // Find an un-attacked position on the player's grid (grid 0)
@@ -789,7 +797,16 @@ class BattleshipGame {
         gameInstance.addToHistory(`🤖 Bot attacks ${letters[target.y]}${target.x + 1}`, 'info');
         
         // Emit the attack to the server (bypass turn check since bot attacks when it's their turn)
+        // ✅ CRITICAL FIX: Clear bot attack flag after a delay to allow the attack to complete
+        // The flag will be reset when the attack result is received
         gameInstance.emitAttack(target.x, target.y, null, null, true);
+        
+        // ✅ CRITICAL FIX: Reset bot attack flag after 5 seconds to allow next attack if needed
+        // This prevents the bot from attacking multiple times in rapid succession
+        setTimeout(() => {
+            gameInstance.botAttackInProgress = false;
+            console.log('🚢 Bot attack flag cleared, ready for next attack');
+        }, 5000);
     }
     
     handleOpponentShipPlaced(data) {
@@ -1024,6 +1041,12 @@ class BattleshipGame {
                 x: x,
                 y: y
             });
+        }
+        
+        // ✅ CRITICAL FIX: Clear bot attack flag when attack result is received
+        if (gameInstance.botAttackInProgress) {
+            gameInstance.botAttackInProgress = false;
+            console.log('🚢 Bot attack flag cleared after receiving attack result');
         }
         
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
