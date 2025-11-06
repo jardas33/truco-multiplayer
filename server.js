@@ -3347,10 +3347,15 @@ io.on('connection', (socket) => {
                 }))
             });
             
-            // Resolve battle after delay
+            // ✅ CRITICAL FIX: Resolve battle after cards appear - calculate based on player count
+            // For 2 players: 2 cards * 1200ms = 2400ms + 500ms buffer = ~3000ms
+            // For 4 players: 4 cards * 1200ms = 4800ms + 500ms buffer = ~5300ms
+            const playerCount = room.game.players.filter(p => p && p.hand && p.hand.length > 0).length;
+            const cardAppearanceDelay = playerCount * 1200; // 1200ms per card appearance
+            const battleResolutionDelay = Math.min(cardAppearanceDelay + 500, 3500); // Max 3.5 seconds total
             setTimeout(() => {
                 resolveWarBattle(room, roomCode);
-            }, 10000); // ✅ CRITICAL FIX: Increased delay to 10 seconds to allow cards to appear and be visible (800ms * 4 players + 5000ms wait + buffer)
+            }, battleResolutionDelay); // ✅ CRITICAL FIX: Dynamic delay based on player count, max 3.5 seconds
             
         } catch (error) {
             console.error(`❌ Error in startBattle handler:`, error);
@@ -3786,7 +3791,10 @@ io.on('connection', (socket) => {
                 endWarGame(room, roomCode);
             }
         } else {
-            // ✅ CRITICAL FIX: Emit next battle to all players with proper synchronization
+            // ✅ CRITICAL FIX: Emit next battle faster - reduce delay for quicker cleanup
+            // Card collection animation completes quickly (max ~1 second for 2 players, ~1.5 seconds for 4 players)
+            const playerCount = room.game.players.filter(p => p && p.hand && p.hand.length > 0).length;
+            const nextBattleDelay = playerCount <= 2 ? 1000 : 1500; // Faster for 2 players (1s) vs more players (1.5s)
             setTimeout(() => {
                 io.to(roomCode).emit('nextBattle', {
                     battleNumber: room.game.battleNumber,
@@ -3796,7 +3804,7 @@ io.on('connection', (socket) => {
                         playerIndex: index
                     }))
                 });
-            }, 1500);
+            }, nextBattleDelay); // ✅ CRITICAL FIX: Reduced delay for faster cleanup
         }
     }
 

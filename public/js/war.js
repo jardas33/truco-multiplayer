@@ -1711,11 +1711,14 @@ class WarClient {
         this.canAct = true;
         this.updateUI();
         
-        // ✅ CRITICAL FIX: Show battle button and wait for user to click it (no auto-start - button is mandatory)
-        this.safeSetTimeout(() => {
-            this.showActionControls();
-            console.log('✅ Battle button shown - waiting for user to click (battle button is mandatory)');
-        }, 4000); // Wait 4 seconds before showing next battle controls
+            // ✅ CRITICAL FIX: Show battle button faster - reduce delay for quicker cleanup
+            // Card collection should be complete by now, so we can show the button sooner
+            const playerCount = this.game.players.length;
+            const buttonDelay = playerCount <= 2 ? 1500 : 2000; // Faster for 2 players (1.5s) vs more players (2s)
+            this.safeSetTimeout(() => {
+                this.showActionControls();
+                console.log('✅ Battle button shown - waiting for user to click (battle button is mandatory)');
+            }, buttonDelay); // ✅ CRITICAL FIX: Reduced delay for faster cleanup (was 4000ms)
     }
 
     // Show game over with celebration
