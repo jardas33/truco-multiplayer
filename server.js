@@ -2628,6 +2628,20 @@ io.on('connection', (socket) => {
             
             console.log(`🔍 Room found with ${room.players.length} players:`, room.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })));
             
+            // ✅ CRITICAL FIX: For War game, allow restarting if game is over
+            if (room.gameType === 'war' && room.game && room.game.gameOver) {
+                console.log(`🔄 Restarting War game after game over`);
+                // Reset game state for new game
+                room.game.gameOver = false;
+                room.game.winner = null;
+                room.game.battleCards = [];
+                room.game.warCards = [];
+                room.game.isWar = false;
+                room.game.battleNumber = 1;
+                room.game.gamePhase = 'playing';
+                // Continue to reinitialize game below
+            }
+            
             // ✅ CRITICAL FIX: Define minimum players per game type
             const minPlayers = room.gameType === 'truco' ? 4 : 
                                (room.gameType === 'war' ? 2 : 

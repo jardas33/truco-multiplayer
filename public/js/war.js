@@ -407,12 +407,15 @@ class WarClient {
         this.canAct = false;
         this.isStartingBattle = false; // ✅ CRITICAL FIX: Prevent race conditions
         this.battleHistory = [];
+        this.gameHistory = []; // ✅ CRITICAL FIX: Track full games (winners)
+        this.currentGameNumber = 1; // ✅ CRITICAL FIX: Track current game number
         this.statistics = {
             totalBattles: 0,
             totalWars: 0,
             longestWar: 0,
             currentWarCount: 0,
-            cardsWonByPlayer: {}
+            cardsWonByPlayer: {},
+            gamesWon: {} // ✅ CRITICAL FIX: Track games won per player
         };
         this.animationQueue = [];
         this.isAnimating = false;
@@ -1749,14 +1752,10 @@ class WarClient {
         this.canAct = true;
         this.updateUI();
         
-            // ✅ CRITICAL FIX: Show battle button faster - reduce delay for quicker cleanup
-            // Card collection should be complete by now, so we can show the button sooner
-            const playerCount = this.game.players.length;
-            const buttonDelay = playerCount <= 2 ? 1500 : 2000; // Faster for 2 players (1.5s) vs more players (2s)
-            this.safeSetTimeout(() => {
-        this.showActionControls();
-                console.log('✅ Battle button shown - waiting for user to click (battle button is mandatory)');
-            }, buttonDelay); // ✅ CRITICAL FIX: Reduced delay for faster cleanup (was 4000ms)
+            // ✅ CRITICAL FIX: Show battle button immediately after cleanup completes
+            // Card collection animation completes quickly, so show button right away
+            this.showActionControls();
+            console.log('✅ Battle button shown immediately after cleanup');
     }
 
     // Show game over with celebration
@@ -1770,6 +1769,32 @@ class WarClient {
             return;
         }
         
+        // ✅ CRITICAL FIX: Track this game's winner before starting new game
+        const gameWinner = {
+            gameNumber: this.currentGameNumber,
+            winner: {
+                name: data.winner.name,
+                cards: data.winner.cards || 0
+            },
+            finalScores: data.finalScores || [],
+            timestamp: Date.now()
+        };
+        this.gameHistory.push(gameWinner);
+        
+        // ✅ CRITICAL FIX: Update games won statistics
+        if (!this.statistics.gamesWon[data.winner.name]) {
+            this.statistics.gamesWon[data.winner.name] = 0;
+        }
+        this.statistics.gamesWon[data.winner.name]++;
+        
+        // Keep only last 10 games
+        if (this.gameHistory.length > 10) {
+            this.gameHistory.shift();
+        }
+        
+        console.log(`🏆 Game ${this.currentGameNumber} over! Winner: ${data.winner.name}`);
+        console.log(`📊 Game history:`, this.gameHistory.map(g => `Game ${g.gameNumber}: ${g.winner.name}`));
+        
         this.game.gameOver = true;
         this.game.winner = this.game.players.find(p => p && p.name === data.winner.name) || data.winner;
         
@@ -1780,7 +1805,7 @@ class WarClient {
         // Massive confetti celebration
         this.createVictoryConfetti();
         
-        // Create victory screen
+        // Create victory screen with previous game winner info
         this.createVictoryScreen(data);
         
         // ✅ CRITICAL FIX: Show winner glow on player with proper element selection
@@ -1803,13 +1828,56 @@ class WarClient {
             }
         }
         
-        UIUtils.showGameMessage(`🏆 ${data.winner.name} wins the war with ${data.winner.cards || 0} cards!`, 'success');
+        UIUtils.showGameMessage(`🏆 ${data.winner.name} wins Game ${this.currentGameNumber} with ${data.winner.cards || 0} cards!`, 'success');
         this.updateUI();
         
-        // ✅ CRITICAL FIX: Show final statistics with tracked timeout
+        // ✅ CRITICAL FIX: Show final statistics with tracked timeout, then auto-start new game
         this.safeSetTimeout(() => {
             this.showFinalStatistics(data);
+            
+            // ✅ CRITICAL FIX: Auto-start new game after 3 seconds
+            this.safeSetTimeout(() => {
+                console.log(`🔄 Auto-starting new game (Game ${this.currentGameNumber + 1})...`);
+                this.startNewGame();
+            }, 3000);
         }, 4000);
+    }
+    
+    // ✅ CRITICAL FIX: Start a new game after previous game ends
+    startNewGame() {
+        // Increment game number
+        this.currentGameNumber++;
+        
+        // Reset game state
+        this.game.gameOver = false;
+        this.game.winner = null;
+        this.game.battleCards = [];
+        this.game.warCards = [];
+        this.game.isWar = false;
+        this.game.battleNumber = 1;
+        this.game.gamePhase = 'playing';
+        
+        // Reset statistics for new game (but keep gameHistory)
+        this.statistics.totalBattles = 0;
+        this.statistics.totalWars = 0;
+        this.statistics.longestWar = 0;
+        this.statistics.currentWarCount = 0;
+        this.statistics.cardsWonByPlayer = {};
+        // Keep gamesWon across games
+        
+        // Clear battle history for new game
+        this.battleHistory = [];
+        
+        // Request new game from server
+        const socket = window.gameFramework.socket;
+        if (socket && socket.connected) {
+            console.log(`🔄 Requesting new game start from server...`);
+            socket.emit('startGame', {
+                roomId: window.gameFramework.roomId
+            });
+        } else {
+            console.error('❌ Cannot start new game - socket not connected');
+        }
     }
     
     // Create victory confetti (more intense)
@@ -1929,17 +1997,50 @@ class WarClient {
             animation: victoryFadeIn 0.5s ease-out;
         `;
         
+        // ✅ CRITICAL FIX: Show previous game winners if available
+        let previousGamesHtml = '';
+        if (this.gameHistory.length > 1) {
+            const previousGames = this.gameHistory.slice(0, -1).reverse().slice(0, 3); // Last 3 games (excluding current)
+            previousGamesHtml = `
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(255, 215, 0, 0.3);">
+                    <div style="color: #FFD700; font-size: 18px; margin-bottom: 10px; font-weight: bold;">Previous Games:</div>
+                    ${previousGames.map(g => `
+                        <div style="color: #ccc; font-size: 14px; margin: 5px 0;">
+                            Game ${g.gameNumber}: 🏆 ${g.winner.name} (${g.winner.cards} cards)
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // ✅ CRITICAL FIX: Show games won statistics
+        const gamesWonHtml = Object.keys(this.statistics.gamesWon).length > 0 ? `
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(255, 215, 0, 0.3);">
+                <div style="color: #FFD700; font-size: 18px; margin-bottom: 10px; font-weight: bold;">Games Won:</div>
+                ${Object.entries(this.statistics.gamesWon).map(([name, wins]) => `
+                    <div style="color: #ccc; font-size: 14px; margin: 5px 0;">
+                        ${name}: ${wins} ${wins === 1 ? 'game' : 'games'}
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
+        
         victoryScreen.innerHTML = `
             <div style="text-align: center; animation: victoryScale 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
                 <div style="font-size: 72px; margin-bottom: 20px; animation: victorySpin 2s ease-in-out infinite;">🏆</div>
                 <h1 style="color: #FFD700; font-size: 48px; margin: 0 0 20px 0; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);">
-                    ${data.winner.name} Wins!
+                    ${data.winner.name} Wins Game ${this.currentGameNumber}!
                 </h1>
                 <div style="color: white; font-size: 24px; margin-bottom: 30px;">
                     Final Score: ${data.winner.cards} cards
                 </div>
-                <div style="color: #ccc; font-size: 16px;">
+                <div style="color: #ccc; font-size: 16px; margin-bottom: 20px;">
                     Total Battles: ${this.statistics.totalBattles} | Wars: ${this.statistics.totalWars}
+                </div>
+                ${previousGamesHtml}
+                ${gamesWonHtml}
+                <div style="color: #999; font-size: 12px; margin-top: 30px; font-style: italic;">
+                    Starting new game in 3 seconds...
                 </div>
             </div>
         `;
