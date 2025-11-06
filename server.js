@@ -650,10 +650,32 @@ io.on('connection', (socket) => {
     
     socket.on('disconnect', (reason) => {
         console.log(`👤 User disconnected: ${socket.id}, reason: ${reason}`);
+        console.log(`🔍 DEBUG: socket.roomCode: ${socket.roomCode}, socket.roomId: ${socket.roomId}`);
         
-        if (socket.roomCode) {
-            const room = rooms.get(socket.roomCode);
-            if (room) {
+        // ✅ CRITICAL FIX: Find room by socket.roomCode first, then fallback to searching all rooms
+        let room = null;
+        let roomCode = socket.roomCode || socket.roomId;
+        
+        if (roomCode) {
+            room = rooms.get(roomCode);
+            console.log(`🔍 DEBUG: Found room by roomCode: ${roomCode}, room exists: ${!!room}`);
+        }
+        
+        // ✅ CRITICAL FIX: Fallback - search all rooms for this socket.id
+        if (!room) {
+            console.log(`🔍 DEBUG: socket.roomCode not set, searching all rooms for socket.id: ${socket.id}`);
+            for (const [code, r] of rooms.entries()) {
+                const playerInRoom = r.players.find(p => p.id === socket.id);
+                if (playerInRoom) {
+                    room = r;
+                    roomCode = code;
+                    console.log(`✅ Found room ${code} by searching - player ${socket.id} is in this room`);
+                    break;
+                }
+            }
+        }
+        
+        if (room && roomCode) {
                 // ✅ CRITICAL FIX: Skip Prince of Persia (no bot replacement)
                 if (room.gameType === 'prince') {
                     console.log(`👑 Prince of Persia player ${socket.id} disconnected - skipping bot replacement`);
@@ -698,7 +720,7 @@ io.on('connection', (socket) => {
                         console.log(`🔍 DEBUG: ${room.gameType} game active check (default): ${isGameActive} (started: ${room.game.started})`);
                     }
                 } else {
-                    console.log(`🔍 DEBUG: No game object found in room ${socket.roomCode}`);
+                    console.log(`🔍 DEBUG: No game object found in room ${roomCode}`);
                 }
                 
                 if (isGameActive) {
@@ -709,7 +731,7 @@ io.on('connection', (socket) => {
                         const leavingPlayer = room.players[playerIndex];
                         const leavingPlayerName = leavingPlayer.name || leavingPlayer.nickname || `Player ${playerIndex + 1}`;
                         
-                        console.log(`⚠️ Player ${leavingPlayerName} (${socket.id}) left during active game in room ${socket.roomCode}`);
+                        console.log(`⚠️ Player ${leavingPlayerName} (${socket.id}) left during active game in room ${roomCode}`);
                         
                         // ✅ CRITICAL FIX: Replace player with bot (keep existing data but mark as bot)
                         leavingPlayer.id = `bot-${Math.random().toString(36).substring(7)}`;
@@ -744,10 +766,10 @@ io.on('connection', (socket) => {
                             console.log(`⚠️ Could not update room.game.players[${playerIndex}] - game: ${!!room.game}, players: ${!!room.game?.players}, isArray: ${Array.isArray(room.game?.players)}, index exists: ${room.game?.players?.[playerIndex] !== undefined}`);
                         }
                         
-                        console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${socket.roomCode}`);
+                        console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${roomCode}`);
                         
                         // ✅ CRITICAL FIX: Emit warning to remaining players
-                        console.log(`📢 Emitting playerReplacedWithBot to room ${socket.roomCode} with ${room.players.length} players`);
+                        console.log(`📢 Emitting playerReplacedWithBot to room ${roomCode} with ${room.players.length} players`);
                         const replacementData = {
                             playerIndex: playerIndex,
                             playerName: leavingPlayerName,
@@ -759,18 +781,19 @@ io.on('connection', (socket) => {
                         if (room.game && room.game.currentPlayer !== undefined) {
                             replacementData.currentPlayer = room.game.currentPlayer;
                         }
-                        io.to(socket.roomCode).emit('playerReplacedWithBot', replacementData);
-                        console.log(`✅ playerReplacedWithBot event emitted successfully with data:`, replacementData);
+                        io.to(roomCode).emit('playerReplacedWithBot', replacementData);
+                        console.log(`✅ playerReplacedWithBot event emitted successfully to room ${roomCode} with data:`, replacementData);
+                        console.log(`🔍 DEBUG: Room ${roomCode} has ${room.players.length} players, socket.roomCode was: ${socket.roomCode}`);
                         
                         // ✅ CRITICAL FIX: Emit updated game state for all games
                         if (room.gameType === 'poker' && room.game) {
                             // Emit updated game state for Poker
-                            console.log(`📢 Emitting gameState for Poker to room ${socket.roomCode}`);
+                            console.log(`📢 Emitting gameState for Poker to room ${roomCode}`);
                             if (typeof emitPokerGameState === 'function') {
-                                emitPokerGameState(socket.roomCode, room);
+                                emitPokerGameState(roomCode, room);
                             } else {
                                 // Fallback: emit basic gameState
-                                io.to(socket.roomCode).emit('gameState', {
+                                io.to(roomCode).emit('gameState', {
                                     players: room.game.players,
                                     gamePhase: room.game.gamePhase,
                                     currentPlayer: room.game.currentPlayer,
@@ -781,8 +804,8 @@ io.on('connection', (socket) => {
                             console.log(`✅ Poker gameState emitted`);
                         } else if (room.gameType === 'blackjack' && room.game) {
                             // Emit updated game state for Blackjack
-                            console.log(`📢 Emitting gameState for Blackjack to room ${socket.roomCode}`);
-                            io.to(socket.roomCode).emit('gameState', {
+                            console.log(`📢 Emitting gameState for Blackjack to room ${roomCode}`);
+                            io.to(roomCode).emit('gameState', {
                                 players: room.game.players,
                                 gamePhase: room.game.gamePhase,
                                 currentPlayer: room.game.currentPlayer,
@@ -791,8 +814,8 @@ io.on('connection', (socket) => {
                             console.log(`✅ Blackjack gameState emitted`);
                         } else if (room.gameType === 'war' && room.game) {
                             // Emit updated game state for War
-                            console.log(`📢 Emitting gameState for War to room ${socket.roomCode}`);
-                            io.to(socket.roomCode).emit('gameState', {
+                            console.log(`📢 Emitting gameState for War to room ${roomCode}`);
+                            io.to(roomCode).emit('gameState', {
                                 players: room.game.players.map((p, idx) => ({
                                     name: p.name,
                                     hand: Array.isArray(p.hand) ? p.hand.length : 0,
@@ -806,9 +829,9 @@ io.on('connection', (socket) => {
                         } else if (room.gameType === 'truco' && room.game) {
                             // Emit updated game state for Truco
                             // ✅ CRITICAL FIX: Truco doesn't have room.game.players, use room.players instead
-                            console.log(`📢 Emitting gameState for Truco to room ${socket.roomCode}`);
+                            console.log(`📢 Emitting gameState for Truco to room ${roomCode}`);
                             console.log(`🔍 DEBUG: Truco room.players:`, room.players.map(p => ({ name: p.name, isBot: p.isBot, id: p.id })));
-                            io.to(socket.roomCode).emit('gameState', {
+                            io.to(roomCode).emit('gameState', {
                                 players: room.players.map((p, idx) => ({
                                     name: p.name,
                                     nickname: p.nickname,
@@ -820,23 +843,23 @@ io.on('connection', (socket) => {
                                 hands: room.game.hands
                             });
                             // Also emit turnChanged to ensure UI updates
-                            io.to(socket.roomCode).emit('turnChanged', {
+                            io.to(roomCode).emit('turnChanged', {
                                 currentPlayer: room.game.currentPlayer,
                                 gamePhase: 'playing'
                             });
                             console.log(`✅ Truco gameState and turnChanged events emitted`);
                         } else if (room.gameType === 'battleship' && room.game) {
                             // Emit updated game state for Battleship
-                            console.log(`📢 Emitting gameState for Battleship to room ${socket.roomCode}`);
-                            io.to(socket.roomCode).emit('battleshipGameState', {
+                            console.log(`📢 Emitting gameState for Battleship to room ${roomCode}`);
+                            io.to(roomCode).emit('battleshipGameState', {
                                 players: room.game.players,
                                 currentPlayer: room.game.currentPlayer
                             });
                             console.log(`✅ Battleship gameState emitted`);
                         } else if (room.gameType === 'go-fish' && room.game) {
                             // Emit updated game state for Go Fish
-                            console.log(`📢 Emitting gameState for Go Fish to room ${socket.roomCode}`);
-                            io.to(socket.roomCode).emit('gameState', {
+                            console.log(`📢 Emitting gameState for Go Fish to room ${roomCode}`);
+                            io.to(roomCode).emit('gameState', {
                                 players: room.game.players.map((p, idx) => ({
                                     name: p.name,
                                     hand: p.hand || [],
@@ -860,7 +883,7 @@ io.on('connection', (socket) => {
                                     
                                     // Notify other players with filtered hands
                                     if (typeof emitPokerGameState === 'function') {
-                                        emitPokerGameState(socket.roomCode, room);
+                                        emitPokerGameState(roomCode, room);
                                     }
                                     
                                     // Check if betting round should continue
@@ -868,7 +891,7 @@ io.on('connection', (socket) => {
                                     if (activePlayers.length <= 1) {
                                         console.log(`🎴 Only one active player left after bot replacement, going to showdown`);
                                         if (typeof handlePokerShowdown === 'function') {
-                                            handlePokerShowdown(socket.roomCode, room);
+                                            handlePokerShowdown(roomCode, room);
                                         }
                                     } else if (room.game.currentPlayer === playerIndex) {
                                         // If it was the bot's turn, advance to next player
@@ -881,7 +904,7 @@ io.on('connection', (socket) => {
                                         
                                         // Emit updated game state
                                         if (typeof emitPokerGameState === 'function') {
-                                            emitPokerGameState(socket.roomCode, room);
+                                            emitPokerGameState(roomCode, room);
                                         }
                                         
                                         // Handle bot actions if needed
@@ -889,7 +912,7 @@ io.on('connection', (socket) => {
                                         if (nextPlayer && nextPlayer.isBot) {
                                             setTimeout(() => {
                                                 if (typeof handlePokerBotAction === 'function') {
-                                                    handlePokerBotAction(socket.roomCode, room, nextPlayer);
+                                                    handlePokerBotAction(roomCode, room, nextPlayer);
                                                 }
                                             }, 1500);
                                         }
@@ -904,7 +927,7 @@ io.on('connection', (socket) => {
                                     console.log(`🃏 Triggering Blackjack bot action for replaced player ${botPlayer.name}`);
                                     setTimeout(() => {
                                         if (typeof handleBlackjackBotTurn === 'function') {
-                                            handleBlackjackBotTurn(socket.roomCode, room);
+                                            handleBlackjackBotTurn(roomCode, room);
                                         }
                                     }, 1500);
                                 }
@@ -917,7 +940,7 @@ io.on('connection', (socket) => {
                                 if (botPlayer && botPlayer.isBot) {
                                     console.log(`🎯 Triggering Truco bot action for replaced player ${botPlayer.name}`);
                                     // Emit turnChanged event to trigger client-side bot logic
-                                    io.to(socket.roomCode).emit('turnChanged', {
+                                    io.to(roomCode).emit('turnChanged', {
                                         currentPlayer: room.game.currentPlayer,
                                         gamePhase: room.game.gamePhase || 'playing'
                                     });
@@ -935,7 +958,7 @@ io.on('connection', (socket) => {
                                 if (botPlayer && botPlayer.isBot) {
                                     console.log(`🐟 Triggering Go Fish bot action for replaced player ${botPlayer.name}`);
                                     // Emit turnChanged or similar event to trigger bot logic
-                                    io.to(socket.roomCode).emit('turnChanged', {
+                                    io.to(roomCode).emit('turnChanged', {
                                         currentPlayer: room.game.currentPlayer
                                     });
                                     console.log(`✅ Go Fish turnChanged event emitted to trigger bot action`);
@@ -949,12 +972,18 @@ io.on('connection', (socket) => {
                         // The game will continue normally with the bot participating
                     } else {
                         console.log(`⚠️ Player ${socket.id} disconnected but not found in room players`);
+                        console.log(`🔍 DEBUG: Room players:`, room.players.map(p => ({ id: p.id, name: p.name })));
                     }
                 } else {
                     // Game not active, just remove player normally
-                    console.log(`👤 Player ${socket.id} disconnected from inactive game in room ${socket.roomCode}`);
+                    console.log(`👤 Player ${socket.id} disconnected from inactive game in room ${roomCode}`);
+                    console.log(`🔍 DEBUG: Game active check result: ${isGameActive}`);
                 }
+            } else {
+                console.log(`⚠️ Room ${roomCode} not found for disconnected socket ${socket.id}`);
             }
+        } else {
+            console.log(`⚠️ Socket ${socket.id} disconnected but no roomCode found and not found in any room`);
         }
     });
     
@@ -6259,7 +6288,7 @@ function advancePokerPhase(roomCode, room) {
                 // Try to continue with what we have, but log error
             }
             if (room.game.deck.length > 0) {
-                room.game.deck.pop(); // Burn card
+            room.game.deck.pop(); // Burn card
             }
             room.game.communityCards = [];
             for (let i = 0; i < 3; i++) {
@@ -6301,7 +6330,7 @@ function advancePokerPhase(roomCode, room) {
                 console.error(`❌ Deck has insufficient cards for turn: ${room.game.deck.length} cards available, need 2`);
             }
             if (room.game.deck.length > 0) {
-                room.game.deck.pop(); // Burn card
+            room.game.deck.pop(); // Burn card
             }
             if (room.game.deck.length > 0) {
                 const card = room.game.deck.pop();
@@ -6339,7 +6368,7 @@ function advancePokerPhase(roomCode, room) {
                 console.error(`❌ Deck has insufficient cards for river: ${room.game.deck.length} cards available, need 2`);
             }
             if (room.game.deck.length > 0) {
-                room.game.deck.pop(); // Burn card
+            room.game.deck.pop(); // Burn card
             }
             if (room.game.deck.length > 0) {
                 const card = room.game.deck.pop();
@@ -6548,17 +6577,17 @@ function handlePokerShowdown(roomCode, room) {
         const validPlayers = activePlayers.filter(p => p.handRank >= 0);
         if (validPlayers.length === 0) {
             console.error(`❌ No valid hands found - splitting pot evenly`);
-            const winAmount = Math.floor(room.game.pot / activePlayers.length);
-            const remainder = room.game.pot % activePlayers.length;
-            room.game.winners = activePlayers.map((player, index) => {
-                const amount = winAmount + (index < remainder ? 1 : 0);
-                player.chips += amount;
-                return {
-                    player: player,
-                    amount: amount,
-                    hand: null
-                };
-            });
+        const winAmount = Math.floor(room.game.pot / activePlayers.length);
+        const remainder = room.game.pot % activePlayers.length;
+        room.game.winners = activePlayers.map((player, index) => {
+            const amount = winAmount + (index < remainder ? 1 : 0);
+            player.chips += amount;
+            return {
+                player: player,
+                amount: amount,
+                hand: null
+            };
+        });
             return;
         }
         
@@ -6757,30 +6786,30 @@ function startNewPokerHand(roomCode, room) {
     room.game.winners = [];
     
     // Always reshuffle deck to ensure fresh deck each hand
-    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
-    const deck = [];
-    
-    for (let suit of suits) {
-        for (let rank of ranks) {
-            let value;
-            if (rank === 'ace') value = 14;
-            else if (rank === 'king') value = 13;
-            else if (rank === 'queen') value = 12;
-            else if (rank === 'jack') value = 11;
-            else value = parseInt(rank);
-            
-            deck.push({ name: `${rank} of ${suit}`, suit: suit, rank: rank, value: value });
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+        const deck = [];
+        
+        for (let suit of suits) {
+            for (let rank of ranks) {
+                let value;
+                if (rank === 'ace') value = 14;
+                else if (rank === 'king') value = 13;
+                else if (rank === 'queen') value = 12;
+                else if (rank === 'jack') value = 11;
+                else value = parseInt(rank);
+                
+                deck.push({ name: `${rank} of ${suit}`, suit: suit, rank: rank, value: value });
+            }
         }
-    }
-    
+        
     // Shuffle deck using Fisher-Yates algorithm
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    
-    room.game.deck = deck;
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        
+        room.game.deck = deck;
     console.log(`🎴 Deck reshuffled - ${deck.length} cards`);
     
     // Post blinds
@@ -7817,7 +7846,7 @@ function determineRoundWinner(playedCards, room) {
                             if (fixedPlayer && fixedPlayer.isBot) {
                                 setTimeout(() => {
                                     handlePokerBotAction(roomCode, room, fixedPlayer);
-                                }, 1500);
+                        }, 1500);
                             }
                         }
                     }
