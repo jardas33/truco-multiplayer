@@ -663,20 +663,30 @@ io.on('connection', (socket) => {
                 // ✅ CRITICAL FIX: Check if game is active (different logic per game type)
                 let isGameActive = false;
                 if (room.game) {
+                    console.log(`🔍 DEBUG: Checking if game is active - gameType: ${room.gameType}, game exists: ${!!room.game}, started: ${room.game.started}, gamePhase: ${room.game.gamePhase}`);
                     if (room.gameType === 'poker' || room.gameType === 'blackjack') {
                         // Poker and Blackjack use gamePhase
                         isGameActive = room.game.gamePhase && 
                                      room.game.gamePhase !== 'waiting' && 
                                      room.game.gamePhase !== 'finished';
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (gamePhase: ${room.game.gamePhase})`);
                     } else if (room.gameType === 'war' || room.gameType === 'truco' || room.gameType === 'battleship') {
                         // War, Truco, and Battleship use game.started
-                        isGameActive = room.game.started === true;
+                        // ✅ CRITICAL FIX: Check both strict true and truthy value, plus check if players have cards
+                        isGameActive = (room.game.started === true || room.game.started === 1 || !!room.game.started) &&
+                                     room.game.players && 
+                                     room.game.players.length > 0 &&
+                                     (room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0));
+                        console.log(`🔍 DEBUG: ${room.gameType} game active check: ${isGameActive} (started: ${room.game.started}, players: ${room.game.players?.length}, hasCards: ${room.game.hands || room.game.players.some(p => p.hand && p.hand.length > 0)})`);
                     }
+                } else {
+                    console.log(`🔍 DEBUG: No game object found in room ${socket.roomCode}`);
                 }
                 
                 if (isGameActive) {
                     // Find the leaving player
                     const playerIndex = room.players.findIndex(p => p.id === socket.id);
+                    console.log(`🔍 DEBUG: Player search - socket.id: ${socket.id}, playerIndex: ${playerIndex}, total players: ${room.players.length}`);
                     if (playerIndex !== -1) {
                         const leavingPlayer = room.players[playerIndex];
                         const leavingPlayerName = leavingPlayer.name || leavingPlayer.nickname || `Player ${playerIndex + 1}`;
@@ -711,6 +721,7 @@ io.on('connection', (socket) => {
                         console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${socket.roomCode}`);
                         
                         // ✅ CRITICAL FIX: Emit warning to remaining players
+                        console.log(`📢 Emitting playerReplacedWithBot to room ${socket.roomCode} with ${room.players.length} players`);
                         io.to(socket.roomCode).emit('playerReplacedWithBot', {
                             playerIndex: playerIndex,
                             playerName: leavingPlayerName,
@@ -718,6 +729,7 @@ io.on('connection', (socket) => {
                             players: room.players,
                             message: `⚠️ ${leavingPlayerName} left the game and was replaced with a bot.`
                         });
+                        console.log(`✅ playerReplacedWithBot event emitted successfully`);
                         
                         // ✅ CRITICAL FIX: Emit updated game state for all games
                         if (room.gameType === 'war' && room.game) {
@@ -741,10 +753,18 @@ io.on('connection', (socket) => {
                             });
                         } else if (room.gameType === 'truco' && room.game) {
                             // Emit updated game state for Truco
+                            console.log(`📢 Emitting gameState for Truco to room ${socket.roomCode}`);
                             io.to(socket.roomCode).emit('gameState', {
                                 players: room.game.players,
-                                currentPlayer: room.game.currentPlayer
+                                currentPlayer: room.game.currentPlayer,
+                                hands: room.game.hands
                             });
+                            // Also emit turnChanged to ensure UI updates
+                            io.to(socket.roomCode).emit('turnChanged', {
+                                currentPlayer: room.game.currentPlayer,
+                                gamePhase: 'playing'
+                            });
+                            console.log(`✅ Truco gameState and turnChanged events emitted`);
                         } else if (room.gameType === 'battleship' && room.game) {
                             // Emit updated game state for Battleship
                             io.to(socket.roomCode).emit('battleshipGameState', {
