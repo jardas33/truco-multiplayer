@@ -776,6 +776,44 @@ class BlackjackClient {
             }
         });
         
+        // ✅ CRITICAL FIX: Handle nickname change success
+        socket.on('nicknameChanged', (data) => {
+            console.log('✅ Nickname changed successfully:', data);
+            
+            // ✅ CRITICAL FIX: Store nickname in localStorage for persistence
+            if (data.nickname && data.nickname.trim()) {
+                localStorage.setItem('blackjackPlayerNickname', data.nickname.trim());
+                console.log('🃏 Stored nickname in localStorage:', data.nickname.trim());
+            }
+            
+            // ✅ Reset button state
+            const changeBtn = document.getElementById('changeNicknameBtn');
+            if (changeBtn) {
+                changeBtn.textContent = 'Change';
+                changeBtn.disabled = false;
+            }
+            
+            // ✅ Clear input field
+            const nicknameInput = document.getElementById('nicknameInput');
+            if (nicknameInput) {
+                nicknameInput.value = '';
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle nickname change error
+        socket.on('nicknameError', (errorMessage) => {
+            console.error('❌ Nickname change error:', errorMessage);
+            
+            // ✅ Reset button state
+            const changeBtn = document.getElementById('changeNicknameBtn');
+            if (changeBtn) {
+                changeBtn.textContent = 'Change';
+                changeBtn.disabled = false;
+            }
+            
+            alert(`Nickname change failed: ${errorMessage}`);
+        });
+        
         socket.on('gameStarted', (data) => {
             console.log('🃏 gameStarted event received:', data);
             // Transition to game view

@@ -812,6 +812,44 @@ class WarClient {
             UIUtils.showGameMessage('Room is full. Maximum 4 players allowed.', 'info');
         });
         
+        // ✅ CRITICAL FIX: Handle nickname change success
+        socket.on('nicknameChanged', (data) => {
+            console.log('✅ Nickname changed successfully:', data);
+            
+            // ✅ CRITICAL FIX: Store nickname in localStorage for persistence
+            if (data.nickname && data.nickname.trim()) {
+                localStorage.setItem('warPlayerNickname', data.nickname.trim());
+                console.log('⚔️ Stored nickname in localStorage:', data.nickname.trim());
+            }
+            
+            // ✅ Reset button state
+            const changeBtn = document.getElementById('changeNicknameBtn');
+            if (changeBtn) {
+                changeBtn.textContent = 'Change';
+                changeBtn.disabled = false;
+            }
+            
+            // ✅ Clear input field
+            const nicknameInput = document.getElementById('nicknameInput');
+            if (nicknameInput) {
+                nicknameInput.value = '';
+            }
+        });
+        
+        // ✅ CRITICAL FIX: Handle nickname change error
+        socket.on('nicknameError', (errorMessage) => {
+            console.error('❌ Nickname change error:', errorMessage);
+            
+            // ✅ Reset button state
+            const changeBtn = document.getElementById('changeNicknameBtn');
+            if (changeBtn) {
+                changeBtn.textContent = 'Change';
+                changeBtn.disabled = false;
+            }
+            
+            alert(`Nickname change failed: ${errorMessage}`);
+        });
+        
         // ✅ CRITICAL FIX: Handle room not full event
         socket.on('roomNotFull', () => {
             console.log('🏠 Room is not full');

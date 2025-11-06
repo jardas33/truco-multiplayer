@@ -1469,6 +1469,10 @@
                     setTimeout(() => {
                         document.body.classList.add('room-created');
                     }, 100);
+                    
+                    // ✅ CRITICAL FIX: Clear player nickname when creating new room to reset to default names
+                    localStorage.removeItem('warPlayerNickname');
+                    console.log('⚔️ Cleared warPlayerNickname - names will reset to default');
                 });
             }
             
@@ -1479,7 +1483,67 @@
                     }, 100);
                 });
             }
+            
+            // ✅ CRITICAL FIX: Wire up nickname change button
+            const changeNicknameBtn = document.getElementById('changeNicknameBtn');
+            if (changeNicknameBtn) {
+                changeNicknameBtn.onclick = changeWarNickname;
+            }
         });
+        
+        // ✅ CRITICAL FIX: Nickname change functionality for War
+        function changeWarNickname() {
+            console.log('🔄 changeNickname called in war menu');
+            const nicknameInput = document.getElementById('nicknameInput');
+            
+            if (!nicknameInput) {
+                console.error('❌ nicknameInput not found');
+                alert('Nickname input not found!');
+                return;
+            }
+            
+            const newNickname = nicknameInput.value.trim();
+            
+            if (!newNickname) {
+                alert('Please enter a nickname!');
+                return;
+            }
+            
+            if (newNickname.length > 12) {
+                alert('Nickname must be 12 characters or less!');
+                return;
+            }
+            
+            // Get socket from game framework
+            const socket = window.gameFramework && window.gameFramework.socket;
+            if (!socket || !socket.connected) {
+                console.error('❌ Socket not connected');
+                alert('Socket not connected. Please wait a moment and try again.');
+                return;
+            }
+            
+            const roomId = window.gameFramework && window.gameFramework.roomId;
+            if (!roomId) {
+                console.error('❌ No room ID available');
+                alert('Not in a room! Please create or join a room first.');
+                return;
+            }
+            
+            console.log('🔄 Changing nickname to:', newNickname, 'in room:', roomId);
+            
+            // Emit nickname change to server
+            socket.emit('changeNickname', {
+                roomCode: roomId,
+                nickname: newNickname
+            });
+            
+            // Show loading state
+            const changeBtn = document.getElementById('changeNicknameBtn');
+            if (changeBtn) {
+                changeBtn.textContent = 'Changing...';
+                changeBtn.disabled = true;
+            }
+        }
     </script>
 </body>
 </html>
