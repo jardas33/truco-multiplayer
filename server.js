@@ -2421,17 +2421,33 @@ io.on('connection', (socket) => {
                 const disconnectedIndex = room.players.findIndex(p => p.id === disconnectedPlayers[0].id);
                 if (disconnectedIndex !== -1) {
                     const disconnectedPlayer = room.players[disconnectedIndex];
+                    // ✅ CRITICAL FIX: When a human player reconnects, clear bot status and restore original name
+                    // A real socket connection means this is a human player, not a bot
+                    const wasBot = disconnectedPlayer.isBot || false;
+                    let restoredName = disconnectedPlayer.name || `Player ${disconnectedIndex + 1}`;
+                    let restoredNickname = disconnectedPlayer.nickname || null;
+                    
+                    // If the disconnected player had "(Bot)" in their name, remove it for the reconnecting human player
+                    if (wasBot && restoredName.includes('(Bot)')) {
+                        restoredName = restoredName.replace(/\s*\(Bot\)\s*/g, '').trim();
+                        if (restoredNickname && restoredNickname.includes('(Bot)')) {
+                            restoredNickname = restoredNickname.replace(/\s*\(Bot\)\s*/g, '').trim();
+                        }
+                        console.log(`🚢 Reconnecting human player - removing (Bot) from name: "${disconnectedPlayer.name}" -> "${restoredName}"`);
+                    }
+                    
                     // CRITICAL FIX: Preserve player properties (isRoomCreator, name/nickname, team) when reconnecting
+                    // But clear bot status since this is a real human player reconnecting
                     room.players[disconnectedIndex] = {
                         id: socket.id,
-                        name: disconnectedPlayer.name || `Player ${disconnectedIndex + 1}`, // Preserve existing name/nickname
-                        nickname: disconnectedPlayer.nickname || disconnectedPlayer.name || `Player ${disconnectedIndex + 1}`,
+                        name: restoredName,
+                        nickname: restoredNickname || restoredName,
                         team: disconnectedPlayer.team || null,
-                        isBot: disconnectedPlayer.isBot || false,
+                        isBot: false, // ✅ CRITICAL FIX: Always false for reconnecting human players
                         isRoomCreator: disconnectedPlayer.isRoomCreator || false, // CRITICAL: Preserve isRoomCreator flag
                         ready: false // Reset ready state for reconnected player
                     };
-                    console.log(`🚢 Replaced disconnected player ${disconnectedPlayers[0].id} with new player ${socket.id}, preserved name: "${room.players[disconnectedIndex].name}", isRoomCreator: ${room.players[disconnectedIndex].isRoomCreator}`);
+                    console.log(`🚢 Replaced disconnected player ${disconnectedPlayers[0].id} with new player ${socket.id}, restored name: "${room.players[disconnectedIndex].name}", isBot: ${room.players[disconnectedIndex].isBot}, isRoomCreator: ${room.players[disconnectedIndex].isRoomCreator}`);
                 }
             } else {
                 console.log(`❌ Room ${roomCode} is full and no disconnected players found`);
@@ -2691,7 +2707,10 @@ io.on('connection', (socket) => {
         // Check if the current player is a bot - if so, allow any player in the room to attack on behalf of the bot
         const currentPlayerIndex = room.currentPlayer !== undefined ? room.currentPlayer : 0;
         const currentPlayer = room.players[currentPlayerIndex];
-        const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true;
+        // ✅ CRITICAL FIX: Verify bot status by checking if socket exists - bots don't have active sockets
+        const hasActiveSocket = currentPlayer && io.sockets.sockets.has(currentPlayer.id);
+        const isCurrentPlayerBot = currentPlayer && currentPlayer.isBot === true && !hasActiveSocket;
+        console.log(`🚢 Attack validation - currentPlayerIndex: ${currentPlayerIndex}, player: ${currentPlayer?.name}, isBot: ${currentPlayer?.isBot}, hasActiveSocket: ${hasActiveSocket}, isCurrentPlayerBot: ${isCurrentPlayerBot}`);
         
         let attackingPlayerIndex = -1;
         let actualAttackingPlayerId = null;

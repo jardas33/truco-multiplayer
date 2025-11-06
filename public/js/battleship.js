@@ -326,9 +326,13 @@ class BattleshipGame {
                             console.log(`🚢 Bot replacement: Current player data:`, currentPlayer ? { name: currentPlayer.name, isBot: currentPlayer.isBot } : 'not found');
                             console.log(`🚢 Bot replacement: All players:`, gameInstance.players ? gameInstance.players.map((p, i) => ({ index: i, name: p.name, isBot: p.isBot })) : 'not found');
                             
-                            // If the current player is a bot and it's their turn (not our turn), trigger bot attack
-                            if (isCurrentPlayerBot && !gameInstance.isPlayerTurn) {
+                            // ✅ CRITICAL FIX: If the current player is a bot, trigger bot attack regardless of isPlayerTurn
+                            // The isPlayerTurn might not be updated correctly yet, so we check the server's currentPlayer index
+                            if (isCurrentPlayerBot) {
                                 console.log(`🚢 Bot replacement: Current player (index ${currentPlayerIndex}) is a bot - triggering bot attack in 2 seconds`);
+                                // Force update isPlayerTurn to false since it's the bot's turn
+                                gameInstance.isPlayerTurn = false;
+                                gameInstance.currentPlayer = 1; // Opponent is the bot
                                 setTimeout(() => {
                                     console.log(`🚢 Bot replacement: Executing bot attack now...`);
                                     this.handleBotAttack();
