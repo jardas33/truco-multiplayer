@@ -57,7 +57,7 @@ class WordleGame {
         
         // Additional common words that can be answers (easily extendable)
         // To add more words, simply add them to this array
-        const additionalTargetWords = ['ROAST', 'TOAST', 'COAST', 'BOAST', 'GHOST', 'MOIST', 'JOIST', 'HOIST', 'FOIST', 'CREST', 'BEAST', 'FEAST', 'LEAST', 'YEAST', 'BLAST', 'LEAST'];
+        const additionalTargetWords = ['ROAST', 'TOAST', 'BOAST', 'GHOST', 'MOIST', 'JOIST', 'HOIST', 'FOIST', 'CREST', 'BEAST', 'FEAST', 'YEAST', 'BLAST'];
         
         return baseTargetWords.concat(additionalTargetWords);
     }
@@ -68,7 +68,7 @@ class WordleGame {
         
         // Additional common words that can be guessed (easily extendable)
         // To add more words, simply add them to this array
-        const additionalCommonWords = ['ROAST', 'TOAST', 'COAST', 'BOAST', 'GHOST', 'MOIST', 'JOIST', 'HOIST', 'FOIST', 'CREST', 'BEAST', 'FEAST', 'LEAST', 'YEAST', 'BLAST', 'LEAST'];
+        const additionalCommonWords = ['ROAST', 'TOAST', 'BOAST', 'GHOST', 'MOIST', 'JOIST', 'HOIST', 'FOIST', 'CREST', 'BEAST', 'FEAST', 'YEAST', 'BLAST'];
         
         // Combine all words
         const allCommonWords = commonWords.concat(additionalCommonWords);
