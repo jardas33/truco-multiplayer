@@ -487,13 +487,13 @@
             position: fixed;
             top: 85px;
             left: 25px;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
+            padding: 12px 20px;
+            border-radius: 25px;
             background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%);
             border: 2px solid rgba(255, 215, 0, 0.5);
             color: #FFD700;
-            font-size: 1.6em;
+            font-size: 1em;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -505,11 +505,12 @@
                 0 4px 15px rgba(0, 0, 0, 0.3),
                 0 0 20px rgba(255, 215, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
         }
 
         .info-button:hover {
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.25) 0%, rgba(255, 165, 0, 0.2) 100%);
-            transform: scale(1.15) rotate(5deg);
+            transform: scale(1.05);
             box-shadow: 
                 0 6px 20px rgba(0, 0, 0, 0.4),
                 0 0 30px rgba(255, 215, 0, 0.3),
@@ -700,7 +701,7 @@
     </div>
 
     <!-- Info Button -->
-    <button class="info-button" onclick="toggleInstructions()" aria-label="Show instructions">ℹ️</button>
+    <button class="info-button" onclick="toggleInstructions()" aria-label="Show instructions">Instructions</button>
 
     <!-- Game Container -->
     <div class="game-container">
