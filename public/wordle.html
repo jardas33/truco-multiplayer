@@ -112,7 +112,7 @@
 
         .game-container {
             max-width: 500px;
-            margin: 80px 20px 20px;
+            margin: 80px auto 20px;
             padding: 20px 30px;
             display: flex;
             flex-direction: column;
@@ -132,12 +132,9 @@
         }
 
         .instructions-panel {
-            position: fixed;
-            right: 20px;
-            top: 80px;
-            width: 300px;
-            max-height: calc(100vh - 100px);
-            padding: 25px;
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
             background: rgba(10, 14, 39, 0.4);
             backdrop-filter: blur(20px) saturate(180%);
             border-radius: 20px;
@@ -146,43 +143,42 @@
                 0 8px 32px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             z-index: 1;
-            overflow-y: auto;
         }
 
         .instructions-panel h3 {
             color: #FFD700;
-            font-size: 1.5em;
-            margin-bottom: 20px;
+            font-size: 1.2em;
+            margin-bottom: 15px;
             text-align: center;
             font-weight: 700;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
         }
 
         .instruction-content {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
         }
 
         .instruction-item {
-            padding: 15px;
+            padding: 12px;
             background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .instruction-item strong {
             color: #FFD700;
             display: block;
-            margin-bottom: 8px;
-            font-size: 1.1em;
+            margin-bottom: 5px;
+            font-size: 0.95em;
         }
 
         .instruction-item p {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 0.9em;
-            line-height: 1.5;
-            margin: 5px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+            margin: 0;
         }
 
         .instruction-item kbd {
@@ -191,24 +187,31 @@
             border-radius: 4px;
             padding: 2px 6px;
             font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #FFD700;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
+        .color-examples {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
         .color-example {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 10px;
-            margin: 8px 0;
+            gap: 5px;
         }
 
         .color-box {
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             border-radius: 6px;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            flex-shrink: 0;
         }
 
         .correct-example {
@@ -227,8 +230,9 @@
         }
 
         .color-example span {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.75em;
+            text-align: center;
         }
 
         .game-title {
@@ -725,13 +729,18 @@
             }
 
             .instructions-panel {
-                position: relative;
-                right: auto;
-                top: auto;
-                width: 100%;
                 max-width: 100%;
                 margin: 20px;
-                max-height: none;
+            }
+
+            .instruction-content {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .color-examples {
+                grid-column: 1;
+                flex-wrap: wrap;
             }
 
             .stats-bar {
@@ -831,35 +840,34 @@
         <h3>How to Play</h3>
         <div class="instruction-content">
             <div class="instruction-item">
-                <strong>Type Letters:</strong>
-                <p>Use your keyboard to type letters. Each guess must be a 5-letter word.</p>
+                <strong>Type:</strong>
+                <p>Use keyboard to type letters</p>
             </div>
             <div class="instruction-item">
-                <strong>Remove Letters:</strong>
-                <p>Press <kbd>Backspace</kbd> or <kbd>Delete</kbd> to remove letters from your current guess.</p>
+                <strong>Delete:</strong>
+                <p>Press <kbd>Backspace</kbd> to remove</p>
             </div>
             <div class="instruction-item">
-                <strong>Submit Guess:</strong>
-                <p>Press <kbd>Enter</kbd> to submit your word and check if it's correct.</p>
-            </div>
-            <div class="instruction-item">
-                <strong>Color Meanings:</strong>
-                <div class="color-example">
-                    <div class="color-box correct-example"></div>
-                    <span>Green = Correct letter, correct position</span>
-                </div>
-                <div class="color-example">
-                    <div class="color-box present-example"></div>
-                    <span>Yellow = Letter in word, wrong position</span>
-                </div>
-                <div class="color-example">
-                    <div class="color-box absent-example"></div>
-                    <span>Gray = Letter not in word</span>
-                </div>
+                <strong>Submit:</strong>
+                <p>Press <kbd>Enter</kbd> to guess</p>
             </div>
             <div class="instruction-item">
                 <strong>Goal:</strong>
-                <p>Guess the word in 6 tries or fewer!</p>
+                <p>Find the word in 6 tries</p>
+            </div>
+            <div class="color-examples">
+                <div class="color-example">
+                    <div class="color-box correct-example"></div>
+                    <span>Correct</span>
+                </div>
+                <div class="color-example">
+                    <div class="color-box present-example"></div>
+                    <span>Wrong spot</span>
+                </div>
+                <div class="color-example">
+                    <div class="color-box absent-example"></div>
+                    <span>Not in word</span>
+                </div>
             </div>
         </div>
     </div>
