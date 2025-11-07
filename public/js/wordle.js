@@ -1000,6 +1000,13 @@ class WordleGame {
     }
 }
 
+function toggleInstructions() {
+    const panel = document.getElementById('instructionsPanel');
+    if (panel) {
+        panel.classList.toggle('show');
+    }
+}
+
 function showInstructions() {
     const modal = window.wordleGame ? window.wordleGame.getElement('instructionsModal') : document.getElementById('instructionsModal');
     if (modal) {

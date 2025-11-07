@@ -143,6 +143,41 @@
                 0 8px 32px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             z-index: 1;
+            display: none;
+            position: relative;
+        }
+
+        .instructions-panel.show {
+            display: block;
+        }
+
+        .instructions-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: #FFD700;
+            font-size: 1.5em;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .instructions-close:hover {
+            background: rgba(255, 215, 0, 0.2);
+            transform: scale(1.1);
+        }
+
+        .instructions-close:focus {
+            outline: 2px solid #FFD700;
+            outline-offset: 2px;
         }
 
         .instructions-panel h3 {
@@ -733,6 +768,10 @@
                 margin: 20px;
             }
 
+            .instructions-panel.show {
+                display: block;
+            }
+
             .instruction-content {
                 grid-template-columns: 1fr;
                 gap: 12px;
@@ -802,7 +841,7 @@
     </div>
 
     <!-- Info Button -->
-    <button class="info-button" onclick="showInstructions()" aria-label="Show instructions">ℹ️</button>
+    <button class="info-button" onclick="toggleInstructions()" aria-label="Show instructions">ℹ️</button>
 
     <!-- Game Container -->
     <div class="game-container">
@@ -836,7 +875,8 @@
     </div>
 
     <!-- Instructions Panel -->
-    <div class="instructions-panel">
+    <div class="instructions-panel" id="instructionsPanel">
+        <button class="instructions-close" onclick="toggleInstructions()" aria-label="Close instructions">×</button>
         <h3>How to Play</h3>
         <div class="instruction-content">
             <div class="instruction-item">
