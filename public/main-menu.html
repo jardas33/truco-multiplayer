@@ -245,6 +245,15 @@
                 <div class="game-players">1-2 Players</div>
                 <div class="game-status status-new">STRATEGY</div>
             </div>
+
+            <!-- WORDLE -->
+            <div class="game-card" onclick="selectGame('wordle')">
+                <span class="game-icon">📝</span>
+                <div class="game-name">WORDLE</div>
+                <div class="game-description">Guess the 5-letter word in 6 tries! Use color clues to figure out the hidden word. Perfect word puzzle game!</div>
+                <div class="game-players">1 Player</div>
+                <div class="game-status status-popular">PUZZLE</div>
+            </div>
         </div>
     </div>
 
@@ -278,6 +287,9 @@
                     break;
                 case 'battleship':
                     window.location.href = '/battleship-menu';
+                    break;
+                case 'wordle':
+                    window.location.href = '/wordle';
                     break;
                 default:
                     console.error('Unknown game type:', gameType);

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Wordle - Word Puzzle Game</title>
+    <script>
+        document.title = 'Wordle - Word Puzzle Game';
+        setInterval(() => {
+            if (document.title !== 'Wordle - Word Puzzle Game') {
+                document.title = 'Wordle - Word Puzzle Game';
+            }
+        }, 100);
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lobby-fixes.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background-attachment: fixed;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .menu-buttons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            z-index: 1001;
+            margin: 0;
+            padding: 10px 0;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            backdrop-filter: blur(5px);
+        }
+
+        .menu-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: inline-block;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .game-container {
+            max-width: 600px;
+            margin: 100px auto 40px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .game-title {
+            color: #FFD700;
+            font-size: 3.5em;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            margin-bottom: 10px;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        .game-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .guess-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .letter-tile {
+            width: 65px;
+            height: 65px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            backdrop-filter: blur(5px);
+        }
+
+        .letter-tile.filled {
+            border-color: rgba(255, 255, 255, 0.5);
+            animation: pop 0.2s ease;
+        }
+
+        .letter-tile.correct {
+            background: #6aaa64;
+            border-color: #6aaa64;
+            color: white;
+            animation: flip 0.6s ease;
+        }
+
+        .letter-tile.present {
+            background: #c9b458;
+            border-color: #c9b458;
+            color: white;
+            animation: flip 0.6s ease;
+        }
+
+        .letter-tile.absent {
+            background: #787c7e;
+            border-color: #787c7e;
+            color: white;
+            animation: flip 0.6s ease;
+        }
+
+        .letter-tile.shake {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes flip {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            max-width: 550px;
+            margin-top: 20px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .key {
+            flex: 1;
+            min-width: 40px;
+            height: 58px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            backdrop-filter: blur(5px);
+        }
+
+        .key:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .key:active {
+            transform: translateY(0);
+        }
+
+        .key.wide {
+            flex: 1.5;
+            font-size: 0.8em;
+        }
+
+        .key.correct {
+            background: #6aaa64;
+            color: white;
+        }
+
+        .key.present {
+            background: #c9b458;
+            color: white;
+        }
+
+        .key.absent {
+            background: #787c7e;
+            color: white;
+        }
+
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 15px;
+            border: 3px solid #FFD700;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            z-index: 2000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .message-content {
+            margin-bottom: 20px;
+        }
+
+        .message-word {
+            font-size: 1.2em;
+            color: #FFD700;
+            margin-top: 10px;
+            letter-spacing: 3px;
+        }
+
+        .message-button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .message-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .info-button {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            color: #FFD700;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .info-button:hover {
+            background: rgba(255, 215, 0, 0.2);
+            transform: scale(1.1);
+        }
+
+        .instructions-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #FFD700;
+            max-width: 500px;
+            z-index: 2000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .instructions-modal.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .instructions-modal h2 {
+            color: #FFD700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .instructions-modal p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .instructions-modal .example {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .instructions-modal .example-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .instructions-modal .example-tile {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover {
+            color: #FFD700;
+            transform: scale(1.2);
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2.5em;
+            }
+
+            .letter-tile {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+            }
+
+            .key {
+                height: 50px;
+                font-size: 0.8em;
+            }
+
+            .game-container {
+                padding: 10px;
+                margin-top: 80px;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Buttons -->
+    <div class="menu-buttons">
+        <button class="menu-btn back-btn" onclick="if(confirm('Are you sure you want to return to the main menu? Your current game progress will be lost.')) { window.location.href = '/'; }">← Back to Main Menu</button>
+    </div>
+
+    <!-- Info Button -->
+    <div class="info-button" onclick="showInstructions()">ℹ️</div>
+
+    <!-- Game Container -->
+    <div class="game-container">
+        <h1 class="game-title">WORDLE</h1>
+        <p class="game-subtitle">Guess the 5-letter word in 6 tries</p>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Games Played</div>
+                <div class="stat-value" id="gamesPlayed">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value" id="winRate">0%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Current Streak</div>
+                <div class="stat-value" id="currentStreak">0</div>
+            </div>
+        </div>
+
+        <!-- Game Board -->
+        <div class="game-board" id="gameBoard">
+            <!-- Rows will be generated by JavaScript -->
+        </div>
+
+        <!-- Keyboard -->
+        <div class="keyboard" id="keyboard">
+            <!-- Keyboard will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div class="message" id="message">
+        <div class="message-content" id="messageContent"></div>
+        <div class="message-word" id="messageWord"></div>
+        <button class="message-button" onclick="closeMessage()">Play Again</button>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div class="instructions-modal" id="instructionsModal">
+        <button class="close-button" onclick="closeInstructions()">&times;</button>
+        <h2>How to Play</h2>
+        <p>Guess the <strong>WORDLE</strong> in 6 tries.</p>
+        <p>Each guess must be a valid 5-letter word. Hit the enter button to submit.</p>
+        <p>After each guess, the color of the tiles will change to show how close your guess was to the word.</p>
+        
+        <div class="example">
+            <p><strong>Examples:</strong></p>
+            <div class="example-row">
+                <div class="example-tile" style="background: #6aaa64; border-color: #6aaa64;">W</div>
+                <div class="example-tile">E</div>
+                <div class="example-tile">A</div>
+                <div class="example-tile">R</div>
+                <div class="example-tile">Y</div>
+            </div>
+            <p><strong>W</strong> is in the word and in the correct spot.</p>
+            
+            <div class="example-row">
+                <div class="example-tile">P</div>
+                <div class="example-tile" style="background: #c9b458; border-color: #c9b458;">I</div>
+                <div class="example-tile">L</div>
+                <div class="example-tile">L</div>
+                <div class="example-tile">S</div>
+            </div>
+            <p><strong>I</strong> is in the word but in the wrong spot.</p>
+            
+            <div class="example-row">
+                <div class="example-tile">V</div>
+                <div class="example-tile">A</div>
+                <div class="example-tile">G</div>
+                <div class="example-tile" style="background: #787c7e; border-color: #787c7e;">U</div>
+                <div class="example-tile">E</div>
+            </div>
+            <p><strong>U</strong> is not in the word in any spot.</p>
+        </div>
+    </div>
+
+    <script src="js/wordle.js"></script>
+</body>
+</html>
+

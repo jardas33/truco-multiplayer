@@ -635,6 +635,11 @@ app.get('/battleship', (req, res) => {
     res.sendFile(__dirname + '/public/battleship.html');
 });
 
+app.get('/wordle', (req, res) => {
+    console.log('📝 WORDLE ROUTE: Serving wordle.html');
+    res.sendFile(__dirname + '/public/wordle.html');
+});
+
 // Static file serving (after custom routes to avoid conflicts)
 app.use(express.static('public'));
 
