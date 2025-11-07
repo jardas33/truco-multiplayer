@@ -1001,9 +1001,12 @@ class WordleGame {
 }
 
 function toggleInstructions() {
-    const panel = document.getElementById('instructionsPanel');
-    if (panel) {
-        panel.classList.toggle('show');
+    const modal = document.getElementById('instructionsModal');
+    const backdrop = document.getElementById('instructionsBackdrop');
+    if (modal && backdrop) {
+        const isShowing = modal.classList.contains('show');
+        modal.classList.toggle('show');
+        backdrop.classList.toggle('show');
     }
 }
 
