@@ -108,7 +108,7 @@
 
         .stats-bar {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             justify-content: center;
             align-items: center;
             background: rgba(0, 0, 0, 0.5);
@@ -116,6 +116,7 @@
             border-radius: 15px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 215, 0, 0.3);
+            flex-wrap: wrap;
         }
 
         .stat-item {
@@ -192,6 +193,16 @@
 
         .letter-tile.shake {
             animation: shake 0.5s ease;
+        }
+
+        .guess-row.active-row {
+            opacity: 1;
+        }
+
+        .guess-row.active-row .letter-tile:not(.filled) {
+            border-color: rgba(255, 215, 0, 0.6);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            transition: all 0.3s ease;
         }
 
         @keyframes pop {
@@ -310,6 +321,12 @@
             color: #FFD700;
             margin-top: 10px;
             letter-spacing: 3px;
+        }
+
+        .message-subtitle {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
         }
 
         .message-button {
@@ -488,6 +505,10 @@
                 <div class="stat-label">Current Streak</div>
                 <div class="stat-value" id="currentStreak">0</div>
             </div>
+            <div class="stat-item">
+                <div class="stat-label">Max Streak</div>
+                <div class="stat-value" id="maxStreak">0</div>
+            </div>
         </div>
 
         <!-- Game Board -->
@@ -505,6 +526,7 @@
     <div class="message" id="message">
         <div class="message-content" id="messageContent"></div>
         <div class="message-word" id="messageWord"></div>
+        <div class="message-subtitle" id="messageSubtitle"></div>
         <button class="message-button" onclick="closeMessage()">Play Again</button>
     </div>
 
