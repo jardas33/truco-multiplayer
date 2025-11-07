@@ -17,6 +17,9 @@ class WordleGame {
         this.previousActiveElement = null; // Store element before modal opens
         this.isSubmitting = false; // Prevent double submissions
         
+        // Cache DOM elements for performance
+        this.cachedElements = {};
+        
         // Word lists - cached and filtered once
         this.targetWords = this.getTargetWords();
         this.validWords = this.getValidWords();
@@ -24,6 +27,19 @@ class WordleGame {
         this.validWordsSet = new Set(this.validWords);
         
         this.init();
+    }
+    
+    // Cache DOM elements for better performance
+    getElement(id) {
+        if (!this.cachedElements[id]) {
+            this.cachedElements[id] = document.getElementById(id);
+        }
+        return this.cachedElements[id];
+    }
+    
+    // Clear cache when needed
+    clearCache() {
+        this.cachedElements = {};
     }
 
     init() {
@@ -75,6 +91,24 @@ class WordleGame {
             this.currentAnimationTimeouts = [];
         }
         
+        // Clear shake timeouts
+        if (this.shakeTimeouts) {
+            this.shakeTimeouts.forEach(timeout => clearTimeout(timeout));
+            this.shakeTimeouts = [];
+        }
+        
+        // Clear message timeouts
+        if (this.messageTimeouts) {
+            this.messageTimeouts.forEach(timeout => clearTimeout(timeout));
+            this.messageTimeouts = [];
+        }
+        
+        // Remove any existing temp messages
+        const existing = document.querySelector('.temp-message');
+        if (existing) {
+            existing.remove();
+        }
+        
         if (this.targetWords.length === 0) {
             this.announceToScreenReader('Error: No words available');
             return;
@@ -85,9 +119,10 @@ class WordleGame {
     }
 
     createBoard() {
-        const board = document.getElementById('gameBoard');
+        const board = this.getElement('gameBoard');
         if (!board) return;
         board.innerHTML = '';
+        this.clearCache(); // Clear cache when recreating board
         for (let i = 0; i < this.maxGuesses; i++) {
             const row = document.createElement('div');
             row.className = 'guess-row';
@@ -100,6 +135,7 @@ class WordleGame {
                 tile.id = `tile-${i}-${j}`;
                 tile.setAttribute('role', 'gridcell');
                 tile.setAttribute('aria-label', `Row ${i + 1}, Position ${j + 1}, empty`);
+                tile.setAttribute('tabindex', '-1'); // Make tiles focusable but not in tab order
                 row.appendChild(tile);
             }
             board.appendChild(row);
@@ -108,7 +144,7 @@ class WordleGame {
     }
 
     createKeyboard() {
-        const keyboard = document.getElementById('keyboard');
+        const keyboard = this.getElement('keyboard');
         if (!keyboard) return;
         keyboard.innerHTML = '';
         const rows = [
@@ -186,8 +222,8 @@ class WordleGame {
         this.keydownHandler = (e) => {
             // Handle ESC key for closing modals
             if (e.key === 'Escape' || e.key === 'Esc') {
-                const instructionsModal = document.getElementById('instructionsModal');
-                const messageModal = document.getElementById('message');
+                const instructionsModal = this.getElement('instructionsModal');
+                const messageModal = this.getElement('message');
                 
                 if (instructionsModal && instructionsModal.classList.contains('show')) {
                     closeInstructions();
@@ -205,8 +241,8 @@ class WordleGame {
             }
             
             // Don't process game keys if modals are open
-            const instructionsModal = document.getElementById('instructionsModal');
-            const messageModal = document.getElementById('message');
+            const instructionsModal = this.getElement('instructionsModal');
+            const messageModal = this.getElement('message');
             if ((instructionsModal && instructionsModal.classList.contains('show')) ||
                 (messageModal && messageModal.classList.contains('show'))) {
                 return;
@@ -230,8 +266,8 @@ class WordleGame {
         
         // Close modals on outside click
         this.modalClickHandler = (e) => {
-            const instructionsModal = document.getElementById('instructionsModal');
-            const messageModal = document.getElementById('message');
+            const instructionsModal = this.getElement('instructionsModal');
+            const messageModal = this.getElement('message');
             
             if (instructionsModal && instructionsModal.classList.contains('show') && e.target === instructionsModal) {
                 closeInstructions();
@@ -294,26 +330,31 @@ class WordleGame {
 
     updateBoard() {
         const rowIndex = this.guesses.length;
-        const row = document.getElementById(`row-${rowIndex}`);
+        const row = this.getElement(`row-${rowIndex}`);
         if (!row) return;
         
         // Remove shake class if present
         row.classList.remove('shake');
         
-        for (let i = 0; i < this.wordLength; i++) {
-            const tile = row.children[i];
-            if (i < this.currentGuess.length) {
-                tile.textContent = this.currentGuess[i];
-                tile.classList.add('filled');
-                tile.setAttribute('aria-label', `Row ${rowIndex + 1}, Position ${i + 1}, letter ${this.currentGuess[i]}`);
-            } else {
-                tile.textContent = '';
-                tile.classList.remove('filled');
-                tile.setAttribute('aria-label', `Row ${rowIndex + 1}, Position ${i + 1}, empty`);
+        // Use requestAnimationFrame for smooth updates
+        requestAnimationFrame(() => {
+            for (let i = 0; i < this.wordLength; i++) {
+                const tile = row.children[i];
+                if (!tile) continue;
+                
+                if (i < this.currentGuess.length) {
+                    tile.textContent = this.currentGuess[i];
+                    tile.classList.add('filled');
+                    tile.setAttribute('aria-label', `Row ${rowIndex + 1}, Position ${i + 1}, letter ${this.currentGuess[i]}`);
+                } else {
+                    tile.textContent = '';
+                    tile.classList.remove('filled');
+                    tile.setAttribute('aria-label', `Row ${rowIndex + 1}, Position ${i + 1}, empty`);
+                }
             }
-        }
-        this.updateActiveRow();
-        this.updateKeyboardState();
+            this.updateActiveRow();
+            this.updateKeyboardState();
+        });
     }
 
     updateActiveRow() {
@@ -331,16 +372,22 @@ class WordleGame {
     }
 
     updateKeyboardState() {
-        const keys = document.querySelectorAll('.key');
-        keys.forEach(key => {
+        // Cache keyboard keys for better performance
+        if (!this.cachedKeys) {
+            this.cachedKeys = document.querySelectorAll('.key');
+        }
+        
+        this.cachedKeys.forEach(key => {
             if (this.isAnimating || this.gameOver) {
                 key.disabled = true;
                 key.style.opacity = '0.5';
                 key.style.cursor = 'not-allowed';
+                key.style.transition = 'opacity 0.2s ease';
             } else {
                 key.disabled = false;
                 key.style.opacity = '';
                 key.style.cursor = 'pointer';
+                key.style.transition = 'opacity 0.2s ease';
             }
         });
     }
@@ -376,12 +423,19 @@ class WordleGame {
 
     showInvalidWord(message = 'Not a valid word!') {
         const rowIndex = this.guesses.length;
-        const row = document.getElementById(`row-${rowIndex}`);
+        const row = this.getElement(`row-${rowIndex}`);
         if (row) {
+            // Enhanced shake animation with better timing
             row.classList.add('shake');
-            setTimeout(() => {
+            const shakeTimeout = setTimeout(() => {
                 row.classList.remove('shake');
-            }, 500);
+            }, 600);
+            
+            // Store timeout for cleanup
+            if (!this.shakeTimeouts) {
+                this.shakeTimeouts = [];
+            }
+            this.shakeTimeouts.push(shakeTimeout);
         }
         
         // Remove existing temp message
@@ -398,7 +452,7 @@ class WordleGame {
         tempMsg.setAttribute('aria-live', 'assertive');
         
         // Calculate position to avoid overlap with game board
-        const gameBoard = document.getElementById('gameBoard');
+        const gameBoard = this.getElement('gameBoard');
         let topPosition = '20%';
         if (gameBoard) {
             const rect = gameBoard.getBoundingClientRect();
@@ -423,16 +477,22 @@ class WordleGame {
             pointer-events: none;
         `;
         document.body.appendChild(tempMsg);
-        setTimeout(() => {
+        const msgTimeout = setTimeout(() => {
             if (tempMsg.parentNode) {
                 tempMsg.parentNode.removeChild(tempMsg);
             }
         }, 2000);
+        
+        // Store timeout for cleanup
+        if (!this.messageTimeouts) {
+            this.messageTimeouts = [];
+        }
+        this.messageTimeouts.push(msgTimeout);
     }
 
     evaluateGuess(guess) {
         const rowIndex = this.guesses.length - 1;
-        const row = document.getElementById(`row-${rowIndex}`);
+        const row = this.getElement(`row-${rowIndex}`);
         if (!row) {
             this.isAnimating = false;
             this.isSubmitting = false;
@@ -505,14 +565,25 @@ class WordleGame {
 
     celebrateWin() {
         const rowIndex = this.guesses.length - 1;
-        const row = document.getElementById(`row-${rowIndex}`);
+        const row = this.getElement(`row-${rowIndex}`);
         if (!row) return;
         
-        // Bounce animation for winning row
-        row.style.animation = 'bounce 0.6s ease';
+        // Enhanced bounce animation for winning row
+        row.style.animation = 'bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
         setTimeout(() => {
             row.style.animation = '';
         }, 600);
+        
+        // Add pulse effect to winning tiles
+        const tiles = row.querySelectorAll('.letter-tile');
+        tiles.forEach((tile, index) => {
+            setTimeout(() => {
+                tile.style.animation = 'pulse 0.3s ease';
+                setTimeout(() => {
+                    tile.style.animation = '';
+                }, 300);
+            }, index * 50);
+        });
         
         // Confetti effect
         this.createConfetti();
@@ -616,9 +687,17 @@ class WordleGame {
     }
 
     updateKeyboard(letter, status) {
-        const keys = document.querySelectorAll('.key');
+        // Use cached keys if available, otherwise query
+        const keys = this.cachedKeys || document.querySelectorAll('.key');
+        if (!this.cachedKeys) {
+            this.cachedKeys = keys;
+        }
+        
         keys.forEach(key => {
             if (key.textContent === letter && key.textContent.length === 1) {
+                // Add smooth transition for status changes
+                key.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                
                 // Correct status takes priority
                 if (status === 'correct') {
                     key.classList.remove('present', 'absent');
@@ -634,10 +713,10 @@ class WordleGame {
     }
 
     showMessage(title, word, subtitle = '') {
-        const message = document.getElementById('message');
-        const content = document.getElementById('messageContent');
-        const wordEl = document.getElementById('messageWord');
-        const subtitleEl = document.getElementById('messageSubtitle');
+        const message = this.getElement('message');
+        const content = this.getElement('messageContent');
+        const wordEl = this.getElement('messageWord');
+        const subtitleEl = this.getElement('messageSubtitle');
         
         if (!message || !content || !wordEl) return;
         
@@ -665,7 +744,7 @@ class WordleGame {
     }
 
     closeMessage() {
-        const message = document.getElementById('message');
+        const message = this.getElement('message');
         if (message) {
             message.classList.remove('show');
             message.removeAttribute('role');
@@ -695,6 +774,9 @@ class WordleGame {
     }
 
     resetKeyboard() {
+        // Clear cached keys to force refresh
+        this.cachedKeys = null;
+        
         const keys = document.querySelectorAll('.key');
         keys.forEach(key => {
             key.classList.remove('correct', 'present', 'absent');
@@ -702,6 +784,7 @@ class WordleGame {
             key.style.opacity = '';
             key.style.cursor = 'pointer';
             key.style.transform = '';
+            key.style.transition = '';
             // Cleanup touch handlers if they exist
             if (key._touchHandlers) {
                 key.removeEventListener('touchstart', key._touchHandlers.start);
@@ -779,6 +862,21 @@ class WordleGame {
     }
 
     loadStats() {
+        // Check if localStorage is available
+        try {
+            const test = '__localStorage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+        } catch (e) {
+            // localStorage not available, return default stats
+            return {
+                gamesPlayed: 0,
+                wins: 0,
+                currentStreak: 0,
+                maxStreak: 0
+            };
+        }
+        
         try {
             const saved = localStorage.getItem('wordleStats');
             if (saved) {
@@ -803,6 +901,16 @@ class WordleGame {
     }
 
     saveStats() {
+        // Check if localStorage is available
+        try {
+            const test = '__localStorage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+        } catch (e) {
+            // localStorage not available, silently fail
+            return;
+        }
+        
         try {
             localStorage.setItem('wordleStats', JSON.stringify(this.stats));
         } catch (e) {
@@ -832,24 +940,54 @@ class WordleGame {
         this.stats.currentStreak = Math.max(0, this.stats.currentStreak || 0);
         this.stats.maxStreak = Math.max(0, this.stats.maxStreak || 0);
         
-        const gamesPlayedEl = document.getElementById('gamesPlayed');
-        const winRateEl = document.getElementById('winRate');
-        const currentStreakEl = document.getElementById('currentStreak');
-        const maxStreakEl = document.getElementById('maxStreak');
+        const gamesPlayedEl = this.getElement('gamesPlayed');
+        const winRateEl = this.getElement('winRate');
+        const currentStreakEl = this.getElement('currentStreak');
+        const maxStreakEl = this.getElement('maxStreak');
         
-        if (gamesPlayedEl) gamesPlayedEl.textContent = this.stats.gamesPlayed;
+        // Animate stat changes with smooth transitions
+        if (gamesPlayedEl) {
+            gamesPlayedEl.style.transition = 'transform 0.3s ease';
+            gamesPlayedEl.style.transform = 'scale(1.1)';
+            gamesPlayedEl.textContent = this.stats.gamesPlayed;
+            setTimeout(() => {
+                if (gamesPlayedEl) gamesPlayedEl.style.transform = 'scale(1)';
+            }, 300);
+        }
+        
         if (winRateEl) {
             const winRate = this.stats.gamesPlayed > 0 ? 
                 Math.round((this.stats.wins / this.stats.gamesPlayed) * 100) : 0;
+            winRateEl.style.transition = 'transform 0.3s ease';
+            winRateEl.style.transform = 'scale(1.1)';
             winRateEl.textContent = winRate + '%';
+            setTimeout(() => {
+                if (winRateEl) winRateEl.style.transform = 'scale(1)';
+            }, 300);
         }
-        if (currentStreakEl) currentStreakEl.textContent = this.stats.currentStreak;
-        if (maxStreakEl) maxStreakEl.textContent = this.stats.maxStreak;
+        
+        if (currentStreakEl) {
+            currentStreakEl.style.transition = 'transform 0.3s ease';
+            currentStreakEl.style.transform = 'scale(1.1)';
+            currentStreakEl.textContent = this.stats.currentStreak;
+            setTimeout(() => {
+                if (currentStreakEl) currentStreakEl.style.transform = 'scale(1)';
+            }, 300);
+        }
+        
+        if (maxStreakEl) {
+            maxStreakEl.style.transition = 'transform 0.3s ease';
+            maxStreakEl.style.transform = 'scale(1.1)';
+            maxStreakEl.textContent = this.stats.maxStreak;
+            setTimeout(() => {
+                if (maxStreakEl) maxStreakEl.style.transform = 'scale(1)';
+            }, 300);
+        }
     }
 }
 
 function showInstructions() {
-    const modal = document.getElementById('instructionsModal');
+    const modal = window.wordleGame ? window.wordleGame.getElement('instructionsModal') : document.getElementById('instructionsModal');
     if (modal) {
         // Store current focus
         if (window.wordleGame) {
@@ -874,7 +1012,7 @@ function showInstructions() {
 }
 
 function closeInstructions() {
-    const modal = document.getElementById('instructionsModal');
+    const modal = window.wordleGame ? window.wordleGame.getElement('instructionsModal') : document.getElementById('instructionsModal');
     if (modal) {
         modal.classList.remove('show');
         modal.removeAttribute('role');
@@ -913,6 +1051,10 @@ style.textContent = `
     @keyframes bounce {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-20px); }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.15); }
     }
     @keyframes confettiFall {
         0% {
