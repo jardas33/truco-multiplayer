@@ -395,9 +395,9 @@ class WordleGame {
             // ✅ MOBILE FIX: Support both click and touch events
             const focusInput = () => {
                 if (!this.gameOver && !this.isAnimating) {
-                    // ✅ ANDROID FIX: Focus without scrolling - let user control view
+                    // ✅ MOBILE FIX: Focus input (will trigger keyboard)
+                    // The focus event will handle scrolling after keyboard appears
                     hiddenInput.focus({ preventScroll: true });
-                    // Don't auto-scroll - user can scroll manually if needed
                 }
             };
             
@@ -575,17 +575,26 @@ class WordleGame {
             }
         });
 
-        // ✅ ANDROID FIX: Handle focus - completely disable auto-scroll
+        // ✅ MOBILE FIX: Handle focus - scroll active row into view when keyboard appears
+        let keyboardResizeTimeout;
         hiddenInput.addEventListener('focus', () => {
-            // Do nothing - let user control scrolling completely
-            // No auto-scroll, no suggestions, nothing
+            // Wait for keyboard to appear, then scroll active row into view
+            clearTimeout(keyboardResizeTimeout);
+            keyboardResizeTimeout = setTimeout(() => {
+                this.scrollActiveRowAboveKeyboard();
+            }, 300); // Wait for keyboard animation
         });
 
-        // ✅ ANDROID FIX: Use Visual Viewport API if available - but don't scroll
+        // ✅ MOBILE FIX: Use Visual Viewport API to detect keyboard show/hide
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
-                // Do nothing - let user control scrolling completely
-                // Keyboard show/hide should not trigger any scrolling
+                // Keyboard appeared/disappeared - scroll active row into view
+                clearTimeout(keyboardResizeTimeout);
+                keyboardResizeTimeout = setTimeout(() => {
+                    if (document.activeElement === hiddenInput) {
+                        this.scrollActiveRowAboveKeyboard();
+                    }
+                }, 100);
             });
         }
 
@@ -610,8 +619,36 @@ class WordleGame {
         });
     }
 
-    // ✅ ANDROID FIX: Removed gentleScrollCheck - no auto-scrolling at all
-    // Users can scroll manually without any interference
+    scrollActiveRowAboveKeyboard() {
+        // ✅ MOBILE FIX: Scroll the active row into view above the keyboard
+        const currentRowIndex = this.guesses.length;
+        const activeRow = this.getElement(`row-${currentRowIndex}`);
+        if (!activeRow) return;
+
+        const gameContainer = document.querySelector('.game-container');
+        if (!gameContainer) return;
+
+        // Get viewport height (accounting for keyboard)
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const rowRect = activeRow.getBoundingClientRect();
+        const containerRect = gameContainer.getBoundingClientRect();
+        
+        // Calculate keyboard height (difference between window height and visual viewport)
+        const keyboardHeight = window.innerHeight - viewportHeight;
+        
+        // Target position: row should be visible above keyboard with some padding
+        const targetPadding = 20; // Space above keyboard
+        const targetBottom = viewportHeight - targetPadding;
+        
+        // Check if row is hidden by keyboard
+        if (rowRect.bottom > targetBottom) {
+            // Calculate how much we need to scroll
+            const scrollAmount = rowRect.bottom - targetBottom + 10; // Add small buffer
+            
+            // Scroll the container
+            gameContainer.scrollTop += scrollAmount;
+        }
+    }
     
     cleanup() {
         // Cleanup event listeners
