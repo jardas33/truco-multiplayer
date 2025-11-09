@@ -528,9 +528,13 @@ class WordleGame {
                 this.updateBoard();
             }
 
-            // ✅ ANDROID FIX: Don't auto-scroll on every keystroke - let user control scrolling
-            // Only scroll if user hasn't manually scrolled recently
-            // Removed auto-scroll to prevent interference with user scrolling
+            // ✅ MOBILE FIX: Keep active row visible while typing
+            // Check if row is hidden by keyboard and scroll if needed
+            setTimeout(() => {
+                if (document.activeElement === hiddenInput) {
+                    this.scrollActiveRowAboveKeyboard();
+                }
+            }, 150);
         });
 
         // Handle keydown events in the input field
