@@ -2928,7 +2928,7 @@ class BattleshipClient {
             // ✅ RESTORE: Use original working grid positions
             // Original positions that were working correctly
             this.gridStartX = 20;
-            this.gridStartY = isMobile ? 50 : 100; // Higher on mobile to fit better
+            this.gridStartY = isMobile ? 50 : 200; // Move grids lower on desktop for better spacing
             
             // Store original offsets for consistency
             this.fleetGridOffset = 80; // Original: gridStartX + 80
@@ -3073,7 +3073,7 @@ class BattleshipClient {
                     
                     // ✅ RESTORE: Use original working positions on resize
                     this.gridStartX = 20;
-                    this.gridStartY = isMobile ? 50 : 100;
+                    this.gridStartY = isMobile ? 50 : 200; // Move grids lower on desktop
                     this.fleetGridOffset = 80;
                     this.attackGridOffset = 500;
                     
