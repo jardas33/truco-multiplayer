@@ -25,8 +25,13 @@
         body {
             margin: 0 !important;
             padding: 0 !important;
-            background: url('Images/battleships.png') center center fixed;
+            background-color: #000000; /* Black background for sides if image doesn't fill */
+            background-image: url('Images/battleships.png');
+            background-position: center center;
+            background-attachment: fixed;
+            /* ✅ Use cover to match middle/right appearance, with black fallback for sides */
             background-size: cover;
+            background-repeat: no-repeat;
             font-family: 'Arial', sans-serif;
             overflow-x: hidden;
             overflow-y: hidden;
@@ -68,10 +73,12 @@
             flex-direction: column;
             align-items: flex-start;
             margin: 120px 20px 0 0;
-            background: rgba(0, 0, 0, 0.3);
+            /* ✅ Make background very transparent so background image shows through */
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 15px;
             padding: 25px;
-            backdrop-filter: blur(10px);
+            /* ✅ Reduce blur to minimum so background image is visible */
+            backdrop-filter: blur(2px);
             border: 1px solid rgba(255, 215, 0, 0.3);
             box-sizing: border-box;
             overflow: hidden;
