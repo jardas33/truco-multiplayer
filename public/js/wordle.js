@@ -549,7 +549,9 @@ class WordleGame {
     }
 
     addLetter(letter) {
-        if (this.currentGuess.length < this.wordLength && !this.isAnimating) {
+        // ✅ FIX: Ensure only single letter is added (prevent autocomplete words)
+        if (letter && letter.length === 1 && /^[A-Z]$/.test(letter) && 
+            this.currentGuess.length < this.wordLength && !this.isAnimating) {
             this.currentGuess += letter;
             this.updateBoard();
             this.announceToScreenReader(`Added letter ${letter}`);
