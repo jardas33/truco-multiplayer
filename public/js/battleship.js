@@ -3295,19 +3295,9 @@ class BattleshipClient {
         // Clear the canvas first to ensure clean drawing
         clear();
         
-        // ✅ CRITICAL FIX: Draw battleship background image (battleships.png) if available
-        push();
-        imageMode(CORNER);
-        if (window.battleshipBackgroundImage && window.battleshipBackgroundImage.width > 0) {
-            image(window.battleshipBackgroundImage, 0, 0, width, height);
-        } else if (window.backgroundImage && window.backgroundImage.width > 0) {
-            // Fallback to generic background if battleship image not loaded
-            image(window.backgroundImage, 0, 0, width, height);
-        } else {
-            // Final fallback background if no image loaded
-            background(0, 50, 100); // Dark blue ocean
-        }
-        pop();
+        // ✅ BACKGROUND FIX: Don't draw background on canvas - let body CSS background show through
+        // The canvas is transparent, so the body's background-image CSS will be visible
+        // This ensures consistent background appearance across entire screen
         
         // Draw unhit ships first (green colors)
         this.drawShips(gameInstance);
