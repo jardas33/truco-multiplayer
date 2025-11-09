@@ -774,23 +774,23 @@ io.on('connection', (socket) => {
                             gamePlayer.nickname = `${leavingPlayer.nickname} (Bot)`;
                         }
                         if (!gamePlayer.name.includes('(Bot)') && !gamePlayer.name.includes('Bot')) {
-                            gamePlayer.name = `${gamePlayer.name || leavingPlayerName} (Bot)`;
+                            gamePlayer.name = `${gamePlayer.name || originalName} (Bot)`;
                         }
                         console.log(`✅ Updated room.game.players[${playerIndex}] to bot status for ${room.gameType}`);
                     } else {
                         console.log(`⚠️ Could not update room.game.players[${playerIndex}] - game: ${!!room.game}, players: ${!!room.game?.players}, isArray: ${Array.isArray(room.game?.players)}, index exists: ${room.game?.players?.[playerIndex] !== undefined}`);
                     }
                     
-                    console.log(`🤖 Replaced ${leavingPlayerName} with bot ${leavingPlayer.name} in room ${roomCode}`);
+                    console.log(`🤖 Replaced ${originalName} with bot ${leavingPlayer.name} in room ${roomCode}`);
                     
                     // ✅ CRITICAL FIX: Emit warning to remaining players
                     console.log(`📢 Emitting playerReplacedWithBot to room ${roomCode} with ${room.players.length} players`);
                     const replacementData = {
                         playerIndex: playerIndex,
-                        playerName: leavingPlayerName,
+                        playerName: originalName,
                         newBotName: leavingPlayer.name,
                         players: room.players,
-                        message: `⚠️ ${leavingPlayerName} left the game and was replaced with a bot.`
+                        message: `⚠️ ${originalName} left the game and was replaced with a bot.`
                     };
                     // ✅ CRITICAL FIX: Include currentPlayer in event data for games that use it
                     if (room.gameType === 'battleship') {
