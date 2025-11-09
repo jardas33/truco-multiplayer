@@ -3183,11 +3183,30 @@ class BattleshipClient {
         
         // Remove canvas-specific mousePressed - using global handler instead
         
-        // Add keyboard event listeners with proper cleanup
+        // ✅ RESOLUTION FIX: Add keyboard event listeners with proper cleanup
+        // Handle rotation and cancellation for ship placement
         this.keydownHandler = (e) => {
-            if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
-                // Redraw for ship rotation and cancellation during placement
-                if (this.game && this.gamePhase === 'placement') {
+            const gameInstance = window.battleshipGame || this.game;
+            if (!gameInstance) return;
+            
+            if (e.key === 'r' || e.key === 'R') {
+                // Rotate ship during placement
+                if (gameInstance.gamePhase === 'placement' && gameInstance.currentShip) {
+                    gameInstance.rotateCurrentShip();
+                    // Sync client's currentShip with game's currentShip after rotation
+                    if (this.currentShip) {
+                        this.currentShip = gameInstance.currentShip;
+                    }
+                    // Force redraw to show rotated preview
+                    redraw();
+                }
+            } else if (e.key === 'Escape') {
+                // Cancel ship placement
+                if (gameInstance.gamePhase === 'placement' && gameInstance.currentShip) {
+                    gameInstance.cancelShipPlacement();
+                    // Clear client's currentShip after cancellation
+                    this.currentShip = null;
+                    // Force redraw to remove preview
                     redraw();
                 }
             }
@@ -3434,22 +3453,26 @@ class BattleshipClient {
     drawMouseHover() {
         // Draw hover effect on grids
         if (this.gamePhase === 'placement') {
-            // ✅ RESTORE: Use original working position
+            // ✅ RESOLUTION FIX: Use consistent grid position calculation
             const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
             const fleetGridY = this.gridStartY;
             
+            // ✅ RESOLUTION FIX: Use temp coordinates if available (for touch), otherwise use mouseX/Y
+            const hoverX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
+            const hoverY = this.tempMouseY !== undefined ? this.tempMouseY : mouseY;
+            
             // Calculate grid coordinates to match exactly how cells are drawn
             const cellSize = this.gridSize + this.gridSpacing;
-            const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-            const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+            const gridX = Math.floor((hoverX - fleetGridX) / cellSize);
+            const gridY = Math.floor((hoverY - fleetGridY) / cellSize);
             
             // Calculate correct grid bounds
             const gridWidth = 10 * cellSize;
             const gridHeight = 10 * cellSize;
             
             if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
-                mouseX >= fleetGridX && mouseX < fleetGridX + gridWidth && 
-                mouseY >= fleetGridY && mouseY < fleetGridY + gridHeight) {
+                hoverX >= fleetGridX && hoverX < fleetGridX + gridWidth && 
+                hoverY >= fleetGridY && hoverY < fleetGridY + gridHeight) {
                 const cellX = fleetGridX + gridX * (this.gridSize + this.gridSpacing);
                 const cellY = fleetGridY + gridY * (this.gridSize + this.gridSpacing);
                 
@@ -3460,16 +3483,20 @@ class BattleshipClient {
                 rect(cellX, cellY, this.gridSize, this.gridSize);
             }
         } else if (this.gamePhase === 'playing' && this.currentPlayer === 0) {
-            // ✅ RESTORE: Use original working position
+            // ✅ RESOLUTION FIX: Use consistent grid position calculation
             const attackGridX = this.gridStartX + 500; // Match drawGrids position
             const attackGridY = this.gridStartY;
             
+            // ✅ RESOLUTION FIX: Use temp coordinates if available (for touch), otherwise use mouseX/Y
+            const hoverX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
+            const hoverY = this.tempMouseY !== undefined ? this.tempMouseY : mouseY;
+            
             // Calculate grid coordinates to match exactly how cells are drawn
             const cellSize = this.gridSize + this.gridSpacing;
-            const gridX = Math.floor((mouseX - attackGridX) / cellSize);
-            const gridY = Math.floor((mouseY - attackGridY) / cellSize);
+            const gridX = Math.floor((hoverX - attackGridX) / cellSize);
+            const gridY = Math.floor((hoverY - attackGridY) / cellSize);
             
-            if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && mouseX >= attackGridX) {
+            if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && hoverX >= attackGridX) {
                 const cellX = attackGridX + gridX * (this.gridSize + this.gridSpacing);
                 const cellY = attackGridY + gridY * (this.gridSize + this.gridSpacing);
                 
@@ -4092,17 +4119,17 @@ class BattleshipClient {
         const gridWidth = 10 * cellSize;
         const gridHeight = 10 * cellSize;
         
-        // Only handle clicks on the fleet grid
+        // ✅ RESOLUTION FIX: Use clickX/clickY for bounds checking (works with both mouse and touch)
         const inBounds = gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10;
-        const inMouseBounds = mouseX >= fleetGridX && mouseX < fleetGridX + gridWidth && 
-                             mouseY >= fleetGridY && mouseY < fleetGridY + gridHeight;
+        const inClickBounds = clickX >= fleetGridX && clickX < fleetGridX + gridWidth && 
+                             clickY >= fleetGridY && clickY < fleetGridY + gridHeight;
         
-        console.log('🔍 Bounds checking - inBounds:', inBounds, 'inMouseBounds:', inMouseBounds);
+        console.log('🔍 Bounds checking - inBounds:', inBounds, 'inClickBounds:', inClickBounds);
         console.log('🔍 Grid bounds - gridWidth:', gridWidth, 'gridHeight:', gridHeight);
-        console.log('🔍 Mouse bounds check - mouseX >= fleetGridX:', mouseX >= fleetGridX, 'mouseX < fleetGridX + gridWidth:', mouseX < fleetGridX + gridWidth);
-        console.log('🔍 Mouse bounds check - mouseY >= fleetGridY:', mouseY >= fleetGridY, 'mouseY < fleetGridY + gridHeight:', mouseY < fleetGridY + gridHeight);
+        console.log('🔍 Click bounds check - clickX >= fleetGridX:', clickX >= fleetGridX, 'clickX < fleetGridX + gridWidth:', clickX < fleetGridX + gridWidth);
+        console.log('🔍 Click bounds check - clickY >= fleetGridY:', clickY >= fleetGridY, 'clickY < fleetGridY + gridHeight:', clickY < fleetGridY + gridHeight);
         
-        if (inBounds && inMouseBounds) {
+        if (inBounds && inClickBounds) {
             if (this.currentShip) {
                 const shipName = this.currentShip.name;
                 const orientation = this.currentShip.orientation || 'horizontal';
