@@ -178,6 +178,15 @@ class WordleGame {
             }
             board.appendChild(row);
         }
+        
+        // ✅ ANDROID FIX: Add spacer at bottom to ensure scrollable content
+        const spacer = document.createElement('div');
+        spacer.className = 'board-spacer';
+        spacer.style.height = '400px'; // Large spacer for mobile scrolling
+        spacer.style.width = '100%';
+        spacer.setAttribute('aria-hidden', 'true');
+        board.appendChild(spacer);
+        
         this.updateActiveRow();
     }
 
