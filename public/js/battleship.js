@@ -2925,28 +2925,14 @@ class BattleshipClient {
             this.canvas.style('left', '0');
             this.canvas.style('z-index', '1');
             
-            // ✅ RESPONSIVE FIX: Calculate grid positions based on canvas size
-            // Calculate grid positions dynamically to ensure they fit on all screen sizes
-            const gridCellSize = this.gridSize + this.gridSpacing;
-            const gridWidth = 10 * gridCellSize; // Width of one grid
-            const gridSpacing = isMobile ? 20 : Math.max(100, (canvasWidth - gridWidth * 2 - 160) / 2); // Dynamic spacing
-            
-            // Calculate total width needed: left margin + grid1 + spacing + grid2 + right margin
-            const totalWidth = 80 + gridWidth + gridSpacing + gridWidth + 80;
-            
-            // Center everything if canvas is larger than needed, otherwise align left
-            if (canvasWidth >= totalWidth) {
-                this.gridStartX = (canvasWidth - totalWidth) / 2 + 80;
-            } else {
-                this.gridStartX = 40; // Minimum left margin
-            }
-            
-            // Store grid spacing for use in other methods
-            this.gridSpacingBetween = gridSpacing;
-            this.fleetGridOffset = 0; // Fleet grid starts at gridStartX
-            this.attackGridOffset = gridWidth + gridSpacing; // Attack grid is after first grid + spacing
-            
+            // ✅ RESTORE: Use original working grid positions
+            // Original positions that were working correctly
+            this.gridStartX = 20;
             this.gridStartY = isMobile ? 50 : 100; // Higher on mobile to fit better
+            
+            // Store original offsets for consistency
+            this.fleetGridOffset = 80; // Original: gridStartX + 80
+            this.attackGridOffset = 500; // Original: gridStartX + 500
             
             console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
             console.log('🎨 Device type - Mobile:', isMobile, 'Tablet:', isTablet);
@@ -3085,23 +3071,11 @@ class BattleshipClient {
                     // Resize canvas
                     resizeCanvas(newWidth, newHeight);
                     
-                    // ✅ DESKTOP FIX: Recalculate grid positions dynamically based on new canvas size
-                    const gridCellSize = this.gridSize + this.gridSpacing;
-                    const gridWidth = 10 * gridCellSize;
-                    const gridSpacing = isMobile ? 20 : Math.max(100, (newWidth - gridWidth * 2 - 160) / 2);
-                    
-                    const totalWidth = 80 + gridWidth + gridSpacing + gridWidth + 80;
-                    
-                    if (newWidth >= totalWidth) {
-                        this.gridStartX = (newWidth - totalWidth) / 2 + 80;
-                    } else {
-                        this.gridStartX = 40;
-                    }
-                    
-                    this.gridSpacingBetween = gridSpacing;
-                    this.fleetGridOffset = 0;
-                    this.attackGridOffset = gridWidth + gridSpacing;
+                    // ✅ RESTORE: Use original working positions on resize
+                    this.gridStartX = 20;
                     this.gridStartY = isMobile ? 50 : 100;
+                    this.fleetGridOffset = 80;
+                    this.attackGridOffset = 500;
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
                     console.log('🔄 New canvas size:', newWidth, 'x', newHeight);
@@ -3379,9 +3353,9 @@ class BattleshipClient {
     // NO drawing calls - grids will be updated on next draw cycle
     
     drawTurnIndicator() {
-        // ✅ DESKTOP FIX: Use dynamic grid positions
-        const fleetGridX = this.gridStartX + (this.fleetGridOffset || 0);
-        const attackGridX = this.gridStartX + (this.attackGridOffset || (10 * (this.gridSize + this.gridSpacing) + 100));
+        // ✅ RESTORE: Use original working positions
+        const fleetGridX = this.gridStartX + 80;
+        const attackGridX = this.gridStartX + 500;
         const gridY = this.gridStartY + 350; // Below the grids
         
         // CRITICAL FIX: Always read turn state directly from the game instance for accuracy
@@ -3443,8 +3417,8 @@ class BattleshipClient {
     drawMouseHover() {
         // Draw hover effect on grids
         if (this.gamePhase === 'placement') {
-            // ✅ DESKTOP FIX: Use dynamic fleet grid position
-            const fleetGridX = this.gridStartX + (this.fleetGridOffset || 0); // Same as in drawGrids
+            // ✅ RESTORE: Use original working position
+            const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
             const fleetGridY = this.gridStartY;
             
             // Calculate grid coordinates to match exactly how cells are drawn
@@ -3469,8 +3443,8 @@ class BattleshipClient {
                 rect(cellX, cellY, this.gridSize, this.gridSize);
             }
         } else if (this.gamePhase === 'playing' && this.currentPlayer === 0) {
-            // ✅ DESKTOP FIX: Use dynamic attack grid position
-            const attackGridX = this.gridStartX + (this.attackGridOffset || (10 * (this.gridSize + this.gridSpacing) + 100)); // Match drawGrids position
+            // ✅ RESTORE: Use original working position
+            const attackGridX = this.gridStartX + 500; // Match drawGrids position
             const attackGridY = this.gridStartY;
             
             // Calculate grid coordinates to match exactly how cells are drawn
@@ -3492,9 +3466,9 @@ class BattleshipClient {
     }
     
     drawGrids(gameInstance) {
-        // ✅ DESKTOP FIX: Calculate grid positions dynamically based on stored offsets
-        const fleetGridX = this.gridStartX + (this.fleetGridOffset || 0);
-        const attackGridX = this.gridStartX + (this.attackGridOffset || (10 * (this.gridSize + this.gridSpacing) + 100));
+        // ✅ RESTORE: Use original working positions
+        const fleetGridX = this.gridStartX + 80; // Original working position
+        const attackGridX = this.gridStartX + 500; // Original working position
         
         console.log('🔍 drawGrids - fleetGridX:', fleetGridX, 'attackGridX:', attackGridX, 'gridStartY:', this.gridStartY, 'gridStartX:', this.gridStartX);
         this.drawGrid(fleetGridX, this.gridStartY, 0, true, gameInstance);
@@ -3708,8 +3682,8 @@ class BattleshipClient {
     }
     
     drawShipOnGrid(ship, player, gameInstance) {
-        // ✅ DESKTOP FIX: Use dynamic fleet grid position
-        const fleetGridX = this.gridStartX + (this.fleetGridOffset || 0); // Same as in drawGrids
+        // ✅ RESTORE: Use original working position
+        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
         // Debug: Log ship coordinates and status
@@ -3793,8 +3767,8 @@ class BattleshipClient {
         // noStroke();
         // ellipse(mouseCanvasX, mouseCanvasY, 8, 8);
         
-        // ✅ DESKTOP FIX: Use dynamic fleet grid position
-        const fleetGridX = this.gridStartX + (this.fleetGridOffset || 0);
+        // ✅ RESTORE: Use original working position
+        const fleetGridX = this.gridStartX + 80;
         const fleetGridY = this.gridStartY;
         
         // Calculate grid cell coordinates - use exact fleetGridX position
@@ -4074,8 +4048,8 @@ class BattleshipClient {
     }
     
     handleShipPlacement() {
-        // ✅ DESKTOP FIX: Use dynamic fleet grid position
-        const fleetGridX = this.gridStartX + (this.fleetGridOffset || 0); // Same as in drawGrids
+        // ✅ RESTORE: Use original working position
+        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
         // ✅ TOUCH SUPPORT: Use temp coordinates if available (from touch events), otherwise use mouseX/Y
@@ -4224,8 +4198,8 @@ class BattleshipClient {
             return;
         }
         
-        // ✅ DESKTOP FIX: Use dynamic attack grid position (must match drawGrids)
-        const attackGridX = this.gridStartX + (this.attackGridOffset || (10 * (this.gridSize + this.gridSpacing) + 100)); // Match drawGrids position
+        // ✅ RESTORE: Use original working position (must match drawGrids)
+        const attackGridX = this.gridStartX + 500; // Match drawGrids position
         const attackGridY = this.gridStartY; // Same Y as player grid
         
         // Check if coordinates are too far from the attack grid (likely phantom event)
