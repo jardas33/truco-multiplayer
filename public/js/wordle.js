@@ -386,13 +386,9 @@ class WordleGame {
             // ✅ MOBILE FIX: Support both click and touch events
             const focusInput = () => {
                 if (!this.gameOver && !this.isAnimating) {
-                    // ✅ ANDROID FIX: Prevent default scroll behavior
-                    // Focus without immediately scrolling
+                    // ✅ ANDROID FIX: Focus without scrolling - let user control view
                     hiddenInput.focus({ preventScroll: true });
-                    // Wait a bit for keyboard to appear, then check if scroll is needed
-                    setTimeout(() => {
-                        this.scrollActiveRowIntoViewIfNeeded();
-                    }, 400);
+                    // Don't auto-scroll - user can scroll manually if needed
                 }
             };
             
@@ -523,11 +519,9 @@ class WordleGame {
                 this.updateBoard();
             }
 
-            // ✅ ANDROID FIX: Keep active row visible when typing (only if needed)
-            // Don't scroll on every keystroke - only if row is actually hidden
-            setTimeout(() => {
-                this.scrollActiveRowIntoViewIfNeeded();
-            }, 100);
+            // ✅ ANDROID FIX: Don't auto-scroll on every keystroke - let user control scrolling
+            // Only scroll if user hasn't manually scrolled recently
+            // Removed auto-scroll to prevent interference with user scrolling
         });
 
         // Handle keydown events in the input field
@@ -572,34 +566,34 @@ class WordleGame {
             }
         });
 
-        // ✅ ANDROID FIX: Handle focus - prevent body scroll, let container handle it
+        // ✅ ANDROID FIX: Handle focus - don't prevent body scroll, allow manual scrolling
         hiddenInput.addEventListener('focus', () => {
-            // Prevent body from scrolling when keyboard appears
-            document.body.classList.add('keyboard-visible');
+            // Don't lock body scroll - allow user to scroll manually
+            // The container will handle its own scrolling
             
-            // Don't scroll immediately - let user see where they are
-            // Only scroll if row is actually hidden
+            // Don't auto-scroll - let user control their view
+            // Only provide a gentle suggestion if row is completely hidden
             setTimeout(() => {
-                this.scrollActiveRowIntoViewIfNeeded();
-            }, 500);
+                this.gentleScrollCheck();
+            }, 800);
         });
 
         // ✅ ANDROID FIX: Use Visual Viewport API if available to handle keyboard
         if (window.visualViewport) {
             let resizeTimeout;
             window.visualViewport.addEventListener('resize', () => {
-                // Debounce to avoid too many scrolls
+                // Don't auto-scroll on keyboard show/hide - let user control
+                // Only check if we need to suggest scrolling (very gentle)
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(() => {
-                    this.scrollActiveRowIntoViewIfNeeded();
-                }, 200);
+                    this.gentleScrollCheck();
+                }, 500);
             });
         }
 
         // Keep input focused when possible (but allow blur for modals)
         hiddenInput.addEventListener('blur', () => {
-            // Re-enable body scroll when keyboard is dismissed
-            document.body.classList.remove('keyboard-visible');
+            // Don't need to remove keyboard-visible class since we're not using it anymore
             
             // Only refocus if game is active and no modals are open
             const instructionsModal = this.getElement('instructionsModal');
@@ -618,8 +612,9 @@ class WordleGame {
         });
     }
 
-    scrollActiveRowIntoViewIfNeeded() {
-        // ✅ ANDROID FIX: Only scroll if the active row is actually hidden by keyboard
+    gentleScrollCheck() {
+        // ✅ ANDROID FIX: Very gentle scroll check - only if row is completely hidden
+        // This is a suggestion, not forced scrolling
         const currentRowIndex = this.guesses.length;
         const activeRow = this.getElement(`row-${currentRowIndex}`);
         if (!activeRow) return;
@@ -632,24 +627,21 @@ class WordleGame {
         const rowRect = activeRow.getBoundingClientRect();
         const containerRect = gameContainer.getBoundingClientRect();
         
-        // Calculate if row is visible (with some padding for keyboard)
-        const keyboardPadding = 50; // Space to leave above keyboard
-        const rowTop = rowRect.top - containerRect.top + gameContainer.scrollTop;
-        const rowBottom = rowRect.bottom - containerRect.top + gameContainer.scrollTop;
-        const visibleTop = gameContainer.scrollTop;
-        const visibleBottom = gameContainer.scrollTop + viewportHeight - keyboardPadding;
+        // Only suggest scrolling if row is COMPLETELY hidden (not just partially)
+        const keyboardPadding = 100; // More padding to ensure row is visible
+        const rowTop = rowRect.top;
+        const rowBottom = rowRect.bottom;
+        const visibleBottom = viewportHeight - keyboardPadding;
         
-        // Only scroll if row is actually hidden
-        if (rowTop < visibleTop || rowBottom > visibleBottom) {
-            // Calculate target scroll position to center the row in visible area
-            const targetScroll = rowTop - (viewportHeight - keyboardPadding) / 2 + (rowRect.height / 2);
+        // Only scroll if row is completely below visible area (user can't see it at all)
+        if (rowTop > visibleBottom) {
+            // Calculate minimal scroll needed to just show the row
+            const scrollNeeded = rowTop - visibleBottom + 20; // Just enough to see it
             
-            // Smooth scroll to position
-            gameContainer.scrollTo({
-                top: Math.max(0, targetScroll),
-                behavior: 'smooth'
-            });
+            // Use instant scroll (not smooth) to avoid interfering with user
+            gameContainer.scrollTop += scrollNeeded;
         }
+        // If row is above visible area, don't scroll - user might have scrolled up intentionally
     }
     
     cleanup() {

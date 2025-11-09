@@ -44,12 +44,7 @@
             color: white;
         }
 
-        /* ✅ ANDROID FIX: Prevent body scroll when input is focused */
-        body.keyboard-visible {
-            overflow-y: hidden;
-            position: fixed;
-            width: 100%;
-        }
+        /* ✅ ANDROID FIX: Removed body scroll lock - allow manual scrolling */
 
         body::before {
             content: '';
@@ -140,13 +135,16 @@
             box-shadow: 
                 0 8px 32px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            /* ✅ ANDROID FIX: Allow container to grow and scroll when keyboard is visible */
-            max-height: min(calc(100vh - 100px), calc(100dvh - 100px));
+            /* ✅ ANDROID FIX: Allow container to grow and scroll freely */
+            max-height: none; /* Remove restriction to allow full scrolling */
             min-height: 400px;
+            height: auto;
             overflow-y: auto;
             overflow-x: hidden;
             /* ✅ MOBILE FIX: Smooth scrolling on mobile */
             -webkit-overflow-scrolling: touch;
+            /* ✅ ANDROID FIX: Extra padding at bottom for keyboard */
+            padding-bottom: 150px;
             /* ✅ ANDROID FIX: Ensure container can scroll even when keyboard is visible */
             overscroll-behavior: contain;
         }
@@ -690,12 +688,16 @@
                 padding: 25px 15px;
                 margin-top: 90px;
                 max-width: 100%;
-                /* ✅ ANDROID FIX: Better height calculation - allow more space when keyboard is visible */
+                /* ✅ ANDROID FIX: Allow container to grow and scroll freely */
                 max-height: none; /* Remove max-height restriction on mobile */
                 height: auto;
                 min-height: calc(100vh - 90px);
-                /* ✅ ANDROID FIX: Ensure container can scroll to show all content */
-                padding-bottom: 100px; /* Extra padding at bottom for keyboard */
+                /* ✅ ANDROID FIX: Extra padding at bottom so user can scroll to see all content */
+                padding-bottom: 150px; /* Increased padding for better scrolling */
+                /* ✅ ANDROID FIX: Ensure smooth scrolling */
+                -webkit-overflow-scrolling: touch;
+                overflow-y: auto;
+                overflow-x: hidden;
             }
 
 
