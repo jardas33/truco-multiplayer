@@ -341,13 +341,10 @@ class WordleGame {
         hiddenInput.autocapitalize = 'off';
         hiddenInput.spellcheck = false;
         
-        // ✅ FIX: Initialize lastValidValue
-        lastValidValue = this.currentGuess;
-
         // Track composition state to prevent word suggestions
         let isComposing = false;
         let lastInputValue = '';
-        let lastValidValue = ''; // Track last known valid value
+        let lastValidValue = this.currentGuess; // Track last known valid value
         let inputHistory = []; // Track input changes to detect anomalies
 
         // ✅ FIX: Prevent paste events
