@@ -45,8 +45,9 @@ class WordleGame {
     init() {
         this.startNewGame();
         this.createBoard();
-        // ✅ MOBILE FIX: Create on-screen keyboard for touch devices
-        this.createKeyboard();
+        // ✅ MOBILE FIX: Use device keyboard instead of on-screen keyboard
+        // this.createKeyboard(); // Removed - using device keyboard
+        this.setupMobileKeyboard();
         this.updateStats();
         this.setupEventListeners();
         this.announceToScreenReader('Wordle game loaded. Start guessing!');
@@ -272,8 +273,10 @@ class WordleGame {
                 }
             }
             
-            // Don't process if typing in an input field or if a modal is open
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            // Don't process if typing in an input field (except our hidden input) or if a modal is open
+            if ((e.target.tagName === 'INPUT' && e.target.id !== 'hiddenInput') || 
+                e.target.tagName === 'TEXTAREA' || 
+                e.target.isContentEditable) {
                 return;
             }
             
@@ -314,6 +317,86 @@ class WordleGame {
             }
         };
         document.addEventListener('click', this.modalClickHandler);
+    }
+
+    setupMobileKeyboard() {
+        // ✅ MOBILE FIX: Setup hidden input to trigger device keyboard
+        const hiddenInput = this.getElement('hiddenInput');
+        if (!hiddenInput) return;
+
+        // Make game board clickable to focus input and show keyboard
+        const gameBoard = this.getElement('gameBoard');
+        if (gameBoard) {
+            gameBoard.addEventListener('click', () => {
+                if (!this.gameOver && !this.isAnimating) {
+                    hiddenInput.focus();
+                }
+            });
+            gameBoard.style.cursor = 'pointer';
+        }
+
+        // Handle input from the hidden input field
+        hiddenInput.addEventListener('input', (e) => {
+            if (this.gameOver || this.isAnimating) {
+                e.target.value = '';
+                return;
+            }
+
+            const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+            
+            // Limit to 5 letters
+            if (value.length > this.wordLength) {
+                e.target.value = value.substring(0, this.wordLength);
+                return;
+            }
+
+            // Update current guess based on input
+            this.currentGuess = value;
+            this.updateBoard();
+            
+            // Keep input value in sync
+            e.target.value = value;
+        });
+
+        // Handle keydown events in the input field
+        hiddenInput.addEventListener('keydown', (e) => {
+            if (this.gameOver || this.isAnimating) {
+                e.preventDefault();
+                return;
+            }
+
+            const key = e.key.toUpperCase();
+            
+            if (key === 'ENTER') {
+                e.preventDefault();
+                this.submitGuess();
+                hiddenInput.value = '';
+            } else if (key === 'BACKSPACE' || key === 'DELETE') {
+                // Let the input event handle backspace naturally
+                // The input event will update this.currentGuess
+            } else if (!/^[A-Z]$/.test(key)) {
+                // Prevent non-letter keys
+                e.preventDefault();
+            }
+        });
+
+        // Keep input focused when possible (but allow blur for modals)
+        hiddenInput.addEventListener('blur', () => {
+            // Only refocus if game is active and no modals are open
+            const instructionsModal = this.getElement('instructionsModal');
+            const messageModal = this.getElement('message');
+            if (!this.gameOver && 
+                !this.isAnimating &&
+                (!instructionsModal || !instructionsModal.classList.contains('show')) &&
+                (!messageModal || !messageModal.classList.contains('show'))) {
+                // Small delay to allow modal clicks
+                setTimeout(() => {
+                    if (!this.gameOver && !this.isAnimating) {
+                        hiddenInput.focus();
+                    }
+                }, 100);
+            }
+        });
     }
     
     cleanup() {
@@ -390,8 +473,8 @@ class WordleGame {
                 }
             }
             this.updateActiveRow();
-            // ✅ MOBILE FIX: Re-enable keyboard state updates
-            this.updateKeyboardState();
+            // Keyboard removed - no state updates needed
+            // this.updateKeyboardState();
         });
     }
 
@@ -452,8 +535,8 @@ class WordleGame {
         
         this.isSubmitting = true;
         this.isAnimating = true;
-        // ✅ MOBILE FIX: Re-enable keyboard state updates
-        this.updateKeyboardState();
+        // Keyboard removed - no state updates needed
+        // this.updateKeyboardState();
         this.guesses.push(guess);
         this.evaluateGuess(guess);
         this.currentGuess = '';
@@ -535,8 +618,8 @@ class WordleGame {
         if (!row) {
             this.isAnimating = false;
             this.isSubmitting = false;
-            // ✅ MOBILE FIX: Re-enable keyboard state updates
-            this.updateKeyboardState();
+            // Keyboard removed - no state updates needed
+            // this.updateKeyboardState();
             return;
         }
         
@@ -557,8 +640,8 @@ class WordleGame {
             
             const timeout = setTimeout(() => {
                 tile.classList.add(result[i]);
-                // ✅ MOBILE FIX: Re-enable keyboard color updates
-                this.updateKeyboard(guess[i], result[i]);
+                // Keyboard removed - no color updates needed
+                // this.updateKeyboard(guess[i], result[i]);
                 
                 // Update aria-label for accessibility
                 const status = result[i] === 'correct' ? 'correct' : result[i] === 'present' ? 'present but wrong position' : 'not in word';
@@ -568,8 +651,8 @@ class WordleGame {
                 if (animationComplete === totalAnimations) {
                     this.isAnimating = false;
                     this.isSubmitting = false;
-                    // ✅ MOBILE FIX: Re-enable keyboard state updates
-                    this.updateKeyboardState();
+                    // Keyboard removed - no state updates needed
+                    // this.updateKeyboardState();
                     this.checkGameEnd(guess);
                 }
             }, i * 150 + 300);
