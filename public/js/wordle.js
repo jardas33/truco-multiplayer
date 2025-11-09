@@ -45,7 +45,8 @@ class WordleGame {
     init() {
         this.startNewGame();
         this.createBoard();
-        // this.createKeyboard(); // Removed on-screen keyboard - using physical keyboard
+        // ✅ MOBILE FIX: Create on-screen keyboard for touch devices
+        this.createKeyboard();
         this.updateStats();
         this.setupEventListeners();
         this.announceToScreenReader('Wordle game loaded. Start guessing!');
@@ -389,7 +390,8 @@ class WordleGame {
                 }
             }
             this.updateActiveRow();
-            // this.updateKeyboardState(); // Keyboard removed
+            // ✅ MOBILE FIX: Re-enable keyboard state updates
+            this.updateKeyboardState();
         });
     }
 
@@ -450,7 +452,8 @@ class WordleGame {
         
         this.isSubmitting = true;
         this.isAnimating = true;
-        // this.updateKeyboardState(); // Keyboard removed
+        // ✅ MOBILE FIX: Re-enable keyboard state updates
+        this.updateKeyboardState();
         this.guesses.push(guess);
         this.evaluateGuess(guess);
         this.currentGuess = '';
@@ -532,7 +535,8 @@ class WordleGame {
         if (!row) {
             this.isAnimating = false;
             this.isSubmitting = false;
-            // this.updateKeyboardState(); // Keyboard removed
+            // ✅ MOBILE FIX: Re-enable keyboard state updates
+            this.updateKeyboardState();
             return;
         }
         
@@ -553,7 +557,8 @@ class WordleGame {
             
             const timeout = setTimeout(() => {
                 tile.classList.add(result[i]);
-                // this.updateKeyboard(guess[i], result[i]); // Keyboard removed
+                // ✅ MOBILE FIX: Re-enable keyboard color updates
+                this.updateKeyboard(guess[i], result[i]);
                 
                 // Update aria-label for accessibility
                 const status = result[i] === 'correct' ? 'correct' : result[i] === 'present' ? 'present but wrong position' : 'not in word';
@@ -563,7 +568,8 @@ class WordleGame {
                 if (animationComplete === totalAnimations) {
                     this.isAnimating = false;
                     this.isSubmitting = false;
-                    // this.updateKeyboardState(); // Keyboard removed
+                    // ✅ MOBILE FIX: Re-enable keyboard state updates
+                    this.updateKeyboardState();
                     this.checkGameEnd(guess);
                 }
             }, i * 150 + 300);
