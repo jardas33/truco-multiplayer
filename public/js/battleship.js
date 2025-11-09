@@ -2928,7 +2928,19 @@ class BattleshipClient {
             // ✅ RESTORE: Use original working grid positions
             // Original positions that were working correctly
             this.gridStartX = 20;
-            this.gridStartY = isMobile ? 50 : 200; // Move grids lower on desktop for better spacing
+            
+            // ✅ AUTO-ADJUST: Calculate grid Y position based on canvas height for proper spacing
+            // Automatically adjusts to different screen resolutions
+            if (isMobile) {
+                // Mobile: Fixed position with minimal top space
+                this.gridStartY = 50;
+            } else {
+                // Desktop/Tablet: Calculate based on canvas height
+                // Leave space at top for title/menu (about 15-20% of canvas height)
+                // Position grids in upper-middle area (around 25-30% from top)
+                const topSpace = Math.max(120, canvasHeight * 0.20); // Minimum 120px, or 20% of canvas
+                this.gridStartY = Math.max(230, topSpace + 50); // Minimum 230px, or calculated position
+            }
             
             // Store original offsets for consistency
             this.fleetGridOffset = 80; // Original: gridStartX + 80
@@ -3071,9 +3083,14 @@ class BattleshipClient {
                     // Resize canvas
                     resizeCanvas(newWidth, newHeight);
                     
-                    // ✅ RESTORE: Use original working positions on resize
+                    // ✅ AUTO-ADJUST: Recalculate grid Y position based on new canvas height
                     this.gridStartX = 20;
-                    this.gridStartY = isMobile ? 50 : 200; // Move grids lower on desktop
+                    if (isMobile) {
+                        this.gridStartY = 50;
+                    } else {
+                        const topSpace = Math.max(120, newHeight * 0.20); // Minimum 120px, or 20% of canvas
+                        this.gridStartY = Math.max(230, topSpace + 50); // Minimum 230px, or calculated position
+                    }
                     this.fleetGridOffset = 80;
                     this.attackGridOffset = 500;
                     
