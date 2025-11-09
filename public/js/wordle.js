@@ -324,6 +324,19 @@ class WordleGame {
         const hiddenInput = this.getElement('hiddenInput');
         if (!hiddenInput) return;
 
+        // ✅ FIX: More aggressive autocomplete prevention
+        hiddenInput.setAttribute('autocomplete', 'off');
+        hiddenInput.setAttribute('autocorrect', 'off');
+        hiddenInput.setAttribute('autocapitalize', 'off');
+        hiddenInput.setAttribute('spellcheck', 'false');
+        hiddenInput.setAttribute('data-lpignore', 'true');
+        hiddenInput.setAttribute('data-form-type', 'other');
+        hiddenInput.setAttribute('name', 'wordle-input'); // Some browsers need a name to disable autocomplete
+
+        // Track composition state to prevent word suggestions
+        let isComposing = false;
+        let lastInputValue = '';
+
         // Make game board clickable/touchable to focus input and show keyboard
         const gameBoard = this.getElement('gameBoard');
         if (gameBoard) {
@@ -331,6 +344,8 @@ class WordleGame {
             const focusInput = () => {
                 if (!this.gameOver && !this.isAnimating) {
                     hiddenInput.focus();
+                    // ✅ ANDROID FIX: Scroll active row into view when keyboard appears
+                    this.scrollActiveRowIntoView();
                 }
             };
             
@@ -343,6 +358,29 @@ class WordleGame {
             gameBoard.style.cursor = 'pointer';
         }
 
+        // ✅ FIX: Handle composition events to prevent word suggestions
+        hiddenInput.addEventListener('compositionstart', (e) => {
+            isComposing = true;
+            lastInputValue = e.target.value;
+        });
+
+        hiddenInput.addEventListener('compositionend', (e) => {
+            isComposing = false;
+            // If composition resulted in a full word, reject it
+            const composedValue = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+            if (composedValue.length > 1 && composedValue.length <= this.wordLength) {
+                // Check if it's a word suggestion (more than 1 character added at once)
+                const diff = composedValue.length - lastInputValue.length;
+                if (diff > 1) {
+                    // Reject the suggestion, keep only single letter additions
+                    e.target.value = lastInputValue;
+                    this.currentGuess = lastInputValue;
+                    this.updateBoard();
+                    return;
+                }
+            }
+        });
+
         // Handle input from the hidden input field
         hiddenInput.addEventListener('input', (e) => {
             if (this.gameOver || this.isAnimating) {
@@ -350,20 +388,42 @@ class WordleGame {
                 return;
             }
 
-            const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+            // ✅ FIX: Prevent autocomplete/suggestion words from being added
+            let value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+            
+            // ✅ FIX: If value suddenly becomes a full word (autocomplete), reject it
+            // Only allow incremental single-letter additions
+            if (!isComposing && value.length > 0 && this.currentGuess.length > 0) {
+                const lengthDiff = value.length - this.currentGuess.length;
+                // If more than 1 character was added at once (likely autocomplete), reject it
+                if (lengthDiff > 1) {
+                    // Keep only the last character or revert to previous
+                    value = this.currentGuess + value.slice(-1);
+                    if (value.length > this.wordLength) {
+                        value = value.substring(0, this.wordLength);
+                    }
+                }
+            }
             
             // Limit to 5 letters
             if (value.length > this.wordLength) {
-                e.target.value = value.substring(0, this.wordLength);
-                return;
+                value = value.substring(0, this.wordLength);
             }
 
-            // Update current guess based on input
-            this.currentGuess = value;
-            this.updateBoard();
-            
-            // Keep input value in sync
-            e.target.value = value;
+            // ✅ FIX: Only update if value is valid (single letters or backspace)
+            // Prevent full words from autocomplete
+            if (value.length <= this.currentGuess.length + 1 || value.length === 0) {
+                this.currentGuess = value;
+                this.updateBoard();
+                e.target.value = value;
+                lastInputValue = value;
+            } else {
+                // Reject autocomplete - revert to previous value
+                e.target.value = this.currentGuess;
+            }
+
+            // ✅ ANDROID FIX: Keep active row visible when typing
+            this.scrollActiveRowIntoView();
         });
 
         // Handle keydown events in the input field
@@ -379,6 +439,7 @@ class WordleGame {
                 e.preventDefault();
                 this.submitGuess();
                 hiddenInput.value = '';
+                lastInputValue = '';
             } else if (key === 'BACKSPACE' || key === 'DELETE') {
                 // Let the input event handle backspace naturally
                 // The input event will update this.currentGuess
@@ -387,6 +448,22 @@ class WordleGame {
                 e.preventDefault();
             }
         });
+
+        // ✅ ANDROID FIX: Handle focus to scroll into view
+        hiddenInput.addEventListener('focus', () => {
+            // Small delay to let keyboard appear first
+            setTimeout(() => {
+                this.scrollActiveRowIntoView();
+            }, 300);
+        });
+
+        // ✅ ANDROID FIX: Use Visual Viewport API if available to handle keyboard
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                // Keyboard appeared/disappeared - scroll active row into view
+                this.scrollActiveRowIntoView();
+            });
+        }
 
         // Keep input focused when possible (but allow blur for modals)
         hiddenInput.addEventListener('blur', () => {
@@ -405,6 +482,32 @@ class WordleGame {
                 }, 100);
             }
         });
+    }
+
+    scrollActiveRowIntoView() {
+        // ✅ ANDROID FIX: Scroll the active row into view when keyboard appears
+        const currentRowIndex = this.guesses.length;
+        const activeRow = this.getElement(`row-${currentRowIndex}`);
+        if (activeRow) {
+            // Use scrollIntoView with options for smooth behavior
+            activeRow.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+            
+            // Also scroll the game container if needed
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                const containerRect = gameContainer.getBoundingClientRect();
+                const rowRect = activeRow.getBoundingClientRect();
+                
+                // If row is below visible area, scroll container
+                if (rowRect.bottom > window.innerHeight - 200) {
+                    gameContainer.scrollTop += (rowRect.bottom - window.innerHeight + 200);
+                }
+            }
+        }
     }
     
     cleanup() {
@@ -430,6 +533,11 @@ class WordleGame {
 
     handleKeyPress(key) {
         if (this.gameOver || this.isAnimating) return;
+        
+        // ✅ FIX: Ensure only single character keys are processed
+        if (key.length > 1 && key !== 'ENTER' && key !== 'BACK') {
+            return; // Reject multi-character input (likely autocomplete)
+        }
         
         if (key === 'ENTER') {
             this.submitGuess();
