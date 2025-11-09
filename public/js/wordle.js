@@ -468,11 +468,6 @@ class WordleGame {
             }, 500);
         });
 
-        hiddenInput.addEventListener('blur', () => {
-            // Re-enable body scroll when keyboard is dismissed
-            document.body.classList.remove('keyboard-visible');
-        });
-
         // ✅ ANDROID FIX: Use Visual Viewport API if available to handle keyboard
         if (window.visualViewport) {
             let resizeTimeout;
@@ -487,6 +482,9 @@ class WordleGame {
 
         // Keep input focused when possible (but allow blur for modals)
         hiddenInput.addEventListener('blur', () => {
+            // Re-enable body scroll when keyboard is dismissed
+            document.body.classList.remove('keyboard-visible');
+            
             // Only refocus if game is active and no modals are open
             const instructionsModal = this.getElement('instructionsModal');
             const messageModal = this.getElement('message');
@@ -497,7 +495,7 @@ class WordleGame {
                 // Small delay to allow modal clicks
                 setTimeout(() => {
                     if (!this.gameOver && !this.isAnimating) {
-                        hiddenInput.focus();
+                        hiddenInput.focus({ preventScroll: true });
                     }
                 }, 100);
             }
