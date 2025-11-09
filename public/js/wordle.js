@@ -343,9 +343,13 @@ class WordleGame {
             // ✅ MOBILE FIX: Support both click and touch events
             const focusInput = () => {
                 if (!this.gameOver && !this.isAnimating) {
-                    hiddenInput.focus();
-                    // ✅ ANDROID FIX: Scroll active row into view when keyboard appears
-                    this.scrollActiveRowIntoView();
+                    // ✅ ANDROID FIX: Prevent default scroll behavior
+                    // Focus without immediately scrolling
+                    hiddenInput.focus({ preventScroll: true });
+                    // Wait a bit for keyboard to appear, then check if scroll is needed
+                    setTimeout(() => {
+                        this.scrollActiveRowIntoViewIfNeeded();
+                    }, 400);
                 }
             };
             
@@ -422,8 +426,11 @@ class WordleGame {
                 e.target.value = this.currentGuess;
             }
 
-            // ✅ ANDROID FIX: Keep active row visible when typing
-            this.scrollActiveRowIntoView();
+            // ✅ ANDROID FIX: Keep active row visible when typing (only if needed)
+            // Don't scroll on every keystroke - only if row is actually hidden
+            setTimeout(() => {
+                this.scrollActiveRowIntoViewIfNeeded();
+            }, 100);
         });
 
         // Handle keydown events in the input field
@@ -449,19 +456,32 @@ class WordleGame {
             }
         });
 
-        // ✅ ANDROID FIX: Handle focus to scroll into view
+        // ✅ ANDROID FIX: Handle focus - prevent body scroll, let container handle it
         hiddenInput.addEventListener('focus', () => {
-            // Small delay to let keyboard appear first
+            // Prevent body from scrolling when keyboard appears
+            document.body.classList.add('keyboard-visible');
+            
+            // Don't scroll immediately - let user see where they are
+            // Only scroll if row is actually hidden
             setTimeout(() => {
-                this.scrollActiveRowIntoView();
-            }, 300);
+                this.scrollActiveRowIntoViewIfNeeded();
+            }, 500);
+        });
+
+        hiddenInput.addEventListener('blur', () => {
+            // Re-enable body scroll when keyboard is dismissed
+            document.body.classList.remove('keyboard-visible');
         });
 
         // ✅ ANDROID FIX: Use Visual Viewport API if available to handle keyboard
         if (window.visualViewport) {
+            let resizeTimeout;
             window.visualViewport.addEventListener('resize', () => {
-                // Keyboard appeared/disappeared - scroll active row into view
-                this.scrollActiveRowIntoView();
+                // Debounce to avoid too many scrolls
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    this.scrollActiveRowIntoViewIfNeeded();
+                }, 200);
             });
         }
 
@@ -484,29 +504,37 @@ class WordleGame {
         });
     }
 
-    scrollActiveRowIntoView() {
-        // ✅ ANDROID FIX: Scroll the active row into view when keyboard appears
+    scrollActiveRowIntoViewIfNeeded() {
+        // ✅ ANDROID FIX: Only scroll if the active row is actually hidden by keyboard
         const currentRowIndex = this.guesses.length;
         const activeRow = this.getElement(`row-${currentRowIndex}`);
-        if (activeRow) {
-            // Use scrollIntoView with options for smooth behavior
-            activeRow.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            });
+        if (!activeRow) return;
+
+        const gameContainer = document.querySelector('.game-container');
+        if (!gameContainer) return;
+
+        // Get viewport height (accounting for keyboard)
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const rowRect = activeRow.getBoundingClientRect();
+        const containerRect = gameContainer.getBoundingClientRect();
+        
+        // Calculate if row is visible (with some padding for keyboard)
+        const keyboardPadding = 50; // Space to leave above keyboard
+        const rowTop = rowRect.top - containerRect.top + gameContainer.scrollTop;
+        const rowBottom = rowRect.bottom - containerRect.top + gameContainer.scrollTop;
+        const visibleTop = gameContainer.scrollTop;
+        const visibleBottom = gameContainer.scrollTop + viewportHeight - keyboardPadding;
+        
+        // Only scroll if row is actually hidden
+        if (rowTop < visibleTop || rowBottom > visibleBottom) {
+            // Calculate target scroll position to center the row in visible area
+            const targetScroll = rowTop - (viewportHeight - keyboardPadding) / 2 + (rowRect.height / 2);
             
-            // Also scroll the game container if needed
-            const gameContainer = document.querySelector('.game-container');
-            if (gameContainer) {
-                const containerRect = gameContainer.getBoundingClientRect();
-                const rowRect = activeRow.getBoundingClientRect();
-                
-                // If row is below visible area, scroll container
-                if (rowRect.bottom > window.innerHeight - 200) {
-                    gameContainer.scrollTop += (rowRect.bottom - window.innerHeight + 200);
-                }
-            }
+            // Smooth scroll to position
+            gameContainer.scrollTo({
+                top: Math.max(0, targetScroll),
+                behavior: 'smooth'
+            });
         }
     }
     
