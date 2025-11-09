@@ -324,13 +324,21 @@ class WordleGame {
         const hiddenInput = this.getElement('hiddenInput');
         if (!hiddenInput) return;
 
-        // Make game board clickable to focus input and show keyboard
+        // Make game board clickable/touchable to focus input and show keyboard
         const gameBoard = this.getElement('gameBoard');
         if (gameBoard) {
-            gameBoard.addEventListener('click', () => {
+            // ✅ MOBILE FIX: Support both click and touch events
+            const focusInput = () => {
                 if (!this.gameOver && !this.isAnimating) {
                     hiddenInput.focus();
                 }
+            };
+            
+            gameBoard.addEventListener('click', focusInput);
+            // Add touch support for better mobile responsiveness
+            gameBoard.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent double-tap zoom
+                focusInput();
             });
             gameBoard.style.cursor = 'pointer';
         }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -36,8 +36,9 @@
             animation: gradientShift 15s ease infinite;
             font-family: 'Poppins', 'Inter', 'Arial', sans-serif;
             overflow-x: hidden;
-            overflow-y: hidden;
-            height: 100vh;
+            /* ✅ MOBILE FIX: Allow vertical scrolling on mobile if content exceeds viewport */
+            overflow-y: auto;
+            min-height: 100vh;
             color: white;
             position: relative;
         }
@@ -96,6 +97,10 @@
             display: inline-block;
             margin: 0;
             white-space: nowrap;
+            /* ✅ MOBILE FIX: Ensure touch-friendly button size */
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .back-btn {
@@ -127,8 +132,11 @@
             box-shadow: 
                 0 8px 32px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            max-height: calc(100vh - 100px);
+            /* ✅ MOBILE FIX: Use min() to account for mobile browser UI (address bar, etc.) */
+            max-height: min(calc(100vh - 100px), calc(100dvh - 100px));
             overflow-y: auto;
+            /* ✅ MOBILE FIX: Smooth scrolling on mobile */
+            -webkit-overflow-scrolling: touch;
         }
 
         .game-title {
@@ -286,6 +294,10 @@
             text-transform: uppercase;
             backdrop-filter: blur(10px) saturate(180%);
             user-select: none;
+            /* ✅ MOBILE FIX: Prevent text selection and double-tap zoom */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
             box-shadow: 
                 0 2px 8px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -468,6 +480,10 @@
                 0 4px 15px rgba(76, 175, 80, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
             font-family: 'Inter', sans-serif;
+            /* ✅ MOBILE FIX: Ensure touch-friendly button size */
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .message-button:hover {
@@ -506,6 +522,11 @@
                 0 0 20px rgba(255, 215, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             white-space: nowrap;
+            /* ✅ MOBILE FIX: Ensure touch-friendly button size */
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .info-button:hover {
@@ -611,6 +632,14 @@
             font-size: 2em;
             cursor: pointer;
             transition: all 0.3s ease;
+            /* ✅ MOBILE FIX: Ensure touch-friendly close button */
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .close-button:hover {
@@ -621,6 +650,10 @@
         /* ✅ MOBILE KEYBOARD: Make game board clickable to trigger device keyboard */
         .game-board {
             cursor: pointer;
+            /* ✅ MOBILE FIX: Prevent double-tap zoom on mobile */
+            touch-action: manipulation;
+            /* ✅ MOBILE FIX: Ensure touch events work properly */
+            -webkit-tap-highlight-color: transparent;
         }
 
         @media (hover: hover) and (pointer: fine) {
@@ -645,6 +678,8 @@
                 padding: 25px 15px;
                 margin-top: 90px;
                 max-width: 100%;
+                /* ✅ MOBILE FIX: Better height calculation for mobile browsers */
+                max-height: min(calc(100vh - 90px), calc(100dvh - 90px));
             }
 
 
@@ -666,11 +701,19 @@
                 padding: 20px 30px;
                 font-size: 1.2em;
                 max-width: 90%;
+                max-height: 90vh;
+                overflow-y: auto;
+                /* ✅ MOBILE FIX: Smooth scrolling on mobile */
+                -webkit-overflow-scrolling: touch;
             }
 
             .instructions-modal {
                 max-width: 90%;
+                max-height: 90vh;
                 padding: 30px 20px;
+                overflow-y: auto;
+                /* ✅ MOBILE FIX: Smooth scrolling on mobile */
+                -webkit-overflow-scrolling: touch;
             }
         }
 
@@ -690,6 +733,18 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
                 padding: 18px;
+            }
+
+            .stat-label {
+                font-size: 0.7em;
+            }
+
+            .stat-value {
+                font-size: 1.1em;
+            }
+
+            .game-subtitle {
+                font-size: 0.85em;
             }
         }
     </style>
@@ -740,7 +795,8 @@
                autocorrect="off" 
                autocapitalize="off" 
                spellcheck="false"
-               style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; border: none;"
+               inputmode="text"
+               style="position: fixed; top: -9999px; left: -9999px; opacity: 0; width: 1px; height: 1px; border: none; padding: 0; margin: 0;"
                aria-hidden="true"
                tabindex="-1">
     </div>
