@@ -332,10 +332,56 @@ class WordleGame {
         hiddenInput.setAttribute('data-lpignore', 'true');
         hiddenInput.setAttribute('data-form-type', 'other');
         hiddenInput.setAttribute('name', 'wordle-input'); // Some browsers need a name to disable autocomplete
+        hiddenInput.setAttribute('data-1p-ignore', 'true'); // Additional LastPass prevention
+        hiddenInput.setAttribute('data-dashlane-ignore', 'true'); // Dashlane prevention
+        
+        // ✅ FIX: Set input properties programmatically as well
+        hiddenInput.autocomplete = 'off';
+        hiddenInput.autocorrect = 'off';
+        hiddenInput.autocapitalize = 'off';
+        hiddenInput.spellcheck = false;
+        
+        // ✅ FIX: Initialize lastValidValue
+        lastValidValue = this.currentGuess;
 
         // Track composition state to prevent word suggestions
         let isComposing = false;
         let lastInputValue = '';
+        let lastValidValue = ''; // Track last known valid value
+        let inputHistory = []; // Track input changes to detect anomalies
+
+        // ✅ FIX: Prevent paste events
+        hiddenInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Clear input after paste attempt
+            setTimeout(() => {
+                hiddenInput.value = this.currentGuess;
+            }, 0);
+            return false;
+        });
+
+        // ✅ FIX: Intercept beforeinput to validate before it's applied
+        hiddenInput.addEventListener('beforeinput', (e) => {
+            // Allow only single character insertions or deletions
+            if (e.inputType === 'insertText' || e.inputType === 'insertCompositionText') {
+                const newText = e.data || '';
+                // If trying to insert more than 1 character, prevent it
+                if (newText.length > 1) {
+                    e.preventDefault();
+                    return false;
+                }
+                // If trying to insert when already at max length, prevent it
+                if (this.currentGuess.length >= this.wordLength && newText.length > 0) {
+                    e.preventDefault();
+                    return false;
+                }
+            } else if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+                // Prevent paste and drop
+                e.preventDefault();
+                return false;
+            }
+        });
 
         // Make game board clickable/touchable to focus input and show keyboard
         const gameBoard = this.getElement('gameBoard');
@@ -366,6 +412,14 @@ class WordleGame {
         hiddenInput.addEventListener('compositionstart', (e) => {
             isComposing = true;
             lastInputValue = e.target.value;
+            lastValidValue = this.currentGuess;
+        });
+
+        hiddenInput.addEventListener('compositionupdate', (e) => {
+            // Reject composition if it's trying to add multiple characters
+            if (e.data && e.data.length > 1) {
+                e.preventDefault();
+            }
         });
 
         hiddenInput.addEventListener('compositionend', (e) => {
@@ -377,53 +431,99 @@ class WordleGame {
                 const diff = composedValue.length - lastInputValue.length;
                 if (diff > 1) {
                     // Reject the suggestion, keep only single letter additions
-                    e.target.value = lastInputValue;
-                    this.currentGuess = lastInputValue;
+                    e.target.value = lastValidValue;
+                    this.currentGuess = lastValidValue;
                     this.updateBoard();
+                    lastInputValue = lastValidValue;
                     return;
                 }
             }
+            // Update lastInputValue after valid composition
+            lastInputValue = composedValue;
         });
 
         // Handle input from the hidden input field
         hiddenInput.addEventListener('input', (e) => {
             if (this.gameOver || this.isAnimating) {
                 e.target.value = '';
+                lastInputValue = '';
+                lastValidValue = '';
                 return;
             }
 
-            // ✅ FIX: Prevent autocomplete/suggestion words from being added
-            let value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+            // ✅ FIX: Get raw input value
+            let rawValue = e.target.value;
             
-            // ✅ FIX: If value suddenly becomes a full word (autocomplete), reject it
-            // Only allow incremental single-letter additions
-            if (!isComposing && value.length > 0 && this.currentGuess.length > 0) {
-                const lengthDiff = value.length - this.currentGuess.length;
-                // If more than 1 character was added at once (likely autocomplete), reject it
-                if (lengthDiff > 1) {
-                    // Keep only the last character or revert to previous
+            // ✅ FIX: Prevent autocomplete/suggestion words from being added
+            let value = rawValue.toUpperCase().replace(/[^A-Z]/g, '');
+            
+            // ✅ FIX: Track input changes to detect anomalies
+            const previousLength = this.currentGuess.length;
+            const newLength = value.length;
+            const lengthDiff = newLength - previousLength;
+            
+            // ✅ FIX: STRICT VALIDATION - Only allow:
+            // 1. Single character addition (lengthDiff === 1)
+            // 2. Single character removal (lengthDiff === -1)
+            // 3. Complete replacement (when currentGuess is empty and value.length === 1)
+            // 4. Complete clear (value.length === 0)
+            
+            let isValid = false;
+            
+            if (value.length === 0) {
+                // Complete clear - always valid
+                isValid = true;
+            } else if (previousLength === 0 && value.length === 1) {
+                // First character - valid
+                isValid = true;
+            } else if (lengthDiff === 1 && value.startsWith(this.currentGuess)) {
+                // Single character added at end - valid
+                isValid = true;
+            } else if (lengthDiff === -1 && this.currentGuess.startsWith(value)) {
+                // Single character removed from end - valid
+                isValid = true;
+            } else if (lengthDiff === 0 && value === this.currentGuess) {
+                // No change - valid (might be from composition)
+                isValid = true;
+            } else {
+                // ✅ FIX: Invalid change detected - likely autocomplete or paste
+                // Try to salvage: if value ends with currentGuess + 1 char, accept only that
+                if (value.length === previousLength + 1 && value.slice(0, -1) === this.currentGuess) {
+                    // Last character is new - accept only that
                     value = this.currentGuess + value.slice(-1);
-                    if (value.length > this.wordLength) {
-                        value = value.substring(0, this.wordLength);
-                    }
+                    isValid = true;
+                } else {
+                    // Reject completely - revert to last valid
+                    isValid = false;
                 }
             }
             
-            // Limit to 5 letters
+            // ✅ FIX: Additional check - ensure value doesn't exceed word length
             if (value.length > this.wordLength) {
                 value = value.substring(0, this.wordLength);
             }
-
-            // ✅ FIX: Only update if value is valid (single letters or backspace)
-            // Prevent full words from autocomplete
-            if (value.length <= this.currentGuess.length + 1 || value.length === 0) {
-                this.currentGuess = value;
-                this.updateBoard();
-                e.target.value = value;
-                lastInputValue = value;
+            
+            // ✅ FIX: Only update if validation passed
+            if (isValid) {
+                // Double-check: ensure value is still valid after processing
+                if (value.length <= this.wordLength && 
+                    (value.length <= previousLength + 1 || value.length === 0)) {
+                    this.currentGuess = value;
+                    this.updateBoard();
+                    e.target.value = value;
+                    lastInputValue = value;
+                    lastValidValue = value;
+                } else {
+                    // Final safety check failed - revert
+                    e.target.value = lastValidValue;
+                    this.currentGuess = lastValidValue;
+                    this.updateBoard();
+                }
             } else {
-                // Reject autocomplete - revert to previous value
-                e.target.value = this.currentGuess;
+                // Invalid input - revert to last valid value
+                e.target.value = lastValidValue;
+                this.currentGuess = lastValidValue;
+                this.updateBoard();
             }
 
             // ✅ ANDROID FIX: Keep active row visible when typing (only if needed)
@@ -442,17 +542,36 @@ class WordleGame {
 
             const key = e.key.toUpperCase();
             
+            // ✅ FIX: Prevent Ctrl+V, Ctrl+Shift+V, and other paste shortcuts
+            if ((e.ctrlKey || e.metaKey) && (key === 'V' || key === 'INSERT')) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // ✅ FIX: Prevent Ctrl+A (select all) and other shortcuts that might interfere
+            if ((e.ctrlKey || e.metaKey) && (key === 'A' || key === 'C' || key === 'X')) {
+                e.preventDefault();
+                return false;
+            }
+            
             if (key === 'ENTER') {
                 e.preventDefault();
                 this.submitGuess();
                 hiddenInput.value = '';
                 lastInputValue = '';
+                lastValidValue = '';
             } else if (key === 'BACKSPACE' || key === 'DELETE') {
                 // Let the input event handle backspace naturally
                 // The input event will update this.currentGuess
-            } else if (!/^[A-Z]$/.test(key)) {
-                // Prevent non-letter keys
+            } else if (key.length === 1 && !/^[A-Z]$/.test(key)) {
+                // Prevent non-letter single characters (numbers, symbols, etc.)
                 e.preventDefault();
+            } else if (key.length > 1 && key !== 'BACKSPACE' && key !== 'DELETE' && key !== 'ENTER') {
+                // Prevent function keys, arrow keys, etc. (except navigation)
+                if (!['ARROWUP', 'ARROWDOWN', 'ARROWLEFT', 'ARROWRIGHT', 'TAB', 'ESCAPE'].includes(key)) {
+                    e.preventDefault();
+                }
             }
         });
 
