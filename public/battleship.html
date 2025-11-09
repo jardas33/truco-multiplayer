@@ -81,7 +81,9 @@
             backdrop-filter: blur(2px);
             border: 1px solid rgba(255, 215, 0, 0.3);
             box-sizing: border-box;
-            overflow: hidden;
+            /* ✅ SCROLL FIX: Allow vertical scrolling on smaller screens so content doesn't get cut off */
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         
         .right-panel {
@@ -480,6 +482,8 @@
                 height: calc(100vh - 140px);
                 max-height: calc(100vh - 140px);
                 margin: 100px 0 20px 0;
+                /* ✅ SCROLL FIX: Allow scrolling on tablets */
+                overflow-y: auto;
             }
             .right-panel {
                 width: 90%;
@@ -504,6 +508,8 @@
                 max-height: calc(100vh - 120px);
                 padding: 20px;
                 margin: 80px 0 20px 0;
+                /* ✅ SCROLL FIX: Allow scrolling on smaller laptops */
+                overflow-y: auto;
             }
             .right-panel {
                 width: 95%;
@@ -559,6 +565,8 @@
                 height: auto;
                 max-height: none;
                 margin-top: 110px;
+                /* ✅ SCROLL FIX: Allow scrolling on mobile if content exceeds viewport */
+                overflow-y: auto;
             }
             
             .right-panel {
