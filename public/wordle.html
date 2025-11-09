@@ -143,8 +143,8 @@
             overflow-x: hidden;
             /* ✅ MOBILE FIX: Smooth scrolling on mobile */
             -webkit-overflow-scrolling: touch;
-            /* ✅ ANDROID FIX: Extra padding at bottom for keyboard */
-            padding-bottom: 150px;
+            /* ✅ ANDROID FIX: Much more padding at bottom so users can scroll down far enough */
+            padding-bottom: 300px; /* Increased significantly for better scrolling */
             /* ✅ ANDROID FIX: Ensure container can scroll even when keyboard is visible */
             overscroll-behavior: contain;
         }
@@ -692,8 +692,8 @@
                 max-height: none; /* Remove max-height restriction on mobile */
                 height: auto;
                 min-height: calc(100vh - 90px);
-                /* ✅ ANDROID FIX: Extra padding at bottom so user can scroll to see all content */
-                padding-bottom: 150px; /* Increased padding for better scrolling */
+                /* ✅ ANDROID FIX: Much more padding at bottom so users can scroll down far enough */
+                padding-bottom: 400px; /* Significantly increased for better scrolling */
                 /* ✅ ANDROID FIX: Ensure smooth scrolling */
                 -webkit-overflow-scrolling: touch;
                 overflow-y: auto;

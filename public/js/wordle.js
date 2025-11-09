@@ -566,28 +566,17 @@ class WordleGame {
             }
         });
 
-        // ✅ ANDROID FIX: Handle focus - don't prevent body scroll, allow manual scrolling
+        // ✅ ANDROID FIX: Handle focus - completely disable auto-scroll
         hiddenInput.addEventListener('focus', () => {
-            // Don't lock body scroll - allow user to scroll manually
-            // The container will handle its own scrolling
-            
-            // Don't auto-scroll - let user control their view
-            // Only provide a gentle suggestion if row is completely hidden
-            setTimeout(() => {
-                this.gentleScrollCheck();
-            }, 800);
+            // Do nothing - let user control scrolling completely
+            // No auto-scroll, no suggestions, nothing
         });
 
-        // ✅ ANDROID FIX: Use Visual Viewport API if available to handle keyboard
+        // ✅ ANDROID FIX: Use Visual Viewport API if available - but don't scroll
         if (window.visualViewport) {
-            let resizeTimeout;
             window.visualViewport.addEventListener('resize', () => {
-                // Don't auto-scroll on keyboard show/hide - let user control
-                // Only check if we need to suggest scrolling (very gentle)
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    this.gentleScrollCheck();
-                }, 500);
+                // Do nothing - let user control scrolling completely
+                // Keyboard show/hide should not trigger any scrolling
             });
         }
 
@@ -612,37 +601,8 @@ class WordleGame {
         });
     }
 
-    gentleScrollCheck() {
-        // ✅ ANDROID FIX: Very gentle scroll check - only if row is completely hidden
-        // This is a suggestion, not forced scrolling
-        const currentRowIndex = this.guesses.length;
-        const activeRow = this.getElement(`row-${currentRowIndex}`);
-        if (!activeRow) return;
-
-        const gameContainer = document.querySelector('.game-container');
-        if (!gameContainer) return;
-
-        // Get viewport height (accounting for keyboard)
-        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        const rowRect = activeRow.getBoundingClientRect();
-        const containerRect = gameContainer.getBoundingClientRect();
-        
-        // Only suggest scrolling if row is COMPLETELY hidden (not just partially)
-        const keyboardPadding = 100; // More padding to ensure row is visible
-        const rowTop = rowRect.top;
-        const rowBottom = rowRect.bottom;
-        const visibleBottom = viewportHeight - keyboardPadding;
-        
-        // Only scroll if row is completely below visible area (user can't see it at all)
-        if (rowTop > visibleBottom) {
-            // Calculate minimal scroll needed to just show the row
-            const scrollNeeded = rowTop - visibleBottom + 20; // Just enough to see it
-            
-            // Use instant scroll (not smooth) to avoid interfering with user
-            gameContainer.scrollTop += scrollNeeded;
-        }
-        // If row is above visible area, don't scroll - user might have scrolled up intentionally
-    }
+    // ✅ ANDROID FIX: Removed gentleScrollCheck - no auto-scrolling at all
+    // Users can scroll manually without any interference
     
     cleanup() {
         // Cleanup event listeners
