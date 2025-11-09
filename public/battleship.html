@@ -505,30 +505,94 @@
         }
         
         @media (max-width: 768px) {
-            .game-title { font-size: 2em; }
-            .menu-buttons { flex-direction: column; }
+            .game-title { 
+                font-size: 1.5em; 
+                top: 60px;
+            }
+            .game-subtitle {
+                font-size: 0.9em;
+                top: 100px;
+            }
+            .menu-buttons { 
+                flex-direction: row;
+                flex-wrap: wrap;
+                height: auto;
+                min-height: 60px;
+                padding: 5px;
+            }
+            .menu-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
             
-            /* Responsive controls for mobile */
+            /* ✅ RESPONSIVE FIX: Better mobile controls */
             .controls {
                 bottom: 10px;
-                padding: 10px 20px;
-                gap: 10px;
-                flex-direction: column;
-                width: 90%;
-                max-width: 300px;
+                padding: 8px 15px;
+                gap: 8px;
+                flex-direction: row;
+                width: 95%;
+                max-width: none;
             }
             
             .control-btn {
-                padding: 10px 20px;
-                font-size: 14px;
+                padding: 10px 16px;
+                font-size: 13px;
+                flex: 1;
             }
+            
             .left-panel, .right-panel {
                 width: 100%;
-                padding: 15px;
-                margin: 10px 0;
-            }
-            #gameContainer {
                 padding: 10px;
+                margin: 5px 0;
+                min-width: auto;
+            }
+            
+            .left-panel {
+                height: auto;
+                max-height: none;
+                margin-top: 110px;
+            }
+            
+            .right-panel {
+                margin-top: 10px;
+            }
+            
+            #gameContainer {
+                padding: 5px;
+                flex-direction: column;
+            }
+            
+            .scoreboard {
+                position: relative;
+                top: auto;
+                right: auto;
+                width: 100%;
+                max-width: none;
+                margin: 10px auto;
+            }
+            
+            .game-history {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                width: 100%;
+                max-width: none;
+                margin: 10px auto;
+                height: auto;
+                max-height: 150px;
+            }
+            
+            /* ✅ TOUCH SUPPORT: Prevent text selection on touch */
+            * {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
+            /* ✅ TOUCH SUPPORT: Prevent double-tap zoom */
+            canvas {
+                touch-action: none;
             }
         }
     </style>

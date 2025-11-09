@@ -2878,9 +2878,35 @@ class BattleshipClient {
             canvasDiv.style.display = 'block';
             canvasDiv.style.visibility = 'visible';
             
-            // Create responsive canvas with better sizing
-            const canvasWidth = Math.min(800, windowWidth - 100);
-            const canvasHeight = Math.min(500, windowHeight - 200);
+            // ✅ RESPONSIVE FIX: Calculate canvas size based on available space and device type
+            const isMobile = window.innerWidth <= 768;
+            const isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
+            
+            // Get available space from container
+            const containerRect = canvasDiv.getBoundingClientRect();
+            const availableWidth = containerRect.width || window.innerWidth;
+            const availableHeight = containerRect.height || window.innerHeight;
+            
+            // Calculate responsive canvas dimensions
+            let canvasWidth, canvasHeight;
+            if (isMobile) {
+                // Mobile: Use most of the screen, leave space for UI
+                canvasWidth = Math.min(availableWidth - 20, 600);
+                canvasHeight = Math.min(availableHeight - 250, 400);
+            } else if (isTablet) {
+                // Tablet: Medium size
+                canvasWidth = Math.min(availableWidth - 40, 700);
+                canvasHeight = Math.min(availableHeight - 200, 450);
+            } else {
+                // Desktop: Original sizing but responsive
+                canvasWidth = Math.min(800, availableWidth - 100);
+                canvasHeight = Math.min(500, availableHeight - 200);
+            }
+            
+            // Ensure minimum size
+            canvasWidth = Math.max(canvasWidth, 400);
+            canvasHeight = Math.max(canvasHeight, 300);
+            
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
             
@@ -2892,20 +2918,22 @@ class BattleshipClient {
             this.canvas.style('left', '0');
             this.canvas.style('z-index', '1');
             
-            console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
-            console.log('🎨 Canvas parent div:', canvasDiv);
-            console.log('🎨 Canvas element:', this.canvas);
-            console.log('🎨 Canvas parent display style:', canvasDiv.style.display);
+            // ✅ RESPONSIVE FIX: Calculate grid positions based on canvas size
+            // Center grids horizontally, position vertically based on available space
+            const gridCellSize = this.gridSize + this.gridSpacing;
+            const totalGridWidth = 10 * gridCellSize * 2 + 100; // Two grids + spacing
+            this.gridStartX = Math.max(20, (canvasWidth - totalGridWidth) / 2);
+            this.gridStartY = isMobile ? 50 : 100; // Higher on mobile to fit better
             
-            // Calculate grid positions - ensure grids fit within canvas with proper spacing
-            this.gridStartX = 20;
-            this.gridStartY = 300; // Restore original centered position
+            console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
+            console.log('🎨 Device type - Mobile:', isMobile, 'Tablet:', isTablet);
+            console.log('🎨 Grid positions - X:', this.gridStartX, 'Y:', this.gridStartY);
+            console.log('🎨 Canvas parent div:', canvasDiv);
+            
             this.initialized = true;
             
             // Set up event listeners after canvas is ready
             this.setupCanvasEventListeners();
-            
-            // Canvas is ready for drawing
             
             console.log('✅ Canvas initialized successfully');
             
@@ -3002,18 +3030,41 @@ class BattleshipClient {
                 }
                 
                 if (this.canvas) {
-                    // Recalculate canvas size and grid positions
-                    const newWidth = Math.min(1400, windowWidth - 30);
-                    const newHeight = Math.min(1000, windowHeight - 10);
+                    // ✅ RESPONSIVE FIX: Recalculate canvas size based on device type
+                    const isMobile = window.innerWidth <= 768;
+                    const isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
+                    const canvasDiv = document.getElementById('gameCanvas');
+                    const containerRect = canvasDiv ? canvasDiv.getBoundingClientRect() : null;
+                    const availableWidth = containerRect ? containerRect.width : window.innerWidth;
+                    const availableHeight = containerRect ? containerRect.height : window.innerHeight;
+                    
+                    let newWidth, newHeight;
+                    if (isMobile) {
+                        newWidth = Math.min(availableWidth - 20, 600);
+                        newHeight = Math.min(availableHeight - 250, 400);
+                    } else if (isTablet) {
+                        newWidth = Math.min(availableWidth - 40, 700);
+                        newHeight = Math.min(availableHeight - 200, 450);
+                    } else {
+                        newWidth = Math.min(800, availableWidth - 100);
+                        newHeight = Math.min(500, availableHeight - 200);
+                    }
+                    
+                    // Ensure minimum size
+                    newWidth = Math.max(newWidth, 400);
+                    newHeight = Math.max(newHeight, 300);
                     
                     // Resize canvas
                     resizeCanvas(newWidth, newHeight);
                     
-                    // Recalculate grid positions - keep consistent positioning
-                    this.gridStartX = 20;
-                    this.gridStartY = 300;
+                    // ✅ RESPONSIVE FIX: Recalculate grid positions based on new canvas size
+                    const gridCellSize = this.gridSize + this.gridSpacing;
+                    const totalGridWidth = 10 * gridCellSize * 2 + 100;
+                    this.gridStartX = Math.max(20, (newWidth - totalGridWidth) / 2);
+                    this.gridStartY = isMobile ? 50 : 100;
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
+                    console.log('🔄 New canvas size:', newWidth, 'x', newHeight);
                     
                     // Redraw after resize to ensure grids are visible
                     this.staticRender();
@@ -3044,6 +3095,60 @@ class BattleshipClient {
                 // NO redraw calls - hover will be drawn by the main draw() function
             }
         });
+        
+        // ✅ TOUCH SUPPORT: Add touch event listeners for mobile devices
+        const canvasElement = this.canvas.elt;
+        
+        // Helper function to convert touch coordinates to p5.js canvas coordinates
+        const getCanvasCoordinates = (clientX, clientY) => {
+            const rect = canvasElement.getBoundingClientRect();
+            const scaleX = width / canvasElement.offsetWidth;
+            const scaleY = height / canvasElement.offsetHeight;
+            const canvasX = (clientX - rect.left) * scaleX;
+            const canvasY = (clientY - rect.top) * scaleY;
+            return { x: canvasX, y: canvasY };
+        };
+        
+        // Touch start - equivalent to mouse down
+        this.touchStartHandler = (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            if (touch && canvasElement) {
+                const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
+                
+                // Store touch position
+                this.lastTouchX = coords.x;
+                this.lastTouchY = coords.y;
+                
+                // Create a synthetic mouse event to trigger mousePressed
+                // We'll call handleTouchPress directly with coordinates
+                this.handleTouchPress(coords.x, coords.y);
+            }
+        };
+        
+        // Touch move - equivalent to mouse move (for ship placement preview)
+        this.touchMoveHandler = (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            if (touch && canvasElement) {
+                const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
+                
+                // Update hover position for ship placement
+                if (this.game && this.gamePhase === 'placement' && this.game.currentShip) {
+                    this.handleTouchMove(coords.x, coords.y);
+                }
+            }
+        };
+        
+        // Touch end - prevent default to avoid double-tap zoom
+        this.touchEndHandler = (e) => {
+            e.preventDefault();
+        };
+        
+        // Add touch event listeners
+        canvasElement.addEventListener('touchstart', this.touchStartHandler, { passive: false });
+        canvasElement.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
+        canvasElement.addEventListener('touchend', this.touchEndHandler, { passive: false });
         
         // Remove canvas-specific mousePressed - using global handler instead
         
@@ -3092,6 +3197,23 @@ class BattleshipClient {
         if (this.keydownHandler) {
             document.removeEventListener('keydown', this.keydownHandler);
             this.keydownHandler = null;
+        }
+        
+        // ✅ TOUCH SUPPORT: Remove touch event listeners
+        if (this.canvas && this.canvas.elt) {
+            const canvasElement = this.canvas.elt;
+            if (this.touchStartHandler) {
+                canvasElement.removeEventListener('touchstart', this.touchStartHandler);
+                this.touchStartHandler = null;
+            }
+            if (this.touchMoveHandler) {
+                canvasElement.removeEventListener('touchmove', this.touchMoveHandler);
+                this.touchMoveHandler = null;
+            }
+            if (this.touchEndHandler) {
+                canvasElement.removeEventListener('touchend', this.touchEndHandler);
+                this.touchEndHandler = null;
+            }
         }
         
         // Remove resize event listener
@@ -3205,9 +3327,9 @@ class BattleshipClient {
         // Update hover position for ship placement preview
         // This method just updates internal state, NO redraw calls
         if (this.game && this.gamePhase === 'placement' && this.game.currentShip) {
-            // Store current mouse position for hover preview
-            this.hoverX = mouseX;
-            this.hoverY = mouseY;
+            // ✅ TOUCH SUPPORT: Use temp coordinates if available (from touch events), otherwise use mouseX/Y
+            this.hoverX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
+            this.hoverY = this.tempMouseY !== undefined ? this.tempMouseY : mouseY;
             
             // NO redraw calls - hover will be drawn by the main draw() function
         }
@@ -3618,9 +3740,10 @@ class BattleshipClient {
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         
+        // ✅ TOUCH SUPPORT: Use temp coordinates if available (from touch events), otherwise use mouseX/Y
         // In p5.js, mouseX and mouseY are already in canvas coordinates
-        const mouseCanvasX = mouseX;
-        const mouseCanvasY = mouseY;
+        const mouseCanvasX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
+        const mouseCanvasY = this.tempMouseY !== undefined ? this.tempMouseY : mouseY;
         
         // Debug: Draw a small red dot at mouse position to verify coordinates (disabled)
         // fill(255, 0, 0, 255);
@@ -3820,6 +3943,61 @@ class BattleshipClient {
         }
     }
     
+    // ✅ TOUCH SUPPORT: Handle touch press events
+    handleTouchPress(touchX, touchY) {
+        console.log(`📱 Touch press detected - X: ${touchX}, Y: ${touchY}`);
+        
+        // Prevent touches during resize events
+        if (this.isResizing || this.resizeTimeout) {
+            console.log(`📱 Touch ignored - window is resizing`);
+            return;
+        }
+        
+        // Temporarily store touch coordinates for mousePressed to use
+        const originalMouseX = typeof mouseX !== 'undefined' ? mouseX : 0;
+        const originalMouseY = typeof mouseY !== 'undefined' ? mouseY : 0;
+        
+        // Use a workaround: store coordinates and call mousePressed logic directly
+        this.processClick(touchX, touchY);
+    }
+    
+    // ✅ TOUCH SUPPORT: Handle touch move events
+    handleTouchMove(touchX, touchY) {
+        // Update hover position for ship placement
+        if (this.game && this.gamePhase === 'placement' && this.game.currentShip) {
+            // Store touch coordinates temporarily
+            this.tempMouseX = touchX;
+            this.tempMouseY = touchY;
+            this.updateHoverPosition();
+        }
+    }
+    
+    // ✅ TOUCH SUPPORT: Process click logic (shared between mouse and touch)
+    processClick(clickX, clickY) {
+        // Check for invalid coordinates
+        if (clickX < 0 || clickY < 0 || clickX > width || clickY > height) {
+            console.log(`🎯 Click ignored - invalid coordinates: X=${clickX}, Y=${clickY}`);
+            return;
+        }
+        
+        if (this.game && this.game.gamePhase === 'placement') {
+            console.log(`🎯 In placement phase - processing click at (${clickX}, ${clickY})`);
+            // Store coordinates for handleShipPlacement to use
+            this.tempMouseX = clickX;
+            this.tempMouseY = clickY;
+            this.handleShipPlacement();
+            redraw();
+            return;
+        }
+        
+        if (this.game && this.game.gamePhase === 'playing') {
+            // Store coordinates for handleAttack to use
+            this.tempMouseX = clickX;
+            this.tempMouseY = clickY;
+            this.handleAttack();
+        }
+    }
+    
     mousePressed() {
         console.log(`🎯 BattleshipClient.mousePressed called - mouseX: ${mouseX}, mouseY: ${mouseY}`);
         console.log(`🎯 Game state - game: ${!!this.game}, gamePhase: ${this.game?.gamePhase}, currentShip: ${!!this.currentShip}`);
@@ -3848,26 +4026,8 @@ class BattleshipClient {
             return;
         }
         
-        if (this.game && this.game.gamePhase === 'placement') {
-            console.log(`🎯 In placement phase - calling handleShipPlacement`);
-            // In placement mode, always try to place the ship first
-            // Only check for ship item clicks if placement fails
-            this.handleShipPlacement();
-            // Redraw for ship placement visual feedback
-            redraw();
-            return;
-        }
-        
-        // Check if click was on a ship item for ship selection (only when not placing)
-        const clickedElement = document.elementFromPoint(mouseX, mouseY);
-        if (clickedElement && clickedElement.closest('.ship-item')) {
-            console.log('🎯 Click on ship item - handling ship selection');
-            // Ship selection is handled by the event listeners in setupShipPlacement
-            // No need to do anything here as the click will be handled by the ship item's click listener
-            return;
-        } else if (this.game && this.game.gamePhase === 'playing') {
-            this.handleAttack();
-        }
+        // Use the shared click processing logic
+        this.processClick(mouseX, mouseY);
     }
     
     handleShipPlacement() {
@@ -3875,12 +4035,20 @@ class BattleshipClient {
         const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
         const fleetGridY = this.gridStartY;
         
-        console.log('🔍 handleShipPlacement - mouseX:', mouseX, 'mouseY:', mouseY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'gridStartX:', this.gridStartX, 'gridStartY:', this.gridStartY);
+        // ✅ TOUCH SUPPORT: Use temp coordinates if available (from touch events), otherwise use mouseX/Y
+        const clickX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
+        const clickY = this.tempMouseY !== undefined ? this.tempMouseY : mouseY;
+        
+        console.log('🔍 handleShipPlacement - clickX:', clickX, 'clickY:', clickY, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY, 'gridStartX:', this.gridStartX, 'gridStartY:', this.gridStartY);
         
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - fleetGridX) / cellSize);
-        const gridY = Math.floor((mouseY - fleetGridY) / cellSize);
+        const gridX = Math.floor((clickX - fleetGridX) / cellSize);
+        const gridY = Math.floor((clickY - fleetGridY) / cellSize);
+        
+        // Clear temp coordinates after use
+        this.tempMouseX = undefined;
+        this.tempMouseY = undefined;
         
         console.log('🔍 Calculated grid coordinates - gridX:', gridX, 'gridY:', gridY, 'cellSize:', cellSize);
         console.log('🔍 Mouse position relative to grid - relX:', mouseX - fleetGridX, 'relY:', mouseY - fleetGridY);
@@ -3993,19 +4161,23 @@ class BattleshipClient {
         }
         this.lastClickTime = currentTime;
         
+        // ✅ TOUCH SUPPORT: Use temp coordinates if available (from touch events), otherwise use mouseX/Y
+        const clickX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
+        const clickY = this.tempMouseY !== undefined ? this.tempMouseY : mouseY;
+        
         console.log(`🎯 handleAttack called - single click handler`);
-        console.log(`🎯 Mouse coordinates: mouseX=${mouseX}, mouseY=${mouseY}`);
+        console.log(`🎯 Click coordinates: clickX=${clickX}, clickY=${clickY}`);
         console.log(`🎯 Grid start position: gridStartX=${this.gridStartX}, gridStartY=${this.gridStartY}`);
         
         // Check if this is a phantom event (coordinates that don't make sense)
-        if (mouseX === 0 && mouseY === 0) {
+        if (clickX === 0 && clickY === 0) {
             console.log(`🎯 Click rejected - phantom event (0,0)`);
             return;
         }
         
         // Check if coordinates are negative (invalid)
-        if (mouseX < 0 || mouseY < 0) {
-            console.log(`🎯 Click rejected - negative coordinates: mouseX=${mouseX}, mouseY=${mouseY}`);
+        if (clickX < 0 || clickY < 0) {
+            console.log(`🎯 Click rejected - negative coordinates: clickX=${clickX}, clickY=${clickY}`);
             return;
         }
         
@@ -4014,15 +4186,15 @@ class BattleshipClient {
         const attackGridY = this.gridStartY; // Same Y as player grid
         
         // Check if coordinates are too far from the attack grid (likely phantom event)
-        const distanceFromAttackGrid = Math.sqrt(Math.pow(mouseX - attackGridX, 2) + Math.pow(mouseY - attackGridY, 2));
+        const distanceFromAttackGrid = Math.sqrt(Math.pow(clickX - attackGridX, 2) + Math.pow(clickY - attackGridY, 2));
         if (distanceFromAttackGrid > 1000) {
             console.log(`🎯 Click rejected - too far from attack grid: distance=${distanceFromAttackGrid}`);
             return;
         }
         
         // Check if coordinates are way outside the window bounds (likely phantom event)
-        if (mouseX > windowWidth + 100 || mouseY > windowHeight + 100) {
-            console.log(`🎯 Click rejected - way outside window bounds: mouseX=${mouseX}, mouseY=${mouseY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
+        if (clickX > windowWidth + 100 || clickY > windowHeight + 100) {
+            console.log(`🎯 Click rejected - way outside window bounds: clickX=${clickX}, clickY=${clickY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
             return;
         }
         
@@ -4030,12 +4202,16 @@ class BattleshipClient {
         
         // Calculate grid coordinates to match exactly how cells are drawn
         const cellSize = this.gridSize + this.gridSpacing;
-        const gridX = Math.floor((mouseX - attackGridX) / cellSize);
-        const gridY = Math.floor((mouseY - attackGridY) / cellSize);
+        const gridX = Math.floor((clickX - attackGridX) / cellSize);
+        const gridY = Math.floor((clickY - attackGridY) / cellSize);
+        
+        // Clear temp coordinates after use
+        this.tempMouseX = undefined;
+        this.tempMouseY = undefined;
         
         console.log(`🎯 Calculated grid coordinates: gridX=${gridX}, gridY=${gridY}`);
-        console.log(`🎯 Cell size: ${cellSize}, mouse relative to attack grid: (${mouseX - attackGridX}, ${mouseY - attackGridY})`);
-        console.log(`🎯 Attack grid position: (${attackGridX}, ${attackGridY}), Mouse: (${mouseX}, ${mouseY})`);
+        console.log(`🎯 Cell size: ${cellSize}, click relative to attack grid: (${clickX - attackGridX}, ${clickY - attackGridY})`);
+        console.log(`🎯 Attack grid position: (${attackGridX}, ${attackGridY}), Click: (${clickX}, ${clickY})`);
         
         // CRITICAL FIX: Ensure coordinates are within valid bounds
         if (gridX < 0 || gridX >= 10 || gridY < 0 || gridY >= 10) {
@@ -4049,22 +4225,22 @@ class BattleshipClient {
         const maxGridY = attackGridY + (10 * cellSize);
         
         // Additional validation: reject clicks that are clearly outside reasonable bounds
-        if (mouseX < 0 || mouseY < 0 || mouseX > windowWidth || mouseY > windowHeight) {
-            console.log(`🎯 Click rejected - outside window bounds: mouseX=${mouseX}, mouseY=${mouseY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
+        if (clickX < 0 || clickY < 0 || clickX > windowWidth || clickY > windowHeight) {
+            console.log(`🎯 Click rejected - outside window bounds: clickX=${clickX}, clickY=${clickY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
             return;
         }
         
         // Additional validation: reject clicks that are clearly outside the attack grid area
-        if (mouseX < attackGridX - 100 || mouseX > attackGridX + 500 || 
-            mouseY < attackGridY - 100 || mouseY > attackGridY + 500) {
-            console.log(`🎯 Click rejected - way outside attack grid area: mouseX=${mouseX}, mouseY=${mouseY}, attackGridX=${attackGridX}, attackGridY=${attackGridY}`);
+        if (clickX < attackGridX - 100 || clickX > attackGridX + 500 || 
+            clickY < attackGridY - 100 || clickY > attackGridY + 500) {
+            console.log(`🎯 Click rejected - way outside attack grid area: clickX=${clickX}, clickY=${clickY}, attackGridX=${attackGridX}, attackGridY=${attackGridY}`);
             return;
         }
         
         // Only handle clicks on the attack grid and only on player's turn
         if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10 && 
-            mouseX >= attackGridX && mouseX < maxGridX && 
-            mouseY >= attackGridY && mouseY < maxGridY && 
+            clickX >= attackGridX && clickX < maxGridX && 
+            clickY >= attackGridY && clickY < maxGridY && 
             this.gamePhase === 'playing') {
             
             // CRITICAL FIX: Always read turn state directly from game instance for accuracy
