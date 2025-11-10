@@ -564,6 +564,19 @@ class BattleshipGame {
         console.log('🚢 Handling game start:', data);
         console.log('🚢 Game phase before setting:', this.gamePhase);
         
+        // ✅ CRITICAL FIX: Reset ready state when new game starts
+        // This ensures players need to place ships and click ready again for next game
+        this.playerReady = false;
+        this.opponentReady = false;
+        console.log('🚢 Reset ready state for new game');
+        
+        // ✅ CRITICAL FIX: Reset start button state
+        const startBtn = document.getElementById('startGameBtn');
+        if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.textContent = 'Start Game';
+        }
+        
         // CRITICAL FIX: Clear processedAttacks when new game starts
         // This prevents attacks from previous games from being blocked
         if (this.processedAttacks) {
