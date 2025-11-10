@@ -844,6 +844,18 @@ class WordleGame {
         this.evaluateGuess(guess);
         this.currentGuess = '';
         this.updateBoard();
+        
+        // ✅ FIX: Clear input field after submission to prevent autocomplete restoration
+        const hiddenInput = this.getElement('hiddenInput');
+        if (hiddenInput) {
+            hiddenInput.value = '';
+            hiddenInput.setAttribute('value', '');
+            // Clear any browser autocomplete cache
+            setTimeout(() => {
+                hiddenInput.value = '';
+                hiddenInput.setAttribute('value', '');
+            }, 0);
+        }
     }
 
     showInvalidWord(message = 'Not a valid word!') {
