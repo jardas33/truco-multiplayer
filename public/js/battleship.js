@@ -3187,18 +3187,34 @@ class BattleshipClient {
         // Handle rotation and cancellation for ship placement
         this.keydownHandler = (e) => {
             const gameInstance = window.battleshipGame || this.game;
-            if (!gameInstance) return;
+            if (!gameInstance) {
+                console.log('⚠️ No game instance found for keydown handler');
+                return;
+            }
             
+            // ✅ FIX: Handle R key for rotation
             if (e.key === 'r' || e.key === 'R') {
+                console.log('🔑 R key pressed');
+                console.log('🔑 Game phase:', gameInstance.gamePhase);
+                console.log('🔑 Current ship:', gameInstance.currentShip);
+                
                 // Rotate ship during placement
-                if (gameInstance.gamePhase === 'placement' && gameInstance.currentShip) {
-                    gameInstance.rotateCurrentShip();
-                    // Sync client's currentShip with game's currentShip after rotation
-                    if (this.currentShip) {
-                        this.currentShip = gameInstance.currentShip;
+                if (gameInstance.gamePhase === 'placement') {
+                    if (gameInstance.currentShip) {
+                        console.log('✅ Rotating ship:', gameInstance.currentShip.name);
+                        gameInstance.rotateCurrentShip();
+                        // Sync client's currentShip with game's currentShip after rotation
+                        if (this.currentShip) {
+                            this.currentShip = gameInstance.currentShip;
+                        }
+                        // Force redraw to show rotated preview
+                        redraw();
+                    } else {
+                        console.log('⚠️ No ship selected for rotation');
+                        gameInstance.addToHistory('⚠️ Please select a ship first!', 'warning');
                     }
-                    // Force redraw to show rotated preview
-                    redraw();
+                } else {
+                    console.log('⚠️ Not in placement phase, current phase:', gameInstance.gamePhase);
                 }
             } else if (e.key === 'Escape') {
                 // Cancel ship placement
@@ -3212,6 +3228,7 @@ class BattleshipClient {
             }
         };
         document.addEventListener('keydown', this.keydownHandler);
+        console.log('✅ Keydown handler attached for ship rotation');
         
         // Add window resize handler to redraw when console opens/closes
         this.resizeHandler = () => {
