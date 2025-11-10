@@ -670,28 +670,39 @@ class WordleGame {
         // Get viewport height (accounting for keyboard)
         const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const rowRect = activeRow.getBoundingClientRect();
+        const containerRect = gameContainer.getBoundingClientRect();
         
         // Target position: row should be visible above keyboard with padding
-        const targetPadding = 80; // More space above keyboard to ensure visibility
+        const targetPadding = 100; // More space above keyboard to ensure visibility
         const targetBottom = viewportHeight - targetPadding;
+        
+        // Calculate row position relative to container
+        const rowTopRelative = rowRect.top - containerRect.top + gameContainer.scrollTop;
+        const rowBottomRelative = rowRect.bottom - containerRect.top + gameContainer.scrollTop;
         
         // Check if row is hidden by keyboard
         if (rowRect.bottom > targetBottom) {
-            // Use scrollIntoView for better browser compatibility
-            activeRow.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            });
+            // Calculate how much to scroll the container
+            // We want the row to be positioned above the keyboard
+            const visibleAreaTop = gameContainer.scrollTop;
+            const visibleAreaBottom = gameContainer.scrollTop + viewportHeight - targetPadding;
             
-            // Also manually adjust container scroll to account for keyboard
-            setTimeout(() => {
-                const newRowRect = activeRow.getBoundingClientRect();
-                if (newRowRect.bottom > targetBottom) {
-                    const scrollAmount = newRowRect.bottom - targetBottom + 20;
-                    gameContainer.scrollTop += scrollAmount;
-                }
-            }, 100);
+            // If row is below visible area, scroll it up
+            if (rowBottomRelative > visibleAreaBottom) {
+                // Scroll so row is centered in visible area above keyboard
+                const targetScroll = rowTopRelative - (viewportHeight - targetPadding) / 2 + (rowRect.height / 2);
+                gameContainer.scrollTo({
+                    top: Math.max(0, targetScroll),
+                    behavior: 'smooth'
+                });
+            } else if (rowTopRelative < visibleAreaTop) {
+                // Row is above visible area, scroll down
+                const targetScroll = rowTopRelative - 50; // Small padding from top
+                gameContainer.scrollTo({
+                    top: Math.max(0, targetScroll),
+                    behavior: 'smooth'
+                });
+            }
         }
     }
     
