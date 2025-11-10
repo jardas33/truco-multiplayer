@@ -459,6 +459,15 @@ class WordleGame {
             // ✅ FIX: Prevent autocomplete/suggestion words from being added
             let value = rawValue.toUpperCase().replace(/[^A-Z]/g, '');
             
+            // ✅ FIX: Detect if autocomplete tried to restore a deleted word
+            // If value suddenly appears and doesn't match our current guess, reject it
+            if (value.length > 0 && this.currentGuess.length === 0 && value.length > 1) {
+                // Autocomplete tried to restore a full word after deletion - reject it
+                e.target.value = '';
+                rawValue = '';
+                value = '';
+            }
+            
             // ✅ FIX: Track input changes to detect anomalies
             const previousLength = this.currentGuess.length;
             const newLength = value.length;
@@ -513,6 +522,7 @@ class WordleGame {
                     this.currentGuess = value;
                     this.updateBoard();
                     e.target.value = value;
+                    e.target.setAttribute('value', value);
                     lastInputValue = value;
                     lastValidValue = value;
                 } else {
@@ -524,8 +534,17 @@ class WordleGame {
             } else {
                 // Invalid input - revert to last valid value
                 e.target.value = lastValidValue;
+                e.target.setAttribute('value', lastValidValue);
                 this.currentGuess = lastValidValue;
                 this.updateBoard();
+                
+                // ✅ FIX: Clear any autocomplete that might have been triggered
+                setTimeout(() => {
+                    if (e.target.value !== lastValidValue) {
+                        e.target.value = lastValidValue;
+                        e.target.setAttribute('value', lastValidValue);
+                    }
+                }, 0);
             }
 
             // ✅ MOBILE FIX: Keep active row visible while typing
@@ -562,10 +581,26 @@ class WordleGame {
             if (key === 'ENTER') {
                 e.preventDefault();
                 this.submitGuess();
+                // ✅ FIX: Aggressively clear input to prevent autocomplete restoration
                 hiddenInput.value = '';
+                hiddenInput.setAttribute('value', '');
                 lastInputValue = '';
                 lastValidValue = '';
+                // Clear any browser autocomplete cache
+                setTimeout(() => {
+                    hiddenInput.value = '';
+                    hiddenInput.setAttribute('value', '');
+                }, 0);
             } else if (key === 'BACKSPACE' || key === 'DELETE') {
+                // ✅ FIX: Clear input value to prevent autocomplete from restoring deleted words
+                setTimeout(() => {
+                    const hiddenInput = this.getElement('hiddenInput');
+                    if (hiddenInput && hiddenInput.value.length > this.currentGuess.length) {
+                        // Autocomplete tried to restore - clear it
+                        hiddenInput.value = this.currentGuess;
+                        hiddenInput.setAttribute('value', this.currentGuess);
+                    }
+                }, 0);
                 // Let the input event handle backspace naturally
                 // The input event will update this.currentGuess
             } else if (key.length === 1 && !/^[A-Z]$/.test(key)) {
@@ -635,22 +670,28 @@ class WordleGame {
         // Get viewport height (accounting for keyboard)
         const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const rowRect = activeRow.getBoundingClientRect();
-        const containerRect = gameContainer.getBoundingClientRect();
         
-        // Calculate keyboard height (difference between window height and visual viewport)
-        const keyboardHeight = window.innerHeight - viewportHeight;
-        
-        // Target position: row should be visible above keyboard with some padding
-        const targetPadding = 20; // Space above keyboard
+        // Target position: row should be visible above keyboard with padding
+        const targetPadding = 80; // More space above keyboard to ensure visibility
         const targetBottom = viewportHeight - targetPadding;
         
         // Check if row is hidden by keyboard
         if (rowRect.bottom > targetBottom) {
-            // Calculate how much we need to scroll
-            const scrollAmount = rowRect.bottom - targetBottom + 10; // Add small buffer
+            // Use scrollIntoView for better browser compatibility
+            activeRow.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
             
-            // Scroll the container
-            gameContainer.scrollTop += scrollAmount;
+            // Also manually adjust container scroll to account for keyboard
+            setTimeout(() => {
+                const newRowRect = activeRow.getBoundingClientRect();
+                if (newRowRect.bottom > targetBottom) {
+                    const scrollAmount = newRowRect.bottom - targetBottom + 20;
+                    gameContainer.scrollTop += scrollAmount;
+                }
+            }, 100);
         }
     }
     
