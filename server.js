@@ -2653,25 +2653,38 @@ io.on('connection', (socket) => {
         console.log(`🚢 Room players:`, room?.players?.length);
         
         if (room && room.gameType === 'battleship') {
-            // ✅ CRITICAL FIX: Initialize battleship game state when starting
-            if (!room.game) {
-                console.log(`🚢 Initializing Battleship game state for room ${data.roomId}`);
-                room.game = {
-                    started: true,
-                    gameType: 'battleship',
-                    players: room.players.map((p, idx) => ({
-                        ...p,
-                        playerIndex: idx
-                    })),
-                    currentPlayer: 0
-                };
-                console.log(`✅ Battleship game state initialized`);
-            }
+            // ✅ CRITICAL FIX: Reset or initialize battleship game state when starting
+            // Always reset game state for new games (even if room.game exists from previous game)
+            console.log(`🚢 Resetting/Initializing Battleship game state for room ${data.roomId}`);
+            room.game = {
+                started: true,
+                gameType: 'battleship',
+                players: room.players.map((p, idx) => ({
+                    ...p,
+                    playerIndex: idx
+                })),
+                currentPlayer: 0
+            };
+            console.log(`✅ Battleship game state reset/initialized`);
+            
+            // ✅ CRITICAL FIX: Reset ready state for all players when starting new game
+            // This ensures players need to place ships and click ready again for next game
+            room.players.forEach(player => {
+                player.ready = false;
+                console.log(`🚢 Reset ready state for player ${player.id} for new game`);
+            });
+            
+            // Find the room creator (Player 1) to assign first turn
+            const roomCreator = room.players.find(p => p.isRoomCreator);
+            const firstPlayerId = roomCreator ? roomCreator.id : room.players[0].id;
+            const firstPlayerIndex = room.players.findIndex(p => p.id === firstPlayerId);
+            room.game.currentPlayer = firstPlayerIndex >= 0 ? firstPlayerIndex : 0;
             
             console.log(`🚢 Broadcasting battleshipGameStart to room ${data.roomId}`);
             io.to(data.roomId).emit('battleshipGameStart', {
                 roomId: data.roomId,
-                players: room.players
+                players: room.players,
+                firstPlayerId: firstPlayerId
             });
             console.log(`🚢 Broadcast complete`);
         } else {
