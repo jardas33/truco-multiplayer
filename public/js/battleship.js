@@ -3185,6 +3185,7 @@ class BattleshipClient {
         
         // ✅ RESOLUTION FIX: Add keyboard event listeners with proper cleanup
         // Handle rotation and cancellation for ship placement
+        let rotationInProgress = false; // Prevent double rotation
         this.keydownHandler = (e) => {
             const gameInstance = window.battleshipGame || this.game;
             if (!gameInstance) {
@@ -3194,6 +3195,12 @@ class BattleshipClient {
             
             // ✅ FIX: Handle R key for rotation
             if (e.key === 'r' || e.key === 'R') {
+                // Prevent double rotation
+                if (rotationInProgress) {
+                    console.log('⚠️ Rotation already in progress, ignoring');
+                    return;
+                }
+                
                 console.log('🔑 R key pressed');
                 console.log('🔑 Game phase:', gameInstance.gamePhase);
                 console.log('🔑 Current ship:', gameInstance.currentShip);
@@ -3201,16 +3208,32 @@ class BattleshipClient {
                 // Rotate ship during placement
                 if (gameInstance.gamePhase === 'placement') {
                     if (gameInstance.currentShip) {
+                        rotationInProgress = true;
                         console.log('✅ Rotating ship:', gameInstance.currentShip.name);
                         console.log('✅ Orientation before:', gameInstance.currentShip.orientation);
-                        gameInstance.rotateCurrentShip();
+                        
+                        // ✅ FIX: Rotate without calling updateUI (which might cause issues)
+                        if (!gameInstance.currentShip.orientation) {
+                            gameInstance.currentShip.orientation = 'horizontal';
+                        }
+                        gameInstance.currentShip.orientation = gameInstance.currentShip.orientation === 'horizontal' ? 'vertical' : 'horizontal';
+                        console.log(`🔄 Rotated ${gameInstance.currentShip.name} to ${gameInstance.currentShip.orientation}`);
+                        gameInstance.addToHistory(`🔄 Rotated ${gameInstance.currentShip.name} to ${gameInstance.currentShip.orientation}`, 'info');
+                        
                         console.log('✅ Orientation after:', gameInstance.currentShip.orientation);
+                        
                         // ✅ FIX: Sync client's currentShip with game's currentShip after rotation
                         // Create a new object reference to ensure the preview updates
                         this.currentShip = { ...gameInstance.currentShip };
                         console.log('✅ Client currentShip synced:', this.currentShip.orientation);
+                        
                         // Force redraw to show rotated preview
                         this.staticRender();
+                        
+                        // Re-enable rotation after a short delay
+                        setTimeout(() => {
+                            rotationInProgress = false;
+                        }, 100);
                     } else {
                         console.log('⚠️ No ship selected for rotation');
                         gameInstance.addToHistory('⚠️ Please select a ship first!', 'warning');
