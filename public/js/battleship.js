@@ -3202,13 +3202,15 @@ class BattleshipClient {
                 if (gameInstance.gamePhase === 'placement') {
                     if (gameInstance.currentShip) {
                         console.log('✅ Rotating ship:', gameInstance.currentShip.name);
+                        console.log('✅ Orientation before:', gameInstance.currentShip.orientation);
                         gameInstance.rotateCurrentShip();
-                        // Sync client's currentShip with game's currentShip after rotation
-                        if (this.currentShip) {
-                            this.currentShip = gameInstance.currentShip;
-                        }
+                        console.log('✅ Orientation after:', gameInstance.currentShip.orientation);
+                        // ✅ FIX: Sync client's currentShip with game's currentShip after rotation
+                        // Create a new object reference to ensure the preview updates
+                        this.currentShip = { ...gameInstance.currentShip };
+                        console.log('✅ Client currentShip synced:', this.currentShip.orientation);
                         // Force redraw to show rotated preview
-                        redraw();
+                        this.staticRender();
                     } else {
                         console.log('⚠️ No ship selected for rotation');
                         gameInstance.addToHistory('⚠️ Please select a ship first!', 'warning');
