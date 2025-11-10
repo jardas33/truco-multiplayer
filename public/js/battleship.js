@@ -4409,23 +4409,10 @@ class BattleshipClient {
     }
     
     keyPressed() {
-        if (key === 'r' || key === 'R') {
-            if (this.game.currentShip) {
-                this.game.rotateCurrentShip();
-                // Sync client's currentShip with game's currentShip after rotation
-                this.currentShip = this.game.currentShip;
-                // Static render after ship rotation
-                this.staticRender();
-            }
-        } else if (key === 'Escape') {
-            if (this.game.currentShip) {
-                this.game.cancelShipPlacement();
-                // Clear client's currentShip after cancellation
-                this.currentShip = null;
-                // Static render after cancellation
-                this.staticRender();
-            }
-        }
+        // ✅ FIX: Disable p5.js keyPressed handler - using document keydown handler instead
+        // This prevents double rotation
+        // The document keydown handler in setupCanvasEventListeners handles rotation
+        return;
     }
     
     mouseMoved() {
