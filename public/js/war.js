@@ -407,6 +407,8 @@ class WarClient {
         this.canAct = false;
         this.isStartingBattle = false; // ✅ CRITICAL FIX: Prevent race conditions
         this.battleHistory = [];
+        this.lastBattleCards = [];
+        this.lastBattleWinnerIndex = null;
         this.gameHistory = []; // ✅ CRITICAL FIX: Track full games (winners)
         this.currentGameNumber = 1; // ✅ CRITICAL FIX: Track current game number
         this.statistics = {
@@ -1388,6 +1390,8 @@ class WarClient {
         
         const unfilteredCount = (data.battleCards || []).length;
         this.game.battleCards = (data.battleCards || []).filter(bc => bc && bc.card);
+        this.lastBattleCards = [];
+        this.lastBattleWinnerIndex = null;
         const filteredCount = this.game.battleCards.length;
         
         if (unfilteredCount !== filteredCount) {
@@ -1524,6 +1528,11 @@ class WarClient {
             }
         }
         
+        this.lastBattleCards = Array.isArray(this.game.battleCards)
+            ? this.game.battleCards.map(battleCard => ({ ...battleCard }))
+            : [];
+        this.lastBattleWinnerIndex = data.winner?.playerIndex ?? null;
+
         // Animate card collection
         if (this.game.battleCards && this.game.battleCards.length > 0 && data.winner) {
             this.animateCardCollection(this.game.battleCards.map(bc => bc.card), data.winner.playerIndex);
@@ -1579,8 +1588,12 @@ class WarClient {
     createWinnerEffect(playerIndex) {
         const playerElement = document.querySelector(`[data-player-index="${playerIndex}"]`);
         if (playerElement) {
+            playerElement.classList.add('score-win-pulse');
+            this.safeSetTimeout(() => {
+                playerElement.classList.remove('score-win-pulse');
+            }, 1800);
             const effect = document.createElement('div');
-            effect.className = 'winner-effect';
+            effect.className = 'winner-effect-disabled';
             effect.style.position = 'absolute';
             const rect = playerElement.getBoundingClientRect();
             effect.style.left = rect.left + rect.width / 2 + 'px';
@@ -2549,11 +2562,15 @@ class WarClient {
         oldBattleCards.forEach(card => card.remove());
         battleArea.innerHTML = '';
         particles.forEach(p => battleArea.appendChild(p));
+
+        const activeBattleCards = Array.isArray(this.game.battleCards) ? this.game.battleCards : [];
+        const showingLastBattle = activeBattleCards.length === 0 && Array.isArray(this.lastBattleCards) && this.lastBattleCards.length > 0;
+        const battleCardsToRender = showingLastBattle ? this.lastBattleCards : activeBattleCards;
         
         // Show battle cards with proper card images and animations
-        if (this.game.battleCards && this.game.battleCards.length > 0) {
-            console.log(`⚔️ updateBattleArea: Rendering ${this.game.battleCards.length} battle cards`);
-            this.game.battleCards.forEach((battleCard, index) => {
+        if (battleCardsToRender.length > 0) {
+            console.log(`⚔️ updateBattleArea: Rendering ${battleCardsToRender.length} battle cards`);
+            battleCardsToRender.forEach((battleCard, index) => {
                 // ✅ CRITICAL FIX: Validate battle card data
                 if (!battleCard || !battleCard.card) {
                     console.warn(`⚠️ Invalid battle card at index ${index}:`, battleCard);
@@ -2566,8 +2583,9 @@ class WarClient {
                     battleCard.card, 
                     'battle-card',
                     {
-                        animate: true,
-                        delay: index * 1200, // ✅ CRITICAL FIX: Increased delay to 1200ms (1.2 seconds) for much better visibility
+                        animate: !showingLastBattle,
+                        delay: showingLastBattle ? 0 : index * 1200, // ✅ CRITICAL FIX: Increased delay to 1200ms (1.2 seconds) for much better visibility
+                        isWinner: showingLastBattle && battleCard.playerIndex === this.lastBattleWinnerIndex,
                         isWar: false,
                         faceUp: true
                     }
@@ -3017,6 +3035,9 @@ class WarClient {
         warMessage.style.zIndex = '2500'; // ✅ CRITICAL FIX: Ensure it's above canvas but below buttons
         warMessage.style.opacity = '1';
         warMessage.style.visibility = 'visible';
+        warMessage.style.top = 'clamp(112px, 27vh, 230px)';
+        warMessage.style.left = '50%';
+        warMessage.style.transform = 'translate(-50%, 0)';
         console.log('✅ War message shown above battle-area, shifted left, no overlap');
     }
 

@@ -45,8 +45,7 @@ class WordleGame {
     init() {
         this.startNewGame();
         this.createBoard();
-        // ✅ MOBILE FIX: Use device keyboard instead of on-screen keyboard
-        // this.createKeyboard(); // Removed - using device keyboard
+        this.createKeyboard();
         this.setupMobileKeyboard();
         this.updateStats();
         this.setupEventListeners();
@@ -178,15 +177,6 @@ class WordleGame {
             }
             board.appendChild(row);
         }
-        
-        // ✅ ANDROID FIX: Add spacer at bottom to ensure scrollable content
-        const spacer = document.createElement('div');
-        spacer.className = 'board-spacer';
-        spacer.style.height = '400px'; // Large spacer for mobile scrolling
-        spacer.style.width = '100%';
-        spacer.setAttribute('aria-hidden', 'true');
-        board.appendChild(spacer);
-        
         this.updateActiveRow();
     }
 
@@ -580,6 +570,7 @@ class WordleGame {
             
             if (key === 'ENTER') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.submitGuess();
                 // ✅ FIX: Aggressively clear input to prevent autocomplete restoration
                 hiddenInput.value = '';
@@ -591,18 +582,21 @@ class WordleGame {
                     hiddenInput.value = '';
                     hiddenInput.setAttribute('value', '');
                 }, 0);
+                return false;
             } else if (key === 'BACKSPACE' || key === 'DELETE') {
-                // ✅ FIX: Clear input value to prevent autocomplete from restoring deleted words
-                setTimeout(() => {
-                    const hiddenInput = this.getElement('hiddenInput');
-                    if (hiddenInput && hiddenInput.value.length > this.currentGuess.length) {
-                        // Autocomplete tried to restore - clear it
-                        hiddenInput.value = this.currentGuess;
-                        hiddenInput.setAttribute('value', this.currentGuess);
-                    }
-                }, 0);
-                // Let the input event handle backspace naturally
-                // The input event will update this.currentGuess
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleKeyPress('BACK');
+                hiddenInput.value = this.currentGuess;
+                hiddenInput.setAttribute('value', this.currentGuess);
+                return false;
+            } else if (/^[A-Z]$/.test(key)) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleKeyPress(key);
+                hiddenInput.value = this.currentGuess;
+                hiddenInput.setAttribute('value', this.currentGuess);
+                return false;
             } else if (key.length === 1 && !/^[A-Z]$/.test(key)) {
                 // Prevent non-letter single characters (numbers, symbols, etc.)
                 e.preventDefault();
@@ -787,8 +781,7 @@ class WordleGame {
                 }
             }
             this.updateActiveRow();
-            // Keyboard removed - no state updates needed
-            // this.updateKeyboardState();
+            this.updateKeyboardState();
         });
     }
 
@@ -849,12 +842,11 @@ class WordleGame {
         
         this.isSubmitting = true;
         this.isAnimating = true;
-        // Keyboard removed - no state updates needed
-        // this.updateKeyboardState();
+        this.updateKeyboardState();
         this.guesses.push(guess);
         this.evaluateGuess(guess);
         this.currentGuess = '';
-        this.updateBoard();
+        this.updateActiveRow();
         
         // ✅ FIX: Clear input field after submission to prevent autocomplete restoration
         const hiddenInput = this.getElement('hiddenInput');
@@ -944,8 +936,7 @@ class WordleGame {
         if (!row) {
             this.isAnimating = false;
             this.isSubmitting = false;
-            // Keyboard removed - no state updates needed
-            // this.updateKeyboardState();
+            this.updateKeyboardState();
             return;
         }
         
@@ -966,8 +957,7 @@ class WordleGame {
             
             const timeout = setTimeout(() => {
                 tile.classList.add(result[i]);
-                // Keyboard removed - no color updates needed
-                // this.updateKeyboard(guess[i], result[i]);
+                this.updateKeyboard(guess[i], result[i]);
                 
                 // Update aria-label for accessibility
                 const status = result[i] === 'correct' ? 'correct' : result[i] === 'present' ? 'present but wrong position' : 'not in word';
@@ -977,8 +967,7 @@ class WordleGame {
                 if (animationComplete === totalAnimations) {
                     this.isAnimating = false;
                     this.isSubmitting = false;
-                    // Keyboard removed - no state updates needed
-                    // this.updateKeyboardState();
+                    this.updateKeyboardState();
                     this.checkGameEnd(guess);
                 }
             }, i * 150 + 300);
@@ -1012,6 +1001,7 @@ class WordleGame {
             setTimeout(() => this.showMessage('Game Over', this.targetWord, 'Better luck next time!'), 800);
         }
         this.updateStats();
+        this.updateKeyboardState();
     }
 
     celebrateWin() {
@@ -1219,7 +1209,7 @@ class WordleGame {
         
         this.startNewGame();
         this.createBoard();
-        // this.resetKeyboard(); // Keyboard removed
+        this.resetKeyboard();
         this.updateStats();
         this.announceToScreenReader('New game started');
     }

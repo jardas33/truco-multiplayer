@@ -4,10 +4,74 @@ console.log('🚨 CRITICAL: lobby.js is executing at:', new Date().toISOString()
 // Global variables
 // socket is already declared in variables.js
 // gameInitialized is already declared in variables.js
+let pendingTrucoCreateRoom = false;
+let pendingTrucoJoinRoomCode = null;
 
 // Helper function to get room code from window.roomId
 function getRoomCode() {
     return typeof window.roomId === 'object' ? window.roomId.roomId : window.roomId;
+}
+
+function setTrucoLobbyButtonsEnabled(enabled) {
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+
+    if (createRoomBtn) {
+        createRoomBtn.disabled = !enabled;
+    }
+
+    if (joinRoomBtn) {
+        joinRoomBtn.disabled = !enabled;
+    }
+}
+
+function retryTrucoCreateRoomWhenConnected() {
+    if (pendingTrucoCreateRoom) {
+        return;
+    }
+
+    pendingTrucoCreateRoom = true;
+    const retry = () => {
+        if (!pendingTrucoCreateRoom) {
+            return;
+        }
+
+        pendingTrucoCreateRoom = false;
+        createRoom();
+    };
+
+    socket.once('connect', retry);
+    setTimeout(() => {
+        if (pendingTrucoCreateRoom) {
+            if (typeof socket.off === 'function') {
+                socket.off('connect', retry);
+            }
+            retry();
+        }
+    }, 150);
+}
+
+function retryTrucoJoinRoomWhenConnected(roomCode) {
+    pendingTrucoJoinRoomCode = roomCode;
+
+    const retry = () => {
+        const queuedRoomCode = pendingTrucoJoinRoomCode;
+        pendingTrucoJoinRoomCode = null;
+
+        if (queuedRoomCode) {
+            joinRoom();
+        }
+    };
+
+    socket.once('connect', retry);
+    setTimeout(() => {
+        if (pendingTrucoJoinRoomCode === roomCode) {
+            if (typeof socket.off === 'function') {
+                socket.off('connect', retry);
+            }
+            retry();
+        }
+    }, 150);
 }
 
 // Initialize socket and lobby when the document is ready
@@ -20,8 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
         GameFramework.initialize('truco');
     }
     
-    // Wait for p5.js to be ready
-    setTimeout(initGame, 100);
+    initGame();
 });
 
 function initGame() {
@@ -30,6 +93,15 @@ function initGame() {
         initSocket();
         setupButtonListeners();
         gameInitialized = true;
+        window.trucoLobbyReady = true;
+
+        if (window.pendingTrucoLobbyAction === 'create') {
+            window.pendingTrucoLobbyAction = null;
+            createRoom();
+        } else if (window.pendingTrucoLobbyAction === 'join') {
+            window.pendingTrucoLobbyAction = null;
+            joinRoom();
+        }
     }
 }
 
@@ -48,10 +120,12 @@ function initSocket() {
         socket.on('connect', () => {
             console.log('Connected to server');
             console.log('🔌 SOCKET CONNECTED:', socket.id);
+            setTrucoLobbyButtonsEnabled(true);
         });
 
         socket.on('disconnect', () => {
             console.log('🔌 SOCKET DISCONNECTED');
+            setTrucoLobbyButtonsEnabled(false);
         });
 
         // ✅ CRITICAL TEST: Add a simple test event listener
@@ -2336,9 +2410,13 @@ function setupButtonListeners() {
         createRoomBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (window.trucoLobbyPointerHandled) {
+                return;
+            }
             console.log('Create Room clicked - preventing default behavior');
             createRoom();
         };
+        createRoomBtn.disabled = !(socket && socket.connected);
     } else {
         console.error('❌ Create Room button not found!');
     }
@@ -2347,9 +2425,13 @@ function setupButtonListeners() {
     const joinRoomBtn = document.getElementById('joinRoomBtn');
     if (joinRoomBtn) {
         joinRoomBtn.onclick = () => {
+            if (window.trucoLobbyPointerHandled) {
+                return;
+            }
             console.log('Join Room clicked');
             joinRoom();
         };
+        joinRoomBtn.disabled = !(socket && socket.connected);
     }
 
     // Add Bot button
@@ -2484,14 +2566,18 @@ function createRoom() {
     // ✅ createRoom function called
     
     if (!socket) {
-        console.error('❌ Socket not initialized in createRoom');
-        alert('Socket not initialized. Please refresh the page.');
+        console.log('Socket not initialized in createRoom - initializing and retrying after connect');
+        initSocket();
+    }
+
+    if (!socket) {
+        console.error('❌ Socket initialization failed in createRoom');
         return;
     }
     
     if (!socket.connected) {
-        console.error('❌ Socket not connected in createRoom');
-        alert('Not connected to server. Please check your connection.');
+        console.log('Socket not connected in createRoom - queueing create after connect');
+        retryTrucoCreateRoomWhenConnected();
         return;
     }
     
@@ -2510,12 +2596,23 @@ function createRoom() {
 
 function joinRoom() {
     if (!socket) {
-        console.error('Socket not initialized in joinRoom');
-        return;
+        console.log('Socket not initialized in joinRoom - initializing and retrying after connect');
+        initSocket();
     }
     
     const roomCode = document.getElementById('roomInput').value;
     if (roomCode) {
+        if (!socket) {
+            console.error('Socket initialization failed in joinRoom');
+            return;
+        }
+
+        if (!socket.connected) {
+            console.log('Socket not connected in joinRoom - queueing join after connect');
+            retryTrucoJoinRoomWhenConnected(roomCode);
+            return;
+        }
+
         // Check if we're already in this room
         if (window.roomId === roomCode) {
             console.log('Already in room:', roomCode);

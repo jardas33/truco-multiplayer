@@ -7,307 +7,287 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Games Collection</title>
-    <script>
-        // Ensure title stays set
-        document.title = 'Games Collection';
-        setInterval(() => {
-            if (document.title !== 'Games Collection') {
-                document.title = 'Games Collection';
-            }
-        }, 100);
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
     <style>
+        :root {
+            --menu-bg: #06100f;
+            --menu-panel: rgba(7, 13, 14, 0.84);
+            --menu-panel-strong: rgba(12, 18, 20, 0.94);
+            --menu-border: rgba(255, 221, 139, 0.24);
+            --menu-border-hot: rgba(255, 221, 139, 0.72);
+            --menu-gold: #f0be5b;
+            --menu-cream: #fff3d4;
+            --menu-green: #6fdeaa;
+            --menu-blue: #70bdf4;
+            --menu-red: #ff766f;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background: url('Images/background.jpg') center center fixed;
+            background:
+                linear-gradient(180deg, rgba(3, 7, 9, 0.78), rgba(3, 7, 9, 0.94)),
+                url('Images/background.jpg') center center fixed;
             background-size: cover;
-            font-family: 'Arial', sans-serif;
+            color: var(--menu-cream);
+            font-family: Arial, sans-serif;
             overflow-x: hidden;
             overflow-y: auto;
         }
 
         #mainMenu {
-            position: relative;
             min-height: 100vh;
+            box-sizing: border-box;
+            padding: clamp(24px, 4vw, 48px);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            z-index: 1000;
-            padding: 40px 20px;
+            justify-content: center;
+            gap: clamp(22px, 4vh, 36px);
+        }
+
+        .menu-header {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 24px;
         }
 
         .game-title {
-            color: #FFD700;
-            font-size: 3.5em;
-            font-weight: bold;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
-            margin-bottom: 20px;
-            text-align: center;
+            margin: 0;
+            color: var(--menu-cream);
+            font-size: clamp(42px, 7vw, 92px);
+            line-height: 0.92;
+            letter-spacing: 0;
+            text-shadow: 0 18px 44px rgba(0, 0, 0, 0.56);
         }
 
         .game-subtitle {
-            color: #ffffff;
-            font-size: 1.2em;
-            margin-bottom: 40px;
-            text-align: center;
-            opacity: 0.9;
+            max-width: 420px;
+            margin: 0 0 8px;
+            color: rgba(255, 246, 220, 0.74);
+            font-size: clamp(15px, 1.8vw, 18px);
+            line-height: 1.45;
+            text-align: right;
         }
 
         .games-grid {
+            width: min(1180px, 100%);
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
-            max-width: 1400px;
-            width: 95%;
-            padding: 20px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
         }
 
         .game-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-height: 218px;
+            box-sizing: border-box;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            color: inherit;
+            text-decoration: none;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+                var(--menu-panel);
+            border: 1px solid var(--menu-border);
+            border-radius: 8px;
+            box-shadow: 0 18px 54px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(12px);
+            transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
         }
 
-        .game-card:hover {
-            transform: translateY(-5px);
-            border-color: #FFD700;
-            box-shadow: 0 12px 40px rgba(255,215,0,0.3);
-            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05));
+        .game-card:hover,
+        .game-card:focus-visible {
+            transform: translateY(-4px);
+            border-color: var(--menu-border-hot);
+            background:
+                linear-gradient(180deg, rgba(255, 221, 139, 0.13), rgba(255, 255, 255, 0.04)),
+                var(--menu-panel-strong);
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(255, 221, 139, 0.18);
+        }
+
+        .game-card:focus-visible {
+            outline: 3px solid var(--menu-gold);
+            outline-offset: 4px;
+        }
+
+        .game-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
 
         .game-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .game-name {
-            color: #ffffff;
-            font-size: 1.4em;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .game-description {
-            color: rgba(255,255,255,0.8);
-            font-size: 0.9em;
-            line-height: 1.4;
-            margin-bottom: 15px;
-        }
-
-        .game-players {
-            color: #FFD700;
-            font-size: 0.8em;
-            font-weight: bold;
+            width: 46px;
+            height: 46px;
+            display: inline-grid;
+            place-items: center;
+            color: #07100f;
+            background: var(--menu-gold);
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.18);
         }
 
         .game-status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: bold;
-            margin-top: 10px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1;
+            color: #06100f;
         }
 
-        .status-new {
-            background: #4CAF50;
+        .status-classic { background: var(--menu-gold); }
+        .status-popular { background: var(--menu-blue); }
+        .status-new { background: var(--menu-green); }
+
+        .game-name {
+            margin: 0;
             color: white;
+            font-size: 20px;
+            line-height: 1.08;
+            font-weight: 900;
         }
 
-        .status-popular {
-            background: #FF9800;
-            color: white;
+        .game-description {
+            margin: 0;
+            color: rgba(255, 246, 220, 0.76);
+            font-size: 14px;
+            line-height: 1.42;
         }
 
-        .status-classic {
-            background: #9C27B0;
-            color: white;
+        .game-players {
+            margin-top: auto;
+            color: var(--menu-gold);
+            font-size: 13px;
+            font-weight: 900;
         }
 
-        /* Floating card animations */
-        .floating-card {
-            position: absolute;
-            opacity: 0.1;
-            animation: float 6s ease-in-out infinite;
+        @media (max-width: 1080px) {
+            .games-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
+        @media (max-width: 720px) {
+            #mainMenu {
+                justify-content: flex-start;
+                padding: 24px 14px;
+            }
+
+            .menu-header {
+                display: block;
+            }
+
+            .game-subtitle {
+                margin-top: 12px;
+                text-align: left;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .game-card {
+                min-height: 176px;
+            }
         }
 
-        .floating-card:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
-        .floating-card:nth-child(2) { top: 20%; right: 15%; animation-delay: 1s; }
-        .floating-card:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 2s; }
-        .floating-card:nth-child(4) { bottom: 15%; right: 25%; animation-delay: 3s; }
-        .floating-card:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
-        .floating-card:nth-child(6) { top: 60%; right: 10%; animation-delay: 5s; }
+        @media (prefers-reduced-motion: reduce) {
+            .game-card {
+                transition: none;
+            }
 
-        /* Responsive design */
-        @media (max-width: 1200px) {
-            .games-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        
-        @media (max-width: 768px) {
-            .game-title { font-size: 2.5em; }
-            .games-grid { grid-template-columns: 1fr; }
-            .game-card { padding: 20px; }
+            .game-card:hover,
+            .game-card:focus-visible {
+                transform: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="mainMenu">
-        <!-- Floating card decorations -->
-        <div class="floating-card">🃏</div>
-        <div class="floating-card">♠️</div>
-        <div class="floating-card">♥️</div>
-        <div class="floating-card">♦️</div>
-        <div class="floating-card">♣️</div>
-        <div class="floating-card">🃏</div>
+    <main id="mainMenu">
+        <header class="menu-header">
+            <h1 class="game-title">Games Collection</h1>
+            <p class="game-subtitle">A polished table of card, board, word, and arcade games.</p>
+        </header>
 
-        <h1 class="game-title">🎮 Games Collection</h1>
-        <p class="game-subtitle">Choose your favorite game</p>
-        
-        <div class="games-grid">
-            <!-- TRUCO -->
-            <div class="game-card" onclick="selectGame('truco')">
-                <span class="game-icon">🃏</span>
-                <div class="game-name">TRUCO</div>
-                <div class="game-description">Classic Brazilian trick-taking game with bluffing and strategy. Call Truco to raise the stakes!</div>
-                <div class="game-players">2-4 Players</div>
-                <div class="game-status status-classic">CLASSIC</div>
-            </div>
+        <nav class="games-grid" aria-label="Games">
+            <a class="game-card" href="/truco" data-game="truco">
+                <span class="game-card-top"><span class="game-icon">TR</span><span class="game-status status-classic">CLASSIC</span></span>
+                <h2 class="game-name">TRUCO</h2>
+                <p class="game-description">Brazilian trick-taking with bluffing, partner pressure, and rising stakes.</p>
+                <span class="game-players">2-4 Players</span>
+            </a>
 
-            <!-- TEXAS HOLD'EM POKER -->
-            <div class="game-card" onclick="selectGame('poker')">
-                <span class="game-icon">♠️</span>
-                <div class="game-name">TEXAS HOLD'EM POKER</div>
-                <div class="game-description">The world's most popular poker variant. Bet, bluff, and build the best 5-card hand!</div>
-                <div class="game-players">2-8 Players</div>
-                <div class="game-status status-popular">POPULAR</div>
-            </div>
+            <a class="game-card" href="/poker" data-game="poker">
+                <span class="game-card-top"><span class="game-icon">&spades;</span><span class="game-status status-popular">POPULAR</span></span>
+                <h2 class="game-name">TEXAS HOLD'EM POKER</h2>
+                <p class="game-description">Bet, call, bluff, and read the table through a full five-card board.</p>
+                <span class="game-players">2-8 Players</span>
+            </a>
 
-            <!-- BLACKJACK -->
-            <div class="game-card" onclick="selectGame('blackjack')">
-                <span class="game-icon">🃏</span>
-                <div class="game-name">BLACKJACK</div>
-                <div class="game-description">Beat the dealer by getting as close to 21 as possible without going over. Hit, stand, double down!</div>
-                <div class="game-players">1-7 Players</div>
-                <div class="game-status status-classic">CLASSIC</div>
-            </div>
+            <a class="game-card" href="/blackjack" data-game="blackjack">
+                <span class="game-card-top"><span class="game-icon">21</span><span class="game-status status-classic">CLASSIC</span></span>
+                <h2 class="game-name">BLACKJACK</h2>
+                <p class="game-description">Beat the dealer by balancing hits, stands, doubles, and bust risk.</p>
+                <span class="game-players">1-7 Players</span>
+            </a>
 
-            <!-- GO FISH -->
-            <div class="game-card" onclick="selectGame('go-fish')">
-                <span class="game-icon">🐟</span>
-                <div class="game-name">GO FISH</div>
-                <div class="game-description">Collect matching pairs by asking other players for cards. Perfect for families!</div>
-                <div class="game-players">2-6 Players</div>
-                <div class="game-status status-new">FAMILY</div>
-            </div>
+            <a class="game-card" href="/go-fish" data-game="go-fish">
+                <span class="game-card-top"><span class="game-icon">GF</span><span class="game-status status-new">FAMILY</span></span>
+                <h2 class="game-name">GO FISH</h2>
+                <p class="game-description">Ask, draw, and complete books through readable turn-by-turn play.</p>
+                <span class="game-players">2-6 Players</span>
+            </a>
 
-            <!-- WAR -->
-            <div class="game-card" onclick="selectGame('war')">
-                <span class="game-icon">⚔️</span>
-                <div class="game-name">WAR</div>
-                <div class="game-description">Simple and exciting! Compare cards and battle to win the deck. Great for beginners!</div>
-                <div class="game-players">2-4 Players</div>
-                <div class="game-status status-new">SIMPLE</div>
-            </div>
+            <a class="game-card" href="/war" data-game="war">
+                <span class="game-card-top"><span class="game-icon">WR</span><span class="game-status status-new">SIMPLE</span></span>
+                <h2 class="game-name">WAR</h2>
+                <p class="game-description">Fast card battles with clear outcomes and escalating war rounds.</p>
+                <span class="game-players">2-4 Players</span>
+            </a>
 
-            <!-- PRINCE OF PERSIA -->
-            <div class="game-card" onclick="selectGame('prince-of-persia')">
-                <span class="game-icon">⚔️👑</span>
-                <div class="game-name">PRINCE OF PERSIA</div>
-                <div class="game-description">The classic platformer! Run, jump, and fight your way through the palace to save the princess.</div>
-                <div class="game-players">1 Player</div>
-                <div class="game-status status-classic">CLASSIC</div>
-            </div>
+            <a class="game-card" href="/prince-of-persia" data-game="prince-of-persia">
+                <span class="game-card-top"><span class="game-icon">PP</span><span class="game-status status-classic">ARCADE</span></span>
+                <h2 class="game-name">PRINCE OF PERSIA</h2>
+                <p class="game-description">Classic platforming wrapped in a clean, focused arcade frame.</p>
+                <span class="game-players">1 Player</span>
+            </a>
 
-            <!-- BATTLESHIP -->
-            <div class="game-card" onclick="selectGame('battleship')">
-                <span class="game-icon">🚢</span>
-                <div class="game-name">BATTLESHIP</div>
-                <div class="game-description">Strategic naval combat! Place your fleet and hunt down the enemy ships. Sink them all to win!</div>
-                <div class="game-players">1-2 Players</div>
-                <div class="game-status status-new">STRATEGY</div>
-            </div>
+            <a class="game-card" href="/battleship-menu" data-game="battleship">
+                <span class="game-card-top"><span class="game-icon">BS</span><span class="game-status status-new">STRATEGY</span></span>
+                <h2 class="game-name">BATTLESHIP</h2>
+                <p class="game-description">Place the fleet, read the grid, and hunt ships through clean salvos.</p>
+                <span class="game-players">1-2 Players</span>
+            </a>
 
-            <!-- WORDLE -->
-            <div class="game-card" onclick="selectGame('wordle')">
-                <span class="game-icon">📝</span>
-                <div class="game-name">WORDLE</div>
-                <div class="game-description">Guess the 5-letter word in 6 tries! Use color clues to figure out the hidden word. Perfect word puzzle game!</div>
-                <div class="game-players">1 Player</div>
-                <div class="game-status status-popular">PUZZLE</div>
-            </div>
-        </div>
-    </div>
+            <a class="game-card" href="/wordle" data-game="wordle">
+                <span class="game-card-top"><span class="game-icon">W5</span><span class="game-status status-popular">PUZZLE</span></span>
+                <h2 class="game-name">WORDLE</h2>
+                <p class="game-description">Six focused guesses, strong keyboard feedback, and crisp word clues.</p>
+                <span class="game-players">1 Player</span>
+            </a>
+        </nav>
+    </main>
 
     <script>
-        // Game selection function
-        function selectGame(gameType) {
-            console.log(`🎮 Selected game: ${gameType}`);
-            
-            // Store selected game type
-            localStorage.setItem('selectedGame', gameType);
-            
-            // Navigate to the appropriate game
-            switch(gameType) {
-                case 'truco':
-                    window.location.href = '/truco';
-                    break;
-                case 'poker':
-                    window.location.href = '/poker';
-                    break;
-                case 'blackjack':
-                    window.location.href = '/blackjack';
-                    break;
-                case 'go-fish':
-                    window.location.href = '/go-fish';
-                    break;
-                case 'war':
-                    window.location.href = '/war';
-                    break;
-                case 'prince-of-persia':
-                    window.location.href = '/prince-of-persia';
-                    break;
-                case 'battleship':
-                    window.location.href = '/battleship-menu';
-                    break;
-                case 'wordle':
-                    window.location.href = '/wordle';
-                    break;
-                default:
-                    console.error('Unknown game type:', gameType);
-            }
-        }
-
-        // Add some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            const gameCards = document.querySelectorAll('.game-card');
-            
-            gameCards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px) scale(1.02)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
+        document.querySelectorAll('[data-game]').forEach((card) => {
+            card.addEventListener('click', () => {
+                localStorage.setItem('selectedGame', card.dataset.game);
             });
         });
     </script>

@@ -275,18 +275,21 @@ class UIUtils {
         const popup = document.createElement('div');
         popup.style.cssText = `
             position: fixed;
-            top: 50%;
+            top: 76px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
-            padding: 20px 30px;
-            border-radius: 10px;
+            padding: 14px 18px;
+            border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             z-index: 10000;
-            font-size: 16px;
-            text-align: center;
+            font-size: 14px;
+            line-height: 1.35;
+            text-align: left;
             border: 2px solid #FFD700;
+            max-width: min(360px, calc(100vw - 48px));
+            pointer-events: none;
         `;
         popup.textContent = message;
         
@@ -617,6 +620,14 @@ class GameFramework {
         const socket = window.gameFramework.socket;
         if (!socket) {
             console.error('❌ Socket not available for joinRoom');
+            return;
+        }
+        if (!socket.connected) {
+            console.error('❌ Socket not connected');
+            socket.once('connect', () => {
+                console.log('✅ Socket connected, retrying joinRoom');
+                this.joinRoom(roomCode);
+            });
             return;
         }
         console.log('🎮 Joining room:', roomCode);
@@ -1044,5 +1055,3 @@ window.CardRenderer = CardRenderer;
 window.GameUtils = GameUtils;
 window.NavigationManager = NavigationManager;
 window.GameFramework = GameFramework;
-
-

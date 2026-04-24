@@ -14,117 +14,136 @@
             box-sizing: border-box;
         }
 
+        html {
+            min-height: 100%;
+            background: #060606;
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-            font-family: 'Arial', sans-serif;
-            overflow-x: hidden;
-            overflow-y: auto;
+            height: 100vh;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow: hidden;
+            color: white;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at 50% 18%, rgba(255, 215, 0, 0.12), transparent 32%),
+                linear-gradient(135deg, #060606, #171007 52%, #050505);
         }
 
         .game-container {
             position: relative;
-            width: 100%;
-            min-height: 100vh;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            padding: 80px 20px 120px 20px;
+            width: 100vw;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: minmax(210px, 280px) minmax(0, 800px) minmax(210px, 280px);
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 74px 24px 24px;
         }
 
         .game-header {
-            position: fixed;
-            top: 20px;
+            position: absolute;
+            top: 18px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 2000;
+            z-index: 20;
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
         }
 
         .nav-button {
-            background: linear-gradient(135deg, #6c757d, #5a6268);
+            min-height: 38px;
+            padding: 10px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 6px;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
             cursor: pointer;
-            font-weight: bold;
             font-size: 14px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
+            font-weight: 700;
+            letter-spacing: 0;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
         .nav-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
         }
 
         .nav-button.blue {
-            background: linear-gradient(135deg, #2196F3, #1976D2);
+            background: linear-gradient(135deg, #2196f3, #1976d2);
         }
 
         #game-wrapper {
+            position: relative;
+            grid-column: 2;
             width: 100%;
             max-width: 800px;
+            aspect-ratio: 4 / 3;
             margin: 0 auto;
-            position: relative;
-            background: #000;
-            border: 3px solid #FFD700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-            border-radius: 5px;
             overflow: hidden;
+            border: 3px solid #ffd700;
+            border-radius: 8px;
+            background: #000;
+            box-shadow: 0 0 32px rgba(255, 215, 0, 0.34), 0 28px 70px rgba(0, 0, 0, 0.6);
         }
 
         #game-iframe {
+            display: block;
             width: 100%;
-            height: 600px;
+            height: 100%;
             border: none;
             background: #000;
-            display: block;
         }
 
         .loading {
-            color: #FFD700;
-            font-size: 24px;
-            text-align: center;
-            padding: 40px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             position: absolute;
-            z-index: 100;
+            z-index: 10;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
+            min-width: 260px;
+            padding: 34px;
+            border: 1px solid rgba(255, 215, 0, 0.36);
             border-radius: 10px;
+            color: #ffd700;
+            background: rgba(0, 0, 0, 0.82);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .loading small {
+            display: block;
+            margin-top: 10px;
+            font-size: 15px;
+            font-weight: 500;
         }
 
         .controls-info {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.9);
-            color: #FFD700;
-            padding: 15px 25px;
+            position: relative;
+            grid-column: 1;
+            width: 100%;
+            max-width: 280px;
+            padding: 18px 20px;
+            border: 2px solid #ffd700;
             border-radius: 10px;
-            border: 2px solid #FFD700;
-            font-size: 14px;
+            color: #ffd700;
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             text-align: center;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 90%;
+            font-size: 14px;
         }
 
         .controls-info h3 {
             margin-bottom: 8px;
-            color: #FFD700;
+            color: #ffd700;
             font-size: 18px;
         }
 
@@ -133,81 +152,85 @@
             color: #fff;
         }
 
-        /* Responsive layout for larger screens - use sidebars */
-        @media (min-width: 1400px) {
-            .game-container {
-                flex-direction: row;
-                padding: 80px 0 20px 0;
-            }
+        .controls-info .note {
+            margin-top: 8px;
+            color: #ccc;
+            font-size: 12px;
+        }
 
-            .game-header {
-                left: 50%;
+        @media (max-width: 1080px) {
+            .game-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+                align-content: center;
+                padding: 76px 14px 14px;
             }
 
             #game-wrapper {
-                max-width: 800px;
-                margin: 0 auto;
+                grid-column: 1;
+                width: min(100%, 800px);
             }
 
             .controls-info {
-                position: fixed;
-                bottom: auto;
-                top: 50%;
-                left: 20px;
-                transform: translateY(-50%);
-                right: auto;
-                max-width: 300px;
+                grid-column: 1;
+                justify-self: center;
+                max-width: min(100%, 800px);
+                padding: 12px 14px;
             }
         }
 
-        @media (min-width: 1800px) {
+        @media (max-width: 560px) {
+            .game-container {
+                gap: 12px;
+            }
+
             .controls-info {
-                left: 50px;
+                font-size: 12px;
+            }
+
+            .nav-button {
+                padding: 9px 12px;
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <!-- Navigation Buttons - Fixed at top, outside game -->
         <div class="game-header">
             <button class="nav-button" id="backToMainMenuBtn" onclick="if(confirm('Are you sure you want to leave the game and return to the main menu?')) { window.location.href = '/'; }">
-                ← Back to Main Menu
+                &lt;- Back to Main Menu
             </button>
             <button class="nav-button blue" id="backToMenuBtn" onclick="if(confirm('Are you sure you want to return to the Prince of Persia menu?')) { window.location.reload(); }">
-                👑 Prince of Persia Menu
+                Prince of Persia Menu
             </button>
         </div>
 
-        <!-- Game Wrapper - Centered with max width -->
-        <div id="game-wrapper">
-            <div class="loading" id="loading-message">
-                👑 Loading Prince of Persia...<br>
-                <small style="font-size: 16px; margin-top: 10px; display: block;">Initializing game...</small>
-            </div>
-            <iframe id="game-iframe" src="https://princejs.com/" allow="gamepad; fullscreen" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+        <div class="controls-info">
+            <h3>Controls</h3>
+            <p><strong>Arrow Keys:</strong> Move Left/Right</p>
+            <p><strong>Up Arrow:</strong> Jump</p>
+            <p><strong>Spacebar:</strong> Draw Sword / Attack</p>
+            <p class="note">Classic Prince of Persia (1989) - original Apple II version</p>
         </div>
 
-        <!-- Controls Info - Fixed at bottom, outside game -->
-        <div class="controls-info">
-            <h3>⚔️ Controls</h3>
-            <p><strong>Arrow Keys:</strong> Move Left/Right | <strong>Up Arrow:</strong> Jump</p>
-            <p><strong>Spacebar:</strong> Draw Sword / Attack</p>
-            <p style="margin-top: 8px; font-size: 12px; color: #ccc;">Classic Prince of Persia (1989) - Original Apple II Version</p>
+        <div id="game-wrapper">
+            <div class="loading" id="loading-message">
+                Loading Prince of Persia...
+                <small>Initializing game...</small>
+            </div>
+            <iframe id="game-iframe" src="https://princejs.com/" allow="gamepad; fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
         </div>
     </div>
 
     <script>
-        // Initialize the game
         const gameIframe = document.getElementById('game-iframe');
         const loadingMessage = document.getElementById('loading-message');
 
-        // Show game immediately - PrinceJS loads quickly
         gameIframe.style.display = 'block';
 
-        // Wait for iframe to load
         gameIframe.addEventListener('load', () => {
-            console.log('👑 Prince of Persia game loaded');
+            console.log('Prince of Persia game loaded');
             setTimeout(() => {
                 if (loadingMessage) {
                     loadingMessage.style.display = 'none';
@@ -215,7 +238,6 @@
             }, 1000);
         });
 
-        // Fallback: hide loading after 2 seconds
         setTimeout(() => {
             if (loadingMessage) {
                 loadingMessage.style.display = 'none';

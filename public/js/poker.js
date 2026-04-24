@@ -604,8 +604,36 @@ class PokerClient {
     // Setup UI event listeners
     setupUI() {
         // Room controls
-        document.getElementById('createRoomBtn').onclick = () => this.createRoom();
-        document.getElementById('joinRoomBtn').onclick = () => this.joinRoom();
+        document.getElementById('createRoomBtn').onclick = () => {
+            window.pendingPokerLobbyAction = null;
+            this.createRoom();
+        };
+        document.getElementById('joinRoomBtn').onclick = () => {
+            window.pendingPokerLobbyAction = null;
+            this.joinRoom();
+        };
+        const setLobbyButtonsReady = (ready) => {
+            ['createRoomBtn', 'joinRoomBtn'].forEach((buttonId) => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.disabled = !ready;
+                    button.style.opacity = ready ? '1' : '0.55';
+                    button.style.cursor = ready ? 'pointer' : 'not-allowed';
+                }
+            });
+        };
+        const lobbySocket = window.gameFramework?.socket;
+        if (lobbySocket?.connected) {
+            setLobbyButtonsReady(true);
+        } else {
+            setLobbyButtonsReady(false);
+            lobbySocket?.once?.('connect', () => setLobbyButtonsReady(true));
+            setTimeout(() => {
+                if (window.gameFramework?.socket?.connected) {
+                    setLobbyButtonsReady(true);
+                }
+            }, 1200);
+        }
         document.getElementById('addBotBtn').onclick = () => this.addBot();
         document.getElementById('removeBotBtn').onclick = () => this.removeBot();
         document.getElementById('startGameBtn').onclick = () => {
@@ -636,10 +664,14 @@ class PokerClient {
         };
         
         // Betting controls
-        document.getElementById('foldBtn').onclick = () => this.playerAction('fold');
-        document.getElementById('callBtn').onclick = () => this.playerAction('call');
-        document.getElementById('raiseBtn').onclick = () => this.playerAction('raise');
-        document.getElementById('betBtn').onclick = () => this.playerAction('bet');
+        const foldBtn = document.getElementById('foldBtn');
+        const callBtn = document.getElementById('callBtn');
+        const raiseBtn = document.getElementById('raiseBtn');
+        const betBtn = document.getElementById('betBtn');
+        if (foldBtn) foldBtn.onclick = () => this.fold();
+        if (callBtn) callBtn.onclick = () => this.call();
+        if (raiseBtn) raiseBtn.onclick = () => this.raise();
+        if (betBtn) betBtn.onclick = () => this.raise();
         
         // Copy room code
         document.getElementById('copyRoomCodeBtn').onclick = () => this.copyRoomCode();
@@ -669,6 +701,15 @@ class PokerClient {
                 console.log('🎴 Poker Menu clicked');
                 window.location.reload();
             };
+        }
+
+        window.pokerLobbyReady = true;
+        if (window.pendingPokerLobbyAction === 'create') {
+            window.pendingPokerLobbyAction = null;
+            setTimeout(() => this.createRoom(), 0);
+        } else if (window.pendingPokerLobbyAction === 'join') {
+            window.pendingPokerLobbyAction = null;
+            setTimeout(() => this.joinRoom(), 0);
         }
     }
 
@@ -1109,6 +1150,14 @@ class PokerClient {
             console.log('🎴 Menu hidden during gameplay');
         }
         
+        const gameDiv = document.getElementById('Game');
+        if (gameDiv) {
+            gameDiv.style.display = 'block';
+            gameDiv.style.visibility = 'visible';
+            gameDiv.style.opacity = '1';
+            console.log('Poker game surface shown during gameplay');
+        }
+
         // Show Back to Main Menu and Poker Menu buttons during gameplay in center top
         // Remove any existing buttons first to prevent duplicates
         const existingBackBtn = document.getElementById('backToMainMenuBtnGame');
@@ -1489,12 +1538,36 @@ class PokerClient {
                 }
             }
         }
-        
         // Update community cards
         this.updateCommunityCardsDisplay();
         
         // Update player areas
         this.updatePlayerAreas();
+        this.syncBettingControlLabels();
+    }
+
+    syncBettingControlLabels() {
+        if (this.localPlayerIndex === undefined || !this.game || !this.game.players) return;
+        const localPlayer = this.game.players[this.localPlayerIndex];
+        if (!localPlayer) return;
+
+        const callAmount = Math.max(0, this.game.currentBet - (localPlayer.currentBet || 0));
+        const callBtn = document.getElementById('callBtn');
+        if (callBtn) {
+            callBtn.textContent = callAmount > 0 ? `Call $${callAmount}` : 'Check';
+        }
+
+        const bigBlind = this.game.bigBlind || 20;
+        const minRaiseTotal = Math.min((localPlayer.currentBet || 0) + (localPlayer.chips || 0), (this.game.currentBet || 0) + bigBlind);
+        const raiseBtn = document.getElementById('raiseBtn');
+        if (raiseBtn) {
+            raiseBtn.textContent = `Raise to $${minRaiseTotal}`;
+        }
+
+        const betBtn = document.getElementById('betBtn');
+        if (betBtn) {
+            betBtn.textContent = 'Min Raise';
+        }
     }
 
     // Update community cards display
@@ -1573,6 +1646,7 @@ class PokerClient {
         const foldBtn = document.getElementById('foldBtn');
         const callBtn = document.getElementById('callBtn');
         const raiseBtn = document.getElementById('raiseBtn');
+        const betBtn = document.getElementById('betBtn');
         const allInBtn = document.getElementById('allInBtn');
         const betAmountInput = document.getElementById('betAmount');
         const currentBetInfo = document.getElementById('currentBetInfo');
@@ -1587,6 +1661,11 @@ class PokerClient {
 
         if (raiseBtn) {
             raiseBtn.onclick = () => this.raise();
+        }
+
+        if (betBtn) {
+            betBtn.onclick = () => this.raise();
+            betBtn.textContent = 'Min Raise';
         }
 
         if (allInBtn) {
@@ -1620,6 +1699,13 @@ class PokerClient {
             if (localPlayer) {
                 const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
                 callBtn.textContent = callAmount > 0 ? `✅ Call $${callAmount}` : '✅ Check';
+            }
+        }
+        if (callBtn && this.localPlayerIndex !== undefined) {
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            if (localPlayer) {
+                const callAmount = this.game.currentBet - (localPlayer.currentBet || 0);
+                callBtn.textContent = callAmount > 0 ? `Call $${callAmount}` : 'Check';
             }
         }
     }
@@ -1906,6 +1992,18 @@ class PokerClient {
             const isValidRaise = betAmount >= minRaiseAmount && totalBetDesired <= maxBet;
             raiseBtn.textContent = isValidRaise ? `📈 Raise $${betAmount}` : `📈 Raise $${minRaiseAmount} (min)`;
         }
+        if (this.localPlayerIndex !== undefined && this.game.players[this.localPlayerIndex]) {
+            const localPlayer = this.game.players[this.localPlayerIndex];
+            const callAmount = Math.max(0, this.game.currentBet - (localPlayer.currentBet || 0));
+            if (callBtn) {
+                callBtn.textContent = callAmount > 0 ? `Call $${callAmount}` : 'Check';
+            }
+            if (raiseBtn) {
+                const targetTotal = betAmount > 0 ? betAmount : minRaiseTotal;
+                const isValidTarget = targetTotal >= minRaiseTotal && targetTotal <= maxBet;
+                raiseBtn.textContent = isValidTarget ? `Raise to $${targetTotal}` : `Raise to $${minRaiseTotal} min`;
+            }
+        }
     }
 
     // Sound system
@@ -2085,6 +2183,229 @@ class PokerClient {
 }
 
 // POKER RENDERING FUNCTIONS
+const POKER_THEME = {
+    felt: [17, 107, 80],
+    feltDark: [7, 52, 44],
+    railDark: [48, 28, 19],
+    rail: [115, 67, 35],
+    gold: [240, 190, 91],
+    cream: [255, 246, 220],
+    panel: [9, 13, 17],
+    blue: [65, 151, 222],
+    red: [204, 70, 64],
+    purple: [125, 91, 214],
+    teal: [65, 186, 143]
+};
+
+function pokerScale() {
+    return constrain(Math.min(width / 1280, height / 720), 0.72, 1.08);
+}
+
+function pokerTableMetrics() {
+    const scale = pokerScale();
+    return {
+        centerX: width / 2,
+        centerY: height * (height < 680 ? 0.47 : 0.49),
+        tableWidth: Math.min(width * 0.84, 1120 * scale),
+        tableHeight: Math.min(height * 0.6, 470 * scale),
+        scale
+    };
+}
+
+function pokerCommunityLayout() {
+    const metrics = pokerTableMetrics();
+    const cardWidth = 76 * metrics.scale;
+    const cardHeight = 106 * metrics.scale;
+    const spacing = 16 * metrics.scale;
+    const totalWidth = (5 * cardWidth) + (4 * spacing);
+
+    return {
+        ...metrics,
+        cardWidth,
+        cardHeight,
+        spacing,
+        totalWidth,
+        startX: metrics.centerX - totalWidth / 2,
+        slotY: metrics.centerY - cardHeight / 2 - 42 * metrics.scale
+    };
+}
+
+function pokerPlayerCardMetrics() {
+    const scale = pokerScale();
+    const cardWidth = 58 * scale;
+    const cardHeight = 81 * scale;
+    const spacing = 7 * scale;
+
+    return {
+        scale,
+        cardWidth,
+        cardHeight,
+        spacing,
+        totalWidth: (2 * cardWidth) + spacing,
+        halfWidth: ((2 * cardWidth) + spacing) / 2
+    };
+}
+
+function pokerPhaseLabel(phase) {
+    const labels = {
+        waiting: 'Waiting',
+        preflop: 'Pre-Flop',
+        flop: 'Flop',
+        turn: 'Turn',
+        river: 'River',
+        showdown: 'Showdown',
+        finished: 'Finished'
+    };
+    return labels[String(phase || 'waiting').toLowerCase()] || String(phase || 'Waiting');
+}
+
+function pokerPlayerLayout(index, total) {
+    const metrics = pokerTableMetrics();
+    const safeTotal = Math.max(total || 1, 1);
+    const localIndex = window.pokerClient?.localPlayerIndex || 0;
+    const seatOffset = (index - localIndex + safeTotal) % safeTotal;
+    const angle = (TWO_PI / safeTotal) * seatOffset + HALF_PI;
+    const radiusX = Math.min(width * 0.37, metrics.tableWidth * 0.47);
+    const radiusY = Math.min(height * 0.3, metrics.tableHeight * 0.54);
+    let x = metrics.centerX + cos(angle) * radiusX;
+    let y = metrics.centerY + sin(angle) * radiusY;
+    const isBottom = sin(angle) > 0.55;
+    const isTop = sin(angle) < -0.55;
+
+    if (isBottom) {
+        y += Math.max(42, 66 * metrics.scale);
+    }
+    if (isTop) {
+        y -= Math.max(12, 24 * metrics.scale);
+    }
+
+    const panelW = 174 * metrics.scale;
+    const panelH = 82 * metrics.scale;
+    const margin = 18 * metrics.scale;
+    x = constrain(x, panelW / 2 + margin, width - panelW / 2 - margin);
+    y = constrain(y, panelH / 2 + margin, height - panelH / 2 - 28 * metrics.scale);
+
+    return {
+        x,
+        y,
+        angle,
+        panelW,
+        panelH,
+        isBottom,
+        isTop,
+        isSide: Math.abs(cos(angle)) > Math.abs(sin(angle)),
+        scale: metrics.scale
+    };
+}
+
+function pokerPlayerCardLayout(index, total) {
+    const layout = pokerPlayerLayout(index, total);
+    const community = pokerCommunityLayout();
+    const cards = pokerPlayerCardMetrics();
+    const clearance = 18 * cards.scale;
+    const panelTop = layout.y - layout.panelH / 2;
+    const panelBottom = layout.y + layout.panelH / 2;
+    let y;
+
+    if (layout.isBottom) {
+        y = panelTop - cards.cardHeight - clearance;
+        y = Math.max(y, community.slotY + community.cardHeight + clearance);
+        y = Math.min(y, panelTop - cards.cardHeight - 10 * cards.scale);
+    } else if (layout.isTop) {
+        y = panelBottom + clearance;
+        if (y + cards.cardHeight > community.slotY - clearance) {
+            y = panelTop - cards.cardHeight - clearance;
+        }
+    } else {
+        y = panelBottom + 11 * cards.scale;
+    }
+
+    y = constrain(y, 14 * cards.scale, height - cards.cardHeight - 16 * cards.scale);
+
+    return {
+        ...cards,
+        x: layout.x,
+        y,
+        midY: y + cards.cardHeight / 2,
+        layout
+    };
+}
+
+function pokerRoundRect(x, y, w, h, r, fillColor, strokeColor, strokeW = 1) {
+    push();
+    if (fillColor) fill(...fillColor);
+    else noFill();
+    if (strokeColor) {
+        stroke(...strokeColor);
+        strokeWeight(strokeW);
+    } else {
+        noStroke();
+    }
+    rect(x, y, w, h, r);
+    pop();
+}
+
+function pokerText(label, x, y, size, fillColor, align = CENTER, style = NORMAL) {
+    push();
+    noStroke();
+    fill(...fillColor);
+    textAlign(align, CENTER);
+    textSize(size);
+    textStyle(style);
+    text(label, x, y);
+    pop();
+}
+
+function pokerIndicatorAnchor(index, type, stackIndex = 0, stackCount = 1) {
+    const total = window.game?.players?.length || 1;
+    const layout = pokerPlayerLayout(index, total);
+    const cardLayout = pokerPlayerCardLayout(index, total);
+    const tokenGap = 76 * layout.scale;
+    const stackOffset = (stackIndex - (stackCount - 1) / 2) * 37 * layout.scale;
+    let x;
+    let y = cardLayout.midY + stackOffset;
+
+    if (layout.isBottom || layout.isTop) {
+        if (type === 'blind') {
+            x = cardLayout.x - cardLayout.halfWidth - tokenGap;
+        } else {
+            x = cardLayout.x + cardLayout.halfWidth + tokenGap + (type === 'bet' ? 10 * layout.scale : 0);
+            y += type === 'bet' ? -19 * layout.scale : 19 * layout.scale;
+        }
+    } else if (layout.isSide) {
+        const isRightSeat = cos(layout.angle) > 0;
+        const inward = isRightSeat ? -1 : 1;
+        x = cardLayout.x + inward * (cardLayout.halfWidth + tokenGap);
+        y = cardLayout.y + cardLayout.cardHeight * (type === 'blind' ? 0.22 : (type === 'chips' ? 0.52 : 0.82));
+    } else {
+        x = cardLayout.x + (type === 'blind' ? -1 : 1) * (cardLayout.halfWidth + tokenGap);
+    }
+
+    x = constrain(x, 64 * layout.scale, width - 64 * layout.scale);
+    y = constrain(y, 96 * layout.scale, height - 76 * layout.scale);
+    return { x, y };
+}
+
+function drawPokerToken(x, y, label, amount, colors) {
+    const textValue = amount !== undefined && amount !== null ? `${label} $${amount}` : label;
+    const tokenW = Math.max(68, textValue.length * 7.4);
+    push();
+    fill(0, 0, 0, 105);
+    noStroke();
+    rect(x - tokenW / 2 + 3, y - 16 + 4, tokenW, 32, 16);
+    fill(...colors);
+    stroke(255, 255, 255, 165);
+    strokeWeight(1.5);
+    rect(x - tokenW / 2, y - 16, tokenW, 32, 16);
+    fill(10, 13, 16);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(10);
+    textStyle(BOLD);
+    text(textValue, x, y);
+    pop();
+}
+
 function drawGameState() {
     if (!window.game || !window.game.players) {
         // Reduced logging to prevent console spam
@@ -2101,16 +2422,18 @@ function drawGameState() {
         console.log('Drawing poker game state');
     }
     
-    // Draw background image
+    // Draw the casino room backdrop. The card art still carries the game detail; the
+    // background stays quiet so the table and actions remain readable.
     push();
-    imageMode(CORNER);
-    if (backgroundImage && backgroundImage.width > 0) {
-        // Draw the actual background image
-        image(backgroundImage, 0, 0, width, height);
-    } else {
-        // Fallback to solid background
-        background(0, 100, 0);
+    background(5, 8, 11);
+    noStroke();
+    for (let i = 0; i < 7; i++) {
+        const alpha = 38 - i * 4;
+        fill(17 + i * 3, 55 + i * 6, 45 + i * 5, alpha);
+        ellipse(width / 2, height * 0.43, width * (0.55 + i * 0.12), height * (0.42 + i * 0.08));
     }
+    fill(0, 0, 0, 72);
+    rect(0, 0, width, height);
     pop();
     
     // Draw poker table elements
@@ -2127,91 +2450,110 @@ function drawGameState() {
 }
 
 function drawPokerTable() {
-    const centerX = width/2;
-    const centerY = height/2;
-    const tableWidth = width * 0.75; // Slightly smaller to avoid edge artifacts
-    const tableHeight = height * 0.55; // Slightly smaller to avoid edge artifacts
+    const { centerX, centerY, tableWidth, tableHeight, scale } = pokerTableMetrics();
     
     push();
     
-    // Draw table shadow (more realistic)
-    fill(0, 0, 0, 80);
+    fill(0, 0, 0, 128);
     noStroke();
-    ellipse(centerX + 8, centerY + 8, tableWidth + 16, tableHeight + 16);
+    ellipse(centerX, centerY + 34 * scale, tableWidth + 74 * scale, tableHeight + 74 * scale);
     
-    // Draw table rim (outermost) - clean ellipse, no extensions
-    fill(101, 67, 33);
+    fill(...POKER_THEME.railDark);
     noStroke();
-    ellipse(centerX, centerY, tableWidth, tableHeight);
+    ellipse(centerX, centerY, tableWidth + 58 * scale, tableHeight + 58 * scale);
     
-    // Draw table edge
-    fill(139, 69, 19);
-    noStroke();
-    ellipse(centerX, centerY, tableWidth - 25, tableHeight - 20);
+    fill(...POKER_THEME.rail);
+    ellipse(centerX, centerY, tableWidth + 36 * scale, tableHeight + 36 * scale);
     
-    // Draw main table felt - clean gradient without weird shapes
-    fill(0, 100, 0); // Base green felt color
-    noStroke();
-    ellipse(centerX, centerY, tableWidth - 50, tableHeight - 40);
+    fill(198, 141, 69);
+    ellipse(centerX, centerY, tableWidth + 8 * scale, tableHeight + 8 * scale);
+
+    fill(...POKER_THEME.feltDark);
+    ellipse(centerX, centerY, tableWidth - 28 * scale, tableHeight - 26 * scale);
+
+    fill(...POKER_THEME.felt);
+    ellipse(centerX, centerY - 2 * scale, tableWidth - 68 * scale, tableHeight - 64 * scale);
     
-    // Draw subtle felt texture dots
-    fill(0, 120, 0, 30);
+    noFill();
+    stroke(255, 246, 220, 42);
+    strokeWeight(2 * scale);
+    ellipse(centerX, centerY - 2 * scale, tableWidth - 144 * scale, tableHeight - 136 * scale);
+
+    stroke(4, 35, 30, 90);
+    strokeWeight(3 * scale);
+    ellipse(centerX, centerY + 8 * scale, tableWidth - 235 * scale, tableHeight - 205 * scale);
+
+    fill(255, 255, 255, 12);
     noStroke();
-    for (let i = 0; i < 15; i++) {
-        const angle = (TWO_PI / 15) * i;
-        const x = centerX + cos(angle) * (tableWidth * 0.2);
-        const y = centerY + sin(angle) * (tableHeight * 0.2);
-        ellipse(x, y, 6, 6);
+    for (let i = 0; i < 34; i++) {
+        const angle = (TWO_PI / 34) * i;
+        const ring = i % 3 === 0 ? 0.32 : 0.21;
+        const x = centerX + cos(angle) * tableWidth * ring;
+        const y = centerY + sin(angle) * tableHeight * ring;
+        ellipse(x, y, 3 * scale, 3 * scale);
     }
+
+    fill(255, 246, 220, 32);
+    textAlign(CENTER, CENTER);
+    textSize(16 * scale);
+    textStyle(BOLD);
+    text('TEXAS HOLD EM', centerX, centerY + tableHeight * 0.27);
     
     pop();
 }
 
 function drawCommunityCards() {
-    // Safety check: ensure game and community cards exist
-    if (!window.game || !window.game.communityCards || !Array.isArray(window.game.communityCards) || window.game.communityCards.length === 0) {
+    if (!window.game) {
         return;
     }
     
-    // Filter out invalid cards
-    const validCards = window.game.communityCards.filter(card => card && card.name);
-    if (validCards.length === 0) {
-        return;
-    }
-    
-    const centerX = width/2;
-    const centerY = height/2;
-    const cardWidth = 80;   // Optimized size for better layout
-    const cardHeight = 112; // Maintain aspect ratio
-    const spacing = 20;     // Better spacing
-    
-    // Draw community cards in the center with better styling
-    const totalWidth = (validCards.length - 1) * (cardWidth + spacing);
-    const startX = centerX - totalWidth / 2;
-    
-    validCards.forEach((card, index) => {
-        // Additional safety check for each card
+    const {
+        centerX,
+        scale,
+        cardWidth,
+        cardHeight,
+        spacing,
+        totalWidth,
+        startX,
+        slotY
+    } = pokerCommunityLayout();
+    const validCards = Array.isArray(window.game.communityCards)
+        ? window.game.communityCards.filter(card => card && card.name)
+        : [];
+
+    push();
+    textAlign(CENTER, CENTER);
+    textSize(11 * scale);
+    textStyle(BOLD);
+    fill(255, 246, 220, 150);
+    noStroke();
+    text('BOARD', centerX, slotY - 22 * scale);
+    pop();
+
+    for (let index = 0; index < 5; index++) {
+        const x = startX + index * (cardWidth + spacing);
+        const card = validCards[index];
+
+        push();
+        fill(3, 20, 18, 78);
+        stroke(255, 246, 220, 52);
+        strokeWeight(1.4 * scale);
+        rect(x, slotY, cardWidth, cardHeight, 9 * scale);
+        pop();
+        
         if (!card || !card.name) {
-            return; // Skip invalid cards
+            continue;
         }
         
-        const x = startX + index * (cardWidth + spacing);
-        const y = centerY - cardHeight/2;
-        
-        // Add subtle floating animation
-        const time = millis() * 0.001;
-        const floatOffset = sin(time + index * 0.5) * 2;
-        const finalY = y + floatOffset;
-        
-        // Use enhanced CardRenderer with options for community cards
-        CardRenderer.drawCard(x, finalY, cardWidth, cardHeight, card, true, {
+        const floatOffset = sin(millis() * 0.001 + index * 0.5) * (1.5 * scale);
+        CardRenderer.drawCard(x, slotY + floatOffset, cardWidth, cardHeight, card, true, {
             shadowOffset: 4,
             shadowOpacity: 80,
             borderWidth: 3,
             cornerRadius: 10,
             highlight: false
         });
-    });
+    }
 }
 
 function drawPlayers() {
@@ -2397,15 +2739,118 @@ function drawPlayers() {
     });
 }
 
+function drawPlayers() {
+    if (!window.game || !window.game.players || !Array.isArray(window.game.players) || window.game.players.length === 0) {
+        return;
+    }
+
+    const playerPositions = [];
+
+    window.game.players.forEach((player, index) => {
+        const layout = pokerPlayerLayout(index, window.game.players.length);
+        const { x, y, panelW, panelH, scale } = layout;
+        const isCurrent = index === window.game.currentPlayer && !player.isFolded;
+        const isLocalPlayer = index === window.pokerClient?.localPlayerIndex;
+        const statusText = player.isFolded ? 'Folded' : (player.isAllIn ? 'All In' : (isCurrent ? 'To Act' : 'In Hand'));
+        const chipsDisplay = (player.chips !== undefined && player.chips !== null) ? Math.max(0, player.chips) : 0;
+
+        playerPositions.push({ x, y, player, index, layout });
+
+        push();
+
+        if (isCurrent) {
+            const pulse = 70 + sin(millis() * 0.004) * 28;
+            fill(80, 176, 232, pulse);
+            noStroke();
+            rect(x - panelW / 2 - 8 * scale, y - panelH / 2 - 8 * scale, panelW + 16 * scale, panelH + 16 * scale, 16 * scale);
+        }
+
+        fill(0, 0, 0, 118);
+        noStroke();
+        rect(x - panelW / 2 + 4 * scale, y - panelH / 2 + 6 * scale, panelW, panelH, 12 * scale);
+
+        const border = isLocalPlayer ? [242, 193, 93, 220] : (isCurrent ? [90, 190, 255, 230] : [255, 255, 255, 78]);
+        fill(10, 14, 18, player.isFolded ? 206 : 238);
+        stroke(...border);
+        strokeWeight(isCurrent || isLocalPlayer ? 2.5 * scale : 1.2 * scale);
+        rect(x - panelW / 2, y - panelH / 2, panelW, panelH, 12 * scale);
+
+        fill(isLocalPlayer ? 242 : 58, isLocalPlayer ? 193 : 88, isLocalPlayer ? 93 : 98, isLocalPlayer ? 220 : 150);
+        noStroke();
+        ellipse(x - panelW / 2 + 26 * scale, y, 35 * scale, 35 * scale);
+
+        fill(255, 246, 220);
+        textAlign(CENTER, CENTER);
+        textSize(13 * scale);
+        textStyle(BOLD);
+        text((player.name || `P${index + 1}`).slice(0, 1).toUpperCase(), x - panelW / 2 + 26 * scale, y + 1 * scale);
+
+        textAlign(LEFT, CENTER);
+        textSize(14 * scale);
+        fill(255, 255, 255);
+        textStyle(BOLD);
+        text((player.name || `Player ${index + 1}`).slice(0, 17), x - panelW / 2 + 50 * scale, y - 20 * scale);
+
+        const statusColor = player.isFolded ? [150, 150, 150] : (player.isAllIn ? [255, 120, 112] : (isCurrent ? [105, 205, 255] : [111, 223, 164]));
+        fill(...statusColor);
+        noStroke();
+        textSize(10 * scale);
+        textStyle(BOLD);
+        text(statusText.toUpperCase(), x - panelW / 2 + 50 * scale, y);
+
+        fill(...POKER_THEME.gold);
+        textSize(13 * scale);
+        textStyle(BOLD);
+        text(`$${chipsDisplay}`, x - panelW / 2 + 50 * scale, y + 20 * scale);
+
+        if (player.isFolded) {
+            fill(0, 0, 0, 96);
+            noStroke();
+            rect(x - panelW / 2, y - panelH / 2, panelW, panelH, 12 * scale);
+        }
+
+        pop();
+    });
+
+    playerPositions.forEach(({ x, y, player, index, layout }) => {
+        if (player.isFolded) return;
+
+        const localPlayerIndex = window.pokerClient?.localPlayerIndex;
+        const isLocalPlayer = index === localPlayerIndex;
+        const gamePhase = window.game?.gamePhase || '';
+        const isShowdown = gamePhase.toLowerCase() === 'showdown';
+        const activePlayers = window.game?.players?.filter(p => !p.isFolded) || [];
+        const allActivePlayersAllIn = activePlayers.length > 0 && activePlayers.every(p => p.isAllIn);
+        const shouldShowCardImages = isLocalPlayer || isShowdown || allActivePlayersAllIn;
+        let cardsToShow = [];
+
+        if (isLocalPlayer && player.hand && player.hand.length > 0) {
+            cardsToShow = player.hand;
+        } else if (!isLocalPlayer) {
+            if ((isShowdown || allActivePlayersAllIn) && player.hand && player.hand.length > 0) {
+                cardsToShow = player.hand;
+            } else {
+                cardsToShow = [
+                    { name: 'back', suit: null, rank: null },
+                    { name: 'back', suit: null, rank: null }
+                ];
+            }
+        }
+
+        if (cardsToShow.length > 0) {
+            const cardLayout = pokerPlayerCardLayout(index, window.game.players.length);
+            drawPlayerCards(cardLayout.x, cardLayout.y, cardsToShow, shouldShowCardImages);
+        }
+    });
+}
+
 function drawPlayerCards(x, y, hand, shouldShowCardImages) {
     // Safety check: ensure hand is valid array
     if (!hand || !Array.isArray(hand) || hand.length === 0) {
         return; // Don't draw anything if hand is invalid
     }
     
-    const cardWidth = 60;   // Smaller cards for better layout
-    const cardHeight = 84;  // Maintain aspect ratio
-    const spacing = 8;      // Tighter spacing
+    const { cardWidth, cardHeight, spacing } = pokerPlayerCardMetrics();
     
     hand.forEach((card, index) => {
         // Safety check: ensure card is valid
@@ -2434,162 +2879,107 @@ function drawPlayerCards(x, y, hand, shouldShowCardImages) {
 }
 
 function drawPot() {
-    // Safety check: ensure game exists
     if (!window.game) {
         return;
     }
-    
-    // Pot position: center when no community cards, move left when community cards appear
-    const hasCommunityCards = window.game.communityCards && Array.isArray(window.game.communityCards) && window.game.communityCards.length > 0;
-    
-    // Calculate how far left to move based on community card width
-    let potOffsetX = 0;
-    if (hasCommunityCards) {
-        const cardWidth = 80;
-        const spacing = 20;
-        const numCards = window.game.communityCards.length;
-        const totalCardWidth = (numCards * cardWidth) + ((numCards - 1) * spacing);
-        const potWidth = 130; // Pot ellipse width
-        // Move pot to the left of the cards with some padding
-        potOffsetX = -(totalCardWidth / 2 + potWidth / 2 + 40); // 40px padding
-    }
-    
-    const centerX = width/2 + potOffsetX;
-    const centerY = height/2; // True center, not offset
-    
+
+    const metrics = pokerCommunityLayout();
+    const centerX = metrics.centerX;
+    const centerY = metrics.slotY - 38 * metrics.scale;
+    const potValue = window.game.pot || 0;
+
     push();
-    
-    // Add subtle pulsing animation to the pot
-    const time = millis() * 0.002;
-    const pulseScale = 1 + sin(time) * 0.03;
-    const potWidth = 130 * pulseScale;
-    const potHeight = 70 * pulseScale;
-    
-    // Draw pot shadow with more depth
-    fill(0, 0, 0, 120);
+
+    fill(0, 0, 0, 116);
     noStroke();
-    ellipse(centerX + 4, centerY + 4, potWidth, potHeight);
-    
-    // Draw pot background with more subtle gold color
-    fill(218, 165, 32); // More subtle gold
-    stroke(184, 134, 11); // Darker gold border
-    strokeWeight(4);
-    ellipse(centerX, centerY, potWidth, potHeight);
-    
-    // Draw pot inner circle with gradient effect
-    fill(255, 215, 0, 200); // Lighter gold inner
+    rect(centerX - 90 * metrics.scale + 4, centerY - 27 * metrics.scale + 5, 180 * metrics.scale, 54 * metrics.scale, 27 * metrics.scale);
+
+    fill(17, 20, 20, 232);
+    stroke(...POKER_THEME.gold, 210);
+    strokeWeight(1.6 * metrics.scale);
+    rect(centerX - 90 * metrics.scale, centerY - 27 * metrics.scale, 180 * metrics.scale, 54 * metrics.scale, 27 * metrics.scale);
+
+    for (let i = 0; i < 4; i++) {
+        const chipX = centerX - 58 * metrics.scale + i * 12 * metrics.scale;
+        fill(180 + i * 14, 54 + i * 10, 47, 235);
+        stroke(255, 246, 220, 170);
+        strokeWeight(1 * metrics.scale);
+        ellipse(chipX, centerY + 1 * metrics.scale, 20 * metrics.scale, 20 * metrics.scale);
+    }
+
+    fill(255, 246, 220, 160);
     noStroke();
-    ellipse(centerX, centerY, 110 * pulseScale, 55 * pulseScale);
-    
-    // Draw pot text with better styling and larger size
-    textAlign(CENTER, CENTER);
-    textSize(20);
+    textAlign(LEFT, CENTER);
+    textSize(10 * metrics.scale);
     textStyle(BOLD);
-    
-    // Shadow for better readability
-    fill(0, 0, 0, 180);
-    text('POT', centerX + 2, centerY - 12);
-    text('$' + (window.game.pot || 0), centerX + 2, centerY + 8);
-    
-    // Main text with better color
-    fill(255, 255, 255);
-    stroke(0, 0, 0);
-    strokeWeight(2);
-    text('POT', centerX, centerY - 12);
-    text('$' + (window.game.pot || 0), centerX, centerY + 8);
-    
+    text('POT', centerX - 12 * metrics.scale, centerY - 10 * metrics.scale);
+    fill(...POKER_THEME.gold);
+    textSize(18 * metrics.scale);
+    text(`$${potValue}`, centerX - 12 * metrics.scale, centerY + 10 * metrics.scale);
+
     pop();
 }
 
 function drawGameInfo() {
     push();
-    
-    // Enhanced game info box with more details
-    const infoWidth = 240;
-    const infoHeight = window.game && window.game.players ? 140 : 80;
-    const infoX = 15;
-    const infoY = 15;
-    
-    // Background with better styling
-    fill(0, 0, 0, 180);
-    stroke(255, 215, 0); // Gold border
-    strokeWeight(2);
-    rect(infoX, infoY, infoWidth, infoHeight, 10);
-    
-    textAlign(LEFT, TOP);
-    textSize(14);
-    textStyle(BOLD);
-    
-    let yOffset = infoY + 20;
-    
-    // Phase
-    fill(255, 255, 255);
+
+    const scale = pokerScale();
+    const infoX = 18 * scale;
+    const infoY = 16 * scale;
+    const infoWidth = Math.min(325 * scale, width * 0.38);
+    const infoHeight = 74 * scale;
+    fill(6, 9, 12, 205);
+    stroke(255, 232, 180, 84);
+    strokeWeight(1.4 * scale);
+    rect(infoX, infoY, infoWidth, infoHeight, 8 * scale);
+
+    const playersCount = window.game?.players?.length || 0;
+    const currentBet = window.game?.currentBet || 0;
+    const phase = pokerPhaseLabel(window.game?.gamePhase);
+    const localPlayer = window.game?.players?.[window.pokerClient?.localPlayerIndex];
+    const localChips = localPlayer ? Math.max(0, localPlayer.chips || 0) : 0;
+
     noStroke();
-    text('Phase: ' + (window.game?.gamePhase || 'waiting'), infoX + 15, yOffset);
-    yOffset += 20;
-    
-    // Current bet
-    if (window.game && window.game.currentBet > 0) {
-        fill(255, 215, 0); // Gold
-        text('Current Bet: $' + window.game.currentBet, infoX + 15, yOffset);
-        yOffset += 20;
-    }
-    
-    // Total players
-    if (window.game && window.game.players && window.game.players.length > 0) {
-        fill(200, 200, 255);
-        text('Players: ' + window.game.players.length, infoX + 15, yOffset);
-        yOffset += 20;
-    } else {
-        // Show 0 players if game exists but no players
-        fill(200, 200, 255);
-        text('Players: 0', infoX + 15, yOffset);
-        yOffset += 20;
-    }
-    
-    // Local player chips
-    if (window.game && window.game.players && window.pokerClient && window.pokerClient.localPlayerIndex !== undefined) {
-        const localPlayer = window.game.players[window.pokerClient.localPlayerIndex];
-        if (localPlayer) {
-            fill(100, 255, 100);
-            // Safety check: ensure chips is valid
-            const localChipsDisplay = (localPlayer.chips !== undefined && localPlayer.chips !== null) ? Math.max(0, localPlayer.chips) : 0;
-            text('Your Chips: $' + localChipsDisplay, infoX + 15, yOffset);
-            yOffset += 20;
-            
-            // Current bet for local player
-            if (localPlayer.currentBet > 0) {
-                fill(255, 200, 100);
-                text('Your Bet: $' + localPlayer.currentBet, infoX + 15, yOffset);
-                yOffset += 20;
-            }
-        }
-    }
-    
-    // Pot amount
-    if (window.game && window.game.pot > 0) {
-        fill(255, 215, 0);
-        text('Pot: $' + window.game.pot, infoX + 15, yOffset);
-    }
-    
+    textAlign(LEFT, CENTER);
+    textStyle(BOLD);
+    textSize(11 * scale);
+    fill(255, 246, 220, 150);
+    text('PHASE', infoX + 16 * scale, infoY + 18 * scale);
+    fill(255, 255, 255);
+    textSize(17 * scale);
+    text(phase, infoX + 16 * scale, infoY + 42 * scale);
+
+    textSize(11 * scale);
+    fill(255, 246, 220, 150);
+    text('BET', infoX + 140 * scale, infoY + 18 * scale);
+    fill(...POKER_THEME.gold);
+    textSize(17 * scale);
+    text(`$${currentBet}`, infoX + 140 * scale, infoY + 42 * scale);
+
+    textSize(11 * scale);
+    fill(255, 246, 220, 150);
+    text('YOU', infoX + 230 * scale, infoY + 18 * scale);
+    fill(111, 223, 164);
+    textSize(17 * scale);
+    text(`$${localChips}`, infoX + 230 * scale, infoY + 42 * scale);
+
+    fill(255, 255, 255, 96);
+    textSize(10 * scale);
+    text(`${playersCount} players`, infoX + 16 * scale, infoY + 63 * scale);
+
     pop();
     
-    // Draw hand rankings button with better readability
     push();
-    // Dark background with white text for better contrast
-    fill(30, 30, 50, 240); // Dark blue-gray background
-    stroke(255, 215, 0); // Gold border
-    strokeWeight(2);
-    rect(width - 200, 20, 180, 40, 8);
-    
-    // White text with black outline for maximum readability
+    fill(6, 9, 12, 210);
+    stroke(255, 232, 180, 92);
+    strokeWeight(1.5 * scale);
+    rect(width - 200 * scale, 18 * scale, 180 * scale, 40 * scale, 8 * scale);
     fill(255, 255, 255);
     textAlign(CENTER, CENTER);
-    textSize(15);
+    textSize(14 * scale);
     textStyle(BOLD);
-    stroke(0, 0, 0);
-    strokeWeight(2);
-    text('Hand Rankings', width - 110, 40);
+    noStroke();
+    text('Hand Rankings', width - 110 * scale, 38 * scale);
     pop();
 }
 
@@ -3999,6 +4389,78 @@ function drawChipStack(x, y, totalChips, currentBet) {
     text('$' + totalChips, x, y + 40);
     
     pop();
+}
+
+// Compact indicator renderer. These definitions intentionally replace the verbose
+// legacy indicator functions above; the old placement logic had several edge-case
+// overlap and undefined-variable paths once a hand reached later streets.
+function drawBetIndicators() {
+    if (!window.game || !Array.isArray(window.game.players) || window.game.players.length < 2) {
+        window.betIndicatorPositions = new Map();
+        return;
+    }
+
+    const positions = new Map();
+    window.game.players.forEach((player, index) => {
+        if (!player || player.isFolded || !player.currentBet) return;
+        const pos = pokerIndicatorAnchor(index, 'bet');
+        positions.set(index, pos);
+        drawPokerToken(pos.x, pos.y, 'BET', player.currentBet, [238, 169, 77, 238]);
+    });
+    window.betIndicatorPositions = positions;
+}
+
+function drawChipIndicators() {
+    if (!window.game || !Array.isArray(window.game.players) || window.game.players.length < 2) {
+        window.chipIndicatorPositions = new Map();
+        return;
+    }
+
+    const positions = new Map();
+    window.game.players.forEach((player, index) => {
+        if (!player || player.isFolded) return;
+        const committed = Math.max(0, (player.totalBet || 0) - (player.currentBet || 0));
+        if (committed <= 0) return;
+        const pos = pokerIndicatorAnchor(index, 'chips');
+        positions.set(index, pos);
+        drawPokerToken(pos.x, pos.y, 'PUT IN', committed, [91, 201, 153, 236]);
+    });
+    window.chipIndicatorPositions = positions;
+}
+
+function drawBlindIndicators() {
+    if (!window.game || !Array.isArray(window.game.players) || window.game.players.length < 2 || !window.game.gamePhase) {
+        window.blindIndicatorPositions = new Map();
+        return;
+    }
+
+    const players = window.game.players;
+    const dealerPosition = window.game.dealerPosition !== undefined ? window.game.dealerPosition : 0;
+    const smallBlindPos = (dealerPosition + 1) % players.length;
+    const bigBlindPos = (dealerPosition + 2) % players.length;
+    const badgesByPlayer = new Map();
+    const addBadge = (index, badge) => {
+        if (!badgesByPlayer.has(index)) badgesByPlayer.set(index, []);
+        badgesByPlayer.get(index).push(badge);
+    };
+
+    addBadge(dealerPosition, { label: 'D', amount: null, color: [245, 231, 199, 238] });
+    addBadge(smallBlindPos, { label: 'SB', amount: window.game.smallBlind || 10, color: [91, 154, 220, 238] });
+    addBadge(bigBlindPos, { label: 'BB', amount: window.game.bigBlind || 20, color: [239, 194, 89, 238] });
+
+    const positions = new Map();
+
+    badgesByPlayer.forEach((badges, index) => {
+        const player = players[index];
+        if (!player || player.isFolded) return;
+        badges.forEach((badge, badgeIndex) => {
+            const pos = pokerIndicatorAnchor(index, 'blind', badgeIndex, badges.length);
+            positions.set(`${index}:${badge.label}`, pos);
+            drawPokerToken(pos.x, pos.y, badge.label, badge.amount, badge.color);
+        });
+    });
+
+    window.blindIndicatorPositions = positions;
 }
 
 // Hand rankings popup functions

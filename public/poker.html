@@ -8,18 +8,8 @@
     <meta http-equiv="Expires" content="0">
     <!-- Cache buster: 2024-01-15-001 -->
     <title>Texas Hold&#39;em Poker Menu</title>
-    <script>
-        // Ensure title stays set
-        var pokerTitle = "Texas Hold'em Poker Menu";
-        document.title = pokerTitle;
-        setInterval(() => {
-            if (document.title !== pokerTitle) {
-                document.title = pokerTitle;
-            }
-        }, 100);
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+    <script src="/libraries/p5.min.js"></script>
+    <script src="/libraries/p5.sound.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
@@ -394,6 +384,252 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        :root {
+            --poker-ink: #f7efe0;
+            --poker-muted: #b8c5bb;
+            --poker-panel: rgba(8, 12, 16, 0.78);
+            --poker-panel-strong: rgba(7, 10, 12, 0.92);
+            --poker-line: rgba(255, 232, 180, 0.28);
+            --poker-gold: #f2c15d;
+            --poker-green: #0f6f56;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 50% 36%, rgba(28, 105, 75, 0.72), transparent 42%),
+                linear-gradient(135deg, #06090c 0%, #12231e 48%, #08090d 100%);
+            color: var(--poker-ink);
+            font-family: Arial, Helvetica, sans-serif;
+            letter-spacing: 0;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 76%);
+            z-index: 0;
+        }
+
+        #Menu {
+            gap: 18px;
+            padding: 28px;
+            box-sizing: border-box;
+            background:
+                radial-gradient(circle at center, rgba(27, 122, 88, 0.42), transparent 54%),
+                rgba(4, 7, 9, 0.42);
+        }
+
+        .game-title {
+            margin: 0;
+            color: #fff7dc;
+            font-size: clamp(3rem, 8vw, 7rem);
+            line-height: 0.9;
+            text-transform: uppercase;
+            text-shadow:
+                0 2px 0 #5c341b,
+                0 18px 46px rgba(0,0,0,0.58),
+                0 0 34px rgba(242, 193, 93, 0.28);
+        }
+
+        .room-controls {
+            width: min(92vw, 560px);
+            min-width: 0;
+            max-height: min(76vh, 680px);
+            overflow: auto;
+            padding: 22px;
+            background: linear-gradient(180deg, rgba(14, 21, 24, 0.88), rgba(7, 10, 12, 0.8));
+            border: 1px solid var(--poker-line);
+            border-radius: 8px;
+            box-shadow: 0 22px 70px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .room-controls input {
+            width: min(100%, 220px);
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(0,0,0,0.18);
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .room-controls button,
+        #backToMainMenu,
+        #copyRoomCodeBtn,
+        #gameMenuBtn,
+        #backToMainMenuBtn {
+            border-radius: 6px !important;
+            min-height: 38px;
+            background: linear-gradient(180deg, #2b7d62, #155c47) !important;
+            border: 1px solid rgba(255,255,255,0.16) !important;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.28);
+            color: white !important;
+        }
+
+        #startGameBtn {
+            background: linear-gradient(180deg, #d59036, #9a5527) !important;
+        }
+
+        #removeBotBtn {
+            background: linear-gradient(180deg, #c84b46, #8e2628) !important;
+        }
+
+        .player-item {
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.07);
+        }
+
+        #Game {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 44%, rgba(22, 102, 76, 0.38), transparent 45%),
+                linear-gradient(145deg, #05070a, #10221d 44%, #07090c);
+        }
+
+        #Game canvas {
+            z-index: 1 !important;
+        }
+
+        .poker-table {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .pot-display,
+        .hand-rankings,
+        .community-cards {
+            display: none !important;
+        }
+
+        .betting-controls {
+            left: 50%;
+            right: auto;
+            bottom: clamp(10px, 2.4vh, 24px);
+            transform: translateX(-50%);
+            width: min(94vw, 720px);
+            padding: 14px;
+            box-sizing: border-box;
+            gap: 10px;
+            align-items: stretch;
+            background: linear-gradient(180deg, var(--poker-panel), var(--poker-panel-strong));
+            border: 1px solid var(--poker-line);
+            border-radius: 8px;
+            box-shadow: 0 18px 46px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+        }
+
+        .betting-status {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            color: var(--poker-muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .betting-status div {
+            padding: 8px 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.055);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .betting-controls-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .betting-controls button,
+        .betting-controls input {
+            width: 100%;
+            min-height: 44px;
+            border-radius: 6px !important;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .betting-controls button {
+            border: 1px solid rgba(255,255,255,0.16);
+            color: white;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.24);
+        }
+
+        #betAmount {
+            padding: 0 12px !important;
+            background: rgba(255,255,255,0.94) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            color: #0c1513 !important;
+            font-weight: 700;
+        }
+
+        .call-button {
+            background: linear-gradient(180deg, #367fc6, #1d5d9d);
+        }
+
+        .raise-button,
+        .bet-button {
+            background: linear-gradient(180deg, #d7903a, #995222);
+        }
+
+        .fold-button {
+            background: linear-gradient(180deg, #c84b46, #8e2628);
+        }
+
+        .all-in-button {
+            background: linear-gradient(180deg, #7c5bd6, #49369f) !important;
+        }
+
+        #historyLog {
+            right: clamp(12px, 2vw, 28px);
+            bottom: 142px;
+            width: min(320px, 88vw);
+            border-radius: 8px;
+            background: var(--poker-panel-strong);
+            border-color: var(--poker-line);
+            pointer-events: auto;
+        }
+
+        @media (max-width: 760px) {
+            .betting-controls {
+                width: calc(100vw - 18px);
+                padding: 10px;
+            }
+
+            .betting-status,
+            .betting-controls-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .betting-status div:last-child,
+            .betting-controls-row:first-of-type button:last-child {
+                grid-column: 1 / -1;
+            }
+
+            .game-title {
+                font-size: clamp(2.4rem, 14vw, 4.8rem);
+            }
+        }
     </style>
 </head>
 <body>
@@ -405,8 +641,8 @@
             ← Back to Main Menu
           </button>
           
-          <button id="joinRoomBtn">Join Room</button>
-          <button id="createRoomBtn">Create Room</button>
+          <button id="joinRoomBtn" disabled onpointerdown="window.pendingPokerLobbyAction='join'" onclick="window.pendingPokerLobbyAction='join'; if (window.pokerLobbyReady && window.pokerClient) { window.pendingPokerLobbyAction=null; window.pokerClient.joinRoom(); }">Join Room</button>
+          <button id="createRoomBtn" disabled onpointerdown="window.pendingPokerLobbyAction='create'" onclick="window.pendingPokerLobbyAction='create'; if (window.pokerLobbyReady && window.pokerClient) { window.pendingPokerLobbyAction=null; window.pokerClient.createRoom(); }">Create Room</button>
           
           <!-- Room Code Display with Copy Button -->
                 <div id="roomCodeDisplay" style="display: none; margin: 10px 0; text-align: center;">
@@ -474,14 +710,19 @@
             </div>
             
             <div class="betting-controls" id="bettingControls" style="display: none;">
+                <div id="currentBetInfo" class="betting-status">
+                    <div>Current Bet: $0</div>
+                    <div>To Call: $0</div>
+                    <div>Your Chips: $0</div>
+                </div>
                 <div class="betting-controls-row">
                     <button id="foldBtn" class="fold-button">Fold</button>
                     <button id="callBtn" class="call-button">Call $<span id="callAmount">0</span></button>
                     <button id="raiseBtn" class="raise-button">Raise</button>
                 </div>
                 <div class="betting-controls-row">
-                    <input type="number" id="betAmount" placeholder="Bet amount" style="padding: 10px; border: none; border-radius: 5px; width: 120px; background: white; color: #333;">
-                    <button id="betBtn" class="bet-button">Bet</button>
+                    <input type="number" id="betAmount" placeholder="Raise to" style="padding: 10px; border: none; border-radius: 5px; width: 120px; background: white; color: #333;">
+                    <button id="betBtn" class="bet-button">Min Raise</button>
                     <button id="allInBtn" class="all-in-button" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: white; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">All In</button>
                 </div>
             </div>
@@ -504,12 +745,28 @@
     <script>
         // Add room-created class when room is created to hide Create/Join buttons
         document.addEventListener('DOMContentLoaded', function() {
+            const title = document.querySelector('.game-title');
+            if (title) title.textContent = "Texas Hold'em Poker";
+            const backToMain = document.getElementById('backToMainMenu');
+            if (backToMain) backToMain.textContent = 'Back to Main Menu';
+            const copyButton = document.getElementById('copyRoomCodeBtn');
+            if (copyButton) copyButton.textContent = 'Copy';
+            const copyMessage = document.getElementById('copySuccessMessage');
+            if (copyMessage) copyMessage.textContent = 'Room code copied to clipboard!';
+            const customizeHeading = document.querySelector('#playerCustomization h4');
+            if (customizeHeading) customizeHeading.textContent = 'Customize Your Player';
+            const pokerMenuButton = document.getElementById('backToMainMenuBtn');
+            if (pokerMenuButton) pokerMenuButton.textContent = 'Back to Poker Menu';
+
             // Listen for room creation events
             const createBtn = document.getElementById('createRoomBtn');
             const joinBtn = document.getElementById('joinRoomBtn');
             
             if (createBtn) {
                 createBtn.addEventListener('click', function() {
+                    if (!window.pokerLobbyReady) {
+                        window.pendingPokerLobbyAction = 'create';
+                    }
                     console.log('🎮 Create Room button clicked');
                     setTimeout(() => {
                         document.body.classList.add('room-created');
@@ -524,6 +781,9 @@
             
             if (joinBtn) {
                 joinBtn.addEventListener('click', function() {
+                    if (!window.pokerLobbyReady) {
+                        window.pendingPokerLobbyAction = 'join';
+                    }
                     console.log('🎮 Join Room button clicked');
                     setTimeout(() => {
                         document.body.classList.add('room-created');

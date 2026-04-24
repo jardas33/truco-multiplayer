@@ -7,14 +7,6 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Wordle - Word Puzzle Game</title>
-    <script>
-        document.title = 'Wordle - Word Puzzle Game';
-        setInterval(() => {
-            if (document.title !== 'Wordle - Word Puzzle Game') {
-                document.title = 'Wordle - Word Puzzle Game';
-            }
-        }, 100);
-    </script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/lobby-fixes.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -765,6 +757,349 @@
                 font-size: 0.85em;
             }
         }
+
+        /* Performance and readability polish */
+        body {
+            background:
+                radial-gradient(circle at 20% 18%, rgba(106, 170, 100, 0.22), transparent 30%),
+                radial-gradient(circle at 82% 12%, rgba(201, 180, 88, 0.18), transparent 34%),
+                linear-gradient(135deg, #111827 0%, #172033 48%, #101620 100%) !important;
+            background-attachment: fixed;
+            background-size: cover !important;
+            animation: none !important;
+        }
+
+        body::before {
+            display: none !important;
+        }
+
+        .menu-buttons,
+        .game-container,
+        .stats-bar,
+        .game-board,
+        .message,
+        .instructions-modal,
+        .info-button {
+            backdrop-filter: none !important;
+        }
+
+        .game-container {
+            margin-top: 92px !important;
+            padding: 22px 24px 28px !important;
+            border-radius: 16px !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .game-title {
+            animation: none !important;
+            letter-spacing: 0 !important;
+        }
+
+        .game-title::after {
+            content: none !important;
+        }
+
+        .stats-bar,
+        .game-board {
+            border-radius: 12px !important;
+        }
+
+        .letter-tile {
+            border-radius: 8px !important;
+        }
+
+        .keyboard {
+            width: min(100%, 560px);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .key {
+            min-width: 38px;
+            height: 44px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            margin: 0 !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+            color: #f8fafc;
+            font: 700 0.82rem 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+            transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+        }
+
+        .key:hover,
+        .key:focus-visible {
+            transform: translateY(-1px);
+            border-color: rgba(255, 215, 0, 0.65);
+            outline: none;
+        }
+
+        .key.wide {
+            min-width: 64px;
+            font-size: 0.72rem;
+        }
+
+        .key.correct {
+            background: #538d4e;
+            border-color: #6aaa64;
+        }
+
+        .key.present {
+            background: #b59f3b;
+            border-color: #c9b458;
+        }
+
+        .key.absent {
+            background: #3a3a3c;
+            border-color: #565758;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        @media (max-width: 560px) {
+            .keyboard {
+                gap: 6px;
+            }
+
+            .keyboard-row {
+                gap: 4px;
+            }
+
+            .key {
+                min-width: 28px;
+                height: 42px;
+                font-size: 0.74rem;
+            }
+
+            .key.wide {
+                min-width: 50px;
+                font-size: 0.64rem;
+            }
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            background-color: #101620 !important;
+        }
+
+        body {
+            background-attachment: scroll !important;
+        }
+
+        .menu-buttons {
+            top: 14px !important;
+            left: 50% !important;
+            right: auto !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            transform: translateX(-50%);
+        }
+
+        .menu-btn {
+            min-height: 40px !important;
+            padding: 9px 16px !important;
+            border-radius: 8px !important;
+        }
+
+        .info-button {
+            top: 14px !important;
+            left: 18px !important;
+            padding: 9px 15px !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 40px !important;
+            min-width: 40px !important;
+            border-radius: 8px !important;
+        }
+
+        .game-container {
+            margin-top: 68px !important;
+            max-width: 530px !important;
+            gap: 12px !important;
+        }
+
+        .game-title {
+            font-size: 2.15rem !important;
+            line-height: 1 !important;
+            text-shadow: 0 0 24px rgba(255, 215, 0, 0.32) !important;
+        }
+
+        .game-subtitle {
+            font-size: 0.88rem !important;
+            margin: 0 !important;
+        }
+
+        .stats-bar {
+            gap: 8px !important;
+            padding: 10px !important;
+        }
+
+        .stat-item {
+            padding: 9px 6px !important;
+            border-radius: 10px !important;
+        }
+
+        .stat-label {
+            font-size: 0.66rem !important;
+            letter-spacing: 0.04em !important;
+            margin-bottom: 5px !important;
+        }
+
+        .stat-value {
+            font-size: 1.15rem !important;
+        }
+
+        .game-board {
+            gap: 5px !important;
+            padding: 8px !important;
+            margin: 4px 0 !important;
+        }
+
+        .guess-row {
+            gap: 5px !important;
+        }
+
+        .letter-tile {
+            width: 50px !important;
+            height: 50px !important;
+            font-size: 1.55rem !important;
+        }
+
+        .key {
+            height: 40px !important;
+        }
+
+        .keyboard {
+            gap: 6px !important;
+        }
+
+        .keyboard-row {
+            gap: 5px !important;
+        }
+
+        @media (max-width: 560px) {
+            .menu-buttons {
+                top: 12px !important;
+            }
+
+            .menu-btn {
+                padding: 9px 13px !important;
+                font-size: 12px !important;
+            }
+
+            .info-button {
+                top: 12px !important;
+                left: 12px !important;
+                width: 40px !important;
+                height: 40px !important;
+                padding: 0 !important;
+                overflow: hidden;
+                font-size: 0 !important;
+            }
+
+            .info-button::after {
+                content: '?';
+                font-size: 17px;
+                font-weight: 800;
+            }
+
+            .game-container {
+                margin-top: 66px !important;
+                width: calc(100vw - 12px) !important;
+                max-width: calc(100vw - 12px) !important;
+                padding: 16px 10px 18px !important;
+                min-height: auto !important;
+                gap: 10px !important;
+                overflow: hidden !important;
+            }
+
+            .game-title {
+                font-size: 1.9rem !important;
+            }
+
+            .game-subtitle {
+                font-size: 0.82rem !important;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 4px !important;
+                padding: 6px !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .stat-item {
+                padding: 7px 3px !important;
+                min-width: 0;
+            }
+
+            .stat-label {
+                font-size: 0.48rem !important;
+                line-height: 1.15 !important;
+                margin-bottom: 4px !important;
+            }
+
+            .stat-value {
+                font-size: 0.92rem !important;
+            }
+
+            .game-board {
+                gap: 4px !important;
+                padding: 7px !important;
+            }
+
+            .guess-row {
+                gap: 4px !important;
+            }
+
+            .letter-tile {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 1.2rem !important;
+            }
+
+            .keyboard {
+                width: 100% !important;
+                max-width: 100% !important;
+                gap: 5px !important;
+            }
+
+            .keyboard-row {
+                gap: 3px !important;
+            }
+
+            .key {
+                min-width: 26px !important;
+                width: 26px !important;
+                height: 35px !important;
+                font-size: 0.65rem !important;
+                border-radius: 7px !important;
+                padding: 0 !important;
+                flex: 0 0 auto;
+            }
+
+            .key.wide {
+                min-width: 42px !important;
+                width: 42px !important;
+                font-size: 0.56rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -804,6 +1139,10 @@
         <!-- Game Board -->
         <div class="game-board" id="gameBoard">
             <!-- Rows will be generated by JavaScript -->
+        </div>
+
+        <div class="keyboard" id="keyboard" aria-label="On-screen keyboard">
+            <!-- Keys will be generated by JavaScript -->
         </div>
 
         <!-- Hidden input to trigger mobile keyboard -->
