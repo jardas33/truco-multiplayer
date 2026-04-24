@@ -219,6 +219,165 @@ button:hover {
     box-shadow: none;
 }
 
+/* Shared game lobby polish for older single-game menus */
+html,
+body {
+    background-color: #0b1412 !important;
+}
+
+#Menu {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+    padding: clamp(28px, 5vh, 52px) 24px !important;
+    display: flex;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: clamp(18px, 3vh, 30px) !important;
+    overflow-y: auto !important;
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 214, 118, 0.12), transparent 30%),
+        radial-gradient(circle at 22% 18%, rgba(54, 143, 106, 0.26), transparent 34%),
+        radial-gradient(circle at 82% 74%, rgba(36, 99, 89, 0.22), transparent 36%),
+        linear-gradient(135deg, rgba(6, 12, 13, 0.76), rgba(12, 27, 24, 0.52)) !important;
+}
+
+#Menu::before {
+    content: "" !important;
+    position: fixed !important;
+    left: 50% !important;
+    bottom: clamp(44px, 10vh, 110px) !important;
+    width: min(980px, 82vw) !important;
+    height: clamp(220px, 32vh, 340px) !important;
+    transform: translateX(-50%) !important;
+    border-radius: 999px !important;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(43, 136, 94, 0.34), rgba(5, 44, 33, 0.48) 52%, rgba(3, 18, 18, 0.72) 73%),
+        linear-gradient(180deg, rgba(255, 214, 112, 0.14), rgba(255, 214, 112, 0.02)) !important;
+    border: 1px solid rgba(255, 214, 112, 0.24) !important;
+    box-shadow:
+        0 36px 110px rgba(0, 0, 0, 0.48),
+        inset 0 0 0 10px rgba(0, 0, 0, 0.18),
+        inset 0 0 70px rgba(255, 214, 112, 0.08) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+#Menu .game-title {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    max-width: min(980px, 94vw) !important;
+    margin: 0 !important;
+    color: #fff2c9 !important;
+    font-size: clamp(44px, 6.2vw, 84px) !important;
+    line-height: 0.92 !important;
+    letter-spacing: 0 !important;
+    text-align: center !important;
+    text-shadow: 0 16px 38px rgba(0, 0, 0, 0.56), 0 0 22px rgba(255, 201, 93, 0.18) !important;
+}
+
+#Menu .room-controls {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: min(760px, calc(100vw - 40px)) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 40px) !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 18px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    background: linear-gradient(180deg, rgba(8, 14, 14, 0.9), rgba(4, 8, 8, 0.82)) !important;
+    border: 1px solid rgba(255, 214, 112, 0.45) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 22px 68px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(14px);
+}
+
+#Menu > * {
+    position: relative;
+    z-index: 1;
+}
+
+#Menu canvas {
+    pointer-events: none !important;
+}
+
+#Menu .room-controls input,
+#Menu .room-controls button {
+    border-radius: 8px !important;
+    margin: 0 !important;
+    min-height: 40px !important;
+}
+
+#Menu .room-controls input {
+    background: rgba(255, 250, 238, 0.96) !important;
+    border: 1px solid rgba(255, 214, 112, 0.8) !important;
+    color: #17120d !important;
+    text-shadow: none !important;
+    text-align: center !important;
+}
+
+#Menu .room-controls input::placeholder {
+    color: rgba(23, 18, 13, 0.55) !important;
+}
+
+#Menu #roomCodeDisplay,
+#Menu #playerCustomization,
+#Menu #playerList {
+    flex-basis: 100% !important;
+}
+
+#Menu #playerCustomization {
+    border-color: rgba(255, 214, 112, 0.42) !important;
+    background: rgba(20, 49, 33, 0.62) !important;
+}
+
+#Menu #playerList {
+    display: grid !important;
+    gap: 8px !important;
+    max-height: 190px !important;
+    overflow: auto !important;
+}
+
+#Menu #playerList > div {
+    border-radius: 8px !important;
+    background: rgba(13, 72, 38, 0.74) !important;
+    border: 1px solid rgba(105, 221, 128, 0.42) !important;
+}
+
+@media (max-width: 720px) {
+    #Menu {
+        padding: 22px 14px !important;
+        gap: 16px !important;
+    }
+
+    #Menu .game-title {
+        font-size: clamp(36px, 13vw, 60px) !important;
+    }
+
+    #Menu .room-controls {
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+        padding: 14px !important;
+    }
+
+    #Menu .room-controls input {
+        width: 100% !important;
+    }
+}
+
 /* ✅ New button styles */
 #addBotBtn {
     background-color: #4CAF50 !important; /* Green for add */
@@ -251,4 +410,47 @@ button:hover {
 
 #backToMainMenuBtn:hover {
     background-color: #1976D2 !important;
+}
+
+/* Shared interaction polish */
+button,
+input,
+select,
+textarea,
+a {
+    font-family: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+    outline: 3px solid #ffd66d !important;
+    outline-offset: 3px !important;
+}
+
+button:disabled,
+.room-controls button:disabled,
+#Menu .room-controls button:disabled {
+    opacity: 0.52 !important;
+    cursor: not-allowed !important;
+    filter: saturate(0.55) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+#Menu .room-controls button:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }

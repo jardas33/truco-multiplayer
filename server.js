@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
@@ -10,6 +11,84 @@ const io = require('socket.io')(http, {
 
 // Store active rooms
 const rooms = new Map();
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const LIBRARIES_DIR = path.join(__dirname, 'libraries');
+const VALID_GAME_TYPES = new Set(['truco', 'poker', 'blackjack', 'go-fish', 'war', 'battleship', 'wordle', 'prince-of-persia']);
+const MAX_PLAYERS_BY_GAME = {
+    truco: 4,
+    poker: 7,
+    blackjack: 7,
+    'go-fish': 6,
+    war: 4,
+    battleship: 2,
+    wordle: 1,
+    'prince-of-persia': 1
+};
+const MIN_PLAYERS_BY_GAME = {
+    truco: 4,
+    poker: 2,
+    blackjack: 1,
+    'go-fish': 2,
+    war: 2,
+    battleship: 2,
+    wordle: 1,
+    'prince-of-persia': 1
+};
+
+function publicFile(fileName) {
+    return path.join(PUBLIC_DIR, fileName);
+}
+
+function rawRoomCodeFrom(data) {
+    if (data && typeof data === 'object') {
+        return data.roomCode ?? data.roomId;
+    }
+    return data;
+}
+
+function normalizeRoomCode(value) {
+    if (value === undefined || value === null || value === '') {
+        return null;
+    }
+
+    const roomCode = String(value).trim().toUpperCase();
+    return /^[A-Z0-9]{1,16}$/.test(roomCode) ? roomCode : null;
+}
+
+function generateRoomCode() {
+    let roomCode;
+    do {
+        roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    } while (rooms.has(roomCode));
+    return roomCode;
+}
+
+function getRoomCode(data) {
+    return normalizeRoomCode(rawRoomCodeFrom(data));
+}
+
+function getGameType(data) {
+    const rawGameType = data && typeof data === 'object' ? data.gameType : undefined;
+    const gameType = typeof rawGameType === 'string' ? rawGameType.trim().toLowerCase() : 'truco';
+    return VALID_GAME_TYPES.has(gameType) ? gameType : 'truco';
+}
+
+function getMaxPlayers(gameType) {
+    return MAX_PLAYERS_BY_GAME[gameType] || 6;
+}
+
+function getMinPlayers(gameType) {
+    return MIN_PLAYERS_BY_GAME[gameType] || 2;
+}
+
+function normalizeNickname(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const nickname = value.trim().replace(/[\u0000-\u001F\u007F]/g, '');
+    return nickname.length > 0 && nickname.length <= 12 ? nickname : null;
+}
 
 // Helper function for Go Fish card values
 function getCardValue(rank) {
@@ -592,56 +671,61 @@ app.get('/test', (req, res) => {
     });
 });
 
+app.get('/favicon.ico', (req, res) => {
+    res.status(204).end();
+});
+
 // Root route - serve main menu
 app.get('/', (req, res) => {
     console.log('🏠 ROOT ROUTE: Serving main-menu.html');
-    res.sendFile(__dirname + '/public/main-menu.html');
+    res.sendFile(publicFile('main-menu.html'));
 });
 
 // Game routes
 app.get('/truco', (req, res) => {
     console.log('🎯 TRUCO ROUTE: Serving index.html');
-    res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(publicFile('index.html'));
 });
 
 app.get('/poker', (req, res) => {
-    res.sendFile(__dirname + '/public/poker.html');
+    res.sendFile(publicFile('poker.html'));
 });
 
 app.get('/blackjack', (req, res) => {
-    res.sendFile(__dirname + '/public/blackjack.html');
+    res.sendFile(publicFile('blackjack.html'));
 });
 
 app.get('/go-fish', (req, res) => {
-    res.sendFile(__dirname + '/public/go-fish.html');
+    res.sendFile(publicFile('go-fish.html'));
 });
 
 app.get('/war', (req, res) => {
-    res.sendFile(__dirname + '/public/war.html');
+    res.sendFile(publicFile('war.html'));
 });
 
 app.get('/prince-of-persia', (req, res) => {
     console.log('👑 PRINCE OF PERSIA ROUTE: Serving prince-of-persia.html');
-    res.sendFile(__dirname + '/public/prince-of-persia.html');
+    res.sendFile(publicFile('prince-of-persia.html'));
 });
 
 app.get('/battleship-menu', (req, res) => {
     console.log('🚢 BATTLESHIP MENU ROUTE: Serving battleship-menu.html');
-    res.sendFile(__dirname + '/public/battleship-menu.html');
+    res.sendFile(publicFile('battleship-menu.html'));
 });
 
 app.get('/battleship', (req, res) => {
     console.log('🚢 BATTLESHIP ROUTE: Serving battleship.html');
-    res.sendFile(__dirname + '/public/battleship.html');
+    res.sendFile(publicFile('battleship.html'));
 });
 
 app.get('/wordle', (req, res) => {
     console.log('📝 WORDLE ROUTE: Serving wordle.html');
-    res.sendFile(__dirname + '/public/wordle.html');
+    res.sendFile(publicFile('wordle.html'));
 });
 
 // Static file serving (after custom routes to avoid conflicts)
-app.use(express.static('public'));
+app.use('/libraries', express.static(LIBRARIES_DIR));
+app.use(express.static(PUBLIC_DIR));
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -682,7 +766,7 @@ io.on('connection', (socket) => {
         
         if (room && roomCode) {
             // ✅ CRITICAL FIX: Skip Prince of Persia (no bot replacement)
-            if (room.gameType === 'prince') {
+            if (room.gameType === 'prince-of-persia') {
                 console.log(`👑 Prince of Persia player ${socket.id} disconnected - skipping bot replacement`);
                 return;
             }
@@ -1015,8 +1099,10 @@ io.on('connection', (socket) => {
                 console.log(`👤 Player ${socket.id} disconnected from inactive game in room ${roomCode}`);
                 console.log(`🔍 DEBUG: Game active check result: ${isGameActive}`);
             }
-        } else {
+        } else if (roomCode) {
             console.log(`⚠️ Room ${roomCode} not found for disconnected socket ${socket.id}`);
+        } else {
+            console.log(`🔍 Socket ${socket.id} disconnected before joining a room`);
         }
     });
     
@@ -1656,7 +1742,11 @@ io.on('connection', (socket) => {
             if (callback && typeof callback === 'function') {
                 callback({ received: true, timestamp: Date.now() });
             }
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room || room.gameType !== 'blackjack') {
@@ -1887,7 +1977,11 @@ io.on('connection', (socket) => {
         console.log(`🃏🃏🃏 Handler - RoomId: ${data?.roomId}, PlayerIndex: ${data?.playerIndex}, Action: ${data?.action}`);
         
         try {
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -2290,9 +2384,9 @@ io.on('connection', (socket) => {
             }
             
             // Generic handler for other games
-            console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
+            console.log(`🎮 Player action in room: ${roomCode}`);
             if (room) {
-                io.to(data.roomId || data.roomCode).emit('playerAction', data);
+                io.to(roomCode).emit('playerAction', data);
             }
         } catch (error) {
             console.error(`❌❌❌ ERROR in playerAction handler:`, error);
@@ -2313,21 +2407,19 @@ io.on('connection', (socket) => {
     
     // Handle room creation
     socket.on('createRoom', (data) => {
-        let roomCode = data.roomCode || data;
-        const gameType = data.gameType || 'truco';
+        const requestedRoomCode = rawRoomCodeFrom(data);
+        let roomCode = normalizeRoomCode(requestedRoomCode);
+        const gameType = getGameType(data);
         
         console.log(`🔍 CREATEROOM EVENT RECEIVED! Room: ${roomCode}, Game: ${gameType}`);
-        // ✅ INPUT VALIDATION: Ensure room code is valid
-        if (roomCode && typeof roomCode === 'string') {
-            roomCode = roomCode.trim().toUpperCase();
-            // Only allow alphanumeric characters
-            if (!/^[A-Z0-9]+$/.test(roomCode)) {
-                console.log(`❌ Invalid room code format: ${roomCode}`);
-                socket.emit('error', 'Invalid room code format. Use only letters and numbers.');
-                return;
-            }
-        } else {
-            roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        if (requestedRoomCode && !roomCode) {
+            console.log(`❌ Invalid room code format: ${requestedRoomCode}`);
+            socket.emit('error', 'Invalid room code format. Use 1-16 letters and numbers.');
+            return;
+        }
+
+        if (!roomCode) {
+            roomCode = generateRoomCode();
         }
         
         // ✅ CHECK: Ensure room code doesn't already exist
@@ -2386,15 +2478,22 @@ io.on('connection', (socket) => {
             console.log(`🔍 JOINROOM EVENT RECEIVED! Socket ID: ${socket.id}`);
             console.log(`🔍 JOINROOM EVENT RECEIVED! Timestamp: ${new Date().toISOString()}`);
             
-            const roomCode = data.roomCode || data;
+            const roomCode = getRoomCode(data);
             console.log(`🔍 JOINROOM EVENT RECEIVED! Room: ${roomCode}`);
+
+            if (!roomCode) {
+                console.log(`❌ Invalid room code provided for join:`, data);
+                socket.emit('error', 'Invalid room code format. Use only letters and numbers.');
+                return;
+            }
+
             const room = rooms.get(roomCode);
             
             console.log(`🚪 User ${socket.id} attempting to join room: ${roomCode}`);
             console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
             console.log(`🔍 DEBUG: Room exists:`, !!room);
             console.log(`🔍 DEBUG: Data type:`, typeof data);
-            console.log(`🔍 DEBUG: Data.gameType:`, data.gameType);
+            console.log(`🔍 DEBUG: Data.gameType:`, data && typeof data === 'object' ? data.gameType : undefined);
             
             if (!room) {
             console.log(`❌ Room ${roomCode} not found`);
@@ -2407,10 +2506,7 @@ io.on('connection', (socket) => {
         }
 
         // ✅ CRITICAL FIX: Define max players per game type for joining
-        const maxPlayersJoin = room.gameType === 'truco' ? 4 : 
-                               (room.gameType === 'battleship' ? 2 : 
-                               (room.gameType === 'poker' ? 7 : 
-                               (room.gameType === 'war' ? 4 : 6))); // Truco: 4, Battleship: 2, Poker: 7, War: 4, others: 6
+        const maxPlayersJoin = getMaxPlayers(room.gameType);
         
         // For battleship rooms, handle reconnection by replacing disconnected players
         if (room.gameType === 'battleship' && room.players.length >= maxPlayersJoin) {
@@ -2524,11 +2620,17 @@ io.on('connection', (socket) => {
 
     // ✅ Handle battleship game events
     socket.on('battleshipPlayerReady', (data) => {
-        console.log(`🚢 Player ready for battleship game: ${data.playerId} in room ${data.roomId}`);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Player ready for battleship game: ${data.playerId} in room ${roomCode}`);
         console.log(`🚢 Socket ID: ${socket.id}`);
         console.log(`🚢 Data received:`, data);
         
-        const room = rooms.get(data.roomId);
+        const room = rooms.get(roomCode);
         console.log(`🚢 Room found:`, !!room);
         console.log(`🚢 Room game type:`, room?.gameType);
         console.log(`🚢 Room players:`, room?.players?.length);
@@ -2571,7 +2673,7 @@ io.on('connection', (socket) => {
                     console.log(`🚢 All players ready:`, allReady);
                     
                     if (allReady) {
-                        console.log(`🚢 Both players ready! Starting battleship game in room ${data.roomId}`);
+                        console.log(`🚢 Both players ready! Starting battleship game in room ${roomCode}`);
                         
                         // Find the room creator (Player 1) to assign first turn
                         const roomCreator = room.players.find(p => p.isRoomCreator);
@@ -2609,8 +2711,8 @@ io.on('connection', (socket) => {
                         const updatedRoomCreator = room.players.find(p => p.isRoomCreator);
                         const finalFirstPlayerId = updatedRoomCreator ? updatedRoomCreator.id : room.players[0].id;
                         
-                        io.to(data.roomId).emit('battleshipGameStart', {
-                            roomId: data.roomId,
+                        io.to(roomCode).emit('battleshipGameStart', {
+                            roomId: roomCode,
                             players: room.players,
                             firstPlayerId: finalFirstPlayerId
                         });
@@ -2623,17 +2725,17 @@ io.on('connection', (socket) => {
                     } else {
                         console.log(`🚢 Not all players ready yet, notifying others`);
                         // Notify other players that this player is ready
-                        socket.to(data.roomId).emit('battleshipPlayerReady', {
+                        socket.to(roomCode).emit('battleshipPlayerReady', {
                             playerId: socket.id,
-                            roomId: data.roomId
+                            roomId: roomCode
                         });
                     }
                 } else {
                     console.log(`🚢 Room has ${room.players.length} players, need exactly 2 for battleship`);
                     // Notify other players that this player is ready
-                    socket.to(data.roomId).emit('battleshipPlayerReady', {
+                    socket.to(roomCode).emit('battleshipPlayerReady', {
                         playerId: socket.id,
-                        roomId: data.roomId
+                        roomId: roomCode
                     });
                 }
             } else {
@@ -2645,9 +2747,15 @@ io.on('connection', (socket) => {
     });
     
     socket.on('battleshipGameStart', (data) => {
-        console.log(`🚢 Battleship game start requested for room: ${data.roomId}`);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Battleship game start requested for room: ${roomCode}`);
         console.log(`🚢 Requesting socket ID: ${socket.id}`);
-        const room = rooms.get(data.roomId);
+        const room = rooms.get(roomCode);
         console.log(`🚢 Room found:`, !!room);
         console.log(`🚢 Room game type:`, room?.gameType);
         console.log(`🚢 Room players:`, room?.players?.length);
@@ -2655,7 +2763,7 @@ io.on('connection', (socket) => {
         if (room && room.gameType === 'battleship') {
             // ✅ CRITICAL FIX: Reset or initialize battleship game state when starting
             // Always reset game state for new games (even if room.game exists from previous game)
-            console.log(`🚢 Resetting/Initializing Battleship game state for room ${data.roomId}`);
+            console.log(`🚢 Resetting/Initializing Battleship game state for room ${roomCode}`);
             room.game = {
                 started: true,
                 gameType: 'battleship',
@@ -2680,9 +2788,9 @@ io.on('connection', (socket) => {
             const firstPlayerIndex = room.players.findIndex(p => p.id === firstPlayerId);
             room.game.currentPlayer = firstPlayerIndex >= 0 ? firstPlayerIndex : 0;
             
-            console.log(`🚢 Broadcasting battleshipGameStart to room ${data.roomId}`);
-            io.to(data.roomId).emit('battleshipGameStart', {
-                roomId: data.roomId,
+            console.log(`🚢 Broadcasting battleshipGameStart to room ${roomCode}`);
+            io.to(roomCode).emit('battleshipGameStart', {
+                roomId: roomCode,
                 players: room.players,
                 firstPlayerId: firstPlayerId
             });
@@ -2693,29 +2801,50 @@ io.on('connection', (socket) => {
     });
     
     socket.on('battleshipTurnChange', (data) => {
-        console.log(`🚢 Turn change in room ${data.roomId}: ${data.currentPlayer}`);
-        const room = rooms.get(data.roomId);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Turn change in room ${roomCode}: ${data.currentPlayer}`);
+        const room = rooms.get(roomCode);
         
         if (room && room.gameType === 'battleship') {
-            io.to(data.roomId).emit('battleshipTurnChange', {
-                roomId: data.roomId,
+            io.to(roomCode).emit('battleshipTurnChange', {
+                roomId: roomCode,
                 currentPlayer: data.currentPlayer
             });
         }
     });
     
     socket.on('battleshipShipPlaced', (data) => {
-        console.log(`🚢 Ship placed in room ${data.roomId}:`, data);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Ship placed in room ${roomCode}:`, data);
         // ✅ CRITICAL FIX: Broadcast ship placement to all players for multiplayer synchronization
-        io.to(data.roomId).emit('battleshipShipPlaced', data);
+        io.to(roomCode).emit('battleshipShipPlaced', {
+            ...data,
+            roomId: roomCode
+        });
     });
     
     socket.on('battleshipAttack', (data) => {
-        console.log(`🚢 Attack in room ${data.roomId}:`, data);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Attack in room ${roomCode}:`, data);
         
-        const room = rooms.get(data.roomId);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${data.roomId} not found for attack`);
+            console.log(`❌ Room ${roomCode} not found for attack`);
             return;
         }
         
@@ -2780,23 +2909,35 @@ io.on('connection', (socket) => {
         // and send back the result
         
         // ✅ CRITICAL FIX: Broadcast attack to all players (including attacker) for multiplayer synchronization
-        io.to(data.roomId).emit('battleshipAttack', data);
+        io.to(roomCode).emit('battleshipAttack', {
+            ...data,
+            roomId: roomCode
+        });
         
         // The defending player will process the attack and send back the result
         // We'll handle the result in a separate event
     });
     
     socket.on('battleshipAttackResult', (data) => {
-        console.log(`🚢 Attack result in room ${data.roomId}:`, data);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Attack result in room ${roomCode}:`, data);
         
-        const room = rooms.get(data.roomId);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${data.roomId} not found for attack result`);
+            console.log(`❌ Room ${roomCode} not found for attack result`);
             return;
         }
         
         // ✅ CRITICAL FIX: Broadcast attack result to all players for multiplayer synchronization
-        io.to(data.roomId).emit('battleshipAttackResult', data);
+        io.to(roomCode).emit('battleshipAttackResult', {
+            ...data,
+            roomId: roomCode
+        });
         
         // CRITICAL FIX: In Battleship, you keep your turn when you hit (hit or sink)
         // Only change turns when you miss
@@ -2811,10 +2952,10 @@ io.on('connection', (socket) => {
         const nextPlayerIndex = 1 - currentPlayerIndex;
         room.currentPlayer = nextPlayerIndex;
         
-            console.log(`🚢 Miss detected - Turn change in room ${data.roomId}: ${nextPlayerIndex}`);
+            console.log(`🚢 Miss detected - Turn change in room ${roomCode}: ${nextPlayerIndex}`);
             console.log(`🚢 Attacking player index: ${attackingPlayerIndex}, next player: ${nextPlayerIndex}`);
-        io.to(data.roomId).emit('battleshipTurnChange', {
-            roomId: data.roomId,
+        io.to(roomCode).emit('battleshipTurnChange', {
+            roomId: roomCode,
             currentPlayer: nextPlayerIndex
         });
         } else {
@@ -2825,7 +2966,7 @@ io.on('connection', (socket) => {
                 room.currentPlayer = attackingPlayerIndex;
             }
             
-            console.log(`🚢 Hit detected - keeping turn for current player in room ${data.roomId}, index: ${room.currentPlayer}`);
+            console.log(`🚢 Hit detected - keeping turn for current player in room ${roomCode}, index: ${room.currentPlayer}`);
             // CRITICAL FIX: Don't emit turn change on hit - the attacker already knows they hit
             // Emitting turn change causes both players to see "Your turn" message incorrectly
             // The attacker's client already handles showing hit messages in handleAttackResult
@@ -2833,15 +2974,23 @@ io.on('connection', (socket) => {
     });
     
     socket.on('battleshipGameOver', (data) => {
-        console.log(`🚢 Game over in room ${data.roomId}:`, data);
+        const roomCode = getRoomCode(data);
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
+
+        console.log(`🚢 Game over in room ${roomCode}:`, data);
         // Broadcast game over to all players
-        io.to(data.roomId).emit('battleshipGameOver', data);
+        io.to(roomCode).emit('battleshipGameOver', {
+            ...data,
+            roomId: roomCode
+        });
     });
 
     // ✅ Handle room leaving
     socket.on('leaveRoom', (roomCode) => {
-        // Handle both string and object formats
-        const actualRoomCode = typeof roomCode === 'object' && roomCode.roomId ? roomCode.roomId : roomCode;
+        const actualRoomCode = getRoomCode(roomCode);
         
         console.log(`🚪 User ${socket.id} leaving room: ${actualRoomCode}`);
         
@@ -2893,8 +3042,13 @@ io.on('connection', (socket) => {
 
     // Handle adding bots
     socket.on('addBot', (data) => {
-        const roomCode = data.roomId || data; // Handle both old and new formats
+        const roomCode = getRoomCode(data);
         console.log(`🤖 Adding bot to room: ${roomCode}`);
+
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
         
         const room = rooms.get(roomCode);
         
@@ -2905,10 +3059,7 @@ io.on('connection', (socket) => {
         }
 
         // ✅ CRITICAL FIX: Define max players per game type
-        const maxPlayersAddBot = room.gameType === 'truco' ? 4 : 
-                                  (room.gameType === 'poker' ? 7 : 
-                                  (room.gameType === 'war' ? 4 : 
-                                  (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
+        const maxPlayersAddBot = getMaxPlayers(room.gameType);
         // Check if room is full (maxPlayersAddBot includes all players + bots)
         if (room.players.length >= maxPlayersAddBot) {
             console.log(`❌ Room ${roomCode} is full (${room.players.length}/${maxPlayersAddBot}), cannot add bot`);
@@ -2940,10 +3091,7 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('playersUpdated', room.players);
 
         // ✅ CRITICAL FIX: Define max players per game type for room full check
-        const maxPlayersFull = room.gameType === 'truco' ? 4 : 
-                               (room.gameType === 'poker' ? 7 : 
-                               (room.gameType === 'war' ? 4 : 
-                               (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
+        const maxPlayersFull = getMaxPlayers(room.gameType);
         if (room.players.length === maxPlayersFull) {
             console.log(`🎯 Room ${roomCode} is now full with ${room.players.length} players`);
             io.to(roomCode).emit('roomFull');
@@ -2952,8 +3100,13 @@ io.on('connection', (socket) => {
 
     // ✅ Handle bot removal
     socket.on('removeBot', (data) => {
-        const roomCode = data.roomId || data; // Handle both old and new formats
+        const roomCode = getRoomCode(data);
         console.log(`🤖 Removing bot from room: ${roomCode}`);
+
+        if (!roomCode) {
+            socket.emit('error', 'Invalid room code');
+            return;
+        }
         
         const room = rooms.get(roomCode);
         if (!room) {
@@ -2984,10 +3137,7 @@ io.on('connection', (socket) => {
 
         // If room is no longer full, emit roomNotFull event
         // ✅ CRITICAL FIX: Define max players per game type for room not full check
-        const maxPlayersNotFull = room.gameType === 'truco' ? 4 : 
-                                  (room.gameType === 'poker' ? 7 : 
-                                  (room.gameType === 'war' ? 4 : 
-                                  (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
+        const maxPlayersNotFull = getMaxPlayers(room.gameType);
         if (room.players.length < maxPlayersNotFull) {
             io.to(roomCode).emit('roomNotFull');
         }
@@ -3002,11 +3152,12 @@ io.on('connection', (socket) => {
             console.log(`🔍 Available rooms:`, Array.from(rooms.keys()));
             console.log(`🔍 Event handler executing...`);
             
-            // Handle both string and object formats
-            let actualRoomCode = roomCode;
-            if (typeof roomCode === 'object' && roomCode.roomId) {
-                actualRoomCode = roomCode.roomId;
-                console.log(`🔍 Extracted room code from object: ${actualRoomCode}`);
+            const actualRoomCode = getRoomCode(roomCode);
+
+            if (!actualRoomCode) {
+                console.log(`❌ Invalid room code for game start:`, roomCode);
+                socket.emit('error', 'Invalid room code');
+                return;
             }
             
             const room = rooms.get(actualRoomCode);
@@ -3035,9 +3186,7 @@ io.on('connection', (socket) => {
             }
             
             // ✅ CRITICAL FIX: Define minimum players per game type
-            const minPlayers = room.gameType === 'truco' ? 4 : 
-                               (room.gameType === 'war' ? 2 : 
-                               (room.gameType === 'battleship' ? 2 : 2)); // Truco: 4, War: 2, Battleship: 2, others: 2
+            const minPlayers = getMinPlayers(room.gameType);
             if (room.players.length < minPlayers) {
                 console.log(`❌ Room ${actualRoomCode} needs ${minPlayers} players, has ${room.players.length}`);
                 socket.emit('error', `Need at least ${minPlayers} players to start the game. Current: ${room.players.length}`);
@@ -3045,10 +3194,7 @@ io.on('connection', (socket) => {
             }
             
             // ✅ CRITICAL FIX: Validate maximum players (prevent starting with too many)
-            const maxPlayersStart = room.gameType === 'truco' ? 4 : 
-                                    (room.gameType === 'poker' ? 7 : 
-                                    (room.gameType === 'war' ? 4 : 
-                                    (room.gameType === 'battleship' ? 2 : 6))); // Truco: 4, Poker: 7, War: 4, Battleship: 2, others: 6
+            const maxPlayersStart = getMaxPlayers(room.gameType);
             if (room.players.length > maxPlayersStart) {
                 console.log(`❌ Room ${actualRoomCode} has too many players (${room.players.length}/${maxPlayersStart})`);
                 socket.emit('error', `Too many players. Maximum ${maxPlayersStart} players allowed. Current: ${room.players.length}`);
@@ -3645,7 +3791,11 @@ io.on('connection', (socket) => {
     socket.on('startBattle', (data) => {
         try {
             console.log(`⚔️ Start battle event received:`, data);
-            const roomCode = data.roomId || data;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room || room.gameType !== 'war') {
@@ -4239,7 +4389,11 @@ io.on('connection', (socket) => {
     socket.on('askForCards', (data) => {
         try {
             console.log(`🐟 Ask for cards event received:`, data);
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4466,7 +4620,11 @@ io.on('connection', (socket) => {
     socket.on('goFish', (data) => {
         try {
             console.log(`🐟 Go fish event received:`, data);
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4582,7 +4740,11 @@ io.on('connection', (socket) => {
     socket.on('cardsGiven', (data) => {
         try {
             console.log(`🐟 Cards given event received:`, data);
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4610,7 +4772,11 @@ io.on('connection', (socket) => {
     socket.on('turnChanged', (data) => {
         try {
             console.log(`🐟 Turn changed event received:`, data);
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4654,7 +4820,11 @@ io.on('connection', (socket) => {
     socket.on('gameOver', (data) => {
         try {
             console.log(`🐟 Game over event received:`, data);
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4679,7 +4849,11 @@ io.on('connection', (socket) => {
     socket.on('makePair', (data) => {
         try {
             console.log(`🐟 Make pair event received:`, data);
-            const roomCode = data.roomId;
+            const roomCode = getRoomCode(data);
+            if (!roomCode) {
+                socket.emit('error', 'Invalid room code');
+                return;
+            }
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4766,7 +4940,19 @@ io.on('connection', (socket) => {
         try {
             console.log(`🐟 Nickname change event received:`, data);
             // CRITICAL FIX: Support both roomCode and roomId for compatibility
-            const roomCode = data.roomCode || data.roomId;
+            const roomCode = getRoomCode(data);
+            const nickname = normalizeNickname(data?.nickname);
+
+            if (!roomCode) {
+                socket.emit('nicknameError', 'Invalid room code');
+                return;
+            }
+
+            if (!nickname) {
+                socket.emit('nicknameError', 'Nickname must be 1-12 characters.');
+                return;
+            }
+
             const room = rooms.get(roomCode);
             
             if (!room) {
@@ -4779,15 +4965,16 @@ io.on('connection', (socket) => {
             const player = room.players.find(p => p.id === socket.id);
             if (player) {
                 const oldName = player.name;
-                player.name = data.nickname;
-                console.log(`🐟 Player ${socket.id} changed nickname from "${oldName}" to "${data.nickname}"`);
+                player.name = nickname;
+                player.nickname = nickname;
+                console.log(`🐟 Player ${socket.id} changed nickname from "${oldName}" to "${nickname}"`);
                 
                 // Broadcast the nickname change to all players in the room
                 io.to(roomCode).emit('playersUpdated', room.players);
                 
                 // Emit success confirmation to the requesting player
                 socket.emit('nicknameChanged', {
-                    nickname: data.nickname,
+                    nickname: nickname,
                     playerId: socket.id
                 });
             } else {
@@ -4801,50 +4988,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-        
-        if (socket.roomCode) {
-            const room = rooms.get(socket.roomCode);
-            if (room) {
-                // ✅ CRITICAL FIX: Don't remove players during active games
-                // This was causing "Room not found" errors
-                if (!room.game || !room.game.started) {
-                    room.players = room.players.filter(p => p.id !== socket.id);
-                    
-                    io.to(socket.roomCode).emit('playerLeft', {
-                        players: room.players,
-                        count: room.players.length
-                    });
-
-                    if (room.players.length === 0) {
-                        console.log(`🔍 DEBUG: Room ${socket.roomCode} is empty after disconnect, checking if game is active before deletion`);
-                        console.log(`🔍 DEBUG: Room game state:`, room.game ? 'active' : 'none');
-                        console.log(`🔍 DEBUG: Room game started:`, room.game?.started ? 'yes' : 'no');
-                        
-                        // ✅ CRITICAL FIX: Don't delete room if game is active
-                        if (room.game && room.game.started) {
-                            console.log(`⚠️ WARNING: Attempting to delete room ${socket.roomCode} during active game after disconnect - PREVENTING DELETION`);
-                        } else {
-                        rooms.delete(socket.roomCode);
-                            console.log(`🗑️ Room ${socket.roomCode} deleted (empty and no active game after disconnect)`);
-                        }
-                    }
-                } else {
-                    console.log(`⚠️ Player disconnected during active game - keeping them in room`);
-                }
-            }
-        }
-    });
-
     // Handle game events
     socket.on('playCard', (data) => {
         console.log(`🃏 Card played with data:`, data);
         
         // ✅ CRITICAL FIX: Use room code from data or fallback to socket.roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        const roomCode = getRoomCode(data) || socket.roomCode;
+        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data?.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: Socket ID: ${socket.id}`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         
@@ -5519,8 +5669,8 @@ io.on('connection', (socket) => {
         console.log(`🤖 Bot turn complete with data:`, data);
         
         // ✅ CRITICAL FIX: Use room code from data or fallback to socket.roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        const roomCode = getRoomCode(data) || socket.roomCode;
+        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data?.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: botTurnComplete event received from socket ${socket.id}`);
         
         if (!roomCode) {
@@ -5705,8 +5855,8 @@ io.on('connection', (socket) => {
         console.log(`🎯 Truco requested with data:`, data);
         
         // ✅ CRITICAL FIX: Use room code from data or fallback to socket.roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        const roomCode = getRoomCode(data) || socket.roomCode;
+        console.log(`🔍 DEBUG: Using room code: ${roomCode} (from data: ${data?.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: Socket ID: ${socket.id}`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         
@@ -5724,15 +5874,15 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // ✅ CRITICAL FIX: Check if game is completed - silently ignore Truco calls if game is over
-        if (room.game.gameCompleted) {
-            console.log(`🏁 Game is completed - silently ignoring Truco request from ${socket.id} (no error sent)`);
-            return;
-        }
-
         if (!room.game) {
             console.log(`❌ No active game in room ${roomCode}`);
             socket.emit('error', 'No active game');
+            return;
+        }
+
+        // ✅ CRITICAL FIX: Check if game is completed - silently ignore Truco calls if game is over
+        if (room.game.gameCompleted) {
+            console.log(`🏁 Game is completed - silently ignoring Truco request from ${socket.id} (no error sent)`);
             return;
         }
 
@@ -6198,13 +6348,13 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: botRespondTruco event handler called`);
         console.log(`🔍 DEBUG: Event data:`, JSON.stringify(data, null, 2));
         console.log(`🔍 DEBUG: Socket ID:`, socket.id);
-        console.log(`🔍 DEBUG: Socket roomCode:`, roomCode);
+        console.log(`🔍 DEBUG: Socket roomCode:`, socket.roomCode);
         console.log(`🔍 DEBUG: Socket connected:`, socket.connected);
         console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
         // ✅ CRITICAL FIX: Use roomCode from event data or fallback to roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${roomCode})`);
+        const roomCode = getRoomCode(data) || socket.roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data?.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
         
@@ -6236,8 +6386,8 @@ io.on('connection', (socket) => {
         console.log(`🔍 DEBUG: Socket rooms:`, Array.from(socket.rooms));
         
         // ✅ CRITICAL FIX: Use roomCode from event data or fallback to socket.roomCode
-        const roomCode = data.roomCode || socket.roomCode;
-        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data.roomCode}, from socket: ${socket.roomCode})`);
+        const roomCode = getRoomCode(data) || socket.roomCode;
+        console.log(`🔍 DEBUG: Using roomCode: ${roomCode} (from data: ${data?.roomCode}, from socket: ${socket.roomCode})`);
         console.log(`🔍 DEBUG: Available rooms:`, Array.from(rooms.keys()));
         console.log(`🔍 DEBUG: Room exists:`, rooms.has(roomCode));
         
@@ -6254,6 +6404,12 @@ io.on('connection', (socket) => {
             return;
         }
 
+        if (!room.game) {
+            console.log(`❌ No active game in room ${roomCode}`);
+            socket.emit('error', 'No active game');
+            return;
+        }
+
         // ✅ CRITICAL FIX: Check if game is completed - silently ignore Truco responses if game is over
         if (room.game.gameCompleted) {
             console.log(`🏁 Game is completed - silently ignoring Truco response from ${socket.id} (no error sent)`);
@@ -6266,21 +6422,22 @@ io.on('connection', (socket) => {
 
     // ✅ Handle manual new game request (fallback mechanism)
     socket.on('requestNewGame', (data) => {
-        console.log(`🎮 Manual new game request received for room: ${data.roomCode}`);
+        const roomCode = getRoomCode(data);
+        console.log(`🎮 Manual new game request received for room: ${roomCode}`);
         
-        if (!data.roomCode) {
+        if (!roomCode) {
             console.log(`❌ No room code provided for manual new game request`);
             return;
         }
 
-        const room = rooms.get(data.roomCode);
+        const room = rooms.get(roomCode);
         if (!room) {
-            console.log(`❌ Room ${data.roomCode} not found for manual new game request`);
+            console.log(`❌ Room ${roomCode} not found for manual new game request`);
             return;
         }
 
-        console.log(`🎮 Executing manual startNewGame for room ${data.roomCode}`);
-        startNewGame(room, 'manual', data.roomCode);
+        console.log(`🎮 Executing manual startNewGame for room ${roomCode}`);
+        startNewGame(room, 'manual', roomCode);
     });
     
     // ✅ Handle Truco responses with improved validation
@@ -6289,7 +6446,7 @@ io.on('connection', (socket) => {
 
     // ✅ Handle player team selection
     socket.on('selectTeam', (data) => {
-        const roomCode = data.roomCode || socket.roomCode;
+        const roomCode = getRoomCode(data) || socket.roomCode;
         console.log(`🏆 Team selection requested in room: ${roomCode}`);
         
         if (!roomCode) {
@@ -7452,691 +7609,6 @@ function determineRoundWinner(playedCards, room) {
     return highestCard;
     }
 
-    // Handle game-specific events for new games
-    // 🃏 BLACKJACK SPECIFIC EVENT HANDLERS
-    
-    // Helper function to calculate blackjack hand value
-    function calculateBlackjackValue(hand) {
-        let value = 0;
-        let aces = 0;
-        
-        hand.forEach(card => {
-            if (card.rank === 'ace') {
-                aces++;
-                value += 11;
-            } else if (['jack', 'queen', 'king'].includes(card.rank)) {
-                value += 10;
-            } else {
-                value += card.value;
-            }
-        });
-        
-        // Adjust for aces
-        while (value > 21 && aces > 0) {
-            value -= 10;
-            aces--;
-        }
-        
-        return value;
-    }
-    
-    // Helper function to check for blackjack
-    function checkBlackjack(hand) {
-        return hand.length === 2 && calculateBlackjackValue(hand) === 21;
-    }
-    
-    // Helper function to deal a card from deck
-    function dealBlackjackCard(room) {
-        if (!room || !room.game || !room.game.deck) {
-            console.error('❌ Invalid room or game state in dealBlackjackCard');
-            return null;
-        }
-        
-        if (room.game.deck.length === 0) {
-            console.log('🃏 Deck empty, reshuffling...');
-            // Reshuffle - create new deck
-            const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
-            room.game.deck = [];
-            
-            for (let suit of suits) {
-                for (let rank of ranks) {
-                    let value;
-                    if (rank === 'ace') {
-                        value = 1;
-                    } else if (['jack', 'queen', 'king'].includes(rank)) {
-                        value = 10;
-                    } else {
-                        value = parseInt(rank);
-                    }
-                    
-                    room.game.deck.push({
-                        name: `${rank} of ${suit}`,
-                        suit: suit,
-                        rank: rank,
-                        value: value
-                    });
-                }
-            }
-            
-            // Shuffle
-            for (let i = room.game.deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [room.game.deck[i], room.game.deck[j]] = [room.game.deck[j], room.game.deck[i]];
-            }
-        }
-        
-        if (room.game.deck.length === 0) {
-            console.error('❌ Deck still empty after reshuffle!');
-            return null;
-        }
-        
-        const card = room.game.deck.pop();
-        if (!card) {
-            console.error('❌ Failed to deal card from deck');
-            return null;
-        }
-        
-        return card;
-    }
-    
-    // Player action handler (Hit, Stand, Double, Split)
-    console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ABOUT TO REGISTER playerAction handler for socket ${socket.id}`);
-    console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Socket object exists: ${!!socket}`);
-    console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 socket.on function exists: ${typeof socket.on}`);
-    console.log(`🃏🃏🃏 Registering playerAction handler for socket ${socket.id} at line 4673`);
-    
-    socket.on('playerAction', (data) => {
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 ========== playerAction handler EXECUTING for socket ${socket.id} ==========`);
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data received:`, data);
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data type:`, typeof data);
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.roomId:`, data?.roomId);
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.playerIndex:`, data?.playerIndex);
-        console.log(`🃏🃏🃏🃏🃏🃏🃏🃏🃏🃏 Data.action:`, data?.action);
-        try {
-            console.log(`🃏🃏🃏 playerAction handler called with data:`, JSON.stringify(data, null, 2));
-            console.log(`🃏🃏🃏 Socket ID: ${socket.id}`);
-            
-            const roomCode = data.roomId;
-            const room = rooms.get(roomCode);
-            
-            console.log(`🃏🃏🃏 Room lookup - roomCode: ${roomCode}, room found: ${!!room}`);
-            
-            if (!room) {
-                console.error(`❌ Room ${roomCode} not found`);
-                socket.emit('error', 'Room not found');
-                return;
-            }
-            
-            console.log(`🃏🃏🃏 Room found - gameType: ${room.gameType}, gamePhase: ${room.game?.gamePhase}`);
-            
-            // Handle blackjack-specific actions
-            if (room.gameType === 'blackjack') {
-                if (room.game.gamePhase !== 'playing') {
-                    console.error(`❌ Not in playing phase. Current phase: ${room.game.gamePhase}`);
-                    socket.emit('error', 'Not in playing phase');
-                    return;
-                }
-                
-                const playerIndex = data.playerIndex;
-                const player = room.game.players[playerIndex];
-                const action = data.action;
-                
-                console.log(`🃏🃏🃏 Player lookup - playerIndex: ${playerIndex}, player found: ${!!player}, player.id: ${player?.id}, socket.id: ${socket.id}, match: ${player?.id === socket.id}`);
-                
-                if (!player || player.id !== socket.id) {
-                    console.error(`❌ Invalid player - player exists: ${!!player}, player.id: ${player?.id}, socket.id: ${socket.id}`);
-                    socket.emit('error', 'Invalid player');
-                    return;
-                }
-                
-                console.log(`🃏🃏🃏 Turn check - playerIndex: ${playerIndex}, currentPlayer: ${room.game.currentPlayer}, match: ${playerIndex === room.game.currentPlayer}`);
-                
-                if (playerIndex !== room.game.currentPlayer) {
-                    console.error(`❌ Not player's turn - playerIndex: ${playerIndex}, currentPlayer: ${room.game.currentPlayer}`);
-                    socket.emit('error', 'Not your turn');
-                    return;
-                }
-                
-                console.log(`🃏🃏🃏 Player state check - isBusted: ${player.isBusted}, isStanding: ${player.isStanding}, hasBlackjack: ${player.hasBlackjack}`);
-                
-                if (player.isBusted || player.isStanding || player.hasBlackjack) {
-                    console.error(`❌ Cannot perform action - player is done`);
-                    socket.emit('error', 'Cannot perform action');
-                    return;
-                }
-                
-                console.log(`🃏 Player ${player.name} performs action: ${action}`);
-                
-                console.log(`🃏🃏🃏 About to process action: ${action}`);
-                console.log(`🃏🃏🃏 dealBlackjackCard function exists: ${typeof dealBlackjackCard}`);
-                console.log(`🃏🃏🃏 calculateBlackjackValue function exists: ${typeof calculateBlackjackValue}`);
-                
-                switch (action) {
-                    case 'hit':
-                        console.log(`🃏🃏🃏 Processing HIT action`);
-                        const hitCard = dealBlackjackCard(room);
-                        console.log(`🃏🃏🃏 Card dealt:`, hitCard);
-                        if (!hitCard) {
-                            socket.emit('error', 'Failed to deal card - deck empty');
-                            console.error('❌ Failed to deal hit card');
-                            return;
-                        }
-                        player.hand.push(hitCard);
-                        player.value = calculateBlackjackValue(player.hand);
-                        player.canDouble = false;
-                        player.canSplit = false;
-                        
-                        if (player.value > 21) {
-                            player.isBusted = true;
-                            console.log(`🃏 Player ${player.name} busted with ${player.value}`);
-                        }
-                        
-                        // Emit the action update - player stays as currentPlayer if not busted
-                        io.to(roomCode).emit('playerAction', {
-                            playerIndex: playerIndex,
-                            action: action,
-                            player: player,
-                            gamePhase: room.game.gamePhase,
-                            currentPlayer: room.game.currentPlayer // Stay as current player unless busted
-                        });
-                        
-                        console.log(`🃏 Hit result: Player ${player.name} value = ${player.value}, busted = ${player.isBusted}`);
-                        console.log(`🃏 Current player remains: ${room.game.currentPlayer}`);
-                        
-                        // Auto-advance if busted
-                        if (player.isBusted) {
-                            console.log(`🃏 Player ${player.name} busted, advancing turn`);
-                            setTimeout(() => {
-                                advanceBlackjackTurn(roomCode, room);
-                            }, 1000);
-                        } else {
-                            console.log(`🃏 Player ${player.name} can continue playing - turn remains`);
-                        }
-                        break;
-                        
-                    case 'stand':
-                        player.isStanding = true;
-                        io.to(roomCode).emit('playerAction', {
-                            playerIndex: playerIndex,
-                            action: action,
-                            player: player,
-                            gamePhase: room.game.gamePhase,
-                            currentPlayer: room.game.currentPlayer
-                        });
-                        
-                        setTimeout(() => {
-                            advanceBlackjackTurn(roomCode, room);
-                        }, 500);
-                        break;
-                        
-                    case 'double':
-                        // Can only double on first 2 cards
-                        if (player.hand.length !== 2) {
-                            socket.emit('error', 'Can only double down on first two cards');
-                            return;
-                        }
-                        
-                        if (!player.canDouble || player.chips < player.bet) {
-                            socket.emit('error', 'Cannot double down');
-                            return;
-                        }
-                        
-                        player.chips -= player.bet;
-                        player.bet *= 2;
-                        const doubleCard = dealBlackjackCard(room);
-                        if (!doubleCard) {
-                            socket.emit('error', 'Failed to deal card - deck empty');
-                            console.error('❌ Failed to deal double card');
-                            // Refund the bet
-                            player.chips += player.bet;
-                            player.bet /= 2;
-                            return;
-                        }
-                        player.hand.push(doubleCard);
-                        player.value = calculateBlackjackValue(player.hand);
-                        player.isStanding = true;
-                        player.canDouble = false;
-                        player.canSplit = false;
-                        
-                        if (player.value > 21) {
-                            player.isBusted = true;
-                        }
-                        
-                        io.to(roomCode).emit('playerAction', {
-                            playerIndex: playerIndex,
-                            action: action,
-                            player: player,
-                            gamePhase: room.game.gamePhase,
-                            currentPlayer: room.game.currentPlayer
-                        });
-                        
-                        setTimeout(() => {
-                            advanceBlackjackTurn(roomCode, room);
-                        }, 500);
-                        break;
-                        
-                    case 'split':
-                        // Simplified split - just mark as done for now
-                        if (!player.canSplit || player.chips < player.bet) {
-                            socket.emit('error', 'Cannot split');
-                            return;
-                        }
-                        
-                        // For now, treat split as stand
-                        player.isStanding = true;
-                        player.canSplit = false;
-                        
-                        io.to(roomCode).emit('playerAction', {
-                            playerIndex: playerIndex,
-                            action: action,
-                            player: player,
-                            gamePhase: room.game.gamePhase,
-                            currentPlayer: room.game.currentPlayer
-                        });
-                        
-                        setTimeout(() => {
-                            advanceBlackjackTurn(roomCode, room);
-                        }, 500);
-                        break;
-                }
-                
-                return; // Exit early for blackjack
-            }
-            
-            // Handle poker-specific actions
-            console.log(`🎴 DEBUG: Checking poker condition - room.gameType: "${room.gameType}", match: ${room.gameType === 'poker'}`);
-            if (room.gameType === 'poker') {
-                console.log(`🎴 Poker player action received`);
-                const playerIndex = data.playerIndex;
-                const player = room.game?.players?.[playerIndex];
-                const action = data.action;
-                const amount = data.amount || 0;
-                
-                if (!player) {
-                    console.error(`❌ Invalid player index: ${playerIndex}`);
-                    socket.emit('error', 'Invalid player');
-                    return;
-                }
-                
-                // Verify it's the player's turn
-                console.log(`🎴 Turn verification: currentPlayer=${room.game.currentPlayer}, playerIndex=${playerIndex}, player.name=${player.name}`);
-                console.log(`🎴 Player positions: dealer=${room.game.dealerPosition}, SB=${(room.game.dealerPosition + 1) % room.game.players.length}, BB=${(room.game.dealerPosition + 2) % room.game.players.length}`);
-                
-                if (room.game.currentPlayer !== playerIndex) {
-                    console.error(`❌ Not player's turn - current: ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name}), attempted: ${playerIndex} (${player.name})`);
-                    socket.emit('error', `Not your turn. It's ${room.game.players[room.game.currentPlayer]?.name}'s turn.`);
-                    return;
-                }
-                
-                console.log(`🎴 Processing poker action: ${action} by ${player.name} (amount: $${amount})`);
-                
-                // Process the action in the game state
-                switch (action) {
-                    case 'fold':
-                        player.isFolded = true;
-                        break;
-                    case 'call':
-                        const callAmount = Math.min(room.game.currentBet - player.currentBet, player.chips);
-                        if (callAmount < 0) {
-                            console.error(`❌ Invalid call amount: ${callAmount} (currentBet: ${room.game.currentBet}, player.currentBet: ${player.currentBet})`);
-                            socket.emit('error', 'Invalid call amount');
-                            return;
-                        }
-                        player.chips = Math.max(0, player.chips - callAmount); // Ensure chips never go negative
-                        player.currentBet += callAmount;
-                        player.totalBet += callAmount;
-                        room.game.pot += callAmount;
-                        if (player.chips === 0) {
-                            player.isAllIn = true;
-                        }
-                        break;
-                    case 'raise':
-                    case 'bet':
-                        // Amount is the total bet amount the player wants to make
-                        // Calculate the additional amount needed (raise increment)
-                        const currentPlayerBet2 = player.currentBet || 0;
-                        const totalBetDesired2 = Math.min(amount, currentPlayerBet2 + player.chips);
-                        const raiseIncrement2 = totalBetDesired2 - currentPlayerBet2;
-                        
-                        if (raiseIncrement2 <= 0) {
-                            console.error(`❌ Invalid raise: totalBetDesired (${totalBetDesired2}) <= currentPlayerBet (${currentPlayerBet2})`);
-                            socket.emit('error', 'Invalid raise amount');
-                            return; // Invalid raise
-                        }
-                        
-                        // ✅ CRITICAL FIX: Validate minimum raise amount (must be at least big blind)
-                        const minRaiseTotal = room.game.currentBet + room.game.bigBlind;
-                        if (totalBetDesired2 < minRaiseTotal && totalBetDesired2 < currentPlayerBet2 + player.chips) {
-                            // If player can't meet minimum raise, check if they're going all-in
-                            if (player.chips === raiseIncrement2) {
-                                // All-in is valid even if below minimum raise
-                                player.chips = 0;
-                                player.currentBet = totalBetDesired2;
-                                player.totalBet += raiseIncrement2;
-                                room.game.pot += raiseIncrement2;
-                                room.game.currentBet = Math.max(room.game.currentBet, totalBetDesired2);
-                                player.isAllIn = true;
-                                console.log(`🎴 Player all-in processed: player bet ${totalBetDesired2} (added ${raiseIncrement2}), new currentBet: ${room.game.currentBet}`);
-                                break;
-                            }
-                            console.error(`❌ Raise too small: ${totalBetDesired2} < minimum ${minRaiseTotal}`);
-                            socket.emit('error', `Minimum raise is $${minRaiseTotal - currentPlayerBet2} (current bet: $${room.game.currentBet} + big blind: $${room.game.bigBlind})`);
-                            return; // Invalid raise
-                        }
-                        
-                        player.chips = Math.max(0, player.chips - raiseIncrement2); // Ensure chips never go negative
-                        player.currentBet = totalBetDesired2;
-                        player.totalBet += raiseIncrement2;
-                        room.game.pot += raiseIncrement2;
-                        room.game.currentBet = player.currentBet;
-                        if (player.chips === 0) {
-                            player.isAllIn = true;
-                        }
-                        console.log(`🎴 Raise processed: player bet ${totalBetDesired2} (added ${raiseIncrement2}), new currentBet: ${room.game.currentBet}`);
-                        break;
-                }
-                
-                // Track if this was a raise
-                if (action === 'raise' || action === 'bet') {
-                    room.game.lastRaisePlayer = playerIndex;
-                }
-                
-                // Move to next active player
-                const startPlayer = room.game.currentPlayer;
-                let attempts = 0;
-                do {
-                    room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
-                    attempts++;
-                    
-                    // Safety check to prevent infinite loop
-                    if (attempts >= room.game.players.length) {
-                        console.error(`❌ Could not find next active player after ${attempts} attempts`);
-                        break;
-                    }
-                } while (
-                    (room.game.players[room.game.currentPlayer].isFolded || 
-                     room.game.players[room.game.currentPlayer].isAllIn) &&
-                    room.game.currentPlayer !== startPlayer
-                );
-                
-                console.log(`🎴 Turn advanced from ${startPlayer} (${room.game.players[startPlayer]?.name}) to ${room.game.currentPlayer} (${room.game.players[room.game.currentPlayer]?.name})`);
-                
-                // Check if betting round is complete
-                // Round is complete when all active players have matched bets and action returns to last raiser
-                const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
-                const allBetsMatched = activePlayers.every(p => p.currentBet === room.game.currentBet);
-                
-                // Get big blind position for preflop logic
-                const bigBlindPos = (room.game.dealerPosition + 2) % room.game.players.length;
-                
-                // For preflop: action must return to big blind (lastRaisePlayer) after everyone acts
-                // For post-flop: action must return to last raiser (or small blind if no raises)
-                let actionBackToLastRaiser;
-                if (room.game.gamePhase === 'preflop') {
-                    // In preflop, if no one raised, action returns to big blind
-                    // If someone raised, action returns to the last raiser
-                    if (room.game.lastRaisePlayer === bigBlindPos) {
-                        // No raises yet - action returns to big blind
-                        actionBackToLastRaiser = room.game.currentPlayer === bigBlindPos;
-                    } else {
-                        // Someone raised - action returns to last raiser
-                        actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
-                    }
-                } else {
-                    // Post-flop: if no raises, action should return to first player after big blind (same as preflop)
-                    if (room.game.lastRaisePlayer === -1) {
-                        // No raises - action should return to first player after big blind
-                        const bigBlindPosPostFlop = (room.game.dealerPosition + 2) % room.game.players.length;
-                        let expectedPlayer = (bigBlindPosPostFlop + 1) % room.game.players.length;
-                        while (room.game.players[expectedPlayer].isFolded || room.game.players[expectedPlayer].isAllIn) {
-                            expectedPlayer = (expectedPlayer + 1) % room.game.players.length;
-                            // Safety check to prevent infinite loop
-                            if (expectedPlayer === (bigBlindPosPostFlop + 1) % room.game.players.length) {
-                                break;
-                            }
-                        }
-                        actionBackToLastRaiser = room.game.currentPlayer === expectedPlayer;
-                    } else {
-                        actionBackToLastRaiser = room.game.currentPlayer === room.game.lastRaisePlayer;
-                    }
-                }
-                
-                console.log(`🎴 Betting round check: phase=${room.game.gamePhase}, allBetsMatched=${allBetsMatched}, actionBackToLastRaiser=${actionBackToLastRaiser}, activePlayers=${activePlayers.length}`);
-                console.log(`🎴 Current player: ${room.game.currentPlayer}, lastRaisePlayer: ${room.game.lastRaisePlayer}`);
-                
-                if (allBetsMatched && actionBackToLastRaiser && activePlayers.length > 1) {
-                    // Betting round complete - advance to next phase
-                    console.log(`🎴 Betting round complete for ${room.game.gamePhase}`);
-                    advancePokerPhase(roomCode, room);
-                } else if (activePlayers.length <= 1) {
-                    // Only one player left - go to showdown
-                    console.log(`🎴 Only one player left, going to showdown`);
-                    handlePokerShowdown(roomCode, room);
-                } else {
-                    // Continue betting round
-                    // Emit updated game state
-                    io.to(roomCode).emit('gameState', {
-                        players: room.game.players,
-                        pot: room.game.pot,
-                        currentBet: room.game.currentBet,
-                        currentPlayer: room.game.currentPlayer,
-                        gamePhase: room.game.gamePhase,
-                        communityCards: room.game.communityCards || []
-                    });
-                    
-                    // Handle bot actions
-                    const currentPlayer = room.game.players[room.game.currentPlayer];
-                    if (currentPlayer && currentPlayer.isBot && !currentPlayer.isFolded && !currentPlayer.isAllIn) {
-                        console.log(`🎴 Next player is bot ${currentPlayer.name} - will act in 1.5 seconds`);
-                        setTimeout(() => {
-                            handlePokerBotAction(roomCode, room, currentPlayer);
-                        }, 1500);
-                    } else if (currentPlayer && (currentPlayer.isFolded || currentPlayer.isAllIn)) {
-                        console.error(`❌ Current player ${currentPlayer.name} is folded or all-in - game may be stuck!`);
-                        // This shouldn't happen, but if it does, try to advance again
-                        const activePlayers = room.game.players.filter(p => !p.isFolded && !p.isAllIn);
-                        if (activePlayers.length <= 1) {
-                            handlePokerShowdown(roomCode, room);
-                        } else {
-                            // Try to find next active player
-                            const nextActive = activePlayers.find(p => 
-                                room.game.players.indexOf(p) > room.game.currentPlayer
-                            ) || activePlayers[0];
-                            room.game.currentPlayer = room.game.players.indexOf(nextActive);
-                            console.log(`🎴 Fixed stuck state - moved to active player ${nextActive.name}`);
-                            emitPokerGameState(roomCode, room);
-                            // Try bot action again
-                            const fixedPlayer = room.game.players[room.game.currentPlayer];
-                            if (fixedPlayer && fixedPlayer.isBot) {
-                                setTimeout(() => {
-                                    handlePokerBotAction(roomCode, room, fixedPlayer);
-                        }, 1500);
-                            }
-                        }
-                    }
-                }
-                
-                return; // Exit early for poker
-            }
-            
-            // Generic handler for other games (if not blackjack or poker)
-            console.log(`🎮 Player action in room: ${data.roomId || data.roomCode}`);
-            if (room) {
-                io.to(data.roomId || data.roomCode).emit('playerAction', data);
-            }
-        } catch (error) {
-            console.error(`❌❌❌ ERROR in playerAction handler:`, error);
-            console.error(`❌❌❌ Error stack:`, error.stack);
-            socket.emit('error', 'Failed to process action: ' + error.message);
-        }
-    });
-    
-    // NOTE: advanceBlackjackTurn function has been moved earlier in the file (before EARLY handler)
-    // This duplicate definition should not be needed, but keeping for safety
-    // Helper function to advance turn in blackjack (DUPLICATE - moved earlier)
-    function advanceBlackjackTurn_LATE(roomCode, room) {
-        const startIndex = room.game.currentPlayer;
-        let found = false;
-        let attempts = 0;
-        
-        // Find next player who can act (max one full cycle)
-        while (attempts < room.game.players.length) {
-            room.game.currentPlayer = (room.game.currentPlayer + 1) % room.game.players.length;
-            attempts++;
-            const player = room.game.players[room.game.currentPlayer];
-            
-            if (!player.isBusted && !player.isStanding && !player.hasBlackjack && player.bet > 0) {
-                found = true;
-                break;
-            }
-            
-            // If we've cycled back to start, break
-            if (room.game.currentPlayer === startIndex) {
-                break;
-            }
-        }
-        
-        // Check if all players are done
-        const allPlayersDone = room.game.players.every(p => 
-            p.isBusted || p.isStanding || p.hasBlackjack || p.bet === 0 || (p.chips < room.game.minBet && p.bet === 0)
-        );
-        
-        // If no valid player found or all players are done, dealer's turn
-        if (!found || allPlayersDone) {
-            // Dealer's turn
-            room.game.gamePhase = 'dealer';
-            room.game.dealer.holeCardVisible = true;
-            room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
-            
-            // Emit dealer turn started
-            io.to(roomCode).emit('dealerTurn', {
-                dealer: room.game.dealer,
-                gamePhase: room.game.gamePhase
-            });
-            
-            // Check if dealer already has blackjack - if so, determine winners immediately
-            if (room.game.dealer.hasBlackjack) {
-                console.log('🃏 Dealer has blackjack - determining winners immediately');
-                io.to(roomCode).emit('dealerTurn', {
-                    dealer: room.game.dealer,
-                    gamePhase: room.game.gamePhase
-                });
-                setTimeout(() => {
-                    determineBlackjackWinners(roomCode, room);
-                }, 1000);
-            } else {
-                // Dealer hits until 17 or bust (with small delay between hits for visual effect)
-                const dealerPlayCards = async () => {
-                    while (room.game.dealer.value < 17 && !room.game.dealer.isBusted && !room.game.dealer.hasBlackjack) {
-                        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between cards
-                        const dealerCard = dealBlackjackCard(room);
-                        if (!dealerCard) {
-                            console.error('❌ Failed to deal dealer card - stopping dealer turn');
-                            // Mark dealer as done
-                            room.game.dealer.isBusted = true;
-                            break;
-                        }
-                        room.game.dealer.hand.push(dealerCard);
-                        room.game.dealer.value = calculateBlackjackValue(room.game.dealer.hand);
-                        
-                        // Check for blackjack after hitting (unlikely but possible with ace)
-                        if (room.game.dealer.hand.length === 2 && room.game.dealer.value === 21) {
-                            room.game.dealer.hasBlackjack = true;
-                        }
-                        
-                        // Update clients after each card
-                        io.to(roomCode).emit('dealerTurn', {
-                            dealer: room.game.dealer,
-                            gamePhase: room.game.gamePhase
-                        });
-                        
-                        // If dealer got blackjack, stop
-                        if (room.game.dealer.hasBlackjack) {
-                            break;
-                        }
-                    }
-                    
-                    if (room.game.dealer.value > 21) {
-                        room.game.dealer.isBusted = true;
-                    }
-                    
-                    // Final dealer update
-                    io.to(roomCode).emit('dealerTurn', {
-                        dealer: room.game.dealer,
-                        gamePhase: room.game.gamePhase
-                    });
-                    
-                    // Small delay before determining winners
-                    setTimeout(() => {
-                        determineBlackjackWinners(roomCode, room);
-                    }, 1000);
-                };
-                
-                dealerPlayCards();
-            }
-        } else {
-            io.to(roomCode).emit('turnChanged', {
-                currentPlayer: room.game.currentPlayer,
-                gamePhase: room.game.gamePhase
-            });
-            
-            // Handle bot turn
-            const currentPlayer = room.game.players[room.game.currentPlayer];
-            if (currentPlayer && currentPlayer.isBot && room.game.gamePhase === 'playing') {
-                setTimeout(() => {
-                    handleBlackjackBotTurn(roomCode, room);
-                }, 1500);
-            }
-        }
-    }
-    
-    // NOTE: Duplicate functions removed - handleBlackjackBotTurn, determineBlackjackWinners, and startNewBlackjackRound
-    // are all now defined at the top of the connection block to ensure they're available when needed
-
-    // Poker helper functions moved to global scope - see above
-
-    socket.on('bettingRoundStarted', (data) => {
-        console.log(`🎮 Betting round started in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('bettingRoundStarted', data);
-        }
-    });
-
-    socket.on('communityCards', (data) => {
-        console.log(`🎮 Community cards in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('communityCards', data);
-        }
-    });
-
-    socket.on('showdown', (data) => {
-        console.log(`🎮 Showdown in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('showdown', data);
-        }
-    });
-
-    socket.on('gameState', (data) => {
-        console.log(`🎮 Game state update in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('gameState', data);
-        }
-    });
-
-
-    // Handle game completion for all games
-    socket.on('gameCompleted', (data) => {
-        console.log(`🎮 Game completed in room: ${data.roomId}`);
-        const room = rooms.get(data.roomId);
-        if (room) {
-            io.to(data.roomId).emit('gameCompleted', data);
-        }
-    });
 }
 
 // ✅ CRITICAL FIX: Function to start a new game after a team wins

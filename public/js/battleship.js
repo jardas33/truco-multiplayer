@@ -169,7 +169,7 @@ class BattleshipGame {
         
         // CRITICAL FIX: Show prominent message to start positioning ships
         this.addToHistory('🎮 Game initialized!', 'success');
-        this.showGameMessage('⚓ START POSITIONING YOUR SHIPS! Click on a ship in the left panel, then click on the grid to place it.', 6000);
+        this.showGameMessage('⚓ START POSITIONING YOUR SHIPS! Click on a ship in the left panel, then click on the grid to place it.', 3000);
         this.addToHistory('⚓ Click on a ship in the "Your Fleet" panel (left side) to select it, then click on your grid to place it.', 'info');
         this.addToHistory('💡 Tip: Press "R" to rotate ships. Place all 5 ships to start the battle!', 'info');
         this.updateUI();
@@ -574,7 +574,7 @@ class BattleshipGame {
         const startBtn = document.getElementById('startGameBtn');
         if (startBtn) {
             startBtn.disabled = false;
-            startBtn.textContent = 'Start Game';
+            startBtn.textContent = 'Start Battle';
         }
         
         // CRITICAL FIX: Clear processedAttacks when new game starts
@@ -1339,6 +1339,29 @@ class BattleshipGame {
             backdrop-filter: blur(10px);
             animation: messageSlideIn 0.3s ease-out;
         `;
+        if (window.innerWidth >= 1024) {
+            messageDiv.style.top = 'auto';
+            messageDiv.style.bottom = '24px';
+            messageDiv.style.transform = 'translateX(-50%)';
+            messageDiv.style.width = 'min(520px, 42vw)';
+            messageDiv.style.padding = '10px 16px';
+            messageDiv.style.fontSize = '14px';
+            messageDiv.style.lineHeight = '1.25';
+            messageDiv.style.pointerEvents = 'none';
+        } else {
+            messageDiv.style.top = 'auto';
+            messageDiv.style.bottom = '72px';
+            messageDiv.style.transform = 'translateX(-50%)';
+            messageDiv.style.width = 'calc(100vw - 32px)';
+            messageDiv.style.maxWidth = '360px';
+            messageDiv.style.padding = '10px 14px';
+            messageDiv.style.fontSize = '13px';
+            messageDiv.style.lineHeight = '1.2';
+            messageDiv.style.pointerEvents = 'none';
+            messageDiv.style.boxSizing = 'border-box';
+            messageDiv.style.whiteSpace = 'normal';
+            messageDiv.style.overflowWrap = 'anywhere';
+        }
         messageDiv.textContent = message;
         document.body.appendChild(messageDiv);
         
@@ -1378,6 +1401,23 @@ class BattleshipGame {
             historyContent.scrollTop = historyContent.scrollHeight;
         }
     }
+
+    scrollInfoPanelToTop() {
+        const leftPanel = document.querySelector('.left-panel');
+        const resetScroll = () => {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            window.scrollTo(0, 0);
+
+            if (leftPanel) {
+                leftPanel.scrollTop = 0;
+            }
+        };
+
+        resetScroll();
+        requestAnimationFrame(resetScroll);
+        setTimeout(resetScroll, 120);
+    }
     
     updateUI() {
         console.log('🔍 updateUI called - gamePhase:', this.gamePhase);
@@ -1403,7 +1443,7 @@ class BattleshipGame {
                     }
                     break;
                 case 'finished':
-                    gamePhase.textContent = this.winner ? '🏆 Victory!' : '💥 Defeat!';
+                    gamePhase.textContent = this.winner === 0 ? '🏆 Victory!' : '💥 Defeat!';
                     break;
             }
         }
@@ -1432,7 +1472,9 @@ class BattleshipGame {
         }
         
         if (currentTurn) {
-            if (this.isMultiplayer) {
+            if (this.gamePhase === 'finished') {
+                currentTurn.textContent = 'Battle ended';
+            } else if (this.isMultiplayer) {
                 // CRITICAL FIX: Use actual player names with nicknames
                 if (this.isPlayerTurn) {
                     currentTurn.textContent = this.getLocalPlayerName();
@@ -1469,6 +1511,11 @@ class BattleshipGame {
         if (startBtn) {
             const allShipsPlaced = this.placedShips[0].length === 5;
             startBtn.disabled = !allShipsPlaced || this.gamePhase !== 'placement';
+
+            const controlsPanel = startBtn.closest('.controls');
+            if (controlsPanel) {
+                controlsPanel.style.display = this.gamePhase === 'placement' ? 'flex' : 'none';
+            }
         }
         
         // CRITICAL FIX: Show/hide reset ships button based on game phase
@@ -1781,6 +1828,7 @@ class BattleshipGame {
         this.addToHistory('💡 Tip: Click on the Attack Grid to target enemy ships. You\'ll get another turn if you hit!', 'info');
         
         this.updateUI();
+        this.scrollInfoPanelToTop();
         console.log('🚀 Calling setupAIShips()...');
         this.setupAIShips();
         console.log('✅ Game started successfully!');
@@ -1889,6 +1937,7 @@ class BattleshipGame {
         
         // CRITICAL FIX: Update UI to enable start button if all ships are placed
         this.updateUI();
+        this.scrollInfoPanelToTop();
         
         // Force visual update
         if (window.battleshipClient) {
@@ -2635,7 +2684,7 @@ class BattleshipGame {
         const startBtn = document.getElementById('startGameBtn');
         if (startBtn) {
             startBtn.disabled = true; // Will be enabled when all ships are placed
-            startBtn.textContent = 'Start Game';
+            startBtn.textContent = 'Start Battle';
         }
         
         this.initializeGame();
@@ -2868,6 +2917,83 @@ class BattleshipClient {
         return this.game ? this.game.socket : null;
     }
     
+    clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    getCanvasSize() {
+        const canvasDiv = document.getElementById('gameCanvas');
+        const rect = canvasDiv ? canvasDiv.getBoundingClientRect() : null;
+        const widthSource = rect && rect.width ? rect.width : window.innerWidth;
+        const heightSource = rect && rect.height ? rect.height : window.innerHeight;
+
+        return {
+            width: Math.max(360, Math.floor(widthSource)),
+            height: Math.max(420, Math.floor(heightSource))
+        };
+    }
+
+    updateCanvasLayout(canvasWidth, canvasHeight) {
+        const isStacked = canvasWidth < 620;
+        this.boardsStacked = isStacked;
+        this.gridSpacing = 1;
+
+        if (isStacked) {
+            const stride = this.clamp(Math.floor((canvasWidth - 80) / 11), 20, 28);
+            this.gridSize = stride - this.gridSpacing;
+            const boardSpan = 10 * stride;
+            const gridX = Math.max(42, Math.floor((canvasWidth - boardSpan) / 2));
+
+            this.gridStartX = 0;
+            this.fleetGridOffset = gridX;
+            this.attackGridOffset = gridX;
+            this.gridStartY = 96;
+            this.attackGridStartY = this.gridStartY + boardSpan + 120;
+            return;
+        }
+
+        const stride = this.clamp(Math.floor((canvasWidth - 120) / 23), 22, 32);
+        this.gridSize = stride - this.gridSpacing;
+
+        const boardSpan = 10 * stride;
+        const gap = this.clamp(Math.floor(canvasWidth * 0.12), 48, 96);
+        const totalWidth = (boardSpan * 2) + gap;
+        const fleetX = Math.max(42, Math.floor((canvasWidth - totalWidth) / 2));
+
+        this.gridStartX = 0;
+        this.fleetGridOffset = fleetX;
+        this.attackGridOffset = fleetX + boardSpan + gap;
+
+        const preferredY = canvasHeight < 560 ? 124 : 136;
+        const maxY = Math.max(116, canvasHeight - boardSpan - 96);
+        this.gridStartY = Math.min(preferredY, maxY);
+        this.attackGridStartY = this.gridStartY;
+    }
+
+    getCellStep() {
+        return this.gridSize + this.gridSpacing;
+    }
+
+    getBoardSpan() {
+        return 10 * this.getCellStep();
+    }
+
+    getFleetGridX() {
+        return this.gridStartX + this.fleetGridOffset;
+    }
+
+    getAttackGridX() {
+        return this.gridStartX + this.attackGridOffset;
+    }
+
+    getFleetGridY() {
+        return this.gridStartY;
+    }
+
+    getAttackGridY() {
+        return this.attackGridStartY || this.gridStartY;
+    }
+
     initializeCanvas() {
         console.log('🎨 Initializing canvas...');
         
@@ -2926,6 +3052,11 @@ class BattleshipClient {
             // Ensure minimum size
             canvasWidth = Math.max(canvasWidth, 400);
             canvasHeight = Math.max(canvasHeight, 300);
+
+            const measuredCanvasSize = this.getCanvasSize();
+            canvasWidth = measuredCanvasSize.width;
+            canvasHeight = measuredCanvasSize.height;
+            this.updateCanvasLayout(canvasWidth, canvasHeight);
             
             this.canvas = createCanvas(canvasWidth, canvasHeight);
             this.canvas.parent(canvasDiv);
@@ -2958,6 +3089,7 @@ class BattleshipClient {
             // Store original offsets for consistency
             this.fleetGridOffset = 80; // Original: gridStartX + 80
             this.attackGridOffset = 500; // Original: gridStartX + 500
+            this.updateCanvasLayout(canvasWidth, canvasHeight);
             
             console.log('🎨 Canvas created with dimensions:', canvasWidth, 'x', canvasHeight);
             console.log('🎨 Device type - Mobile:', isMobile, 'Tablet:', isTablet);
@@ -3092,6 +3224,11 @@ class BattleshipClient {
                     // Ensure minimum size
                     newWidth = Math.max(newWidth, 400);
                     newHeight = Math.max(newHeight, 300);
+
+                    const measuredCanvasSize = this.getCanvasSize();
+                    newWidth = measuredCanvasSize.width;
+                    newHeight = measuredCanvasSize.height;
+                    this.updateCanvasLayout(newWidth, newHeight);
                     
                     // Resize canvas
                     resizeCanvas(newWidth, newHeight);
@@ -3106,6 +3243,7 @@ class BattleshipClient {
                     }
                     this.fleetGridOffset = 80;
                     this.attackGridOffset = 500;
+                    this.updateCanvasLayout(newWidth, newHeight);
                     
                     console.log('🔄 Canvas resized and grid repositioned:', this.gridStartX, this.gridStartY);
                     console.log('🔄 New canvas size:', newWidth, 'x', newHeight);
@@ -3435,9 +3573,15 @@ class BattleshipClient {
     
     drawTurnIndicator() {
         // ✅ RESTORE: Use original working positions
-        const fleetGridX = this.gridStartX + 80;
-        const attackGridX = this.gridStartX + 500;
-        const gridY = this.gridStartY + 350; // Below the grids
+        const fleetGridX = this.getFleetGridX();
+        const attackGridX = this.getAttackGridX();
+        const fleetGridY = this.getFleetGridY();
+        const attackGridY = this.getAttackGridY();
+        const boardSpan = this.getBoardSpan();
+        const fleetIndicatorY = fleetGridY + boardSpan + 22;
+        const attackIndicatorY = attackGridY + boardSpan + 22;
+        const gridY = fleetIndicatorY;
+        const boxWidth = Math.min(380, boardSpan + 56);
         
         // CRITICAL FIX: Always read turn state directly from the game instance for accuracy
         const gameInstance = window.battleshipGame || this.game;
@@ -3452,8 +3596,8 @@ class BattleshipClient {
         fill(0, 0, 0, 240); // More opaque background
         stroke(255, 255, 0);
         strokeWeight(3);
-        rect(fleetGridX - 15, gridY - 5, 430, 50);
-        rect(attackGridX - 15, gridY - 5, 430, 50);
+        rect(fleetGridX - 20, fleetIndicatorY - 5, boxWidth, 50);
+        rect(attackGridX - 20, attackIndicatorY - 5, boxWidth, 50);
         
         // Draw turn text with better styling
         fill(255, 255, 255);
@@ -3499,8 +3643,8 @@ class BattleshipClient {
         // Draw hover effect on grids
         if (this.gamePhase === 'placement') {
             // ✅ RESOLUTION FIX: Use consistent grid position calculation
-            const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
-            const fleetGridY = this.gridStartY;
+            const fleetGridX = this.getFleetGridX();
+            const fleetGridY = this.getFleetGridY();
             
             // ✅ RESOLUTION FIX: Use temp coordinates if available (for touch), otherwise use mouseX/Y
             const hoverX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
@@ -3529,8 +3673,8 @@ class BattleshipClient {
             }
         } else if (this.gamePhase === 'playing' && this.currentPlayer === 0) {
             // ✅ RESOLUTION FIX: Use consistent grid position calculation
-            const attackGridX = this.gridStartX + 500; // Match drawGrids position
-            const attackGridY = this.gridStartY;
+            const attackGridX = this.getAttackGridX();
+            const attackGridY = this.getAttackGridY();
             
             // ✅ RESOLUTION FIX: Use temp coordinates if available (for touch), otherwise use mouseX/Y
             const hoverX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
@@ -3556,14 +3700,16 @@ class BattleshipClient {
     
     drawGrids(gameInstance) {
         // ✅ RESTORE: Use original working positions
-        const fleetGridX = this.gridStartX + 80; // Original working position
-        const attackGridX = this.gridStartX + 500; // Original working position
+        const fleetGridX = this.getFleetGridX();
+        const attackGridX = this.getAttackGridX();
+        const fleetGridY = this.getFleetGridY();
+        const attackGridY = this.getAttackGridY();
         
         console.log('🔍 drawGrids - fleetGridX:', fleetGridX, 'attackGridX:', attackGridX, 'gridStartY:', this.gridStartY, 'gridStartX:', this.gridStartX);
-        this.drawGrid(fleetGridX, this.gridStartY, 0, true, gameInstance);
+        this.drawGrid(fleetGridX, fleetGridY, 0, true, gameInstance);
         
         // Draw attack grid - dynamically positioned
-        const attackGridY = this.gridStartY; // Same Y position
+        // attackGridY is calculated separately for stacked narrow layouts.
         
         // In multiplayer, show player 0's view of player 1's grid (opponent's grid)
         const attackGridPlayer = this.isMultiplayer ? 0 : 0;
@@ -3580,14 +3726,16 @@ class BattleshipClient {
         const attackGridCenter = attackGridX + gridCenterOffset;
         
         // CRITICAL FIX: Move titles further up to create more space from grid numbers
-        const titleBoxY = this.gridStartY - 75; // Move up from -55 to -75 (20px more space)
-        const titleTextY = this.gridStartY - 60; // Move up from -40 to -60 (20px more space)
+        const fleetTitleBoxY = fleetGridY - 75;
+        const fleetTitleTextY = fleetGridY - 60;
+        const attackTitleBoxY = attackGridY - 75;
+        const attackTitleTextY = attackGridY - 60;
         
         // Draw background boxes for better readability
         noStroke();
         fill(0, 0, 0, 220); // Semi-transparent black background
-        rect(fleetGridCenter - 70, titleBoxY, 140, 30);
-        rect(attackGridCenter - 70, titleBoxY, 140, 30);
+        rect(fleetGridCenter - 70, fleetTitleBoxY, 140, 30);
+        rect(attackGridCenter - 70, attackTitleBoxY, 140, 30);
         
         // Draw grid titles with better styling
         fill(255, 215, 0); // Gold color for better visibility
@@ -3595,8 +3743,8 @@ class BattleshipClient {
         textSize(20); // Good readable size
         textStyle(BOLD); // Bold for emphasis
         noStroke(); // No outline for cleaner look
-        text('Your Fleet', fleetGridCenter, titleTextY);
-        text('Attack Grid', attackGridCenter, titleTextY);
+        text('Your Fleet', fleetGridCenter, fleetTitleTextY);
+        text('Attack Grid', attackGridCenter, attackTitleTextY);
         
         // Reset text style
         textStyle(NORMAL);
@@ -3772,8 +3920,8 @@ class BattleshipClient {
     
     drawShipOnGrid(ship, player, gameInstance) {
         // ✅ RESTORE: Use original working position
-        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
-        const fleetGridY = this.gridStartY;
+        const fleetGridX = this.getFleetGridX();
+        const fleetGridY = this.getFleetGridY();
         
         // Debug: Log ship coordinates and status
         console.log('🔍 drawShipOnGrid - ship.x:', ship.x, 'ship.y:', ship.y, 'hits:', ship.hits, 'sunk:', ship.sunk, 'fleetGridX:', fleetGridX, 'fleetGridY:', fleetGridY);
@@ -3857,8 +4005,8 @@ class BattleshipClient {
         // ellipse(mouseCanvasX, mouseCanvasY, 8, 8);
         
         // ✅ RESTORE: Use original working position
-        const fleetGridX = this.gridStartX + 80;
-        const fleetGridY = this.gridStartY;
+        const fleetGridX = this.getFleetGridX();
+        const fleetGridY = this.getFleetGridY();
         
         // Calculate grid cell coordinates - use exact fleetGridX position
         const gridX = Math.floor((mouseCanvasX - fleetGridX) / cellSize);
@@ -4127,7 +4275,7 @@ class BattleshipClient {
         }
         
         // Check for phantom events that are clearly outside the game area
-        if (mouseX > 1000 || mouseY > 1000) {
+        if (mouseX > width || mouseY > height) {
             console.log(`🎯 Click ignored - coordinates way outside game area: mouseX=${mouseX}, mouseY=${mouseY}`);
             return;
         }
@@ -4138,8 +4286,8 @@ class BattleshipClient {
     
     handleShipPlacement() {
         // ✅ RESTORE: Use original working position
-        const fleetGridX = this.gridStartX + 80; // Same as in drawGrids
-        const fleetGridY = this.gridStartY;
+        const fleetGridX = this.getFleetGridX();
+        const fleetGridY = this.getFleetGridY();
         
         // ✅ TOUCH SUPPORT: Use temp coordinates if available (from touch events), otherwise use mouseX/Y
         const clickX = this.tempMouseX !== undefined ? this.tempMouseX : mouseX;
@@ -4198,7 +4346,7 @@ class BattleshipClient {
             }
         } else {
             console.log(`❌ Click outside fleet grid: gridX=${gridX}, gridY=${gridY}, mouseX=${mouseX}, mouseY=${mouseY}`);
-            console.log(`❌ Bounds check failed - inBounds: ${inBounds}, inMouseBounds: ${inMouseBounds}`);
+            console.log(`❌ Bounds check failed - inBounds: ${inBounds}, inClickBounds: ${inClickBounds}`);
             console.log(`❌ Grid position - fleetGridX: ${fleetGridX}, fleetGridY: ${fleetGridY}`);
             console.log(`❌ Grid size - gridWidth: ${gridWidth}, gridHeight: ${gridHeight}`);
             return false; // Click outside grid
@@ -4288,8 +4436,8 @@ class BattleshipClient {
         }
         
         // ✅ RESTORE: Use original working position (must match drawGrids)
-        const attackGridX = this.gridStartX + 500; // Match drawGrids position
-        const attackGridY = this.gridStartY; // Same Y as player grid
+        const attackGridX = this.getAttackGridX();
+        const attackGridY = this.getAttackGridY();
         
         // Check if coordinates are too far from the attack grid (likely phantom event)
         const distanceFromAttackGrid = Math.sqrt(Math.pow(clickX - attackGridX, 2) + Math.pow(clickY - attackGridY, 2));
@@ -4299,7 +4447,7 @@ class BattleshipClient {
         }
         
         // Check if coordinates are way outside the window bounds (likely phantom event)
-        if (clickX > windowWidth + 100 || clickY > windowHeight + 100) {
+        if (clickX > width + 100 || clickY > height + 100) {
             console.log(`🎯 Click rejected - way outside window bounds: clickX=${clickX}, clickY=${clickY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
             return;
         }
@@ -4331,14 +4479,15 @@ class BattleshipClient {
         const maxGridY = attackGridY + (10 * cellSize);
         
         // Additional validation: reject clicks that are clearly outside reasonable bounds
-        if (clickX < 0 || clickY < 0 || clickX > windowWidth || clickY > windowHeight) {
+        if (clickX < 0 || clickY < 0 || clickX > width || clickY > height) {
             console.log(`🎯 Click rejected - outside window bounds: clickX=${clickX}, clickY=${clickY}, windowWidth=${windowWidth}, windowHeight=${windowHeight}`);
             return;
         }
         
         // Additional validation: reject clicks that are clearly outside the attack grid area
-        if (clickX < attackGridX - 100 || clickX > attackGridX + 500 || 
-            clickY < attackGridY - 100 || clickY > attackGridY + 500) {
+        const boardSpan = this.getBoardSpan();
+        if (clickX < attackGridX - 100 || clickX > attackGridX + boardSpan + 100 || 
+            clickY < attackGridY - 100 || clickY > attackGridY + boardSpan + 100) {
             console.log(`🎯 Click rejected - way outside attack grid area: clickX=${clickX}, clickY=${clickY}, attackGridX=${attackGridX}, attackGridY=${attackGridY}`);
             return;
         }

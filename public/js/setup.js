@@ -93,7 +93,7 @@ function createCanvasSafely() {
     // Ensure proper initial state
     if (menuDiv) {
         menuDiv.class('active');
-        menuDiv.style('display', 'block'); // Force menu to be visible
+        menuDiv.style('display', currentPath === '/battleship' ? 'block' : 'flex'); // Preserve centered lobby layouts
     }
     if (gameDiv) {
         gameDiv.removeClass('active');

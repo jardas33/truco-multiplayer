@@ -2019,25 +2019,17 @@ function drawMainPlayerHand() {
     const canvasWidth = width;
     const canvasHeight = height;
     
-    const handY = height - 150; // Moved up more to give space for pair-making area
-    const cardWidth = 60;
-    const cardHeight = 84;
-    const spacing = 15;
-    const buttonWidth = 70;
-    const buttonHeight = 30;
-    const buttonSpacing = 20;
-    const cardsToButtonsGap = 30; // Gap between cards and buttons
-    
-    // Calculate total width needed for cards and buttons
-    const handLength = player.hand.length;
-    const cardsWidth = (handLength - 1) * (cardWidth + spacing) + cardWidth;
-    const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
-    const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
-    
-    // Center everything
-    const startX = (width - totalWidth) / 2;
-    const cardsStartX = startX;
-    const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
+    const layout = getMainPlayerHandLayout(player.hand.length);
+    const handY = layout.handY;
+    const cardWidth = layout.cardWidth;
+    const cardHeight = layout.cardHeight;
+    const spacing = layout.spacing;
+    const buttonWidth = layout.buttonWidth;
+    const buttonHeight = layout.buttonHeight;
+    const buttonSpacing = layout.buttonSpacing;
+    const startX = layout.startX;
+    const cardsStartX = layout.cardsStartX;
+    const buttonsStartX = layout.buttonsStartX;
     
     // Removed repetitive draw logs to reduce console spam
     
@@ -2045,7 +2037,7 @@ function drawMainPlayerHand() {
     fill(0, 0, 0, 150);
     stroke(100, 150, 200);
         strokeWeight(2);
-    rect(startX - 20, handY - 20, totalWidth + 40, 100, 10);
+    rect(layout.backgroundX, layout.backgroundY, layout.backgroundWidth, layout.backgroundHeight, 10);
     
     // Draw player info
     fill(255, 255, 255);
@@ -2859,22 +2851,19 @@ window.goFishMousePressed = function goFishMousePressed() {
         console.log('⚠️ Consider checking browser zoom level or CSS scaling.');
     }
         
-        const handY = height - 150; // Match the new position from drawMainPlayerHand
-        const cardWidth = 60;
-        const spacing = 15;
-        const buttonWidth = 70;
-        const buttonHeight = 30;
-        const buttonSpacing = 20;
-        const cardsToButtonsGap = 30;
-        
-        // Calculate positions (same as in drawMainPlayerHand)
         const player = window.game.players[window.game.localPlayerIndex];
+        const layout = getMainPlayerHandLayout(player.hand.length);
+        const handY = layout.handY;
+        const cardWidth = layout.cardWidth;
+        const spacing = layout.spacing;
+        const buttonWidth = layout.buttonWidth;
+        const buttonHeight = layout.buttonHeight;
+        const buttonSpacing = layout.buttonSpacing;
+        const startX = layout.startX;
+        const buttonsStartX = layout.buttonsStartX;
         const handLength = player.hand.length;
-        const cardsWidth = (handLength - 1) * (cardWidth + spacing) + cardWidth;
-        const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
-        const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
-        const startX = (width - totalWidth) / 2;
-        const buttonsStartX = startX + cardsWidth + cardsToButtonsGap;
+        const cardsWidth = layout.cardsWidth;
+        const cardsToButtonsGap = layout.cardsToButtonsGap;
         const buttonY = handY + 20;
         
         console.log(`🎯 Click detection - handLength: ${handLength}, cardsWidth: ${cardsWidth}, buttonsStartX: ${buttonsStartX}`);
@@ -3522,15 +3511,99 @@ function getResponsiveDimensions() {
     };
 }
 
+function getScorePanelBounds() {
+    const playerCount = window.game && window.game.players ? window.game.players.length : 3;
+    const baseHeight = 120;
+    const playerSectionHeight = 25;
+    const overallSectionHeight = 40;
+    const overallPlayerHeight = 20;
+    const padding = 20;
+    const calculatedHeight = baseHeight + (playerCount * playerSectionHeight) + overallSectionHeight + (playerCount * overallPlayerHeight) + padding;
+    const dims = getResponsiveDimensions();
+    const panelWidth = dims.isSmallScreen ? 240 : 260;
+    const panelHeight = Math.max(calculatedHeight, dims.isSmallScreen ? 250 : 280);
+
+    return {
+        x: width - panelWidth - 20,
+        y: height - panelHeight - 40,
+        width: panelWidth,
+        height: panelHeight
+    };
+}
+
+function getMainPlayerHandLayout(handLength) {
+    const cardWidth = 60;
+    const cardHeight = 84;
+    const spacing = 15;
+    const buttonWidth = 70;
+    const buttonHeight = 30;
+    const buttonSpacing = 20;
+    const cardsToButtonsGap = 30;
+    const handY = height - 150;
+    const cardsWidth = handLength > 0 ? (handLength - 1) * (cardWidth + spacing) + cardWidth : 0;
+    const buttonsWidth = (buttonWidth * 2) + buttonSpacing;
+    const totalWidth = cardsWidth + cardsToButtonsGap + buttonsWidth;
+    const preferredStartX = (width - totalWidth) / 2;
+    const pairAreaX = width - 500;
+    const maxStartX = pairAreaX - 24 - totalWidth - 20;
+    const startX = Math.max(20, Math.min(preferredStartX, maxStartX));
+
+    return {
+        handY,
+        cardWidth,
+        cardHeight,
+        spacing,
+        buttonWidth,
+        buttonHeight,
+        buttonSpacing,
+        cardsToButtonsGap,
+        cardsWidth,
+        buttonsWidth,
+        totalWidth,
+        startX,
+        cardsStartX: startX,
+        buttonsStartX: startX + cardsWidth + cardsToButtonsGap,
+        backgroundX: startX - 20,
+        backgroundY: handY - 20,
+        backgroundWidth: totalWidth + 40,
+        backgroundHeight: 100
+    };
+}
+
+function getMainHandBounds() {
+    const player = window.game && window.game.players ? window.game.players[window.game.localPlayerIndex] : null;
+    const handLength = player && player.hand ? player.hand.length : 7;
+    const layout = getMainPlayerHandLayout(handLength);
+
+    return {
+        x: layout.backgroundX,
+        y: layout.backgroundY,
+        width: layout.backgroundWidth,
+        height: layout.backgroundHeight
+    };
+}
+
+function getPairAreaBounds() {
+    const handY = height - 150;
+
+    return {
+        x: width - 500,
+        y: handY - 20,
+        width: 200,
+        height: 100
+    };
+}
+
 function validateLayoutSpacing() {
+
     // Define safe zones for each component
     const zones = {
         opponent1: { x: 50, y: 80, width: 150, height: 170 }, // 80 + 80 + 10 margin
         opponent2: { x: width - 250, y: 80, width: 150, height: 170 },
-        scorePanel: { x: width - 200, y: 50, width: 180, height: 200 },
+        scorePanel: getScorePanelBounds(),
         fishPond: { x: width/2 - 120, y: height * 0.45 - 60, width: 240, height: 120 },
-        mainHand: { x: 50, y: height - 80 - 20, width: width - 100, height: 100 },
-        controlPanel: { x: 50, y: height - 200, width: 300, height: 100 }
+        mainHand: getMainHandBounds(),
+        pairArea: getPairAreaBounds()
     };
     
     // Check for overlaps
@@ -3549,22 +3622,11 @@ function validateLayoutSpacing() {
 }
 
 function drawModernScorePanel() {
-    const dims = getResponsiveDimensions();
-    
-    // Calculate dynamic size based on number of players
-    const playerCount = window.game && window.game.players ? window.game.players.length : 3;
-    const baseHeight = 120; // Base height for title and current turn
-    const playerSectionHeight = 25; // Height per player for current scores
-    const overallSectionHeight = 40; // Height for "Overall Wins" header
-    const overallPlayerHeight = 20; // Height per player for overall wins
-    const padding = 20; // Extra padding
-    
-    const calculatedHeight = baseHeight + (playerCount * playerSectionHeight) + overallSectionHeight + (playerCount * overallPlayerHeight) + padding;
-    
-    const panelWidth = dims.isSmallScreen ? 240 : 260; // Increased width significantly
-    const panelHeight = Math.max(calculatedHeight, dims.isSmallScreen ? 250 : 280); // Dynamic height with minimum
-    const panelX = width - panelWidth - 20; // Bottom right with margin
-    const panelY = height - panelHeight - 40; // Moved higher with more margin
+    const panel = getScorePanelBounds();
+    const panelWidth = panel.width;
+    const panelHeight = panel.height;
+    const panelX = panel.x;
+    const panelY = panel.y;
     
     // Draw score panel background
     fill(0, 0, 0, 200);

@@ -50,7 +50,7 @@ function draw() {
                 if (!currentParent || !currentParent.elt || currentParent.elt.id !== 'Menu') {
                     window.gameCanvas.parent('Menu');
                     // Force the Menu div to be visible
-                    if (menuDiv) menuDiv.style('display', 'block');
+                    if (menuDiv) menuDiv.style('display', 'flex');
                 }
             }
         } catch (error) {
@@ -168,7 +168,7 @@ function draw() {
             gameState = gameStateEnum.Menu;
             const menuDiv = document.getElementById('Menu');
             if (menuDiv) {
-                menuDiv.style.display = 'block';
+                menuDiv.style.display = 'flex';
             }
             const instructionsDiv = document.getElementById('Instructions');
             if (instructionsDiv) {
@@ -309,7 +309,7 @@ function draw() {
                 gameState = gameStateEnum.Menu;
                 const menuDiv = document.getElementById('Menu');
                 if (menuDiv) {
-                    menuDiv.style.display = 'block';
+                    menuDiv.style.display = 'flex';
                 }
                 const valuesDiv = document.getElementById('Values');
                 if (valuesDiv) {
